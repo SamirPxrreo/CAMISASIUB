@@ -662,9 +662,37 @@
     box-shadow: 0 4px 12px var(--shadow);
     max-width: 100%;
   }
-  .table-wrap table { min-width: 1400px; }
-  .table-wrap th, .table-wrap td { white-space: nowrap; }
-  .table-wrap .col-detalle { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .table-wrap table { min-width: 1800px; }
+  .table-wrap th, .table-wrap td { padding: 8px 24px; }
+  #section-orders .table-wrap td:nth-child(4) { white-space: normal; min-width: 350px; }
+  #section-orders .table-wrap td:nth-child(5),
+  #section-orders .table-wrap td:nth-child(6),
+  #section-orders .table-wrap td:nth-child(7),
+  #section-orders .table-wrap td:nth-child(8),
+  #section-orders .table-wrap td:nth-child(9),
+  #section-orders .table-wrap td:nth-child(10),
+  #section-orders .table-wrap td:nth-child(12),
+  #section-orders .table-wrap td:nth-child(13) { white-space: nowrap; }
+  #section-orders .table-wrap th:nth-child(1),
+  #section-orders .table-wrap th:nth-child(2),
+  #section-orders .table-wrap th:nth-child(3),
+  #section-orders .table-wrap th:nth-child(11),
+  #section-orders .table-wrap td:nth-child(1),
+  #section-orders .table-wrap td:nth-child(2),
+  #section-orders .table-wrap td:nth-child(3),
+  #section-orders .table-wrap td:nth-child(11) { padding: 8px 10px; }
+
+  #section-purchases .table-wrap td:nth-child(4),
+  #section-purchases .table-wrap td:nth-child(5),
+  #section-purchases .table-wrap td:nth-child(6),
+  #section-purchases .table-wrap td:nth-child(7),
+  #section-purchases .table-wrap td:nth-child(8) { white-space: nowrap; }
+  #section-purchases .table-wrap th:nth-child(1),
+  #section-purchases .table-wrap th:nth-child(2),
+  #section-purchases .table-wrap th:nth-child(3),
+  #section-purchases .table-wrap td:nth-child(1),
+  #section-purchases .table-wrap td:nth-child(2),
+  #section-purchases .table-wrap td:nth-child(3) { padding: 8px 10px; }
 
   table {
     width: 100%;
@@ -860,17 +888,29 @@
 
   .sidebar {
     width: 220px;
-    flex-shrink: 0;
     background: var(--card);
     border-right: 1px solid var(--line);
     display: flex;
     flex-direction: column;
     padding: 16px 0;
-    position: sticky;
+    position: fixed;
+    left: -240px;
     top: 0;
     height: 100vh;
     overflow-y: auto;
+    z-index: 100;
+    transition: left 0.25s ease;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.15);
   }
+  .sidebar.open { left: 0; }
+  .sidebar-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.3);
+    z-index: 99;
+  }
+  .sidebar-backdrop.show { display: block; }
   .sidebar-header {
     padding: 0 16px 16px;
     border-bottom: 1px solid var(--line);
@@ -920,7 +960,7 @@
   .main-content {
     flex: 1;
     padding: 24px;
-    max-width: calc(100vw - 220px);
+    max-width: 100vw;
     overflow-x: hidden;
   }
 
@@ -979,24 +1019,16 @@
   [data-theme="dark"] .alert-item.success { background: #052e16; color: #86efac; border-color: #166534; }
 
   /* Mobile sidebar */
-  .sidebar-toggle { display: none; }
+  .sidebar-toggle {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--card); border: 1px solid var(--line);
+    padding: 10px 16px; border-radius: 10px; cursor: pointer;
+    font-size: 14px; color: var(--ink); font-family: inherit;
+    width: fit-content;
+    margin-bottom: 12px;
+  }
 
   @media (max-width: 768px) {
-    .sidebar {
-      position: fixed;
-      left: -240px;
-      z-index: 100;
-      transition: left 0.25s ease;
-      box-shadow: 4px 0 20px rgba(0,0,0,0.15);
-    }
-    .sidebar.open { left: 0; }
-    .sidebar-toggle {
-      display: flex; align-items: center; gap: 8px;
-      background: var(--card); border: 1px solid var(--line);
-      padding: 8px 14px; border-radius: 8px; cursor: pointer;
-      font-size: 14px; color: var(--ink); margin-bottom: 12px;
-      font-family: inherit;
-    }
     .main-content {
       max-width: 100vw;
       padding: 16px;
@@ -1004,10 +1036,6 @@
     .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
     .kpi-card .kpi-value { font-size: 22px; }
     .vendor-summary-grid { grid-template-columns: 1fr; }
-  }
-
-  @media (min-width: 769px) {
-    .sidebar-toggle { display: none !important; }
   }
 
   @media (max-width: 480px) {
@@ -1241,7 +1269,6 @@
       <button class="sidebar-item" data-section="orders" onclick="navigateTo('orders')">📋 Pedidos</button>
       <button class="sidebar-item" data-section="purchases" onclick="navigateTo('purchases')">🛍️ Compras</button>
       <button class="sidebar-item" data-section="settlements" onclick="navigateTo('settlements')">💰 Liquidaciones</button>
-      <button class="sidebar-item" data-section="clients" onclick="navigateTo('clients')">👥 Clientes</button>
       <button class="sidebar-item" data-section="reports" onclick="navigateTo('reports')">📈 Reportes</button>
       <button class="sidebar-item hidden" data-section="settings" id="tab-users-btn" onclick="navigateTo('settings')">⚙️ Configuración</button>
     </nav>
@@ -1254,6 +1281,9 @@
       </div>
     </div>
   </aside>
+
+  <!-- Sidebar backdrop -->
+  <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="toggleSidebar()"></div>
 
   <!-- MAIN CONTENT -->
   <main class="main-content" id="main-content">
@@ -1480,8 +1510,7 @@
             <option value="Entregado">Entregado</option>
             <option value="Pagado">Pagado</option>
           </select>
-          <input type="date" id="filter-fecha-desde" placeholder="Desde" title="Desde fecha">
-          <input type="date" id="filter-fecha-hasta" placeholder="Hasta" title="Hasta fecha">
+          <input type="search" id="filter-search" placeholder="🔍 Buscar por nombre, teléfono, vendedor, fecha, ID…" style="flex:1;min-width:180px;">
         </div>
       </div>
 
@@ -1606,16 +1635,6 @@
     <!-- ════════════════════════════════════════════════════
          SECCIÓN: CLIENTES
          ════════════════════════════════════════════════════ -->
-    <div id="section-clients" class="hidden">
-      <div class="toolbar">
-        <div>
-          <h2 style="margin:0; color:var(--thread-dark);">👥 Clientes</h2>
-          <p style="color:var(--muted); margin:4px 0 0; font-size:14px;">Historial de pedidos y saldos por cliente.</p>
-        </div>
-      </div>
-      <div id="clientes-content"></div>
-    </div>
-
     <!-- ════════════════════════════════════════════════════
          SECCIÓN: REPORTES
          ════════════════════════════════════════════════════ -->
@@ -1918,7 +1937,7 @@
       'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
     ];
 
-    return `${diasSemana[fechaObj.getDay()]} ${dia} de ${meses[fechaObj.getMonth()]} de ${anio}`;
+    return `📅 ${diasSemana[fechaObj.getDay()]} ${dia} de ${meses[fechaObj.getMonth()]} de ${anio}`;
   }
 
   function fmt(n) {
@@ -2168,8 +2187,7 @@
      document.getElementById('f-cantidad').addEventListener('change', onCantidadChange);
      document.getElementById('filter-vendedor').addEventListener('change', renderTable);
      document.getElementById('filter-estado').addEventListener('change', renderTable);
-     document.getElementById('filter-fecha-desde').addEventListener('change', renderTable);
-     document.getElementById('filter-fecha-hasta').addEventListener('change', renderTable);
+     document.getElementById('filter-search').addEventListener('input', renderTable);
 
      document.getElementById('export-buy-btn').addEventListener('click', exportarCompraExcel);
      document.getElementById('export-full-btn').addEventListener('click', exportarExcelCompleto);
@@ -2313,7 +2331,7 @@
      NAVEGACIÓN POR SIDEBAR
      ===================================================== */
   function navigateTo(section) {
-    const sections = ['dashboard', 'new-sale', 'orders', 'purchases', 'settlements', 'clients', 'reports', 'settings'];
+    const sections = ['dashboard', 'new-sale', 'orders', 'purchases', 'settlements', 'reports', 'settings'];
     sections.forEach(s => {
       document.getElementById(`section-${s}`).classList.add('hidden');
     });
@@ -2335,17 +2353,17 @@
       renderCompras();
     } else if (section === 'settlements') {
       renderLiquidaciones();
-    } else if (section === 'clients') {
-      renderClientes();
     } else if (section === 'settings' && currentRole.role === 'admin') {
       loadUsuarios();
     }
 
     document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-backdrop').classList.remove('show');
   }
 
   function toggleSidebar() {
     document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('sidebar-backdrop').classList.toggle('show');
   }
 
 
@@ -2474,17 +2492,19 @@
     const abono = Number(v.abono) || 0;
     const saldo = (precio * cant) - abono;
     const items = itemsParaDashboard(v);
+    const telefonoLimpio = (v.cliente_telefono || '').replace(/\D/g, '');
+    const waLink = telefonoLimpio ? `https://wa.me/57${telefonoLimpio}` : '';
     const detalleWhatsApp = items.map(it => it.replace(/^• /, '')).join('\n     ');
     const msgWhatsApp = encodeURIComponent(
-      `📌 *Recordatorio Camisas IUB* 🧵\n\n👤 *Cliente:* ${v.cliente_nombre}\n📞 *Teléfono:* ${v.cliente_telefono}\n👕 *Detalle:* \n     ${detalleWhatsApp}\n🔢 *Cantidad:* ${cant}\n💰 *Saldo Pendiente:* ${fmt(saldo)}\n📅 *Fecha Entrega:* ${formatearFechaHumana(v.fecha_entrega) || 'Sin fecha'}\n📍 *Lugar:* ${v.lugar_entrega || 'Sin definir'}`
+      `📌 *Recordatorio Camisas IUB* 🧵\n\n👤 *Cliente:* ${v.cliente_nombre}\n📞 *Teléfono:* ${v.cliente_telefono}\n👕 *Detalle:* \n     ${detalleWhatsApp}\n🔢 *Cantidad:* ${cant}\n💰 *Saldo Pendiente:* ${fmt(saldo)}\n*Fecha Entrega:* ${formatearFechaHumana(v.fecha_entrega) || 'Sin fecha'}\n📍 *Lugar:* ${v.lugar_entrega || 'Sin definir'}`
     );
 
     return `
       <div class="order-card">
         <div class="order-card-row">
           <span class="order-card-client">👤 ${v.cliente_nombre || '—'}</span>
-          <span class="order-card-phone">📞 ${v.cliente_telefono || '—'}</span>
-          <span class="order-card-date">📅 ${formatearFechaHumana(v.fecha_entrega) || 'Sin fecha'}</span>
+          <span class="order-card-phone">📞 ${v.cliente_telefono || '—'}${waLink ? ` · <a href="${waLink}" target="_blank" style="color:var(--ok);font-weight:600;text-decoration:none;">WhatsApp</a>` : ''}</span>
+          <span class="order-card-date">${formatearFechaHumana(v.fecha_entrega) || 'Sin fecha'}</span>
         </div>
         <div class="order-card-row order-card-meta">
           <span class="badge-estado estado-${v.estado}">${v.estado}</span>
@@ -2552,14 +2572,23 @@
   function getVentasFiltradas() {
     const fv = document.getElementById('filter-vendedor').value;
     const fe = document.getElementById('filter-estado').value;
-    const fd = document.getElementById('filter-fecha-desde').value;
-    const fh = document.getElementById('filter-fecha-hasta').value;
+    const fs = (document.getElementById('filter-search').value || '').toLowerCase().trim();
 
     return ventasCache.filter(v => {
       if (fv && v.vendedor !== fv) return false;
       if (fe && v.estado !== fe) return false;
-      if (fd && v.fecha < fd) return false;
-      if (fh && v.fecha > fh) return false;
+      if (fs && !(
+        (v.cliente_nombre || '').toLowerCase().includes(fs) ||
+        (v.cliente_telefono || '').toLowerCase().includes(fs) ||
+        (v.vendedor || '').toLowerCase().includes(fs) ||
+        (v.id || '').toLowerCase().includes(fs) ||
+        (v.fecha || '').includes(fs) ||
+        (v.fecha_entrega || '').includes(fs) ||
+        (v.lugar_entrega || '').toLowerCase().includes(fs) ||
+        (v.estado || '').toLowerCase().includes(fs) ||
+        (formatearFechaHumana(v.fecha) || '').toLowerCase().includes(fs) ||
+        (formatearFechaHumana(v.fecha_entrega) || '').toLowerCase().includes(fs)
+      )) return false;
       if (currentRole.role !== 'admin' && currentRole.vendedor && v.vendedor !== currentRole.vendedor) return false;
       return true;
     });
@@ -2589,11 +2618,11 @@
 
       return `
         <tr>
-          <td>${v.fecha || ''}</td>
+          <td>${v.fecha ? formatearFechaHumana(v.fecha) : ''}</td>
           <td><b>${v.vendedor || ''}</b></td>
           <td>
             <b>${v.cliente_nombre || ''}</b>
-            <span class="sub-tag">📞 ${v.cliente_telefono || ''}</span>
+            <span class="sub-tag">📞 ${v.cliente_telefono || ''}${v.cliente_telefono ? ` · <a href="https://wa.me/57${v.cliente_telefono.replace(/\D/g,'')}" target="_blank" style="color:var(--ok);font-weight:600;text-decoration:none;">WhatsApp</a>` : ''}</span>
           </td>
           <td>
             <div style="font-size:12px; line-height:1.6;">${items.join('<br>')}</div>
@@ -2605,7 +2634,7 @@
           <td class="money" style="color:var(--ok);">${fmt(costoPagado)}</td>
           <td class="money" style="color:${pendienteYesenia > 0 ? 'var(--warn)' : 'var(--ok)'}">${fmt(pendienteYesenia)}</td>
           <td>
-            <span class="humano-fecha">📅 ${fechaEntregaHumana}</span>
+            <span class="humano-fecha">${fechaEntregaHumana}</span>
             <span class="sub-tag">📍 ${v.lugar_entrega || 'Sin definir'}</span>
           </td>
           <td>
@@ -3097,7 +3126,7 @@
 
       return `
         <tr>
-          <td>📅 ${formatearFechaHumana(c.fecha)}</td>
+          <td>${formatearFechaHumana(c.fecha)}</td>
           <td><b>${c.proveedor || ''}</b></td>
           <td>${c.comprador || ''}</td>
           <td>${cantidad}</td>
@@ -3298,7 +3327,7 @@
         <div class="aporte-row">
           <span style="flex:1 1 130px;"><b>${a.persona}</b></span>
           <span class="money" style="flex:0 0 120px;">${fmt(a.monto)}</span>
-          <span style="flex:1 1 150px; color:var(--muted);">📅 ${formatearFechaHumana(a.fecha)}</span>
+          <span style="flex:1 1 150px; color:var(--muted);">${formatearFechaHumana(a.fecha)}</span>
           <span style="flex:2 1 160px; color:var(--muted);">${a.observacion || ''}</span>
           <button class="btn-danger" onclick="deleteAporteCompra('${a.id}')" type="button">Eliminar</button>
         </div>
@@ -3557,7 +3586,7 @@
           : (l.venta_id ? 'Pedido eliminado' : '—');
         return `
         <tr>
-          <td>📅 ${formatearFechaHumana(l.fecha)}</td>
+          <td>${formatearFechaHumana(l.fecha)}</td>
           <td>${pedidoLabel}</td>
           <td><b>${l.pagador}</b></td>
           <td><b>${l.receptor}</b></td>
@@ -3876,7 +3905,8 @@
             "Género": g.genero,
             "Color": g.color,
             "Talla": g.talla,
-            "Bordado": v.cliente_programa || ''
+            "Bordado": v.cliente_programa || '',
+            "Cliente": v.cliente_nombre || ''
           });
         });
       });
@@ -3895,44 +3925,114 @@
     if (currentRole.role !== 'admin') return;
 
     const data = getVentasFiltradas();
-
     if (data.length === 0) {
       alert('No hay datos para exportar con los filtros actuales.');
       return;
     }
 
-    const excelData = data.map(v => ({
-      "Fecha Pedido": v.fecha,
-      "Vendedor": v.vendedor,
-      "Cliente": v.cliente_nombre,
-      "Teléfono": v.cliente_telefono,
-      "Género": v.genero,
-      "Color": v.color,
-      "Talla": v.talla,
-      "Cantidad": v.cantidad,
-      "Detalle": formatearDetalleCamisa(v),
-      "Bordado": v.cliente_programa || '',
-      "Precio Unitario": v.precio_unitario,
-      "Costo Unitario": v.costo_unitario,
-      "Venta Total": (v.precio_unitario * v.cantidad),
-      "Costo Total": (v.costo_unitario * v.cantidad),
-      "Abono Cliente": v.abono,
-      "Restante Cliente": ((v.precio_unitario * v.cantidad) - v.abono),
-      "Pagado a Proveedor": (() => { const p = abonosProveedorPorVentaId(v.id); return p.abonado; })(),
-      "Falta Pagar": (() => { const p = abonosProveedorPorVentaId(v.id); return p.pendiente; })(),
-      "Ganancia Total": ((v.precio_unitario * v.cantidad) - (v.costo_unitario * v.cantidad)),
-      "Estado": v.estado,
-      "Fecha Entrega": v.fecha_entrega || '',
-      "Fecha Entrega Humana": v.fecha_entrega ? formatearFechaHumana(v.fecha_entrega) : '',
-      "Lugar Entrega": v.lugar_entrega || '',
-      "Nota": v.nota || ''
-    }));
+    const headers = [
+      'ID Pedido', 'Fecha Pedido', 'Fecha Entrega', 'Día de entrega', 'Estado',
+      'Vendedor', 'Cliente', 'Teléfono', 'Lugar de entrega', 'Nota',
+      'Género', 'Color', 'Talla', 'Bordado',
+      'Precio Unitario', 'Costo Unitario',
+      'Cantidad', 'Venta Total', 'Costo Total', 'Abono Cliente',
+      'Saldo Pendiente Cliente', 'Pagado al Proveedor', 'Saldo Pendiente Proveedor',
+      'Ganancia Total'
+    ];
 
-    const worksheet = XLSX.utils.json_to_sheet(excelData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Reporte Completo Ventas");
+    const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
-    XLSX.writeFile(workbook, `Reporte_Ventas_Camisas_IUB_${hoyColombia()}.xlsx`);
+    const fmt = n => (n == null || isNaN(n)) ? '' : '$' + Math.round(n).toLocaleString('es-CO');
+    const fmtNum = n => (n == null || isNaN(n)) ? '' : String(Math.round(n));
+
+    const statusBg = { 'Pedido':'#F3F4F6','Comprado':'#DBEAFE','Bordado':'#F3E8FF','Entregado':'#DBEAFE','Pagado':'#D1FAE5' };
+    const statusFg = { 'Pedido':'#4B5563','Comprado':'#1E40AF','Bordado':'#7C3AED','Entregado':'#1E3A5F','Pagado':'#065F46' };
+
+    let html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Reporte</x:Name><x:WorksheetOptions><x:FreezePanes/><x:FrozenNoSplit/><x:SplitHorizontal>1</x:SplitHorizontal><x:TopRowBottomPane>1</x:TopRowBottomPane></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
+<style>td,th{border:1px solid #CBD5E1;padding:4px 8px;font-family:Calibri,sans-serif;font-size:10pt}th{background:#1E293B;color:#FFF;font-weight:700;text-align:center}.c{text-align:center}.r{text-align:right}.m{mso-number-format:'\\0022$\\0022#,##0';text-align:right}</style></head><body><table>`;
+
+    // Header
+    html += '<tr>' + headers.map(h => '<th>' + esc(h) + '</th>').join('') + '</tr>';
+
+    let lastPedidoId = null;
+    let rowToggle = false;
+
+    data.forEach(v => {
+      if (v.id !== lastPedidoId) { rowToggle = !rowToggle; lastPedidoId = v.id; }
+      const bg = rowToggle ? '#F8FAFC' : '#FFFFFF';
+      let items = null;
+      if (v.items_camisa) {
+        try { items = JSON.parse(v.items_camisa); } catch (e) { items = null; }
+      }
+      if (!items || !Array.isArray(items) || items.length === 0) {
+        items = [{ genero: v.genero || '', color: v.color || '', talla: v.talla || '', programa: v.cliente_programa || '' }];
+      }
+
+      const cant = Number(v.cantidad) || 1;
+      const precio = Number(v.precio_unitario) || 0;
+      const costo = Number(v.costo_unitario) || 0;
+      const abono = Number(v.abono) || 0;
+      const ventaTotal = precio * cant;
+      const costoTotal = costo * cant;
+      const saldoCliente = ventaTotal - abono;
+      const pagosProv = abonosProveedorPorVentaId(v.id);
+      const gananciaTotal = ventaTotal - costoTotal;
+
+      let diaSemana = '';
+      if (v.fecha_entrega) {
+        try {
+          diaSemana = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'][new Date(v.fecha_entrega + 'T12:00:00').getDay()] || '';
+        } catch (e) {}
+      }
+
+      const venClr = v.vendedor === 'Samir' ? 'background:#EFF6FF;color:#1D4ED8;font-weight:700' : v.vendedor === 'Valentina' ? 'background:#FDF2F8;color:#BE185D;font-weight:700' : '';
+
+      const e = v.estado || '';
+      const eBg = statusBg[e] || 'transparent';
+      const eFg = statusFg[e] || '#000';
+
+      items.forEach(it => {
+        html += '<tr style="background:' + bg + '">' +
+          '<td class="c">' + esc(v.id) + '</td>' +
+          '<td class="c">' + esc(v.fecha) + '</td>' +
+          '<td class="c">' + esc(v.fecha_entrega) + '</td>' +
+          '<td class="c">' + esc(diaSemana) + '</td>' +
+          '<td style="background:' + eBg + ';color:' + eFg + ';font-weight:700;text-align:center">' + esc(e) + '</td>' +
+          '<td style="' + venClr + ';text-align:center">' + esc(v.vendedor) + '</td>' +
+          '<td>' + esc(v.cliente_nombre) + '</td>' +
+          '<td class="c">' + esc(v.cliente_telefono) + '</td>' +
+          '<td>' + esc(v.lugar_entrega) + '</td>' +
+          '<td>' + esc(v.nota) + '</td>' +
+          '<td class="c">' + esc(it.genero) + '</td>' +
+          '<td class="c">' + esc((it.color || '').toLowerCase()) + '</td>' +
+          '<td class="c">' + esc(it.talla) + '</td>' +
+          '<td>' + esc(it.programa) + '</td>' +
+          '<td class="m">' + fmtNum(precio) + '</td>' +
+          '<td class="m">' + fmtNum(costo) + '</td>' +
+          '<td class="c">1</td>' +
+          '<td class="m">' + fmtNum(ventaTotal) + '</td>' +
+          '<td class="m">' + fmtNum(costoTotal) + '</td>' +
+          '<td class="m">' + fmtNum(abono) + '</td>' +
+          '<td class="m">' + fmtNum(saldoCliente) + '</td>' +
+          '<td class="m">' + fmtNum(pagosProv.abonado) + '</td>' +
+          '<td class="m">' + fmtNum(pagosProv.pendiente) + '</td>' +
+          '<td class="m">' + fmtNum(gananciaTotal) + '</td>' +
+          '</tr>';
+      });
+    });
+
+    html += '</table></body></html>';
+
+    const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Reporte_Ventas_Camisas_IUB_' + hoyColombia() + '.xls';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   }
 
 
@@ -4055,7 +4155,7 @@
                   const abono = Number(v.abono) || 0;
                   const saldo = venta - abono;
                   return `<tr>
-                    <td>${v.fecha || ''}</td>
+          <td>${v.fecha ? formatearFechaHumana(v.fecha) : ''}</td>
                     <td>${v.vendedor || ''}</td>
                     <td>${formatearDetalleCamisa(v)}</td>
                     <td>${cant}</td>
