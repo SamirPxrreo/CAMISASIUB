@@ -735,6 +735,24 @@
 
   .empty b { color: var(--ink); }
 
+  .pagination {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 0; font-size: 13px; color: var(--muted);
+    flex-wrap: wrap; gap: 8px;
+  }
+  .pagination-btns { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+  .pagination-btns .btn-small { min-width: 36px; text-align: center; }
+  .pagination-btns .btn-small:disabled { opacity: 0.4; cursor: default; }
+  .pagination-active { background: var(--thread) !important; color: #fff !important; border-color: var(--thread) !important; }
+  .pagination-info { white-space: nowrap; }
+
+  .spinner {
+    width: 40px; height: 40px; border: 4px solid var(--line);
+    border-top-color: var(--thread); border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
   select.estado-select {
     font-size: 13px;
     padding: 6px 10px;
@@ -1212,6 +1230,78 @@
     "samir@gmail.com": { nombre: "Samir", role: "vendedor", vendedor: "Samir" },
     "val@gmail.com":   { nombre: "Valentina", role: "vendedor", vendedor: "Valentina" }
   };
+
+  function logError(context, err) { console.error(`[${context}]`, err); }
+
+  /* Loading spinner */
+  let loadingCounter = 0;
+  function showLoading(show = true) {
+    loadingCounter += show ? 1 : -1;
+    if (loadingCounter < 0) loadingCounter = 0;
+    let el = document.getElementById('loading-spinner');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'loading-spinner';
+      el.innerHTML = '<div class="spinner"></div>';
+      Object.assign(el.style, {
+        position: 'fixed', inset: '0', background: 'rgba(0,0,0,0.25)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        zIndex: '9998', transition: 'opacity 0.2s'
+      });
+      document.body.appendChild(el);
+    }
+    el.style.display = loadingCounter > 0 ? 'flex' : 'none';
+  }
+
+  function mostrarToast(mensaje, tipo = 'success') {
+    const colores = { success: 'var(--ok)', error: 'var(--warn)', info: 'var(--thread)' };
+    const toast = document.createElement('div');
+    toast.textContent = mensaje;
+    Object.assign(toast.style, {
+      position: 'fixed', bottom: '80px', left: '50%', transform: 'translateX(-50%)',
+      background: colores[tipo] || '#333', color: '#fff', padding: '12px 24px',
+      borderRadius: '10px', fontSize: '14px', fontWeight: '600',
+      boxShadow: '0 6px 24px rgba(0,0,0,0.25)', zIndex: '9999',
+      transition: 'opacity 0.3s', opacity: '0', fontFamily: 'inherit'
+    });
+    document.body.appendChild(toast);
+    requestAnimationFrame(() => { toast.style.opacity = '1'; });
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
+  }
+
+  function confirmar(mensaje) {
+    return window.confirm(mensaje);
+  }
+
+  function debounce(fn, ms = 300) {
+    let timer;
+    return function(...args) { clearTimeout(timer); timer = setTimeout(() => fn.apply(this, args), ms); };
+  }
+
+  /* ---------- PAGINACIÓN ---------- */
+  const PAGE_SIZE = 15;
+  let paginationState = { orders: 0, compras: 0, liquidaciones: 0 };
+
+  function renderPagination(total, currentPage, key, onPageChange) {
+    const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
+    if (totalPages <= 1) return '';
+    const start = currentPage * PAGE_SIZE + 1;
+    const end = Math.min((currentPage + 1) * PAGE_SIZE, total);
+    return `
+      <div class="pagination">
+        <span class="pagination-info">${start}–${end} de ${total}</span>
+        <div class="pagination-btns">
+          <button class="btn-small" ${currentPage === 0 ? 'disabled' : ''} onclick="${onPageChange}(${currentPage - 1})" type="button">‹ Anterior</button>
+          ${Array.from({ length: totalPages }, (_, i) => `
+            <button class="btn-small ${i === currentPage ? 'pagination-active' : ''}" onclick="${onPageChange}(${i})" type="button">${i + 1}</button>
+          `).join('')}
+          <button class="btn-small" ${currentPage >= totalPages - 1 ? 'disabled' : ''} onclick="${onPageChange}(${currentPage + 1})" type="button">Siguiente ›</button>
+        </div>
+      </div>`;
+  }
 
   const LUGARES_ENTREGA = [
     "Soledad",
@@ -2187,7 +2277,7 @@
      document.getElementById('f-cantidad').addEventListener('change', onCantidadChange);
      document.getElementById('filter-vendedor').addEventListener('change', renderTable);
      document.getElementById('filter-estado').addEventListener('change', renderTable);
-     document.getElementById('filter-search').addEventListener('input', renderTable);
+      document.getElementById('filter-search').addEventListener('input', debounce(() => { paginationState.orders = 0; renderTable(); }, 300));
 
      document.getElementById('export-buy-btn').addEventListener('click', exportarCompraExcel);
      document.getElementById('export-full-btn').addEventListener('click', exportarExcelCompleto);
@@ -2248,7 +2338,7 @@
     try {
       const { data } = await supabaseClient.from('usuarios').select('*').eq('correo', email).single();
       dbUser = data;
-    } catch (e) {}
+    } catch (e) { logError('syncUserRole', e); }
 
     if (dbUser) {
       currentRole = {
@@ -2321,7 +2411,7 @@
   }
 
   async function handleLogout() {
-    try { await supabaseClient.auth.signOut(); } catch(e){}
+    try { await supabaseClient.auth.signOut(); } catch(e){ logError('logout', e); }
     currentUser = null;
     location.reload();
   }
@@ -2366,18 +2456,28 @@
     document.getElementById('sidebar-backdrop').classList.toggle('show');
   }
 
+  // Close modals on Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      ['compra-modal', 'liquidacion-modal', 'user-modal'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el && !el.classList.contains('hidden')) el.classList.add('hidden');
+      });
+    }
+  });
 
   /* =====================================================
      1. VENTAS Y PEDIDOS (RESUMEN COMPARTIDO, TABLA PERSONAL)
      ===================================================== */
   async function loadVentas() {
+    showLoading(true);
     try {
       const { data, error } = await supabaseClient
         .from('ventas')
         .select('*')
         .order('fecha', { ascending: false });
 
-      if (error) console.error('Error ventas:', error);
+      if (error) logError('loadVentas', error);
       ventasCache = data || [];
 
       renderVendorFilter();
@@ -2385,8 +2485,8 @@
       renderTable();
       renderCompras();
     } catch (err) {
-      console.error(err);
-    }
+      logError('loadVentas', err);
+    } finally { showLoading(false); }
   }
 
   function renderVendorFilter() {
@@ -2434,6 +2534,7 @@
     });
 
     document.getElementById('dashboard-contenido').innerHTML = `
+      <div id="dashboard-alertas"></div>
       <div class="dash-section" style="margin-bottom:24px;">
         <h2 style="font-size:17px;font-weight:600;margin:0 0 10px;">📊 Resumen por Vendedor</h2>
         <div class="vendor-summary-grid">
@@ -2522,7 +2623,7 @@
   function copiarWhatsApp(msg) {
     const texto = decodeURIComponent(msg);
     navigator.clipboard.writeText(texto).then(() => {
-      alert('✅ Mensaje copiado al portapapeles. Pégalo en WhatsApp.');
+      mostrarToast('✅ Mensaje copiado al portapapeles. Pégalo en WhatsApp.');
     }).catch(() => {
       const ta = document.createElement('textarea');
       ta.value = texto;
@@ -2530,7 +2631,7 @@
       ta.select();
       document.execCommand('copy');
       ta.remove();
-      alert('✅ Mensaje copiado. Pégalo en WhatsApp.');
+      mostrarToast('✅ Mensaje copiado. Pégalo en WhatsApp.');
     });
   }
 
@@ -2600,7 +2701,12 @@
     const body = document.getElementById('ventas-body');
     document.getElementById('empty-state').classList.toggle('hidden', rows.length > 0);
 
-    body.innerHTML = rows.map(v => {
+    const page = paginationState.orders;
+    const totalPages = Math.ceil(rows.length / PAGE_SIZE) || 1;
+    const start = page * PAGE_SIZE;
+    const pageRows = rows.slice(start, start + PAGE_SIZE);
+
+    body.innerHTML = pageRows.map(v => {
       const cant = Number(v.cantidad) || 1;
       const precio = Number(v.precio_unitario) || 0;
       const costoUnitario = Number(v.costo_unitario) || 0;
@@ -2656,6 +2762,16 @@
       `;
     }).join('');
 
+    paginationState.orders = page;
+
+    let pagContainer = document.getElementById('orders-pagination');
+    if (!pagContainer) {
+      pagContainer = document.createElement('div');
+      pagContainer.id = 'orders-pagination';
+      document.getElementById('ventas-body').parentElement.appendChild(pagContainer);
+    }
+    pagContainer.innerHTML = renderPagination(rows.length, page, 'orders', 'irPaginaOrdenes');
+
     document.querySelectorAll('.estado-select').forEach(select => {
       select.addEventListener('change', () => updateEstado(select.dataset.id, select.value, select));
     });
@@ -2677,6 +2793,7 @@
     });
   }
 
+  function irPaginaOrdenes(p) { paginationState.orders = p; renderTable(); }
 
   /* =====================================================
      ITEMS DINÁMICOS DE CAMISA (uno por unidad, según Cantidad)
@@ -3016,13 +3133,13 @@
          ({ error } = await supabaseClient.from('ventas').insert(payload));
        }
 
-       if (error) { alert('Error al guardar: ' + error.message); return; }
+       if (error) { mostrarToast('Error al guardar: ' + error.message, 'error'); return; }
        const eraEdicion = !!editingId;
        await loadVentas();
        openForm(null);
-       alert(eraEdicion ? '✅ Venta actualizada correctamente.' : '✅ Venta registrada correctamente.');
+        mostrarToast(eraEdicion ? '✅ Venta actualizada correctamente.' : '✅ Venta registrada correctamente.');
      } catch (err) {
-       alert('Error inesperado al guardar la venta.');
+       mostrarToast('Error inesperado al guardar la venta.', 'error');
      }
    }
 
@@ -3061,18 +3178,20 @@
      2. MÓDULO: COMPRAS AL PROVEEDOR
      ===================================================== */
   async function loadCompras() {
+    showLoading(true);
     try {
       const { data, error } = await supabaseClient
         .from('compras_proveedor')
         .select('*')
         .order('fecha', { ascending: false });
 
-      if (error) console.log('Cargando compras al proveedor.');
+      if (error) logError('loadCompras', error);
       comprasCache = data || [];
 
       await loadCompraAportes();
       renderCompras();
-    } catch (e) {}
+    } catch (e) { logError('loadCompras', e); }
+    finally { showLoading(false); }
   }
 
   async function loadCompraAportes() {
@@ -3082,9 +3201,9 @@
         .select('*')
         .order('fecha', { ascending: false });
 
-      if (error) return;
+      if (error) { logError('loadCompraAportes', error); return; }
       compraAportesCache = data || [];
-    } catch (e) {}
+    } catch (e) { logError('loadCompraAportes', e); }
   }
 
   function comprasVisibles() {
@@ -3113,11 +3232,15 @@
       banner.innerHTML = `🔒 <span><b>Acceso Privado:</b> Estás viendo únicamente las compras donde tienes pedidos propios (${currentRole.vendedor}).</span>`;
     }
 
-    const rows = comprasVisibles();
+    let rows = comprasVisibles();
     const body = document.getElementById('compras-body');
     document.getElementById('compras-empty-state').classList.toggle('hidden', rows.length > 0);
 
-    body.innerHTML = rows.map(c => {
+    const page = paginationState.compras;
+    const start = page * PAGE_SIZE;
+    const pageRows = rows.slice(start, start + PAGE_SIZE);
+
+    body.innerHTML = pageRows.map(c => {
       const pedidos = ventasCache.filter(v => v.compra_id === c.id);
       const cantidad = pedidos.reduce((s, v) => s + (Number(v.cantidad) || 1), 0);
       const costoTotal = pedidos.reduce((s, v) => s + (Number(v.costo_unitario) || 0) * (Number(v.cantidad) || 1), 0);
@@ -3143,8 +3266,17 @@
       `;
     }).join('');
 
+    let pagContainer = document.getElementById('compras-pagination');
+    if (!pagContainer) {
+      pagContainer = document.createElement('div');
+      pagContainer.id = 'compras-pagination';
+      body.parentElement.appendChild(pagContainer);
+    }
+    pagContainer.innerHTML = renderPagination(rows.length, page, 'compras', 'irPaginaCompras');
+
     renderComprasDeudaBox();
   }
+  function irPaginaCompras(p) { paginationState.compras = p; renderCompras(); }
 
   function renderPedidosPicker(compra) {
     const yaAsignados = compra ? ventasCache.filter(v => v.compra_id === compra.id).map(v => v.id) : [];
@@ -3298,7 +3430,7 @@
    }
 
    async function deleteCompra(id) {
-    if (!confirm('¿Eliminar esta compra? Los pedidos asociados quedarán disponibles nuevamente; no se eliminarán.')) return;
+    if (!confirmar('¿Eliminar esta compra? Los pedidos asociados quedarán disponibles nuevamente; no se eliminarán.')) return;
     try {
       await supabaseClient.from('compra_aportes').delete().eq('compra_id', id);
       await supabaseClient.from('ventas').update({ compra_id: null, estado: 'Pedido' }).eq('compra_id', id);
@@ -3307,7 +3439,7 @@
       if (editingCompraId === id) closeCompraModal();
       await loadVentas();
       await loadCompras();
-    } catch (e) {}
+    } catch (e) { logError('deleteCompra', e); }
   }
 
   /* ---------- APORTES DE LA COMPRA ABIERTA EN EL MODAL ---------- */
@@ -3346,7 +3478,7 @@
     const observacion = document.getElementById('ap-observacion').value.trim();
 
     if (isNaN(monto) || monto <= 0 || !fecha) {
-      alert('Ingresa un monto válido y una fecha para el aporte.');
+      mostrarToast('Ingresa un monto válido y una fecha para el aporte.', 'error');
       return;
     }
 
@@ -3354,7 +3486,7 @@
       const { error } = await supabaseClient.from('compra_aportes').insert({
         compra_id: editingCompraId, persona, monto, fecha, observacion
       });
-      if (error) { alert('Error al guardar el aporte: ' + error.message); return; }
+      if (error) { mostrarToast('Error al guardar el aporte: ' + error.message, 'error'); return; }
 
       document.getElementById('ap-monto').value = '';
       document.getElementById('ap-observacion').value = '';
@@ -3363,18 +3495,18 @@
       renderAportesList();
       renderCompras();
     } catch (e) {
-      alert('Error inesperado al guardar el aporte.');
+      mostrarToast('Error inesperado al guardar el aporte.', 'error');
     }
   }
 
   async function deleteAporteCompra(id) {
-    if (!confirm('¿Eliminar este aporte?')) return;
+    if (!confirmar('¿Eliminar este aporte?')) return;
     try {
       await supabaseClient.from('compra_aportes').delete().eq('id', id);
       await loadCompraAportes();
       renderAportesList();
       renderCompras();
-    } catch (e) {}
+    } catch (e) { logError('deleteAporteCompra', e); }
   }
 
   /* ---------- CÁLCULO AUTOMÁTICO DE OBLIGACIONES Y LIQUIDACIÓN ---------- */
@@ -3473,11 +3605,11 @@
         .select('*')
         .order('fecha', { ascending: false });
 
-      if (error) console.log('Cargando liquidaciones.');
+      if (error) logError('loadLiquidaciones', error);
       liquidacionesCache = data || [];
       renderLiquidaciones();
       renderTable();
-    } catch (e) {}
+    } catch (e) { logError('loadLiquidaciones', e); }
   }
 
   // Balance entre socios: se basa en liquidaciones registradas por pedido (50% de ganancia).
@@ -3579,7 +3711,11 @@
       empty.classList.remove('hidden');
     } else {
       empty.classList.add('hidden');
-      body.innerHTML = liquidacionesCache.map(l => {
+      const page = paginationState.liquidaciones;
+      const start = page * PAGE_SIZE;
+      const pageRows = liquidacionesCache.slice(start, start + PAGE_SIZE);
+
+      body.innerHTML = pageRows.map(l => {
         const venta = ventasCache.find(v => v.id === l.venta_id);
         const pedidoLabel = venta
           ? `${venta.cliente_nombre || 'Cliente'} (${venta.fecha || '?'})`
@@ -3600,8 +3736,18 @@
         </tr>
       `;
       }).join('');
+
+      const wrap = body.closest('.table-wrap');
+      let pagContainer = wrap.querySelector('.pagination');
+      if (!pagContainer) {
+        pagContainer = document.createElement('div');
+        pagContainer.className = 'pagination';
+        wrap.appendChild(pagContainer);
+      }
+      pagContainer.innerHTML = renderPagination(liquidacionesCache.length, page, 'liquidaciones', 'irPaginaLiquidaciones');
     }
   }
+  function irPaginaLiquidaciones(p) { paginationState.liquidaciones = p; renderLiquidaciones(); }
 
   function openLiquidacionModal() {
     document.getElementById('lq-pagador').value = '';
@@ -3682,8 +3828,8 @@
      const entradaTemp = { id: 'new_' + Date.now(), venta_id: ventaId, fecha, pagador, receptor, monto: Number(monto), nota };
      liquidacionesCache = [entradaTemp, ...liquidacionesCache];
 
-     try { renderLiquidaciones(); } catch (e) {}
-     try { renderTable(); } catch (e) {}
+     try { renderLiquidaciones(); } catch (e) { logError('renderLiquidaciones', e); }
+     try { renderTable(); } catch (e) { logError('renderTable', e); }
      closeLiquidacionModal();
 
      await loadLiquidaciones();
@@ -3691,12 +3837,12 @@
   }
 
   async function deleteLiquidacion(id) {
-    if (!confirm('¿Eliminar este registro de pago?')) return;
+    if (!confirmar('¿Eliminar este registro de pago?')) return;
     try {
       await supabaseClient.from('liquidaciones').delete().eq('id', id);
       await loadLiquidaciones();
       renderTable();
-    } catch (e) {}
+    } catch (e) { logError('deleteLiquidacion', e); }
   }
 
 
@@ -3710,10 +3856,10 @@
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) return;
+      if (error) { logError('loadUsuarios', error); return; }
       usuariosCache = data || [];
       renderUsuariosTable();
-    } catch (err) {}
+    } catch (err) { logError('loadUsuarios', err); }
   }
 
   function renderUsuariosTable() {
@@ -3762,7 +3908,7 @@
       // El correo de un usuario ya existente no se puede cambiar (identifica su cuenta de acceso),
       // y la contraseña sólo se puede establecer al crear el usuario.
       document.getElementById('u-correo').disabled = true;
-      passwordInput.parentElement ? null : null;
+      // password disabled when editing existing user
       passwordInput.style.display = 'none';
       passwordLabel.style.display = 'none';
       passwordHint.style.display = 'none';
@@ -3846,7 +3992,7 @@
 
       closeUserModal();
       await loadUsuarios();
-      alert(`✅ Usuario creado. Ahora ${nombre} puede iniciar sesión con ${correo} y la contraseña que ingresaste.`);
+      mostrarToast(`✅ Usuario creado. Ahora ${nombre} puede iniciar sesión con ${correo} y la contraseña que ingresaste.`);
     } catch (err) {
       errEl.textContent = 'Error inesperado al crear el usuario.';
       errEl.classList.remove('hidden');
@@ -3861,11 +4007,12 @@
   }
 
   async function deleteUser(id) {
-    if (!confirm('¿Eliminar este usuario?')) return;
+    if (!confirmar('¿Eliminar este usuario?')) return;
     try {
       await supabaseClient.from('usuarios').delete().eq('id', id);
       await loadUsuarios();
-    } catch (err) {}
+      mostrarToast('Usuario eliminado');
+    } catch (err) { logError('deleteUser', err); mostrarToast('Error al eliminar usuario', 'error'); }
   }
 
 
@@ -3877,7 +4024,7 @@
       const dataset = getVentasFiltradas().filter(v => v.estado === 'Pedido');
 
       if (dataset.length === 0) {
-        alert('✅ No hay pedidos pendientes de comprar al proveedor.');
+        mostrarToast('✅ No hay pedidos pendientes de comprar al proveedor.');
         return;
       }
 
@@ -3917,7 +4064,7 @@
 
       XLSX.writeFile(workbook, `Compra_camisas_${hoyColombia()}.xlsx`);
     } catch (err) {
-      alert('Error al exportar: ' + (err.message || err));
+      mostrarToast('Error al exportar: ' + (err.message || err), 'error');
     }
   }
 
@@ -3926,7 +4073,7 @@
 
     const data = getVentasFiltradas();
     if (data.length === 0) {
-      alert('No hay datos para exportar con los filtros actuales.');
+      mostrarToast('No hay datos para exportar con los filtros actuales.', 'error');
       return;
     }
 
@@ -3983,7 +4130,7 @@
       if (v.fecha_entrega) {
         try {
           diaSemana = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'][new Date(v.fecha_entrega + 'T12:00:00').getDay()] || '';
-        } catch (e) {}
+        } catch (e) { logError('diaSemana', e); }
       }
 
       const venClr = v.vendedor === 'Samir' ? 'background:#EFF6FF;color:#1D4ED8;font-weight:700' : v.vendedor === 'Valentina' ? 'background:#FDF2F8;color:#BE185D;font-weight:700' : '';
@@ -4044,7 +4191,7 @@
     if (estado === 'Pagado' && venta) {
       const check = puedeMarcarPagado(venta);
       if (!check.ok) {
-        alert('No puedes marcar como Pagado:\n\n• ' + check.faltas.join('\n• '));
+        mostrarToast('No puedes marcar como Pagado:\n\n• ' + check.faltas.join('\n• '), 'error');
         if (selectEl) selectEl.value = selectEl.dataset.prev || venta.estado;
         return;
       }
@@ -4066,7 +4213,7 @@
     if (entrada === null) return;
 
     const monto = parseFloat(entrada);
-    if (isNaN(monto) || monto <= 0) { alert('Ingresa un monto válido.'); return; }
+    if (isNaN(monto) || monto <= 0) { mostrarToast('Ingresa un monto válido.', 'error'); return; }
 
     const nuevoAbono = (Number(venta.abono) || 0) + monto;
     const payload = { abono: nuevoAbono };
@@ -4075,103 +4222,28 @@
       try {
         const items = JSON.parse(venta.items_camisa);
         if (Array.isArray(items) && items.length > 0) {
-          items[items.length - 1].abono = (Number(items[items.length - 1].abono) || 0) + monto;
+          const abonoPorItem = monto / items.length;
+          items.forEach((it, i) => { items[i].abono = (Number(items[i].abono) || 0) + abonoPorItem; });
           payload.items_camisa = JSON.stringify(items);
         }
-      } catch (e) {}
+      } catch (e) { logError('addAbono:parseItems', e); }
     }
 
     try {
       await supabaseClient.from('ventas').update(payload).eq('id', id);
       await loadVentas();
-    } catch (err) {}
+      mostrarToast('Abono agregado correctamente');
+    } catch (err) { logError('addAbono:update', err); mostrarToast('Error al agregar abono', 'error'); }
   }
 
   async function deleteVenta(id) {
-    if (!confirm('¿Deseas borrar permanentemente este pedido?')) return;
+    if (!confirmar('¿Deseas borrar permanentemente este pedido?')) return;
     try {
       await supabaseClient.from('ventas').delete().eq('id', id);
       await loadVentas();
     } catch (err) {}
   }
 
-
-  /* =====================================================
-     CLIENTES — historial agrupado por cliente
-     ===================================================== */
-  function renderClientes() {
-    const container = document.getElementById('clientes-content');
-    const esAdmin = currentRole.role === 'admin';
-    const miNombre = currentRole.vendedor;
-    const grupos = {};
-
-    (esAdmin ? ventasCache : ventasCache.filter(v => v.vendedor === miNombre)).forEach(v => {
-      const nombre = v.cliente_nombre || 'Sin nombre';
-      if (!grupos[nombre]) grupos[nombre] = { telefono: v.cliente_telefono, pedidos: [] };
-      grupos[nombre].pedidos.push(v);
-    });
-
-    const entries = Object.entries(grupos).sort((a, b) => a[0].localeCompare(b[0]));
-
-    if (entries.length === 0) {
-      container.innerHTML = '<div class="empty">No hay clientes registrados.</div>';
-      return;
-    }
-
-    container.innerHTML = entries.map(([nombre, info]) => {
-      const totalPedidos = info.pedidos.length;
-      const totalDeuda = info.pedidos.reduce((s, v) => {
-        if (v.estado === 'Pagado') return s;
-        return s + Math.max(((Number(v.precio_unitario) || 0) * (Number(v.cantidad) || 1)) - (Number(v.abono) || 0), 0);
-      }, 0);
-
-      return `
-        <div class="form-card" style="margin-bottom:14px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <div>
-              <h3 style="margin:0;">${nombre}</h3>
-              <span style="color:var(--muted); font-size:13px;">📞 ${info.telefono || 'Sin teléfono'} · ${totalPedidos} pedido(s)</span>
-            </div>
-            <span style="font-weight:700; font-size:18px; color:${totalDeuda > 0 ? 'var(--warn)' : 'var(--ok)'}">${totalDeuda > 0 ? fmt(totalDeuda) : '✅ Al día'}</span>
-          </div>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Fecha</th>
-                  <th>Vendedor</th>
-                  <th>Detalle</th>
-                  <th>Cant.</th>
-                  <th>Total</th>
-                  <th>Abono</th>
-                  <th>Saldo</th>
-                  <th>Estado</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${info.pedidos.map(v => {
-                  const cant = Number(v.cantidad) || 1;
-                  const venta = (Number(v.precio_unitario) || 0) * cant;
-                  const abono = Number(v.abono) || 0;
-                  const saldo = venta - abono;
-                  return `<tr>
-          <td>${v.fecha ? formatearFechaHumana(v.fecha) : ''}</td>
-                    <td>${v.vendedor || ''}</td>
-                    <td>${formatearDetalleCamisa(v)}</td>
-                    <td>${cant}</td>
-                    <td class="money">${fmt(venta)}</td>
-                    <td class="money">${fmt(abono)}</td>
-                    <td class="money" style="color:${saldo > 0 ? 'var(--warn)' : 'var(--ok)'}">${fmt(saldo)}</td>
-                    <td><span class="badge-estado estado-${v.estado}">${v.estado}</span></td>
-                  </tr>`;
-                }).join('')}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      `;
-    }).join('');
-  }
 
 </script>
 
