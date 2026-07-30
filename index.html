@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Camisas IUB — Control de ventas, compras y liquidaciones</title>
-<link rel="icon" type="image/png" href="favicon.png">
+<link rel="icon" type="image/png" href="/favicon.png">
 
 <!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1015,6 +1015,152 @@
     .main-content { padding: 12px; }
   }
 
+  /* DASHBOARD — Order Cards */
+  .dash-list { margin-bottom: 32px; }
+  .dash-list:last-child { margin-bottom: 0; }
+
+  .dash-list-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px 12px;
+    margin-bottom: 14px;
+  }
+  .dash-list-header h2 { font-size: 18px; font-weight: 600; margin: 0; }
+  .dash-list-subtitle {
+    font-size: 13px;
+    color: var(--muted);
+    margin: 0;
+  }
+  .dash-list-count {
+    margin-left: auto;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    background: var(--accent-bg);
+    padding: 2px 10px;
+    border-radius: 10px;
+  }
+
+  .dash-empty {
+    padding: 28px 20px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+    background: var(--card);
+    border: 1px dashed var(--line);
+    border-radius: 12px;
+  }
+
+  .order-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 8px;
+    box-shadow: 0 1px 4px var(--shadow);
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .order-card:last-child { margin-bottom: 0; }
+  .order-card:hover {
+    border-color: var(--thread);
+    box-shadow: 0 2px 10px var(--shadow);
+  }
+
+  .order-card-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 16px;
+  }
+  .order-card-row + .order-card-row { margin-top: 6px; }
+
+  .order-card-client {
+    font-weight: 600;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .order-card-phone {
+    font-size: 13px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .order-card-date {
+    margin-left: auto;
+    font-size: 13px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .order-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 16px;
+  }
+  .order-card-saldo {
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .order-card-copy {
+    margin-left: auto;
+  }
+  .order-card-copy .btn-copy-card {
+    background: var(--accent-bg);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    padding: 5px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s, border-color 0.15s;
+    white-space: nowrap;
+  }
+  .order-card-copy .btn-copy-card:hover {
+    background: var(--thread);
+    border-color: var(--thread);
+    color: #fff;
+  }
+
+  .order-card-divider {
+    border: none;
+    border-top: 1px solid var(--line);
+    margin: 8px 0;
+  }
+
+  .order-card-items {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .order-card-item {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Mobile order card */
+  @media (max-width: 640px) {
+    .order-card { padding: 10px 12px; }
+    .order-card-client { width: 100%; font-size: 14px; }
+    .order-card-date { margin-left: 0; }
+    .order-card-row { gap: 2px 12px; }
+    .order-card-meta { gap: 6px 12px; }
+    .order-card-copy { margin-left: 0; }
+    .order-card-item { font-size: 12px; }
+  }
+
   @media (max-width: 768px) {
     .vendor-split { grid-template-columns: 1fr; }
     .table-wrap { overflow-x: auto; }
@@ -1119,65 +1265,7 @@
          SECCIÓN: DASHBOARD
          ════════════════════════════════════════════════════ -->
     <div id="section-dashboard">
-      <h2 style="margin:0 0 18px;">🏠 Dashboard — Resumen General</h2>
-
-      <div class="kpi-grid" id="dashboard-kpis"></div>
-
-      <div class="dash-section">
-        <h2>📊 Resumen por Vendedor</h2>
-        <div class="vendor-summary-grid" id="dashboard-vendors"></div>
-      </div>
-
-      <div class="dash-section">
-        <h2>📅 Próximas Entregas <span class="count" id="proximas-count"></span></h2>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Fecha Entrega</th>
-                <th>Cliente</th>
-                <th>Teléfono</th>
-                <th>Detalle del Pedido</th>
-                <th>Cant.</th>
-                <th>Saldo Pendiente</th>
-                <th>Estado</th>
-                <th>Copiar</th>
-              </tr>
-            </thead>
-            <tbody id="proximas-body"></tbody>
-          </table>
-          <div class="empty" id="proximas-empty">🎉 No hay entregas pendientes.</div>
-        </div>
-      </div>
-
-      <div class="dash-section">
-        <h2>📦 Mis Próximas Entregas <span class="count" id="mis-entregas-count"></span></h2>
-        <p style="color:var(--muted); margin:-8px 0 12px; font-size:13px;">Pedidos donde eres la persona encargada de entregar.</p>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Fecha Entrega</th>
-                <th>Cliente</th>
-                <th>Teléfono</th>
-                <th>Vendedor</th>
-                <th>Detalle del Pedido</th>
-                <th>Cant.</th>
-                <th>Saldo Pendiente</th>
-                <th>Estado</th>
-                <th>Copiar</th>
-              </tr>
-            </thead>
-            <tbody id="mis-entregas-body"></tbody>
-          </table>
-          <div class="empty" id="mis-entregas-empty">🎉 No tienes entregas asignadas.</div>
-        </div>
-      </div>
-
-      <div class="dash-section">
-        <h2>⚠️ Alertas</h2>
-        <div id="dashboard-alertas"></div>
-      </div>
+      <div id="dashboard-contenido"></div>
     </div>
 
     <!-- ════════════════════════════════════════════════════
@@ -2239,9 +2327,6 @@
 
     if (section === 'dashboard') {
       renderDashboard();
-      renderProximasEntregas();
-      renderMisEntregas();
-      calcularAlertas();
     } else if (section === 'new-sale') {
       document.getElementById('form-card').classList.remove('hidden');
     } else if (section === 'orders') {
@@ -2279,9 +2364,6 @@
 
       renderVendorFilter();
       renderDashboard();
-      renderProximasEntregas();
-      renderMisEntregas();
-      calcularAlertas();
       renderTable();
       renderCompras();
     } catch (err) {
@@ -2300,135 +2382,121 @@
     sel.value = current;
   }
 
-  // DASHBOARD — KPIs, resumen por vendedor
+  // DASHBOARD — resumen en tarjetas
   function renderDashboard() {
-    let totalCamisas = 0;
-    let totalGanancia = 0;
-    let totalRestante = 0;
-    let totalVentas = 0;
-    const porVendedor = {};
+    const esAdmin = currentRole.role === 'admin';
+    const miNombre = currentRole.vendedor;
 
+    const pendientes = ventasCache.filter(v => v.estado !== 'Pagado' && v.estado !== 'Entregado');
+
+    const misVentas = pendientes
+      .filter(v => esAdmin || v.vendedor === miNombre)
+      .sort((a, b) => (a.fecha_entrega || '') > (b.fecha_entrega || '') ? 1 : -1);
+
+    const misEntregas = pendientes
+      .filter(v => v.entrega_por && (esAdmin || v.entrega_por === miNombre))
+      .sort((a, b) => (a.fecha_entrega || '') > (b.fecha_entrega || '') ? 1 : -1);
+
+    let totalCamisas = 0;
+    let totalRestante = 0;
+    const porVendedor = {};
     ventasCache.forEach(v => {
       const cant = Number(v.cantidad) || 1;
       const precio = Number(v.precio_unitario) || 0;
       const costoUnitario = Number(v.costo_unitario) || 0;
       const abono = Number(v.abono) || 0;
-      const venta = precio * cant;
-      const costo = costoUnitario * cant;
-      const ganancia = venta - costo;
-      const restante = venta - abono;
-
+      const ganancia = (precio * cant) - (costoUnitario * cant);
+      const restante = (precio * cant) - abono;
       totalCamisas += cant;
-      totalGanancia += ganancia;
       totalRestante += Math.max(restante, 0);
-      totalVentas += venta;
-
-      if (!porVendedor[v.vendedor]) porVendedor[v.vendedor] = { camisas: 0, ganancia: 0, restante: 0 };
-      const p = porVendedor[v.vendedor];
-      p.camisas += cant;
-      p.ganancia += ganancia;
-      p.restante += Math.max(restante, 0);
+      if (!porVendedor[v.vendedor]) porVendedor[v.vendedor] = { camisas: 0, restante: 0 };
+      porVendedor[v.vendedor].camisas += cant;
+      porVendedor[v.vendedor].restante += Math.max(restante, 0);
+      porVendedor[v.vendedor].ganancia = (porVendedor[v.vendedor].ganancia || 0) + ganancia;
     });
 
-    document.getElementById('dashboard-kpis').innerHTML = `
-      <div class="kpi-card">
-        <div class="kpi-label">Camisas Vendidas</div>
-        <div class="kpi-value">${totalCamisas}</div>
-        <div class="kpi-sub">Total de unidades</div>
+    document.getElementById('dashboard-contenido').innerHTML = `
+      <div class="dash-section" style="margin-bottom:24px;">
+        <h2 style="font-size:17px;font-weight:600;margin:0 0 10px;">📊 Resumen por Vendedor</h2>
+        <div class="vendor-summary-grid">
+          ${Object.entries(porVendedor).map(([nombre, p]) => `
+            <div class="vendor-summary-card">
+              <h3>${nombre}</h3>
+              <div class="row"><span class="label">Camisas vendidas</span><span><b>${p.camisas}</b></span></div>
+              <div class="row"><span class="label">Por cobrar</span><span style="color:var(--warn)">${fmt(p.restante)}</span></div>
+              <div class="row"><span class="label">Ganancia (50%)</span><span style="color:var(--ok)">${fmt((p.ganancia || 0) / 2)}</span></div>
+            </div>
+          `).join('') || '<p style="color:var(--muted)">No hay datos por vendedor.</p>'}
+        </div>
       </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Ganancia Total</div>
-        <div class="kpi-value" style="color:var(--ok)">${fmt(totalGanancia)}</div>
-        <div class="kpi-sub">Venta - Costo</div>
+      <div class="dash-list">
+        <div class="dash-list-header">
+          <h2>🛒 Pedidos que vendí</h2>
+          <span class="dash-list-subtitle">Pedidos vendidos por mí, sin importar quién realiza la entrega.</span>
+          <span class="dash-list-count">${misVentas.length}</span>
+        </div>
+        ${misVentas.length === 0
+          ? '<div class="dash-empty">🎉 No hay pedidos pendientes.</div>'
+          : misVentas.map(v => renderOrderCard(v)).join('')
+        }
       </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Por Cobrar a Clientes</div>
-        <div class="kpi-value" style="color:var(--warn)">${fmt(totalRestante)}</div>
-        <div class="kpi-sub">Saldo pendiente</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Total Ventas</div>
-        <div class="kpi-value">${fmt(totalVentas)}</div>
-        <div class="kpi-sub">Valor bruto</div>
+      <div class="dash-list">
+        <div class="dash-list-header">
+          <h2>📦 Pedidos que debo entregar</h2>
+          <span class="dash-list-subtitle">Pedidos cuya entrega está asignada a mí.</span>
+          <span class="dash-list-count">${misEntregas.length}</span>
+        </div>
+        ${misEntregas.length === 0
+          ? '<div class="dash-empty">🎉 No hay entregas asignadas.</div>'
+          : misEntregas.map(v => renderOrderCard(v)).join('')
+        }
       </div>
     `;
-
-    const wrap = document.getElementById('dashboard-vendors');
-    const entradas = Object.entries(porVendedor);
-    wrap.innerHTML = entradas.map(([nombre, p]) => `
-      <div class="vendor-summary-card">
-        <h3>${nombre}</h3>
-        <div class="row"><span class="label">Camisas vendidas</span><span><b>${p.camisas}</b></span></div>
-        <div class="row"><span class="label">Por cobrar</span><span style="color:var(--warn)">${fmt(p.restante)}</span></div>
-        <div class="row"><span class="label">Ganancia (50%)</span><span style="color:var(--ok)">${fmt(p.ganancia / 2)}</span></div>
-      </div>
-    `).join('') || '<p style="color:var(--muted)">No hay datos por vendedor.</p>';
   }
 
-  // PRÓXIMAS ENTREGAS — tabla en dashboard con copiar WhatsApp
-  function renderProximasEntregas() {
-    const esAdmin = currentRole.role === 'admin';
-    const miNombre = currentRole.vendedor;
-    const pendientes = ventasCache
-      .filter(v => v.estado !== 'Pagado' && v.estado !== 'Entregado')
-      .filter(v => esAdmin || v.vendedor === miNombre)
-      .sort((a, b) => (a.fecha_entrega || '') > (b.fecha_entrega || '') ? 1 : -1);
-    document.getElementById('proximas-count').textContent = `(${pendientes.length})`;
-    renderTablaEntregas('proximas-body', 'proximas-empty', pendientes, false);
-  }
-
-  // MIS PRÓXIMAS ENTREGAS — filtrado por persona que entrega
-  function renderMisEntregas() {
-    const esAdmin = currentRole.role === 'admin';
-    const miNombre = currentRole.vendedor;
-    const pendientes = ventasCache
-      .filter(v => v.estado !== 'Pagado' && v.estado !== 'Entregado' && v.entrega_por)
-      .filter(v => esAdmin || v.entrega_por === miNombre)
-      .sort((a, b) => (a.fecha_entrega || '') > (b.fecha_entrega || '') ? 1 : -1);
-    document.getElementById('mis-entregas-count').textContent = `(${pendientes.length})`;
-    renderTablaEntregas('mis-entregas-body', 'mis-entregas-empty', pendientes, true);
-  }
-
-  function renderTablaEntregas(bodyId, emptyId, pendientes, mostrarVendedor) {
-    const body = document.getElementById(bodyId);
-    const empty = document.getElementById(emptyId);
-
-    if (pendientes.length === 0) {
-      body.innerHTML = '';
-      empty.classList.remove('hidden');
-      return;
+  function itemsParaDashboard(v) {
+    let items = null;
+    if (v.items_camisa) {
+      try { items = JSON.parse(v.items_camisa); } catch (e) { items = null; }
     }
-    empty.classList.add('hidden');
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return [`• ${v.genero || '?'} · ${(v.color || '?').toLowerCase()} · ${v.talla || '?'}`];
+    }
+    return items.map(it => {
+      const base = `${it.genero || '?'} · ${(it.color || '?').toLowerCase()} · ${it.talla || '?'}`;
+      return it.programa ? `• ${base} · ${it.programa}` : `• ${base}`;
+    });
+  }
 
-    body.innerHTML = pendientes.map(v => {
-      const cant = Number(v.cantidad) || 1;
-      const precio = Number(v.precio_unitario) || 0;
-      const abono = Number(v.abono) || 0;
-      const saldo = (precio * cant) - abono;
-      const detalleHtml = formatearDetalleCamisa(v, { html: true });
-      const detalleTexto = formatearDetalleCamisa(v);
-      const detalleWhatsApp = formatearDetalleCamisa(v, { paraWhatsApp: true });
+  function renderOrderCard(v) {
+    const cant = Number(v.cantidad) || 1;
+    const precio = Number(v.precio_unitario) || 0;
+    const abono = Number(v.abono) || 0;
+    const saldo = (precio * cant) - abono;
+    const items = itemsParaDashboard(v);
+    const detalleWhatsApp = items.map(it => it.replace(/^• /, '')).join('\n     ');
+    const msgWhatsApp = encodeURIComponent(
+      `📌 *Recordatorio Camisas IUB* 🧵\n\n👤 *Cliente:* ${v.cliente_nombre}\n📞 *Teléfono:* ${v.cliente_telefono}\n👕 *Detalle:* \n     ${detalleWhatsApp}\n🔢 *Cantidad:* ${cant}\n💰 *Saldo Pendiente:* ${fmt(saldo)}\n📅 *Fecha Entrega:* ${formatearFechaHumana(v.fecha_entrega) || 'Sin fecha'}\n📍 *Lugar:* ${v.lugar_entrega || 'Sin definir'}`
+    );
 
-      const msgWhatsApp = encodeURIComponent(
-        `📌 *Recordatorio Camisas IUB* 🧵\n\n👤 *Cliente:* ${v.cliente_nombre}\n📞 *Teléfono:* ${v.cliente_telefono}\n👕 *Detalle:* \n     ${detalleWhatsApp}\n🔢 *Cantidad:* ${cant}\n💰 *Saldo Pendiente:* ${fmt(saldo)}\n📅 *Fecha Entrega:* ${formatearFechaHumana(v.fecha_entrega) || 'Sin fecha'}\n📍 *Lugar:* ${v.lugar_entrega || 'Sin definir'}`
-      );
-
-      const vendedorCell = mostrarVendedor ? `<td><b>${v.vendedor || ''}</b></td>` : '';
-
-      return `
-        <tr>
-          <td>${formatearFechaHumana(v.fecha_entrega) || 'Sin fecha'}</td>
-          <td><b>${v.cliente_nombre || ''}</b></td>
-          <td>${v.cliente_telefono || ''}</td>
-          ${vendedorCell}
-          <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${detalleTexto.replace(/"/g, '&quot;')}">${detalleHtml}</td>
-          <td>${cant}</td>
-          <td class="money" style="color:${saldo > 0 ? 'var(--warn)' : 'var(--ok)'}">${fmt(saldo)}</td>
-          <td><span class="badge-estado estado-${v.estado}">${v.estado}</span></td>
-          <td><button class="btn-small" onclick="copiarWhatsApp('${msgWhatsApp}')" type="button">📋 Copiar</button></td>
-        </tr>
-      `;
-    }).join('');
+    return `
+      <div class="order-card">
+        <div class="order-card-row">
+          <span class="order-card-client">👤 ${v.cliente_nombre || '—'}</span>
+          <span class="order-card-phone">📞 ${v.cliente_telefono || '—'}</span>
+          <span class="order-card-date">📅 ${formatearFechaHumana(v.fecha_entrega) || 'Sin fecha'}</span>
+        </div>
+        <div class="order-card-row order-card-meta">
+          <span class="badge-estado estado-${v.estado}">${v.estado}</span>
+          <span class="order-card-saldo" style="color:${saldo > 0 ? 'var(--warn)' : 'var(--ok)'}">💰 ${fmt(saldo)}</span>
+          <span class="order-card-copy"><button class="btn-copy-card" onclick="copiarWhatsApp('${msgWhatsApp}')" type="button">📋 Copiar</button></span>
+        </div>
+        <hr class="order-card-divider">
+        <div class="order-card-items">
+          ${items.map(it => `<div class="order-card-item">${it}</div>`).join('')}
+        </div>
+      </div>
+    `;
   }
 
   function copiarWhatsApp(msg) {
@@ -2517,7 +2585,7 @@
 
       const fechaEntregaHumana = v.fecha_entrega ? formatearFechaHumana(v.fecha_entrega) : 'Sin fecha';
 
-      const detalleCamisaHtml = formatearDetalleCamisa(v, { html: true });
+      const items = itemsParaDashboard(v);
 
       return `
         <tr>
@@ -2528,8 +2596,7 @@
             <span class="sub-tag">📞 ${v.cliente_telefono || ''}</span>
           </td>
           <td>
-            ${detalleCamisaHtml}
-            ${v.cliente_programa ? '<span class="sub-tag" style="color:var(--thread);">🧵 Bordado: ' + v.cliente_programa + '</span>' : ''}
+            <div style="font-size:12px; line-height:1.6;">${items.join('<br>')}</div>
           </td>
           <td><b>${cant}</b></td>
           <td class="money">${fmt(venta)}</td>
@@ -3454,38 +3521,25 @@
       if (balCard) balCard.id = 'card-balance-socios';
     }
 
-    let deudaHtml = '';
-    if (d.deudaSamirAVal > d.deudaValASamir) {
-      const neto = d.deudaSamirAVal - d.deudaValASamir;
-      deudaHtml = `<div style="margin-top:10px; padding:10px; border-radius:8px; background:${neto > 0 ? 'var(--warn)' : 'var(--ok)'}22;">
-        <b>🔁 Samir debe</b> ${fmt(neto)} a Valentina (liquidaciones pendientes por pedido)
-        ${neto > 0 ? `<br>⚠️ Saldo pendiente: <b>${fmt(neto)}</b>` : '<br>✅ Al día'}
-      </div>`;
-    } else if (d.deudaValASamir > d.deudaSamirAVal) {
-      const neto = d.deudaValASamir - d.deudaSamirAVal;
-      deudaHtml = `<div style="margin-top:10px; padding:10px; border-radius:8px; background:${neto > 0 ? 'var(--warn)' : 'var(--ok)'}22;">
-        <b>🔁 Valentina debe</b> ${fmt(neto)} a Samir (liquidaciones pendientes por pedido)
-        ${neto > 0 ? `<br>⚠️ Saldo pendiente: <b>${fmt(neto)}</b>` : '<br>✅ Al día'}
-      </div>`;
-    }
+    const totalPendiente = Math.max(d.deudaSamirAVal, d.deudaValASamir) - Math.min(d.deudaSamirAVal, d.deudaValASamir);
 
     if (!balCard) return;
     balCard.innerHTML = `
       <div class="eyebrow">💰 Balance entre socios</div>
-      <p style="color:var(--muted); font-size:12px; margin:4px 0 12px;">Se calcula por pedido: cada venta genera una obligación del 50% de la ganancia hacia el otro socio. Registra pagos en Liquidaciones seleccionando el pedido. Todo lo no liquidado queda como saldo pendiente.</p>
+      <p style="color:var(--muted); font-size:12px; margin:4px 0 12px;">Registra pagos en Liquidaciones seleccionando el pedido.</p>
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:13px; border:1px solid var(--line); border-radius:8px; padding:10px;">
         <div>
           <b>Samir</b><br>
-          Ganancia bruta en pedidos: ${fmt(d.gananciaPendienteSamir)}<br>
-          Debe liquidar a Valentina: ${fmt(d.deudaSamirAVal)}
+          Debe liquidar: ${fmt(d.deudaSamirAVal)}
         </div>
         <div>
           <b>Valentina</b><br>
-          Ganancia bruta en pedidos: ${fmt(d.gananciaPendienteVal)}<br>
-          Debe liquidar a Samir: ${fmt(d.deudaValASamir)}
+          Debe liquidar: ${fmt(d.deudaValASamir)}
         </div>
       </div>
-      ${deudaHtml || '<div style="margin-top:10px; color:var(--ok);"><b>✅ Cuentas al día entre socios</b></div>'}
+      <div style="margin-top:10px; padding:10px; border-radius:8px; background:${totalPendiente > 0 ? 'var(--warn)' : 'var(--ok)'}22;">
+        <b>${totalPendiente > 0 ? `⚠️ Total pendiente por liquidar: ${fmt(totalPendiente)}` : '✅ Cuentas al día entre socios'}</b>
+      </div>
     `;
 
     const body = document.getElementById('liquidaciones-body');
