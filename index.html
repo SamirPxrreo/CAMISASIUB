@@ -710,8 +710,8 @@
   }
   #section-settlements .table-wrap th:nth-child(2),
   #section-settlements .table-wrap td:nth-child(2) {
-    min-width: 190px;
-    max-width: 280px;
+    min-width: 150px;
+    max-width: 200px;
     white-space: normal;
   }
   #section-settlements .table-wrap th:nth-child(3),
@@ -2210,6 +2210,34 @@
     return new Date().toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit', hour12: false });
   }
 
+  // Ordena pedidos por fecha de entrega (ascendente). Los que no tienen fecha
+  // ("Pendiente por definir") siempre quedan al final. Desempate: fecha de pedido.
+  function ordenarPorEntrega(a, b) {
+    const fa = a.fecha_entrega || '9999-12-31';
+    const fb = b.fecha_entrega || '9999-12-31';
+    if (fa !== fb) return fa < fb ? -1 : 1;
+    const pa = a.fecha || '9999-12-31';
+    const pb = b.fecha || '9999-12-31';
+    if (pa !== pb) return pa < pb ? -1 : 1;
+    return 0;
+  }
+
+  // Pedidos que aún NO se han comprado en la distribuidora:
+  // activos, sin compra asociada y sin estado avanzado (todo manual).
+  function pedidosPorComprar() {
+    return ventasCache.filter(v =>
+      !v.finalizado && v.estado === 'Pedido' && !v.compra_id
+    );
+  }
+
+  function camisasPorComprar() {
+    return pedidosPorComprar().reduce((s, v) => s + (Number(v.cantidad) || 1), 0);
+  }
+
+  function pedidosSinFechaEntrega() {
+    return ventasCache.filter(v => !v.finalizado && !v.fecha_entrega);
+  }
+
   /* ---------- Liquidación entre socios por pedido ---------- */
   function mitadGananciaPedido(v) {
     const cant = Number(v.cantidad) || 1;
@@ -2691,11 +2719,20 @@
 
     const misVentas = pendientes
       .filter(v => esAdmin || v.vendedor === miNombre)
-      .sort((a, b) => (a.fecha_entrega || '') > (b.fecha_entrega || '') ? 1 : -1);
+      .sort(ordenarPorEntrega);
 
     const misEntregas = pendientes
       .filter(v => v.entrega_por && (esAdmin || v.entrega_por === miNombre))
-      .sort((a, b) => (a.fecha_entrega || '') > (b.fecha_entrega || '') ? 1 : -1);
+      .sort(ordenarPorEntrega);
+
+    const porComprar = camisasPorComprar();
+    const porComprarPedidos = pedidosPorComprar().length;
+    const sinFecha = pedidosSinFechaEntrega().length;
+    let totalPorCobrar = 0;
+    ventasCache.forEach(v => {
+      if (v.finalizado || v.estado === 'Pagado') return;
+      totalPorCobrar += Math.max((Number(v.precio_unitario) || 0) * (Number(v.cantidad) || 1) - (Number(v.abono) || 0), 0);
+    });
 
     document.getElementById('dashboard-contenido').innerHTML = `
       <div id="dashboard-alertas"></div>
@@ -2721,6 +2758,31 @@
             <div class="kpi-label">💰 Liquidaciones</div>
             <div class="kpi-value" style="font-size:16px;">Ver</div>
             <div class="kpi-sub">Saldos y ganancias entre socios</div>
+          </div>
+        </div>
+      </div>
+      <div class="dash-section" style="margin-bottom:24px;">
+        <h2 style="font-size:17px;font-weight:600;margin:0 0 10px;">🏭 Estado del negocio</h2>
+        <div class="kpi-grid">
+          <div class="kpi-card" style="border-left:3px solid var(--warn);">
+            <div class="kpi-label">🛒 Camisas por comprar</div>
+            <div class="kpi-value">${porComprar}</div>
+            <div class="kpi-sub">${porComprarPedidos} pedidos sin ir a la distribuidora</div>
+          </div>
+          <div class="kpi-card" style="border-left:3px solid var(--thread);">
+            <div class="kpi-label">📦 Pedidos sin fecha de entrega</div>
+            <div class="kpi-value">${sinFecha}</div>
+            <div class="kpi-sub">Esperando definir la entrega</div>
+          </div>
+          <div class="kpi-card" style="border-left:3px solid var(--gold);">
+            <div class="kpi-label">🏦 Por cobrar</div>
+            <div class="kpi-value">${fmt(totalPorCobrar)}</div>
+            <div class="kpi-sub">Saldo pendiente de los clientes</div>
+          </div>
+          <div class="kpi-card" style="border-left:3px solid var(--ok);">
+            <div class="kpi-label">📋 Pedidos activos</div>
+            <div class="kpi-value">${pendientes.length}</div>
+            <div class="kpi-sub">En la lista de trabajo</div>
           </div>
         </div>
       </div>
@@ -2914,6 +2976,73 @@
     return items;
   }
 
+  // Rango de fechas del período seleccionado (YYYY-MM-DD).
+  function resRangoFechas() {
+    const p = document.getElementById('res-periodo').value;
+    const hoy = hoyColombia();
+    if (p === 'todo') {
+      const fechas = ventasCache.map(v => v.fecha).filter(Boolean).sort();
+      return { desde: fechas[0] || hoy, hasta: hoy };
+    }
+    if (p === 'hoy') return { desde: hoy, hasta: hoy };
+    if (p === 'ayer') {
+      const a = new Date(); a.setDate(a.getDate() - 1);
+      const s = a.toLocaleDateString('en-CA');
+      return { desde: s, hasta: s };
+    }
+    if (p === 'semana') {
+      const a = new Date(); a.setDate(a.getDate() - 6);
+      return { desde: a.toLocaleDateString('en-CA'), hasta: hoy };
+    }
+    if (p === 'mes') {
+      const h = new Date(hoy + 'T12:00:00');
+      return { desde: new Date(h.getFullYear(), h.getMonth(), 1).toLocaleDateString('en-CA'), hasta: hoy };
+    }
+    if (p === 'anio') {
+      const h = new Date(hoy + 'T12:00:00');
+      return { desde: `${h.getFullYear()}-01-01`, hasta: hoy };
+    }
+    let desde = document.getElementById('res-desde').value || hoy;
+    let hasta = document.getElementById('res-hasta').value || hoy;
+    if (desde > hasta) { const t = desde; desde = hasta; hasta = t; }
+    return { desde, hasta };
+  }
+
+  const MESES_CORTOS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+  const DIAS_CORTOS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+
+  function resLabelBucket(k, porDia) {
+    if (porDia) {
+      const p = k.split('-');
+      const d = new Date(+p[0], +p[1] - 1, +p[2]);
+      return `${DIAS_CORTOS[d.getDay()]} ${+p[2]} ${MESES_CORTOS[+p[1] - 1]}`;
+    }
+    const p = k.split('-');
+    const m = MESES_CORTOS[+p[1] - 1];
+    return `${m.charAt(0).toUpperCase() + m.slice(1)} ${p[0]}`;
+  }
+
+  // Desglose del período: por día si es corto (≤31 días), por mes si es largo.
+  function resDesglose() {
+    const { desde, hasta } = resRangoFechas();
+    const d1 = new Date(desde + 'T12:00:00');
+    const d2 = new Date(hasta + 'T12:00:00');
+    const porDia = Math.round((d2 - d1) / 86400000) <= 31;
+    const keys = [];
+    const buckets = {};
+    const cur = porDia ? new Date(d1) : new Date(d1.getFullYear(), d1.getMonth(), 1);
+    while (cur <= d2) {
+      const key = porDia
+        ? cur.toLocaleDateString('en-CA')
+        : `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, '0')}`;
+      keys.push(key);
+      buckets[key] = { pedidos: 0, camisas: 0, vendido: 0, costo: 0 };
+      if (porDia) cur.setDate(cur.getDate() + 1);
+      else cur.setMonth(cur.getMonth() + 1);
+    }
+    return { porDia, keys, buckets };
+  }
+
   function renderResumenes() {
     const selVendedor = document.getElementById('res-vendedor');
     const selCliente = document.getElementById('res-cliente');
@@ -2960,8 +3089,18 @@
     // ---------- PEDIDOS ----------
     const pedidosActivos = ventasFiltradas.filter(v => !v.finalizado && v.estado !== 'Pagado' && v.estado !== 'Entregado').length;
     const pedidosFinalizados = ventasFiltradas.filter(v => v.finalizado).length;
-    const pendientesEntregar = ventasFiltradas.filter(v => !v.finalizado && v.estado !== 'Entregado').length;
     const entregados = ventasFiltradas.filter(v => v.estado === 'Entregado').length;
+
+    // ---------- COMPRAS PENDIENTES (estado actual, sin filtro de período) ----------
+    const porComprar = pedidosPorComprar().filter(v =>
+      (!fVendedor || v.vendedor === fVendedor) &&
+      (!fCliente || (v.cliente_nombre || '') === fCliente)
+    );
+    const camisasPorComprarN = porComprar.reduce((s, v) => s + (Number(v.cantidad) || 1), 0);
+    const sinFecha = pedidosSinFechaEntrega().filter(v =>
+      (!fVendedor || v.vendedor === fVendedor) &&
+      (!fCliente || (v.cliente_nombre || '') === fCliente)
+    ).length;
 
     // ---------- POR VENDEDOR ----------
     const porVendedor = {};
@@ -2971,11 +3110,10 @@
       const costoU = Number(v.costo_unitario) || 0;
       const abono = Number(v.abono) || 0;
       const nombre = v.vendedor || 'Sin asignar';
-      if (!porVendedor[nombre]) porVendedor[nombre] = { camisas: 0, vendido: 0, ganancia: 0, abono: 0, restante: 0 };
+      if (!porVendedor[nombre]) porVendedor[nombre] = { camisas: 0, vendido: 0, ganancia: 0, restante: 0 };
       porVendedor[nombre].camisas += cant;
       porVendedor[nombre].vendido += precio * cant;
       porVendedor[nombre].ganancia += (precio - costoU) * cant;
-      porVendedor[nombre].abono += abono;
       porVendedor[nombre].restante += Math.max(precio * cant - abono, 0);
     });
 
@@ -2994,7 +3132,9 @@
     });
 
     // ---------- COMPRAS ----------
-    const comprasFiltradas = comprasCache.filter(c => resPeriodoAplica(c.fecha));
+    const comprasFiltradas = comprasCache.filter(c =>
+      resPeriodoAplica(c.fecha) && (!fVendedor || c.comprador === fVendedor)
+    );
     const comprasInvertido = comprasFiltradas.reduce((s, c) => {
       const costo = ventasCache
         .filter(v => v.compra_id === c.id)
@@ -3003,8 +3143,24 @@
     }, 0);
 
     // ---------- LIQUIDACIONES ----------
-    const liqFiltradas = liquidacionesCache.filter(l => resPeriodoAplica(l.fecha));
+    const liqFiltradas = liquidacionesCache.filter(l =>
+      resPeriodoAplica(l.fecha) && (!fVendedor || l.pagador === fVendedor)
+    );
     const liqTotal = liqFiltradas.reduce((s, l) => s + (Number(l.monto) || 0), 0);
+
+    // ---------- DESGLOSE POR DÍA / MES ----------
+    const desglose = resDesglose();
+    ventasFiltradas.forEach(v => {
+      const f = (v.fecha || '').slice(0, 10);
+      const k = desglose.porDia ? f : f.slice(0, 7);
+      const b = desglose.buckets[k];
+      if (!b) return;
+      const cant = Number(v.cantidad) || 1;
+      b.pedidos += 1;
+      b.camisas += cant;
+      b.vendido += (Number(v.precio_unitario) || 0) * cant;
+      b.costo += (Number(v.costo_unitario) || 0) * cant;
+    });
 
     const rkVendedores = Object.entries(porVendedor).sort((a, b) => b[1].camisas - a[1].camisas);
     const rkProductos = Object.values(productos).sort((a, b) => b.cantidad - a.cantidad).slice(0, 8);
@@ -3019,7 +3175,7 @@
         <td><b>${escSimple(nombre)}</b></td>
         <td class="c">${p.camisas}</td>
         <td class="money">${fmt(p.vendido)}</td>
-        <td class="money" style="color:var(--ok);">${fmt(p.ganancia / 2)}</td>
+        <td class="money" style="color:var(--ok);">${fmt(p.ganancia)}</td>
         <td class="money" style="color:var(--warn);">${fmt(p.restante)}</td>
       </tr>`).join('');
 
@@ -3042,64 +3198,114 @@
         <td class="money" style="color:${c.deuda > 0 ? 'var(--warn)' : 'var(--ok)'};">${fmt(c.deuda)}</td>
       </tr>`).join('');
 
+    const filaDesglose = desglose.keys
+      .filter(k => desglose.buckets[k].pedidos > 0)
+      .map(k => {
+        const b = desglose.buckets[k];
+        return `
+        <tr>
+          <td>${resLabelBucket(k, desglose.porDia)}</td>
+          <td class="c">${b.pedidos}</td>
+          <td class="c">${b.camisas}</td>
+          <td class="money">${fmt(b.vendido)}</td>
+          <td class="money" style="color:var(--ok);">${fmt(b.vendido - b.costo)}</td>
+        </tr>`;
+      }).join('');
+
     document.getElementById('resumen-contenido').innerHTML = `
       <div style="color:var(--muted); font-size:12.5px; margin-bottom:12px;">Período: <b>${resPeriodoLabel()}</b>${fVendedor ? ` · Vendedor: <b>${escSimple(fVendedor)}</b>` : ''}${fCliente ? ` · Cliente: <b>${escSimple(fCliente)}</b>` : ''}</div>
 
+      <h3 style="margin:0 0 12px; font-size:15px;">💵 Ventas del período</h3>
       <div class="kpi-grid">
         <div class="kpi-card">
-          <div class="kpi-label">💵 Ventas (total vendido)</div>
+          <div class="kpi-label">Ventas (total vendido)</div>
           <div class="kpi-value">${fmt(totalVendido)}</div>
           <div class="kpi-sub">${ventasFiltradas.length} pedidos · ${totalCamisas} camisas</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label">📈 Ganancias</div>
+          <div class="kpi-label">Ganancias</div>
           <div class="kpi-value" style="color:var(--ok);">${fmt(ganancia)}</div>
           <div class="kpi-sub">50% por socio: ${fmt(ganancia / 2)}</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label">🏦 Por cobrar</div>
+          <div class="kpi-label">Por cobrar</div>
           <div class="kpi-value" style="color:var(--warn);">${fmt(porCobrar)}</div>
           <div class="kpi-sub">Abonado: ${fmt(totalAbonos)}</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label">👕 Camisas vendidas</div>
+          <div class="kpi-label">Camisas vendidas</div>
           <div class="kpi-value">${totalCamisas}</div>
           <div class="kpi-sub">Costo total: ${fmt(totalCosto)}</div>
         </div>
       </div>
 
-      <div class="kpi-grid" style="margin-top:14px;">
-        <div class="kpi-card">
-          <div class="kpi-label">📋 Pedidos activos</div>
-          <div class="kpi-value">${pedidosActivos}</div>
-          <div class="kpi-sub">Aún sin finalizar</div>
+      <h3 style="margin:24px 0 12px; font-size:15px;">🛒 Compras al proveedor (estado actual)</h3>
+      <div class="kpi-grid">
+        <div class="kpi-card" style="border-left:3px solid var(--warn);">
+          <div class="kpi-label">Camisas por comprar</div>
+          <div class="kpi-value">${camisasPorComprarN}</div>
+          <div class="kpi-sub">${porComprar.length} pedidos sin ir a la distribuidora</div>
+        </div>
+        <div class="kpi-card" style="border-left:3px solid var(--thread);">
+          <div class="kpi-label">Pedidos sin fecha de entrega</div>
+          <div class="kpi-value">${sinFecha}</div>
+          <div class="kpi-sub">Esperando definir la entrega</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label">✅ Finalizados</div>
+          <div class="kpi-label">Invertido en compras</div>
+          <div class="kpi-value">${fmt(comprasInvertido)}</div>
+          <div class="kpi-sub">${comprasFiltradas.length} compras registradas</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Liquidado entre socios</div>
+          <div class="kpi-value" style="color:var(--ok);">${fmt(liqTotal)}</div>
+          <div class="kpi-sub">${liqFiltradas.length} pagos registrados</div>
+        </div>
+      </div>
+
+      <h3 style="margin:24px 0 12px; font-size:15px;">📦 Flujo de pedidos</h3>
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">Pedidos activos</div>
+          <div class="kpi-value">${pedidosActivos}</div>
+          <div class="kpi-sub">En la lista de trabajo</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Entregados</div>
+          <div class="kpi-value">${entregados}</div>
+          <div class="kpi-sub">Marcados como entregados</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Finalizados</div>
           <div class="kpi-value">${pedidosFinalizados}</div>
           <div class="kpi-sub">Cerrados en Historial</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label">📦 Pendientes de entregar</div>
-          <div class="kpi-value">${pendientesEntregar}</div>
-          <div class="kpi-sub">Entregados: ${entregados}</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">🛍️ Compras proveedor</div>
-          <div class="kpi-value">${fmt(comprasInvertido)}</div>
-          <div class="kpi-sub">${comprasFiltradas.length} compras registradas</div>
+          <div class="kpi-label">Deuda de clientes</div>
+          <div class="kpi-value" style="color:var(--warn);">${fmt(porCobrar)}</div>
+          <div class="kpi-sub">Saldo pendiente de cobrar</div>
         </div>
       </div>
 
-      <div class="cards" style="margin-top:16px;">
-        <div class="card">
-          <div class="eyebrow">💰 Liquidaciones entre socios</div>
-          <div class="value" style="font-size:22px;">${fmt(liqTotal)}</div>
-          <div class="sub">${liqFiltradas.length} pagos registrados en el período</div>
-        </div>
+      <h3 style="margin:24px 0 12px; font-size:15px;">📅 Actividad ${desglose.porDia ? 'por día' : 'por mes'}</h3>
+      <div class="table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>${desglose.porDia ? 'Día' : 'Mes'}</th>
+              <th class="c">Pedidos</th>
+              <th class="c">Camisas</th>
+              <th>Vendido</th>
+              <th>Ganancia</th>
+            </tr>
+          </thead>
+          <tbody>${filaDesglose || '<tr><td colspan="5" style="color:var(--muted);text-align:center;">Sin ventas en el período.</td></tr>'}</tbody>
+        </table>
       </div>
 
-      <div class="table-wrap" style="margin-top:18px;">
+      <h3 style="margin:24px 0 12px; font-size:15px;">🏆 Rankings</h3>
+      <div class="table-wrap" style="margin-top:0;">
+        <h4 style="margin:0 0 8px; font-size:13.5px;">Vendedores</h4>
         <table class="admin-table">
           <thead>
             <tr>
@@ -3107,7 +3313,7 @@
               <th>Vendedor</th>
               <th class="c">Camisas</th>
               <th>Vendido</th>
-              <th>Ganancia (50%)</th>
+              <th>Ganancia</th>
               <th>Por cobrar</th>
             </tr>
           </thead>
@@ -3116,6 +3322,7 @@
       </div>
 
       <div class="table-wrap" style="margin-top:18px;">
+        <h4 style="margin:0 0 8px; font-size:13.5px;">Camisas más vendidas</h4>
         <table class="admin-table">
           <thead>
             <tr>
@@ -3131,6 +3338,7 @@
       </div>
 
       <div class="table-wrap" style="margin-top:18px;">
+        <h4 style="margin:0 0 8px; font-size:13.5px;">Clientes</h4>
         <table class="admin-table">
           <thead>
             <tr>
@@ -3176,7 +3384,7 @@
   }
 
   function renderTable() {
-    let rows = getVentasFiltradas();
+    let rows = getVentasFiltradas().sort(ordenarPorEntrega);
 
     const body = document.getElementById('ventas-body');
     document.getElementById('empty-state').classList.toggle('hidden', rows.length > 0);
@@ -4254,7 +4462,7 @@
       body.innerHTML = pageRows.map(l => {
         const venta = ventasCache.find(v => v.id === l.venta_id);
         const pedidoLabel = venta
-          ? `${venta.cliente_nombre || 'Cliente'} (${venta.fecha || '?'})`
+          ? `<b>${venta.cliente_nombre || 'Cliente'}</b><span class="sub-tag">${venta.fecha || ''}</span>`
           : (l.venta_id ? 'Pedido eliminado' : '—');
         const puedeBorrar = currentRole.role === 'admin' || currentRole.vendedor === l.pagador;
         const acciones = puedeBorrar
@@ -4566,47 +4774,98 @@
      ===================================================== */
   function exportarCompraExcel() {
     try {
-      const dataset = getVentasFiltradas().filter(v => v.estado === 'Pedido');
+      const dataset = pedidosPorComprar();
       if (dataset.length === 0) {
         mostrarToast('✅ No hay pedidos pendientes de comprar al proveedor.');
         return;
       }
 
-      const excelData = [];
+      // Combina pedidos iguales: suma las unidades por Género/Color/Talla.
+      const agg = {};
+      dataset.forEach(v => {
+        let items = null;
+        if (v.items_camisa) {
+          try { items = JSON.parse(v.items_camisa); } catch (e) { items = null; }
+        }
+        const sinDetalle = !(items && Array.isArray(items) && items.length > 0);
+        if (!items || !Array.isArray(items) || items.length === 0) {
+          items = [{ genero: v.genero, color: v.color, talla: v.talla }];
+        }
+        items.forEach(it => {
+          const veces = sinDetalle ? (Number(v.cantidad) || 1) : 1;
+          const key = `${it.genero || ''}|${it.color || ''}|${it.talla || ''}`;
+          if (!agg[key]) agg[key] = { genero: it.genero || '', color: it.color || '', talla: it.talla || '', cantidad: 0 };
+          agg[key].cantidad += veces;
+        });
+      });
+
+      const listaCompra = Object.values(agg)
+        .sort((a, b) =>
+          (a.color || '').localeCompare(b.color || '') ||
+          (a.talla || '').localeCompare(b.talla || '') ||
+          (a.genero || '').localeCompare(b.genero || '')
+        )
+        .map(g => ({ Cantidad: g.cantidad, Género: g.genero, Color: g.color, Talla: g.talla }));
+
+      // Totales para la hoja de resumen.
+      let totalCamisas = 0;
+      let totalVenta = 0;
+      let totalCosto = 0;
+      dataset.forEach(v => {
+        const cant = Number(v.cantidad) || 1;
+        totalCamisas += cant;
+        totalVenta += (Number(v.precio_unitario) || 0) * cant;
+        totalCosto += (Number(v.costo_unitario) || 0) * cant;
+      });
+
+      const resumen = [
+        ['FECHA DE EXPORTACIÓN', formatearFechaHumana(hoyColombia()).replace(/^📅\s*/, '')],
+        [],
+        ['Pedidos por comprar', dataset.length],
+        ['Camisas por comprar', totalCamisas],
+        ['Valor venta total', '$' + Math.round(totalVenta).toLocaleString('es-CO')],
+        ['Costo estimado total', '$' + Math.round(totalCosto).toLocaleString('es-CO')],
+        ['Ganancia estimada', '$' + Math.round(totalVenta - totalCosto).toLocaleString('es-CO')]
+      ];
+
+      // Detalle por pedido (referencia interna).
+      const detalle = [];
       dataset.forEach(v => {
         let items = null;
         if (v.items_camisa) {
           try { items = JSON.parse(v.items_camisa); } catch (e) { items = null; }
         }
         if (!items || !Array.isArray(items) || items.length === 0) {
-          items = [{ genero: v.genero, color: v.color, talla: v.talla }];
+          items = [{ genero: v.genero, color: v.color, talla: v.talla, programa: v.cliente_programa }];
         }
-
-        // Agrupa camisas iguales (mismo género/color/talla) dentro del mismo pedido para no repetir filas
-        const grupos = {};
         items.forEach(it => {
-          const key = `${it.genero || ''}|${it.color || ''}|${it.talla || ''}`;
-          if (!grupos[key]) grupos[key] = { genero: it.genero || '', color: it.color || '', talla: it.talla || '', cantidad: 0 };
-          grupos[key].cantidad += 1;
-        });
-
-        Object.values(grupos).forEach(g => {
-          excelData.push({
-            "Cantidad": g.cantidad,
-            "Género": g.genero,
-            "Color": g.color,
-            "Talla": g.talla,
-            "Bordado": v.cliente_programa || '',
-            "Cliente": v.cliente_nombre || ''
+          detalle.push({
+            'ID Pedido': v.id || '',
+            'Cliente': v.cliente_nombre || '',
+            'Vendedor': v.vendedor || '',
+            'Género': it.genero || '',
+            'Color': it.color || '',
+            'Talla': it.talla || '',
+            'Bordado': it.programa || ''
           });
         });
       });
 
-      const worksheet = XLSX.utils.json_to_sheet(excelData);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Compra de Camisas");
+      const wb = XLSX.utils.book_new();
 
-      XLSX.writeFile(workbook, `Compra_camisas_${hoyColombia()}.xlsx`);
+      const wsLista = XLSX.utils.json_to_sheet(listaCompra);
+      wsLista['!cols'] = [{ wch: 9 }, { wch: 10 }, { wch: 10 }, { wch: 8 }];
+      XLSX.utils.book_append_sheet(wb, wsLista, 'Lista de compra');
+
+      const wsResumen = XLSX.utils.aoa_to_sheet(resumen);
+      wsResumen['!cols'] = [{ wch: 26 }, { wch: 22 }];
+      XLSX.utils.book_append_sheet(wb, wsResumen, 'Resumen');
+
+      const wsDetalle = XLSX.utils.json_to_sheet(detalle);
+      wsDetalle['!cols'] = [{ wch: 16 }, { wch: 18 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 8 }, { wch: 18 }];
+      XLSX.utils.book_append_sheet(wb, wsDetalle, 'Detalle por pedido');
+
+      XLSX.writeFile(wb, `Compra_camisas_${hoyColombia()}.xlsx`);
     } catch (err) {
       mostrarToast('Error al exportar: ' + (err.message || err), 'error');
     }
@@ -4615,7 +4874,7 @@
   function exportarExcelCompleto() {
     if (currentRole.role !== 'admin') return;
 
-    const data = getVentasFiltradas();
+    const data = getVentasFiltradas().sort(ordenarPorEntrega);
     if (data.length === 0) {
       mostrarToast('No hay datos para exportar con los filtros actuales.', 'error');
       return;
