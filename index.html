@@ -700,12 +700,41 @@
     max-width: 180px;
     white-space: normal;
   }
+  #section-settlements .table-wrap table { min-width: 980px; }
   #section-settlements .table-wrap th:nth-child(1),
   #section-settlements .table-wrap td:nth-child(1) {
     width: 150px;
     min-width: 130px;
     max-width: 180px;
     white-space: normal;
+  }
+  #section-settlements .table-wrap th:nth-child(2),
+  #section-settlements .table-wrap td:nth-child(2) {
+    min-width: 190px;
+    max-width: 280px;
+    white-space: normal;
+  }
+  #section-settlements .table-wrap th:nth-child(3),
+  #section-settlements .table-wrap td:nth-child(3),
+  #section-settlements .table-wrap th:nth-child(4),
+  #section-settlements .table-wrap td:nth-child(4) {
+    width: 100px;
+    min-width: 90px;
+    white-space: nowrap;
+  }
+  #section-settlements .table-wrap th:nth-child(5),
+  #section-settlements .table-wrap td:nth-child(5) {
+    width: 110px;
+    min-width: 100px;
+    white-space: nowrap;
+  }
+  #section-settlements .table-wrap th:nth-child(6),
+  #section-settlements .table-wrap td:nth-child(6) {
+    max-width: 220px;
+  }
+  #section-settlements .table-wrap th:nth-child(7),
+  #section-settlements .table-wrap td:nth-child(7) {
+    width: 120px;
   }
 
   table {
@@ -1384,14 +1413,15 @@
     </div>
 
     <nav class="sidebar-nav">
-      <button class="sidebar-item active" data-section="dashboard" onclick="navigateTo('dashboard')">🏠 Dashboard</button>
+      <button class="sidebar-item active" data-section="dashboard" onclick="navigateTo('dashboard')">🏠 Inicio</button>
       <button class="sidebar-item" data-section="new-sale" onclick="navigateTo('new-sale')">➕ Nueva Venta</button>
       <button class="sidebar-item" data-section="orders" onclick="navigateTo('orders')">📋 Pedidos</button>
-      <button class="sidebar-item" data-section="history" onclick="navigateTo('history')">📚 Historial</button>
       <button class="sidebar-item" data-section="purchases" onclick="navigateTo('purchases')">🛍️ Compras</button>
       <button class="sidebar-item" data-section="settlements" onclick="navigateTo('settlements')">💰 Liquidaciones</button>
+      <button class="sidebar-item" data-section="summaries" onclick="navigateTo('summaries')">📊 Resúmenes</button>
       <button class="sidebar-item" data-section="reports" onclick="navigateTo('reports')">📈 Reportes</button>
       <button class="sidebar-item hidden" data-section="settings" id="tab-users-btn" onclick="navigateTo('settings')">⚙️ Configuración</button>
+      <button class="sidebar-item" data-section="history" onclick="navigateTo('history')">📚 Historial</button>
     </nav>
 
     <div class="sidebar-footer">
@@ -1794,6 +1824,59 @@
     </div>
 
     <!-- ════════════════════════════════════════════════════
+         SECCIÓN: RESUMENES (CENTRO DE ESTADÍSTICAS)
+         ════════════════════════════════════════════════════ -->
+    <div id="section-summaries" class="hidden">
+      <div class="toolbar">
+        <div>
+          <h2 style="margin:0; color:var(--thread-dark);">📊 Resúmenes</h2>
+          <p style="color:var(--muted); margin:4px 0 0; font-size:14px;">Estadísticas y análisis del negocio con filtros por período, vendedor y cliente.</p>
+        </div>
+      </div>
+
+      <div class="toolbar" style="margin-bottom:16px; gap:8px; flex-wrap:wrap;">
+        <div class="filters" style="flex-wrap:wrap; align-items:end;">
+          <div>
+            <label style="margin:0 0 4px;">Período</label>
+            <select id="res-periodo" onchange="resRangoToggle(); renderResumenes();">
+              <option value="todo" selected>Todos</option>
+              <option value="hoy">Hoy</option>
+              <option value="ayer">Ayer</option>
+              <option value="semana">Esta semana</option>
+              <option value="mes">Este mes</option>
+              <option value="anio">Este año</option>
+              <option value="rango">Rango personalizado</option>
+            </select>
+          </div>
+          <div id="res-rango-block" class="hidden" style="display:flex; gap:8px; align-items:end;">
+            <div>
+              <label style="margin:0 0 4px;">Desde</label>
+              <input type="date" id="res-desde" onchange="renderResumenes();">
+            </div>
+            <div>
+              <label style="margin:0 0 4px;">Hasta</label>
+              <input type="date" id="res-hasta" onchange="renderResumenes();">
+            </div>
+          </div>
+          <div>
+            <label style="margin:0 0 4px;">Vendedor</label>
+            <select id="res-vendedor" onchange="renderResumenes();">
+              <option value="">Todos</option>
+            </select>
+          </div>
+          <div>
+            <label style="margin:0 0 4px;">Cliente</label>
+            <select id="res-cliente" onchange="renderResumenes();">
+              <option value="">Todos</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div id="resumen-contenido"></div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════
          SECCIÓN: CLIENTES
          ════════════════════════════════════════════════════ -->
     <!-- ════════════════════════════════════════════════════
@@ -2109,6 +2192,22 @@
   function textoFechaEntrega(v) {
     if (!(v && v.fecha_entrega)) return 'Pendiente por definir';
     return formatearFechaHumana(v.fecha_entrega).replace(/^📅\s*/, '');
+  }
+
+  // Opciones del select "Vendedor asignado": usuarios conocidos + vendedores con ventas + el usuario actual.
+  // Así funciona automáticamente para cualquier usuario nuevo sin tocar el código.
+  function opcionesVendedoresHtml(seleccionado) {
+    const nombres = new Set();
+    Object.values(USER_ROLES_DEFAULT).forEach(u => { if (u.vendedor) nombres.add(u.vendedor); });
+    ventasCache.forEach(v => { if (v.vendedor) nombres.add(v.vendedor); });
+    if (currentRole.vendedor) nombres.add(currentRole.vendedor);
+    return [...nombres].sort().map(n =>
+      `<option value="${n}" ${n === seleccionado ? 'selected' : ''}>${n}</option>`
+    ).join('');
+  }
+
+  function horaColombia() {
+    return new Date().toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit', hour12: false });
   }
 
   /* ---------- Liquidación entre socios por pedido ---------- */
@@ -2499,7 +2598,7 @@
      NAVEGACIÓN POR SIDEBAR
      ===================================================== */
   function navigateTo(section) {
-    const sections = ['dashboard', 'new-sale', 'orders', 'history', 'purchases', 'settlements', 'reports', 'settings'];
+    const sections = ['dashboard', 'new-sale', 'orders', 'purchases', 'settlements', 'summaries', 'reports', 'settings', 'history'];
     sections.forEach(s => {
       document.getElementById(`section-${s}`).classList.add('hidden');
     });
@@ -2523,6 +2622,8 @@
       renderCompras();
     } else if (section === 'settlements') {
       renderLiquidaciones();
+    } else if (section === 'summaries') {
+      renderResumenes();
     } else if (section === 'settings' && currentRole.role === 'admin') {
       loadUsuarios();
     }
@@ -2581,7 +2682,7 @@
     sel.value = current;
   }
 
-  // DASHBOARD — resumen en tarjetas
+  // DASHBOARD — pantalla principal: información rápida y accesos generales
   function renderDashboard() {
     const esAdmin = currentRole.role === 'admin';
     const miNombre = currentRole.vendedor;
@@ -2596,37 +2697,31 @@
       .filter(v => v.entrega_por && (esAdmin || v.entrega_por === miNombre))
       .sort((a, b) => (a.fecha_entrega || '') > (b.fecha_entrega || '') ? 1 : -1);
 
-    let totalCamisas = 0;
-    let totalRestante = 0;
-    const porVendedor = {};
-    ventasCache.forEach(v => {
-      const cant = Number(v.cantidad) || 1;
-      const precio = Number(v.precio_unitario) || 0;
-      const costoUnitario = Number(v.costo_unitario) || 0;
-      const abono = Number(v.abono) || 0;
-      const ganancia = (precio * cant) - (costoUnitario * cant);
-      const restante = (precio * cant) - abono;
-      totalCamisas += cant;
-      totalRestante += Math.max(restante, 0);
-      if (!porVendedor[v.vendedor]) porVendedor[v.vendedor] = { camisas: 0, restante: 0 };
-      porVendedor[v.vendedor].camisas += cant;
-      porVendedor[v.vendedor].restante += Math.max(restante, 0);
-      porVendedor[v.vendedor].ganancia = (porVendedor[v.vendedor].ganancia || 0) + ganancia;
-    });
-
     document.getElementById('dashboard-contenido').innerHTML = `
       <div id="dashboard-alertas"></div>
       <div class="dash-section" style="margin-bottom:24px;">
-        <h2 style="font-size:17px;font-weight:600;margin:0 0 10px;">📊 Resumen por Vendedor</h2>
-        <div class="vendor-summary-grid">
-          ${Object.entries(porVendedor).map(([nombre, p]) => `
-            <div class="vendor-summary-card">
-              <h3>${nombre}</h3>
-              <div class="row"><span class="label">Camisas vendidas</span><span><b>${p.camisas}</b></span></div>
-              <div class="row"><span class="label">Por cobrar</span><span style="color:var(--warn)">${fmt(p.restante)}</span></div>
-              <div class="row"><span class="label">Ganancia (50%)</span><span style="color:var(--ok)">${fmt((p.ganancia || 0) / 2)}</span></div>
-            </div>
-          `).join('') || '<p style="color:var(--muted)">No hay datos por vendedor.</p>'}
+        <h2 style="font-size:17px;font-weight:600;margin:0 0 10px;">⚡ Accesos rápidos</h2>
+        <div class="kpi-grid">
+          <div class="kpi-card" style="cursor:pointer;" onclick="navigateTo('new-sale')">
+            <div class="kpi-label">➕ Nueva Venta</div>
+            <div class="kpi-value" style="font-size:16px;">Registrar</div>
+            <div class="kpi-sub">Crea un nuevo pedido de camisas</div>
+          </div>
+          <div class="kpi-card" style="cursor:pointer;" onclick="navigateTo('orders')">
+            <div class="kpi-label">📋 Pedidos</div>
+            <div class="kpi-value" style="font-size:16px;">${pendientes.length}</div>
+            <div class="kpi-sub">Pedidos activos</div>
+          </div>
+          <div class="kpi-card" style="cursor:pointer;" onclick="navigateTo('summaries')">
+            <div class="kpi-label">📊 Resúmenes</div>
+            <div class="kpi-value" style="font-size:16px;">Ver</div>
+            <div class="kpi-sub">Estadísticas y análisis del negocio</div>
+          </div>
+          <div class="kpi-card" style="cursor:pointer;" onclick="navigateTo('settlements')">
+            <div class="kpi-label">💰 Liquidaciones</div>
+            <div class="kpi-value" style="font-size:16px;">Ver</div>
+            <div class="kpi-sub">Saldos y ganancias entre socios</div>
+          </div>
         </div>
       </div>
       <div class="dash-list">
@@ -2652,6 +2747,8 @@
         }
       </div>
     `;
+
+    calcularAlertas();
   }
 
   function itemsParaDashboard(v) {
@@ -2750,6 +2847,305 @@
     if (alertas.length === 0) alertas.push({ tipo: 'success', msg: '✅ Todo al día — No hay alertas pendientes.' });
 
     container.innerHTML = alertas.map(a => `<div class="alert-item ${a.tipo}">${a.msg}</div>`).join('');
+  }
+
+  /* =====================================================
+     RESUMENES — CENTRO DE ESTADÍSTICAS Y ANÁLISIS
+     ===================================================== */
+  function escSimple(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function resPeriodoLabel() {
+    const labels = {
+      todo: 'Todos los tiempos', hoy: 'Hoy', ayer: 'Ayer',
+      semana: 'Últimos 7 días', mes: 'Este mes', anio: 'Este año', rango: 'Rango personalizado'
+    };
+    return labels[document.getElementById('res-periodo').value] || 'Todos los tiempos';
+  }
+
+  function resRangoToggle() {
+    const block = document.getElementById('res-rango-block');
+    if (!block) return;
+    block.classList.toggle('hidden', document.getElementById('res-periodo').value !== 'rango');
+  }
+
+  // ¿La fecha (YYYY-MM-DD) cae dentro del período seleccionado?
+  function resPeriodoAplica(fecha) {
+    if (!fecha) return false;
+    const f = String(fecha).slice(0, 10);
+    const hoy = hoyColombia();
+    const periodo = document.getElementById('res-periodo').value;
+    if (periodo === 'todo') return true;
+
+    if (periodo === 'rango') {
+      const desde = document.getElementById('res-desde').value;
+      const hasta = document.getElementById('res-hasta').value;
+      if (!desde) return true;
+      if (f < desde) return false;
+      if (hasta && f > hasta) return false;
+      return true;
+    }
+    if (periodo === 'hoy') return f === hoy;
+    if (periodo === 'ayer') {
+      const ayer = new Date();
+      ayer.setDate(ayer.getDate() - 1);
+      return f === ayer.toLocaleDateString('en-CA');
+    }
+    if (periodo === 'semana') {
+      const inicio = new Date();
+      inicio.setDate(inicio.getDate() - 6);
+      return f >= inicio.toLocaleDateString('en-CA') && f <= hoy;
+    }
+    if (periodo === 'mes') return f.slice(0, 7) === hoy.slice(0, 7);
+    if (periodo === 'anio') return f.slice(0, 4) === hoy.slice(0, 4);
+    return true;
+  }
+
+  function itemsCamisaVenta(v) {
+    let items = null;
+    if (v.items_camisa) {
+      try { items = JSON.parse(v.items_camisa); } catch (e) { items = null; }
+    }
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return [{ color: v.color, talla: v.talla, genero: v.genero }];
+    }
+    return items;
+  }
+
+  function renderResumenes() {
+    const selVendedor = document.getElementById('res-vendedor');
+    const selCliente = document.getElementById('res-cliente');
+    const fVendedor = selVendedor.value;
+    const fCliente = selCliente.value;
+
+    const vendors = [...new Set(ventasCache.map(v => v.vendedor).filter(Boolean))].sort();
+    selVendedor.innerHTML = '<option value="">Todos</option>' + vendors.map(v =>
+      `<option value="${escSimple(v)}" ${v === fVendedor ? 'selected' : ''}>${escSimple(v)}</option>`).join('');
+
+    const clientes = [...new Set(ventasCache.map(v => v.cliente_nombre).filter(Boolean))].sort();
+    selCliente.innerHTML = '<option value="">Todos</option>' + clientes.map(c =>
+      `<option value="${escSimple(c)}" ${c === fCliente ? 'selected' : ''}>${escSimple(c)}</option>`).join('');
+
+    const ventasFiltradas = ventasCache.filter(v => {
+      if (!resPeriodoAplica(v.fecha)) return false;
+      if (fVendedor && v.vendedor !== fVendedor) return false;
+      if (fCliente && (v.cliente_nombre || '') !== fCliente) return false;
+      return true;
+    });
+
+    // ---------- VENTAS ----------
+    let totalCamisas = 0;
+    let totalVendido = 0;
+    let totalCosto = 0;
+    let totalAbonos = 0;
+    const productos = {};
+    ventasFiltradas.forEach(v => {
+      const cant = Number(v.cantidad) || 1;
+      const precio = Number(v.precio_unitario) || 0;
+      const costoU = Number(v.costo_unitario) || 0;
+      const abono = Number(v.abono) || 0;
+      totalCamisas += cant;
+      totalVendido += precio * cant;
+      totalCosto += costoU * cant;
+      totalAbonos += abono;
+      itemsCamisaVenta(v).forEach(it => {
+        const clave = `${it.color || '?'} · ${it.talla || '?'} · ${it.genero || '?'}`;
+        if (!productos[clave]) productos[clave] = { cantidad: 0, color: it.color || '?', talla: it.talla || '?', genero: it.genero || '?' };
+        productos[clave].cantidad += cant;
+      });
+    });
+
+    // ---------- PEDIDOS ----------
+    const pedidosActivos = ventasFiltradas.filter(v => !v.finalizado && v.estado !== 'Pagado' && v.estado !== 'Entregado').length;
+    const pedidosFinalizados = ventasFiltradas.filter(v => v.finalizado).length;
+    const pendientesEntregar = ventasFiltradas.filter(v => !v.finalizado && v.estado !== 'Entregado').length;
+    const entregados = ventasFiltradas.filter(v => v.estado === 'Entregado').length;
+
+    // ---------- POR VENDEDOR ----------
+    const porVendedor = {};
+    ventasFiltradas.forEach(v => {
+      const cant = Number(v.cantidad) || 1;
+      const precio = Number(v.precio_unitario) || 0;
+      const costoU = Number(v.costo_unitario) || 0;
+      const abono = Number(v.abono) || 0;
+      const nombre = v.vendedor || 'Sin asignar';
+      if (!porVendedor[nombre]) porVendedor[nombre] = { camisas: 0, vendido: 0, ganancia: 0, abono: 0, restante: 0 };
+      porVendedor[nombre].camisas += cant;
+      porVendedor[nombre].vendido += precio * cant;
+      porVendedor[nombre].ganancia += (precio - costoU) * cant;
+      porVendedor[nombre].abono += abono;
+      porVendedor[nombre].restante += Math.max(precio * cant - abono, 0);
+    });
+
+    // ---------- CLIENTES ----------
+    const porCliente = {};
+    ventasFiltradas.forEach(v => {
+      const cant = Number(v.cantidad) || 1;
+      const precio = Number(v.precio_unitario) || 0;
+      const abono = Number(v.abono) || 0;
+      const nombre = v.cliente_nombre || 'Sin nombre';
+      if (!porCliente[nombre]) porCliente[nombre] = { pedidos: 0, camisas: 0, vendido: 0, deuda: 0 };
+      porCliente[nombre].pedidos += 1;
+      porCliente[nombre].camisas += cant;
+      porCliente[nombre].vendido += precio * cant;
+      porCliente[nombre].deuda += Math.max(precio * cant - abono, 0);
+    });
+
+    // ---------- COMPRAS ----------
+    const comprasFiltradas = comprasCache.filter(c => resPeriodoAplica(c.fecha));
+    const comprasInvertido = comprasFiltradas.reduce((s, c) => {
+      const costo = ventasCache
+        .filter(v => v.compra_id === c.id)
+        .reduce((ss, v) => ss + (Number(v.costo_unitario) || 0) * (Number(v.cantidad) || 1), 0);
+      return s + costo;
+    }, 0);
+
+    // ---------- LIQUIDACIONES ----------
+    const liqFiltradas = liquidacionesCache.filter(l => resPeriodoAplica(l.fecha));
+    const liqTotal = liqFiltradas.reduce((s, l) => s + (Number(l.monto) || 0), 0);
+
+    const rkVendedores = Object.entries(porVendedor).sort((a, b) => b[1].camisas - a[1].camisas);
+    const rkProductos = Object.values(productos).sort((a, b) => b.cantidad - a.cantidad).slice(0, 8);
+    const rkClientes = Object.entries(porCliente).sort((a, b) => b[1].vendido - a[1].vendido).slice(0, 8);
+
+    const ganancia = totalVendido - totalCosto;
+    const porCobrar = Math.max(totalVendido - totalAbonos, 0);
+
+    const filaVendedor = rkVendedores.map(([nombre, p], i) => `
+      <tr>
+        <td class="c">${i + 1}</td>
+        <td><b>${escSimple(nombre)}</b></td>
+        <td class="c">${p.camisas}</td>
+        <td class="money">${fmt(p.vendido)}</td>
+        <td class="money" style="color:var(--ok);">${fmt(p.ganancia / 2)}</td>
+        <td class="money" style="color:var(--warn);">${fmt(p.restante)}</td>
+      </tr>`).join('');
+
+    const filaProducto = rkProductos.map((p, i) => `
+      <tr>
+        <td class="c">${i + 1}</td>
+        <td>${escSimple(p.color.toLowerCase())}</td>
+        <td class="c">${escSimple(p.talla)}</td>
+        <td class="c">${escSimple(p.genero)}</td>
+        <td class="c"><b>${p.cantidad}</b></td>
+      </tr>`).join('');
+
+    const filaCliente = rkClientes.map(([nombre, c], i) => `
+      <tr>
+        <td class="c">${i + 1}</td>
+        <td><b>${escSimple(nombre)}</b></td>
+        <td class="c">${c.pedidos}</td>
+        <td class="c">${c.camisas}</td>
+        <td class="money">${fmt(c.vendido)}</td>
+        <td class="money" style="color:${c.deuda > 0 ? 'var(--warn)' : 'var(--ok)'};">${fmt(c.deuda)}</td>
+      </tr>`).join('');
+
+    document.getElementById('resumen-contenido').innerHTML = `
+      <div style="color:var(--muted); font-size:12.5px; margin-bottom:12px;">Período: <b>${resPeriodoLabel()}</b>${fVendedor ? ` · Vendedor: <b>${escSimple(fVendedor)}</b>` : ''}${fCliente ? ` · Cliente: <b>${escSimple(fCliente)}</b>` : ''}</div>
+
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">💵 Ventas (total vendido)</div>
+          <div class="kpi-value">${fmt(totalVendido)}</div>
+          <div class="kpi-sub">${ventasFiltradas.length} pedidos · ${totalCamisas} camisas</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">📈 Ganancias</div>
+          <div class="kpi-value" style="color:var(--ok);">${fmt(ganancia)}</div>
+          <div class="kpi-sub">50% por socio: ${fmt(ganancia / 2)}</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">🏦 Por cobrar</div>
+          <div class="kpi-value" style="color:var(--warn);">${fmt(porCobrar)}</div>
+          <div class="kpi-sub">Abonado: ${fmt(totalAbonos)}</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">👕 Camisas vendidas</div>
+          <div class="kpi-value">${totalCamisas}</div>
+          <div class="kpi-sub">Costo total: ${fmt(totalCosto)}</div>
+        </div>
+      </div>
+
+      <div class="kpi-grid" style="margin-top:14px;">
+        <div class="kpi-card">
+          <div class="kpi-label">📋 Pedidos activos</div>
+          <div class="kpi-value">${pedidosActivos}</div>
+          <div class="kpi-sub">Aún sin finalizar</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">✅ Finalizados</div>
+          <div class="kpi-value">${pedidosFinalizados}</div>
+          <div class="kpi-sub">Cerrados en Historial</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">📦 Pendientes de entregar</div>
+          <div class="kpi-value">${pendientesEntregar}</div>
+          <div class="kpi-sub">Entregados: ${entregados}</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">🛍️ Compras proveedor</div>
+          <div class="kpi-value">${fmt(comprasInvertido)}</div>
+          <div class="kpi-sub">${comprasFiltradas.length} compras registradas</div>
+        </div>
+      </div>
+
+      <div class="cards" style="margin-top:16px;">
+        <div class="card">
+          <div class="eyebrow">💰 Liquidaciones entre socios</div>
+          <div class="value" style="font-size:22px;">${fmt(liqTotal)}</div>
+          <div class="sub">${liqFiltradas.length} pagos registrados en el período</div>
+        </div>
+      </div>
+
+      <div class="table-wrap" style="margin-top:18px;">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th class="c" style="width:40px;">#</th>
+              <th>Vendedor</th>
+              <th class="c">Camisas</th>
+              <th>Vendido</th>
+              <th>Ganancia (50%)</th>
+              <th>Por cobrar</th>
+            </tr>
+          </thead>
+          <tbody>${filaVendedor || '<tr><td colspan="6" style="color:var(--muted);text-align:center;">Sin datos en el período.</td></tr>'}</tbody>
+        </table>
+      </div>
+
+      <div class="table-wrap" style="margin-top:18px;">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th class="c" style="width:40px;">#</th>
+              <th>Color</th>
+              <th class="c">Talla</th>
+              <th class="c">Género</th>
+              <th class="c">Unidades</th>
+            </tr>
+          </thead>
+          <tbody>${filaProducto || '<tr><td colspan="5" style="color:var(--muted);text-align:center;">Sin datos en el período.</td></tr>'}</tbody>
+        </table>
+      </div>
+
+      <div class="table-wrap" style="margin-top:18px;">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th class="c" style="width:40px;">#</th>
+              <th>Cliente</th>
+              <th class="c">Pedidos</th>
+              <th class="c">Camisas</th>
+              <th>Vendido</th>
+              <th>Deuda</th>
+            </tr>
+          </thead>
+          <tbody>${filaCliente || '<tr><td colspan="6" style="color:var(--muted);text-align:center;">Sin datos en el período.</td></tr>'}</tbody>
+        </table>
+      </div>
+    `;
   }
 
   // TABLA DE PEDIDOS (PERSONAL POR VENDEDOR)
@@ -3100,7 +3496,6 @@
       document.getElementById('f-precio').value = venta.precio_unitario || 39000;
       document.getElementById('f-costo').value = venta.costo_unitario || 30000;
       document.getElementById('f-estado').value = venta.estado || 'Pedido';
-      vendedorSelect.value = venta.vendedor || miNombre;
       entregaSelect.value = venta.entrega_por || '';
       document.getElementById('f-fecha').value = venta.fecha || '';
       document.getElementById('f-fecha-entrega').value = venta.fecha_entrega || '';
@@ -3135,12 +3530,17 @@
       document.getElementById('f-lugar-entrega').value = '';
       document.getElementById('f-lugar-entrega').disabled = true;
       document.getElementById('f-nota').value = '';
-      vendedorSelect.value = miNombre;
       entregaSelect.value = '';
     }
 
-    // Admin puede cambiar el vendedor; los demás lo tienen fijo según su sesión
-    vendedorSelect.disabled = currentRole.role !== 'admin';
+    // Vendedor: siempre el usuario autenticado; solo el administrador puede cambiarlo.
+    if (currentRole.role === 'admin') {
+      vendedorSelect.disabled = false;
+      vendedorSelect.innerHTML = opcionesVendedoresHtml(venta ? (venta.vendedor || miNombre) : miNombre);
+    } else {
+      vendedorSelect.disabled = true;
+      vendedorSelect.innerHTML = opcionesVendedoresHtml(currentRole.vendedor || miNombre);
+    }
 
     document.getElementById('form-card').classList.remove('hidden');
     document.getElementById('form-card').scrollIntoView({ behavior: 'smooth' });
@@ -3361,7 +3761,7 @@
 
       return `
         <tr>
-          <td>${formatearFechaHumana(c.fecha)}</td>
+          <td>${formatearFechaHumana(c.fecha)}<span class="sub-tag">🕐 ${c.hora || ''}</span></td>
           <td><b>${c.proveedor || ''}</b></td>
           <td>${c.comprador || ''}</td>
           <td>${cantidad}</td>
@@ -3517,7 +3917,7 @@
      const pedidosObjs = pedidosSeleccionados.map(id => ventasCache.find(v => v.id === id)).filter(Boolean);
      const costoTotal = pedidosObjs.reduce((s, v) => s + (Number(v.costo_unitario) || 0) * (Number(v.cantidad) || 1), 0);
 
-     const payload = { fecha, comprador, proveedor, observaciones, total: costoTotal };
+     const payload = { fecha, comprador, proveedor, observaciones, total: costoTotal, hora: horaColombia() };
 
      try {
        let error;
@@ -3862,7 +4262,7 @@
           : '<span style="color:var(--muted);">—</span>';
         return `
         <tr>
-          <td>${formatearFechaHumana(l.fecha)}</td>
+          <td>${formatearFechaHumana(l.fecha)}<span class="sub-tag">🕐 ${l.hora || ''}</span></td>
           <td>${pedidoLabel}</td>
           <td><b>${l.pagador}</b></td>
           <td><b>${l.receptor}</b></td>
@@ -3960,7 +4360,7 @@
     }
 
      const { error } = await supabaseClient.from('liquidaciones').insert({
-       venta_id: ventaId, fecha, pagador, receptor, monto, nota
+       venta_id: ventaId, fecha, pagador, receptor, monto, nota, hora: horaColombia()
      });
 
      if (error) { errEl.textContent = error.message; errEl.classList.remove('hidden'); return; }
