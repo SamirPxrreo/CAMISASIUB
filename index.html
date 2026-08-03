@@ -686,13 +686,19 @@
   #section-purchases .table-wrap td:nth-child(5),
   #section-purchases .table-wrap td:nth-child(6),
   #section-purchases .table-wrap td:nth-child(7),
-  #section-purchases .table-wrap td:nth-child(8) { white-space: nowrap; }
+  #section-purchases .table-wrap td:nth-child(8),
+  #section-purchases .table-wrap td:nth-child(9) { white-space: nowrap; }
   #section-purchases .table-wrap th:nth-child(1),
   #section-purchases .table-wrap th:nth-child(2),
   #section-purchases .table-wrap th:nth-child(3),
   #section-purchases .table-wrap td:nth-child(1),
   #section-purchases .table-wrap td:nth-child(2),
   #section-purchases .table-wrap td:nth-child(3) { padding: 8px 10px; }
+  #section-purchases .table-wrap th:nth-child(4),
+  #section-purchases .table-wrap td:nth-child(4) {
+    min-width: 110px;
+    max-width: 200px;
+  }
   #section-purchases .table-wrap th:nth-child(1),
   #section-purchases .table-wrap td:nth-child(1) {
     width: 150px;
@@ -1416,7 +1422,7 @@
       <button class="sidebar-item active" data-section="dashboard" onclick="navigateTo('dashboard')">🏠 Inicio</button>
       <button class="sidebar-item" data-section="new-sale" onclick="navigateTo('new-sale')">➕ Nueva Venta</button>
       <button class="sidebar-item" data-section="orders" onclick="navigateTo('orders')">📋 Pedidos</button>
-      <button class="sidebar-item" data-section="purchases" onclick="navigateTo('purchases')">🛍️ Compras</button>
+      <button class="sidebar-item" data-section="purchases" onclick="navigateTo('purchases')">🛍️ Abonos Yesenia</button>
       <button class="sidebar-item" data-section="settlements" onclick="navigateTo('settlements')">💰 Liquidaciones</button>
       <button class="sidebar-item" data-section="summaries" onclick="navigateTo('summaries')">📊 Resúmenes</button>
       <button class="sidebar-item" data-section="reports" onclick="navigateTo('reports')">📈 Reportes</button>
@@ -1738,14 +1744,14 @@
          ════════════════════════════════════════════════════ -->
     <div id="section-purchases" class="hidden">
       <div class="private-banner" id="compras-privacy-banner">
-        🔒 <span><b>Acceso Privado:</b> Estás viendo únicamente las compras donde tienes pedidos propios.</span>
+        🔒 <span><b>Acceso Privado:</b> Estás viendo únicamente los abonos a Yesenia donde tienes pedidos propios.</span>
       </div>
       <div class="toolbar">
         <div>
-          <h2 style="margin:0; color:var(--thread-dark);">🛍️ Compras al proveedor</h2>
-          <p style="color:var(--muted); margin:4px 0 0; font-size:14px;">Cada compra agrupa los pedidos comprados en una misma visita al proveedor, con sus aportes y la liquidación entre quienes participaron.</p>
+          <h2 style="margin:0; color:var(--thread-dark);">🛍️ Abonos Yesenia</h2>
+          <p style="color:var(--muted); margin:4px 0 0; font-size:14px;">Cada abono agrupa los pedidos pagados en una misma visita a Yesenia, con los aportes de cada quien y la liquidación entre quienes participaron.</p>
         </div>
-        <button class="btn btn-gold" onclick="openCompraModal()" type="button">+ Nueva compra</button>
+        <button class="btn btn-gold" onclick="openCompraModal()" type="button">+ Nuevo abono</button>
       </div>
       <div class="liquidacion-box" id="compras-deuda-box" style="margin-top:16px;"></div>
       <div class="table-wrap" style="margin-top:16px;">
@@ -1755,6 +1761,7 @@
               <th>Fecha</th>
               <th>Proveedor</th>
               <th>Comprador</th>
+              <th>Quién abona</th>
               <th>Camisas</th>
               <th>Costo total</th>
               <th>Aportado</th>
@@ -1765,8 +1772,8 @@
           <tbody id="compras-body"></tbody>
         </table>
         <div class="empty hidden" id="compras-empty-state">
-          <b>Todavía no hay compras registradas.</b><br>
-          Usa "+ Nueva compra" para registrar una visita al proveedor.
+          <b>Todavía no hay abonos a Yesenia registrados.</b><br>
+          Usa "+ Nuevo abono" para registrar una visita a Yesenia.
         </div>
       </div>
     </div>
@@ -1945,7 +1952,7 @@
 <div id="compra-modal" class="modal-backdrop hidden">
   <div class="modal-card modal-card-wide">
     <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px;">
-      <h3 id="compra-modal-title" style="margin:0; color:var(--thread-dark);">Nueva compra al proveedor</h3>
+      <h3 id="compra-modal-title" style="margin:0; color:var(--thread-dark);">Nuevo abono a Yesenia</h3>
       <button class="btn-ghost btn" onclick="closeCompraModal()" style="padding:2px 10px; font-size:20px; line-height:1; min-width:auto; flex-shrink:0;" type="button" title="Cerrar">✕</button>
     </div>
 
@@ -1997,7 +2004,7 @@
 
     <!-- APORTES Y LIQUIDACIÓN (sólo disponible una vez la compra existe) -->
     <div id="cp-aportes-section" class="hidden" style="margin-top:26px; border-top:2px solid var(--line); padding-top:18px;">
-      <h4 style="margin:0 0 12px; color:var(--thread-dark);">Aportes para pagar esta compra</h4>
+      <h4 style="margin:0 0 12px; color:var(--thread-dark);">Aportes para pagar este abono</h4>
 
       <div id="cp-aportes-list" style="margin-bottom:14px;"></div>
 
@@ -2194,6 +2201,12 @@
     return formatearFechaHumana(v.fecha_entrega).replace(/^📅\s*/, '');
   }
 
+  // Muestra el color con su inicial en mayúscula (ej. "negro" → "Negro").
+  function capitalizarColor(color) {
+    const c = String(color == null ? '' : color).trim();
+    return c ? c.charAt(0).toUpperCase() + c.slice(1) : c;
+  }
+
   // Opciones del select "Vendedor asignado": usuarios conocidos + vendedores con ventas + el usuario actual.
   // Así funciona automáticamente para cualquier usuario nuevo sin tocar el código.
   function opcionesVendedoresHtml(seleccionado) {
@@ -2278,7 +2291,7 @@
     const faltas = [];
     if (!costoProveedorPagado(v)) {
       const pagos = abonosProveedorPorVentaId(v.id);
-      faltas.push(`Falta pagar ${fmt(pagos.pendiente)} al proveedor (registra aportes en Compras).`);
+      faltas.push(`Falta pagar ${fmt(pagos.pendiente)} al proveedor (registra abonos en Abonos Yesenia).`);
     }
     if (!pedidoSocioLiquidado(v)) {
       faltas.push(`Falta liquidar ${fmt(saldoSocioPendientePedido(v))} al otro socio (registra pago en Liquidaciones).`);
@@ -2370,8 +2383,8 @@
     box.classList.remove('hidden');
     box.innerHTML = `
       <div style="margin-bottom:8px;">
-        <b>📋 Deuda al proveedor por pedidos no marcados como Pagado</b>
-        <p style="color:var(--muted); font-size:12px; margin:4px 0 0;">Suma lo que falta cubrir del costo de tus pedidos activos según los aportes registrados en cada compra.</p>
+        <b>📋 Deuda con Yesenia por pedidos no marcados como Pagado</b>
+        <p style="color:var(--muted); font-size:12px; margin:4px 0 0;">Suma lo que falta cubrir del costo de tus pedidos activos según los abonos registrados en cada visita.</p>
       </div>
       ${bloques}
       ${vendedores.length > 1 ? `<div style="margin-top:10px; padding-top:8px; border-top:2px solid var(--line);"><b>Total general pendiente:</b> <span style="color:var(--warn);">${fmt(totalGeneral)}</span></div>` : ''}
@@ -2385,24 +2398,24 @@
        try { items = JSON.parse(v.items_camisa); } catch (e) { items = null; }
      }
      if (!items || !Array.isArray(items) || items.length === 0) {
-       const texto = `${v.genero || '?'}, ${(v.color || '?').toLowerCase()}, talla ${v.talla || '?'}`;
-       return html ? `<b>${v.genero || '?'}</b>, ${(v.color || '?').toLowerCase()}, talla <b>${v.talla || '?'}</b>` : texto;
+       const texto = `${v.genero || '?'}, ${capitalizarColor(v.color)}, talla ${v.talla || '?'}`;
+       return html ? `<b>${v.genero || '?'}</b>, ${capitalizarColor(v.color)}, talla <b>${v.talla || '?'}</b>` : texto;
      }
      if (html) {
        // Remove Abono from HTML display
        return items.map((it, idx) => `
          <div style="${idx > 0 ? 'margin-top:4px; padding-top:4px; border-top:1px dashed var(--line);' : ''}">
-           <b>${it.genero || '?'}</b>, ${(it.color || '?').toLowerCase()}, talla <b>${it.talla || '?'}</b>
+           <b>${it.genero || '?'}</b>, ${capitalizarColor(it.color)}, talla <b>${it.talla || '?'}</b>
          </div>
        `).join('') + (items.some(it => it.programa) ? `<div style="margin-top:4px; color:var(--thread); font-size:12px; font-weight:600;">🧵 Bordado: ${items.map(it => it.programa).filter(Boolean).join(', ')}</div>` : '');
      }
      if (paraWhatsApp) {
        return items.map(it => {
-         const base = `${it.genero || '?'}, ${(it.color || '?').toLowerCase()}, talla ${it.talla || '?'}`;
+         const base = `${it.genero || '?'}, ${capitalizarColor(it.color)}, talla ${it.talla || '?'}`;
          return it.programa ? `${base} — ${it.programa} (bordado)` : base;
        }).join('\n     ');
      }
-     let texto = items.map(it => `${it.genero || '?'}, ${(it.color || '?').toLowerCase()}, talla ${it.talla || '?'}`).join('; ');
+     let texto = items.map(it => `${it.genero || '?'}, ${capitalizarColor(it.color)}, talla ${it.talla || '?'}`).join('; ');
      if (maxLength && texto.length > maxLength) texto = texto.substring(0, maxLength) + '…';
      return texto;
    }
@@ -2819,10 +2832,10 @@
       try { items = JSON.parse(v.items_camisa); } catch (e) { items = null; }
     }
     if (!items || !Array.isArray(items) || items.length === 0) {
-      return [`• ${v.genero || '?'} · ${(v.color || '?').toLowerCase()} · ${v.talla || '?'}`];
+      return [`• ${v.genero || '?'} · ${capitalizarColor(v.color)} · ${v.talla || '?'}`];
     }
     return items.map(it => {
-      const base = `${it.genero || '?'} · ${(it.color || '?').toLowerCase()} · ${it.talla || '?'}`;
+      const base = `${it.genero || '?'} · ${capitalizarColor(it.color)} · ${it.talla || '?'}`;
       return it.programa ? `• ${base} · ${it.programa}` : `• ${base}`;
     });
   }
@@ -3182,7 +3195,7 @@
     const filaProducto = rkProductos.map((p, i) => `
       <tr>
         <td class="c">${i + 1}</td>
-        <td>${escSimple(p.color.toLowerCase())}</td>
+        <td>${escSimple(capitalizarColor(p.color))}</td>
         <td class="c">${escSimple(p.talla)}</td>
         <td class="c">${escSimple(p.genero)}</td>
         <td class="c"><b>${p.cantidad}</b></td>
@@ -3239,7 +3252,7 @@
         </div>
       </div>
 
-      <h3 style="margin:24px 0 12px; font-size:15px;">🛒 Compras al proveedor (estado actual)</h3>
+      <h3 style="margin:24px 0 12px; font-size:15px;">🛒 Abonos a Yesenia (estado actual)</h3>
       <div class="kpi-grid">
         <div class="kpi-card" style="border-left:3px solid var(--warn);">
           <div class="kpi-label">Camisas por comprar</div>
@@ -3942,9 +3955,9 @@
   function renderCompras() {
     const banner = document.getElementById('compras-privacy-banner');
     if (currentRole.role === 'admin') {
-      banner.innerHTML = '🛡️ <span><b>Modo Administrador:</b> Viendo todas las compras registradas al proveedor.</span>';
+      banner.innerHTML = '🛡️ <span><b>Modo Administrador:</b> Viendo todos los abonos a Yesenia registrados.</span>';
     } else {
-      banner.innerHTML = `🔒 <span><b>Acceso Privado:</b> Estás viendo únicamente las compras donde tienes pedidos propios (${currentRole.vendedor}).</span>`;
+      banner.innerHTML = `🔒 <span><b>Acceso Privado:</b> Estás viendo únicamente los abonos a Yesenia donde tienes pedidos propios (${currentRole.vendedor}).</span>`;
     }
 
     let rows = comprasVisibles();
@@ -3959,7 +3972,8 @@
       const pedidos = ventasCache.filter(v => v.compra_id === c.id);
       const cantidad = pedidos.reduce((s, v) => s + (Number(v.cantidad) || 1), 0);
       const costoTotal = pedidos.reduce((s, v) => s + (Number(v.costo_unitario) || 0) * (Number(v.cantidad) || 1), 0);
-      const aportado = compraAportesCache.filter(a => a.compra_id === c.id).reduce((s, a) => s + (Number(a.monto) || 0), 0);
+      const aportesCompra = compraAportesCache.filter(a => a.compra_id === c.id);
+      const aportado = aportesCompra.reduce((s, a) => s + (Number(a.monto) || 0), 0);
       const saldo = aportado - costoTotal;
       const puedeGestionar = currentRole.role === 'admin' || c.comprador === currentRole.vendedor;
       const acciones = puedeGestionar
@@ -3967,11 +3981,21 @@
            <button class="btn-danger" onclick="deleteCompra('${c.id}')" type="button">Eliminar</button>`
         : `<button class="btn-small" onclick="openCompraModal('${c.id}')" type="button">Aportes</button>`;
 
+      const personasAbono = [...new Set(aportesCompra.map(a => a.persona).filter(Boolean))];
+      const quienesAbonanHtml = personasAbono.length === 0
+        ? '<span style="color:var(--muted);">—</span>'
+        : personasAbono.map(p =>
+            p === currentRole.vendedor
+              ? `<b style="color:var(--thread);">${escSimple(p)}</b>`
+              : escSimple(p)
+          ).join(', ');
+
       return `
         <tr>
           <td>${formatearFechaHumana(c.fecha)}<span class="sub-tag">🕐 ${c.hora || ''}</span></td>
           <td><b>${c.proveedor || ''}</b></td>
           <td>${c.comprador || ''}</td>
+          <td>${quienesAbonanHtml}</td>
           <td>${cantidad}</td>
           <td class="money">${fmt(costoTotal)}</td>
           <td class="money" style="color:var(--ok);">${fmt(aportado)}</td>
@@ -4066,7 +4090,7 @@
       const c = comprasCache.find(x => x.id === compraId);
       if (!c) return;
       compraSoloAportes = currentRole.role !== 'admin' && c.comprador !== currentRole.vendedor;
-      title.textContent = compraSoloAportes ? 'Compra al proveedor — aportes' : 'Editar compra al proveedor';
+      title.textContent = compraSoloAportes ? 'Abono a Yesenia — aportes' : 'Editar abono a Yesenia';
       document.getElementById('cp-fecha').value = c.fecha || '';
       document.getElementById('cp-comprador').value = c.comprador || 'Samir';
       document.getElementById('cp-proveedor').value = c.proveedor || 'Yesenia';
@@ -4080,7 +4104,7 @@
       renderAportesList();
     } else {
       compraSoloAportes = false;
-      title.textContent = 'Nueva compra al proveedor';
+      title.textContent = 'Nuevo abono a Yesenia';
       document.getElementById('cp-fecha').value = hoyColombia();
       document.getElementById('cp-comprador').value = '';
       document.getElementById('cp-proveedor').value = 'Yesenia';
@@ -4197,7 +4221,7 @@
     const aportes = aportesDeCompraActual();
 
     if (aportes.length === 0) {
-      list.innerHTML = '<p style="color:var(--muted); margin:0;">Todavía no hay aportes registrados para esta compra.</p>';
+      list.innerHTML = '<p style="color:var(--muted); margin:0;">Todavía no hay aportes registrados para este abono.</p>';
     } else {
       list.innerHTML = aportes.map(a => `
         <div class="aporte-row">
@@ -4301,7 +4325,7 @@
     if (!box) return;
 
     if (!editingCompraId) {
-      box.innerHTML = '<p style="color:var(--muted); margin:0;">Guarda la compra para poder registrar aportes y ver la liquidación.</p>';
+      box.innerHTML = '<p style="color:var(--muted); margin:0;">Guarda el abono para poder registrar aportes y ver la liquidación.</p>';
       return;
     }
 
@@ -4955,7 +4979,7 @@
           '<td>' + esc(v.lugar_entrega) + '</td>' +
           '<td>' + esc(v.nota) + '</td>' +
           '<td class="c">' + esc(it.genero) + '</td>' +
-          '<td class="c">' + esc((it.color || '').toLowerCase()) + '</td>' +
+          '<td class="c">' + esc(capitalizarColor(it.color)) + '</td>' +
           '<td class="c">' + esc(it.talla) + '</td>' +
           '<td>' + esc(it.programa) + '</td>' +
           '<td class="m">' + fmtNum(precio) + '</td>' +
