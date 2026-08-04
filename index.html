@@ -609,6 +609,93 @@
     opacity: .45;
   }
 
+  /* DETALLE EXPANDIBLE POR PEDIDO (abono por camisa) */
+  .pedido-block {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    background: var(--section-bg);
+    overflow: hidden;
+  }
+  .pedido-block .pedido-check-row {
+    border-bottom: 1px dashed var(--line);
+  }
+  .pedido-block .pedido-check-row:last-child {
+    border-bottom: none;
+  }
+  .pedido-block .pedido-check-row:hover {
+    background: var(--accent-bg);
+  }
+  .pedido-costo-tag {
+    margin-left: auto;
+    color: var(--muted);
+    font-size: 12.5px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .pedido-detalle {
+    border-top: 1px dashed var(--line);
+    padding: 10px 10px 12px;
+    background: var(--card);
+    animation: fadeIn 0.2s ease;
+  }
+  .pedido-detalle-titulo {
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--muted);
+    font-weight: 700;
+    margin: 0 0 8px;
+  }
+  .camisa-detalle-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 8px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    margin-bottom: 6px;
+    background: var(--card);
+  }
+  .camisa-detalle-row:last-child {
+    margin-bottom: 0;
+  }
+  .camisa-detalle-info {
+    flex: 1 1 220px;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+  .camisa-abono-campo {
+    flex: 0 0 160px;
+  }
+  .camisa-abono-campo input {
+    padding: 6px 8px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .pedido-total-detalle {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--line);
+    font-size: 13px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+    color: var(--muted);
+  }
+  .pedido-total-detalle b {
+    color: var(--thread);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .persona-block .camisa-detalle-info {
+    color: var(--muted);
+  }
+  .persona-block .camisa-abono-campo {
+    flex-basis: 200px;
+  }
+
   .aporte-row {
     display: flex;
     flex-wrap: wrap;
@@ -698,6 +785,11 @@
   #section-purchases .table-wrap td:nth-child(4) {
     min-width: 110px;
     max-width: 200px;
+  }
+  #section-purchases .table-wrap th:nth-child(5),
+  #section-purchases .table-wrap td:nth-child(5) {
+    min-width: 240px;
+    white-space: normal;
   }
   #section-purchases .table-wrap th:nth-child(1),
   #section-purchases .table-wrap td:nth-child(1) {
@@ -1981,7 +2073,8 @@
     <label>Observaciones</label>
     <textarea id="cp-observaciones" rows="2" placeholder="Detalle de la visita al proveedor..."></textarea>
 
-    <label style="margin-top:16px;">Pedidos incluidos en esta compra</label>
+    <label style="margin-top:16px;">Personas incluidas en esta compra</label>
+    <p style="color:var(--muted); font-size:12px; margin:2px 0 8px;">Cada persona aparece una vez con la suma de sus camisas. Escribe el abono total que esa persona paga a Yesenia.</p>
     <div class="pedidos-picker" id="cp-pedidos-picker"></div>
 
     <div class="cards" style="margin-top:14px;">
@@ -1992,6 +2085,14 @@
       <div class="card">
         <div class="eyebrow">Costo total de la compra</div>
         <div class="value gold" id="cp-resumen-costo">$0</div>
+      </div>
+      <div class="card">
+        <div class="eyebrow">Abono clientes (total)</div>
+        <div class="value ok" id="cp-resumen-abono">$0</div>
+      </div>
+      <div class="card">
+        <div class="eyebrow">Saldo pendiente (costo − abono)</div>
+        <div class="value warn" id="cp-resumen-restante">$0</div>
       </div>
     </div>
 
@@ -2006,34 +2107,20 @@
     <div id="cp-aportes-section" class="hidden" style="margin-top:26px; border-top:2px solid var(--line); padding-top:18px;">
       <h4 style="margin:0 0 12px; color:var(--thread-dark);">Aportes para pagar este abono</h4>
 
-      <div id="cp-aportes-list" style="margin-bottom:14px;"></div>
+      <div id="cp-pedidos-detalle" style="margin-bottom:14px;"></div>
 
-      <div class="form-grid">
-        <div>
-          <label>Persona que aporta</label>
-          <select id="ap-persona">
-            <option value="" selected disabled>Selecciona quién aporta</option>
-            <option value="Samir">Samir</option>
-            <option value="Valentina">Valentina</option>
-            <option value="Yesenia">Yesenia</option>
-          </select>
-        </div>
-        <div>
-          <label>Valor aportado ($)</label>
-          <input type="number" id="ap-monto" min="1" placeholder="Ej. 50000">
-        </div>
-        <div>
-          <label>Fecha del aporte</label>
-          <input type="date" id="ap-fecha">
-        </div>
-        <div>
-          <label>Observación</label>
-          <input type="text" id="ap-observacion" placeholder="Opcional">
+      <div id="cp-aporte-auto" style="margin-bottom:14px; padding:10px 12px; border:1px solid var(--line); border-radius:10px; background:var(--accent-bg); font-size:13px;">
+        <b>Aporte registrado automáticamente</b>
+        <div style="margin-top:4px; color:var(--muted);">
+          <span>Persona: <b id="ap-auto-persona" style="color:var(--thread);"></b></span>
+          <span style="margin-left:8px;">·</span>
+          <span>Valor: <b class="money" id="ap-auto-monto"></b></span>
+          <span style="margin-left:8px;">·</span>
+          <span>Fecha: <b id="ap-auto-fecha"></b></span>
         </div>
       </div>
-      <div class="form-actions" style="margin-top:10px; justify-content:flex-start;">
-        <button class="btn btn-success" onclick="addAporteCompra()" type="button">+ Agregar aporte</button>
-      </div>
+
+      <div id="cp-aportes-list" style="margin-bottom:14px;"></div>
 
       <div class="liquidacion-box" id="cp-liquidacion-box"></div>
 
@@ -2162,6 +2249,7 @@
   let editingUserId = null;
   let editingCompraId = null;
   let compraSoloAportes = false;
+  let pedidosDisponiblesPickers = [];
 
 
   /* =====================================================
@@ -3881,23 +3969,26 @@
     const compraId = venta.compra_id;
     if (!compraId) return { abonado: 0, costoTotal: costoVenta, pendiente: costoVenta };
 
-    const compra = comprasCache.find(c => c.id === compraId);
-    if (!compra) return { abonado: 0, costoTotal: costoVenta, pendiente: costoVenta };
+    // El abono registrado en la venta es el valor exacto pagado a Yesenia por este pedido.
+    let abonado = Number(venta.abono) || 0;
 
-    const pedidos = ventasCache.filter(v => v.compra_id === compraId);
-    const costoTotalCompra = pedidos.reduce((s, v) => s + (Number(v.costo_unitario) || 0) * (Number(v.cantidad) || 1), 0);
-    const aportes = compraAportesCache.filter(a => a.compra_id === compraId);
-    const totalAportado = aportes.reduce((s, a) => s + (Number(a.monto) || 0), 0);
-
-    let abonado = 0;
-    if (costoTotalCompra > 0) {
-      abonado = (costoVenta / costoTotalCompra) * totalAportado;
+    // Respaldo: si el pedido no tiene abono propio pero la compra tiene aportes,
+    // se distribuyen proporcionalmente al costo de cada pedido.
+    if (!abonado) {
+      const pedidos = ventasCache.filter(v => v.compra_id === compraId);
+      const costoTotalCompra = pedidos.reduce((s, v) => s + (Number(v.costo_unitario) || 0) * (Number(v.cantidad) || 1), 0);
+      const aportes = compraAportesCache.filter(a => a.compra_id === compraId);
+      const totalAportado = aportes.reduce((s, a) => s + (Number(a.monto) || 0), 0);
+      if (costoTotalCompra > 0) {
+        abonado = (costoVenta / costoTotalCompra) * totalAportado;
+      }
     }
 
+    abonado = Math.round(abonado);
     return {
-      abonado: Math.round(abonado),
+      abonado,
       costoTotal: costoVenta,
-      pendiente: Math.max(costoVenta - Math.round(abonado), 0)
+      pendiente: Math.max(costoVenta - abonado, 0)
     };
   }
 
@@ -3973,8 +4064,10 @@
       const cantidad = pedidos.reduce((s, v) => s + (Number(v.cantidad) || 1), 0);
       const costoTotal = pedidos.reduce((s, v) => s + (Number(v.costo_unitario) || 0) * (Number(v.cantidad) || 1), 0);
       const aportesCompra = compraAportesCache.filter(a => a.compra_id === c.id);
-      const aportado = aportesCompra.reduce((s, a) => s + (Number(a.monto) || 0), 0);
-      const saldo = aportado - costoTotal;
+      const aportadoAportes = aportesCompra.reduce((s, a) => s + (Number(a.monto) || 0), 0);
+      const abonoPedidos = pedidos.reduce((s, v) => s + (Number(v.abono) || 0), 0);
+      const aportado = Math.max(aportadoAportes, abonoPedidos);
+      const saldo = costoTotal - aportado;
       const puedeGestionar = currentRole.role === 'admin' || c.comprador === currentRole.vendedor;
       const acciones = puedeGestionar
         ? `<button class="btn-small" onclick="openCompraModal('${c.id}')" type="button">Editar</button>
@@ -3990,16 +4083,38 @@
               : escSimple(p)
           ).join(', ');
 
+      const detallePedidos = pedidos.length === 0
+        ? '<span style="color:var(--muted);">—</span>'
+        : pedidos.map(p => {
+            const cant = Number(p.cantidad) || 1;
+            const ab = Number(p.abono) || 0;
+            const costo = (Number(p.costo_unitario) || 0) * cant;
+            const resto = costo - ab;
+            return `
+              <div style="line-height:1.7; border-bottom:1px dashed var(--line); padding:3px 0;">
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                  <b>${escSimple(p.cliente_nombre || 'Sin cliente')}</b>
+                  <span class="sub-tag" style="display:inline-block; margin:0;">×${cant} camisa(s)</span>
+                  <span class="sub-tag" style="display:inline-block; margin:0; color:var(--ok); font-weight:700;">Abono ${fmt(ab)}</span>
+                  <span class="sub-tag" style="display:inline-block; margin:0; color:${resto > 0 ? 'var(--warn)' : 'var(--ok)'};">${resto > 0 ? 'Saldo ' + fmt(resto) : 'Liquidado'}</span>
+                </div>
+              </div>`;
+          }).join('');
+
       return `
         <tr>
           <td>${formatearFechaHumana(c.fecha)}<span class="sub-tag">🕐 ${c.hora || ''}</span></td>
           <td><b>${c.proveedor || ''}</b></td>
           <td>${c.comprador || ''}</td>
           <td>${quienesAbonanHtml}</td>
-          <td>${cantidad}</td>
+          <td>
+            <div style="font-weight:700; margin-bottom:4px;">${cantidad} camisa(s)</div>
+            <div class="sub-tag" style="margin-bottom:2px;">${pedidos.length} pedido(s) incluido(s)</div>
+            <div>${detallePedidos}</div>
+          </td>
           <td class="money">${fmt(costoTotal)}</td>
           <td class="money" style="color:var(--ok);">${fmt(aportado)}</td>
-          <td class="money" style="color:${saldo >= 0 ? 'var(--ok)' : 'var(--warn)'}">${saldo >= 0 ? fmt(saldo) : '-' + fmt(-saldo)}</td>
+          <td class="money" style="color:${saldo > 0 ? 'var(--warn)' : 'var(--ok)'};">${saldo > 0 ? fmt(saldo) + ' pendiente' : 'Liquidado'}</td>
           <td>
             <div class="action-group">
               ${acciones}
@@ -4021,88 +4136,202 @@
   }
   function irPaginaCompras(p) { paginationState.compras = p; renderCompras(); }
 
+  function itemsDeVentaParaAbono(v) {
+    let items = null;
+    if (v.items_camisa) {
+      try { const p = JSON.parse(v.items_camisa); if (Array.isArray(p) && p.length) items = p; } catch (e) { items = null; }
+    }
+    if (!items || items.length === 0) {
+      const cant = Number(v.cantidad) || 1;
+      const abonoTotal = Number(v.abono) || 0;
+      items = Array.from({ length: cant }, () => ({
+        genero: v.genero || '',
+        color: v.color || '',
+        talla: v.talla || '',
+        programa: v.cliente_programa || '',
+        abono: cant > 0 ? Math.round(abonoTotal / cant) : 0
+      }));
+    }
+    return items;
+  }
+
+  function personasSeleccionadasActuales() {
+    return Array.from(document.querySelectorAll('.cp-persona-check:checked')).map(cb => cb.dataset.persona);
+  }
+
+  function pedidosDePersonasSeleccionadas() {
+    const personas = personasSeleccionadasActuales();
+    if (personas.length === 0) return [];
+    return pedidosDisponiblesPickers.filter(v => personas.includes(v.cliente_nombre));
+  }
+
+  // Reparte el abono total de una persona entre sus pedidos (proporcional al costo de cada pedido).
+  function distribuirAbonoPersona(abonoTotal, pedidos) {
+    const r = {};
+    if (!pedidos || pedidos.length === 0) return r;
+    if (!(abonoTotal > 0)) {
+      pedidos.forEach(v => { r[v.id] = 0; });
+      return r;
+    }
+    const costos = pedidos.map(v => (Number(v.costo_unitario) || 0) * (Number(v.cantidad) || 1));
+    const costoTotal = costos.reduce((a, b) => a + b, 0);
+    let asignado = 0;
+    pedidos.forEach((v, idx) => {
+      if (idx === pedidos.length - 1) {
+        r[v.id] = abonoTotal - asignado;
+      } else {
+        const parte = costoTotal > 0 ? Math.floor(abonoTotal * costos[idx] / costoTotal) : 0;
+        asignado += parte;
+        r[v.id] = parte;
+      }
+    });
+    return r;
+  }
+
   function renderPedidosPicker(compra) {
-    const yaAsignados = compra ? ventasCache.filter(v => v.compra_id === compra.id).map(v => v.id) : [];
+    const yaAsignados = new Set(compra ? ventasCache.filter(v => v.compra_id === compra.id).map(v => v.id) : []);
     const disponibles = pedidosDisponiblesParaCompra(compra ? compra.id : null);
     const picker = document.getElementById('cp-pedidos-picker');
+    const soloAportes = compraSoloAportes;
 
-    if (disponibles.length === 0) {
+    pedidosDisponiblesPickers = disponibles;
+
+    const porPersona = new Map();
+    disponibles.forEach(v => {
+      const nombre = v.cliente_nombre || 'Sin cliente';
+      if (!porPersona.has(nombre)) porPersona.set(nombre, []);
+      porPersona.get(nombre).push(v);
+    });
+
+    if (porPersona.size === 0) {
       picker.innerHTML = '<p style="color:var(--muted); margin:6px 0;">No hay pedidos disponibles para incluir en una compra.</p>';
       actualizarResumenCompraModal();
       return;
     }
 
-    picker.innerHTML = disponibles.map(v => {
-      const cant = Number(v.cantidad) || 1;
-      const costo = (Number(v.costo_unitario) || 0) * cant;
-      const checked = yaAsignados.includes(v.id) ? 'checked' : '';
-      return `
-        <label class="pedido-check-row">
-          <input type="checkbox" class="cp-pedido-check" value="${v.id}" ${checked}>
-          <span><b>${v.cliente_nombre || 'Pedido'}</b> — ${v.vendedor || ''} — 📅 ${v.fecha || '?'} — ${cant} camisa(s) — ${fmt(costo)}</span>
-        </label>
-      `;
-    }).join('');
+    const bloques = [];
+    porPersona.forEach((pedidos, nombre) => {
+      const cant = pedidos.reduce((s, v) => s + (Number(v.cantidad) || 1), 0);
+      const costo = pedidos.reduce((s, v) => s + (Number(v.costo_unitario) || 0) * (Number(v.cantidad) || 1), 0);
+      const estaEnCompra = pedidos.some(v => yaAsignados.has(v.id));
+      const checked = estaEnCompra ? 'checked' : '';
+      const abonoPrev = pedidos
+        .filter(v => yaAsignados.has(v.id))
+        .reduce((s, v) => s + (Number(v.abono) || 0), 0);
+      const vendedores = [...new Set(pedidos.map(v => v.vendedor).filter(Boolean))].join(', ');
 
-    picker.querySelectorAll('.cp-pedido-check').forEach(cb => {
-      if (compraSoloAportes) cb.disabled = true;
-      cb.addEventListener('change', actualizarResumenCompraModal);
+      bloques.push(`
+        <div class="pedido-block persona-block">
+          <label class="pedido-check-row">
+            <input type="checkbox" class="cp-persona-check" data-persona="${escSimple(nombre)}" ${checked} ${soloAportes ? 'disabled' : ''}>
+            <span><b>${escSimple(nombre)}</b>${vendedores ? ' — ' + escSimple(vendedores) : ''} — ${cant} camisa(s)</span>
+            <span class="pedido-costo-tag">${fmt(costo)}</span>
+          </label>
+          <div class="pedido-detalle ${checked ? '' : 'hidden'}">
+            <div class="camisa-detalle-row">
+              <span class="camisa-detalle-info">💵 Abono total que paga a Yesenia</span>
+              <span class="camisa-abono-campo">
+                <input type="number" class="cp-persona-abono" data-persona="${escSimple(nombre)}" data-costo="${costo}" min="0" step="1000" placeholder="$ Abono" value="${abonoPrev || ''}" ${soloAportes ? 'disabled' : ''}>
+              </span>
+            </div>
+            <div class="camisa-detalle-row">
+              <span class="camisa-detalle-info">Restante (costo − abono)</span>
+              <span class="cp-persona-restante" data-persona="${escSimple(nombre)}"></span>
+            </div>
+          </div>
+        </div>`);
     });
+
+    picker.innerHTML = bloques.join('');
+
+    picker.querySelectorAll('.cp-persona-check').forEach(cb => {
+      if (soloAportes) cb.disabled = true;
+      cb.addEventListener('change', () => {
+        const block = cb.closest('.persona-block');
+        const detalle = block ? block.querySelector('.pedido-detalle') : null;
+        if (detalle) detalle.classList.toggle('hidden', !cb.checked);
+        actualizarResumenCompraModal();
+        actualizarRestantesAbono();
+      });
+    });
+    picker.querySelectorAll('.cp-persona-abono').forEach(inp => {
+      inp.addEventListener('input', () => {
+        actualizarResumenCompraModal();
+        actualizarRestantesAbono();
+      });
+    });
+
     actualizarResumenCompraModal();
+    actualizarRestantesAbono();
   }
 
-  function actualizarResumenCompraModal() {
-    const checked = Array.from(document.querySelectorAll('.cp-pedido-check:checked')).map(cb => cb.value);
-    let cantidad = 0, costo = 0;
-    checked.forEach(id => {
-      const v = ventasCache.find(x => x.id === id);
-      if (!v) return;
-      const cant = Number(v.cantidad) || 1;
-      cantidad += cant;
-      costo += (Number(v.costo_unitario) || 0) * cant;
-    });
-    document.getElementById('cp-resumen-cantidad').textContent = cantidad;
-    document.getElementById('cp-resumen-costo').textContent = fmt(costo);
-    renderLiquidacionBox();
-  }
+   function actualizarResumenCompraModal() {
+     const pedidos = pedidosDePersonasSeleccionadas();
+     let cantidad = 0, costo = 0;
+     pedidos.forEach(v => {
+       cantidad += Number(v.cantidad) || 1;
+       costo += (Number(v.costo_unitario) || 0) * (Number(v.cantidad) || 1);
+     });
+
+     const personas = personasSeleccionadasActuales();
+     let abonoClientes = 0;
+     document.querySelectorAll('.cp-persona-abono').forEach(inp => {
+       if (personas.includes(inp.dataset.persona)) abonoClientes += parseFloat(inp.value) || 0;
+     });
+
+     document.getElementById('cp-resumen-cantidad').textContent = cantidad;
+     document.getElementById('cp-resumen-costo').textContent = fmt(costo);
+     const abonoEl = document.getElementById('cp-resumen-abono');
+     if (abonoEl) abonoEl.textContent = fmt(abonoClientes);
+     const restoTotal = costo - abonoClientes;
+     const restoEl = document.getElementById('cp-resumen-restante');
+     if (restoEl) {
+       restoEl.textContent = restoTotal >= 0 ? ('-' + fmt(restoTotal)) : fmt(-restoTotal);
+       restoEl.classList.toggle('warn', restoTotal > 0);
+     }
+     renderLiquidacionBox();
+   }
+
+   // Actualiza, por persona, el restante (costo − abono) mostrado junto al input de abono.
+   function actualizarRestantesAbono() {
+     document.querySelectorAll('.persona-block').forEach(block => {
+       const inp = block.querySelector('.cp-persona-abono');
+       const restEl = block.querySelector('.cp-persona-restante');
+       if (!inp || !restEl) return;
+       const costo = parseFloat(inp.dataset.costo) || 0;
+       const abono = parseFloat(inp.value) || 0;
+       const resto = costo - abono;
+       restEl.textContent = resto >= 0 ? '- ' + fmt(resto) : fmt(-resto);
+       restEl.style.color = resto >= 0 ? 'var(--warn)' : 'var(--ok)';
+     });
+   }
 
   function openCompraModal(compraId = null) {
     editingCompraId = compraId;
     const title = document.getElementById('compra-modal-title');
     const aportesSection = document.getElementById('cp-aportes-section');
 
-    document.getElementById('cp-error').classList.add('hidden');
-    document.getElementById('ap-fecha').value = hoyColombia();
-    document.getElementById('ap-monto').value = '';
-    document.getElementById('ap-observacion').value = '';
+     document.getElementById('cp-error').classList.add('hidden');
 
-    // La persona que aporta queda fija según quién tiene la sesión iniciada (Samir/Valentina).
-    // El administrador puede seguir eligiendo entre las opciones.
-    const apPersonaSelect = document.getElementById('ap-persona');
-    if (currentRole.role !== 'admin' && (currentRole.vendedor === 'Samir' || currentRole.vendedor === 'Valentina')) {
-      apPersonaSelect.value = currentRole.vendedor;
-      apPersonaSelect.disabled = true;
-    } else {
-      apPersonaSelect.disabled = false;
-    }
-
-    if (compraId) {
-      const c = comprasCache.find(x => x.id === compraId);
-      if (!c) return;
-      compraSoloAportes = currentRole.role !== 'admin' && c.comprador !== currentRole.vendedor;
-      title.textContent = compraSoloAportes ? 'Abono a Yesenia — aportes' : 'Editar abono a Yesenia';
-      document.getElementById('cp-fecha').value = c.fecha || '';
-      document.getElementById('cp-comprador').value = c.comprador || 'Samir';
-      document.getElementById('cp-proveedor').value = c.proveedor || 'Yesenia';
-      document.getElementById('cp-observaciones').value = c.observaciones || '';
-      ['cp-fecha', 'cp-comprador', 'cp-proveedor', 'cp-observaciones'].forEach(id => {
-        document.getElementById(id).disabled = compraSoloAportes;
-      });
-      document.getElementById('cp-save-btn').classList.toggle('hidden', compraSoloAportes);
-      renderPedidosPicker(c);
-      aportesSection.classList.remove('hidden');
-      renderAportesList();
-    } else {
+     if (compraId) {
+       const c = comprasCache.find(x => x.id === compraId);
+       if (!c) return;
+       compraSoloAportes = currentRole.role !== 'admin' && c.comprador !== currentRole.vendedor;
+       title.textContent = compraSoloAportes ? 'Abono a Yesenia — aportes' : 'Editar abono a Yesenia';
+       document.getElementById('cp-fecha').value = c.fecha || '';
+       document.getElementById('cp-comprador').value = c.comprador || 'Samir';
+       document.getElementById('cp-proveedor').value = c.proveedor || 'Yesenia';
+       document.getElementById('cp-observaciones').value = c.observaciones || '';
+       ['cp-fecha', 'cp-comprador', 'cp-proveedor', 'cp-observaciones'].forEach(id => {
+         document.getElementById(id).disabled = compraSoloAportes;
+       });
+       document.getElementById('cp-save-btn').classList.toggle('hidden', compraSoloAportes);
+       renderPedidosPicker(c);
+       aportesSection.classList.remove('hidden');
+       renderAportesList();
+       renderPedidosDetalleCompra();
+       renderAporteAutoSummary();
+     } else {
       compraSoloAportes = false;
       title.textContent = 'Nuevo abono a Yesenia';
       document.getElementById('cp-fecha').value = hoyColombia();
@@ -4140,11 +4369,11 @@
      const comprador = document.getElementById('cp-comprador').value;
      const proveedor = document.getElementById('cp-proveedor').value;
      const observaciones = document.getElementById('cp-observaciones').value.trim();
-     const pedidosSeleccionados = Array.from(document.querySelectorAll('.cp-pedido-check:checked')).map(cb => cb.value);
+     const pedidosSeleccionados = pedidosDePersonasSeleccionadas().map(v => v.id);
 
      if (!fecha) { errEl.textContent = 'Ingresa la fecha de la compra.'; errEl.classList.remove('hidden'); return; }
      if (!comprador) { errEl.textContent = 'Selecciona quién realizó la compra.'; errEl.classList.remove('hidden'); return; }
-     if (pedidosSeleccionados.length === 0) { errEl.textContent = 'Selecciona al menos un pedido para esta compra.'; errEl.classList.remove('hidden'); return; }
+     if (pedidosSeleccionados.length === 0) { errEl.textContent = 'Selecciona al menos una persona para esta compra.'; errEl.classList.remove('hidden'); return; }
 
      const pedidosObjs = pedidosSeleccionados.map(id => ventasCache.find(v => v.id === id)).filter(Boolean);
      const costoTotal = pedidosObjs.reduce((s, v) => s + (Number(v.costo_unitario) || 0) * (Number(v.cantidad) || 1), 0);
@@ -4176,16 +4405,44 @@
        }
 
        // Vincular pedidos seleccionados (sin cambiar estado automáticamente)
-       for (const id of pedidosSeleccionados) {
-         await supabaseClient.from('ventas').update({
-           compra_id: compraIdGuardada
-         }).eq('id', id);
-       }
+       // y repartir el abono total de cada persona entre sus pedidos.
+       const abonoPorPedido = {};
+       document.querySelectorAll('.cp-persona-check:checked').forEach(cb => {
+         const block = cb.closest('.persona-block');
+         const persona = cb.dataset.persona;
+         const pedidosPersona = pedidosDisponiblesPickers.filter(v => v.cliente_nombre === persona);
+         const abonoVal = block ? parseFloat(block.querySelector('.cp-persona-abono').value) || 0 : 0;
+         const porPedido = distribuirAbonoPersona(abonoVal, pedidosPersona);
+         pedidosPersona.forEach(v => {
+           const items = itemsDeVentaParaAbono(v);
+           const totalPedido = porPedido[v.id] || 0;
+           const cantItems = items.length || 1;
+           const base = Math.floor(totalPedido / cantItems);
+           const resto = totalPedido - base * cantItems;
+           items.forEach((it, idx) => { it.abono = base + (idx < resto ? 1 : 0); });
+           abonoPorPedido[v.id] = { items, abono: totalPedido };
+         });
+       });
 
-       await loadVentas();
-       await loadCompras();
- 
-       openCompraModal(compraIdGuardada);
+        for (const id of pedidosSeleccionados) {
+          const upd = { compra_id: compraIdGuardada };
+          if (abonoPorPedido[id]) {
+            upd.items_camisa = JSON.stringify(abonoPorPedido[id].items);
+            upd.abono = abonoPorPedido[id].abono;
+          }
+          await supabaseClient.from('ventas').update(upd).eq('id', id);
+        }
+
+        // Registrar el aporte a Yesenia de forma automática: quien tiene la sesión
+        // iniciada aporta la suma de los abonos ingresados por persona, con fecha de hoy.
+        await registrarAporteAutomatico(compraIdGuardada, comprador);
+
+        await loadVentas();
+        await loadCompras();
+        await loadCompraAportes();
+
+        openCompraModal(compraIdGuardada);
+        renderAporteAutoSummary();
      } catch (err) {
        errEl.textContent = 'Error inesperado al guardar la compra.';
        errEl.classList.remove('hidden');
@@ -4210,11 +4467,107 @@
     } catch (e) { logError('deleteCompra', e); }
   }
 
-  /* ---------- APORTES DE LA COMPRA ABIERTA EN EL MODAL ---------- */
-  function aportesDeCompraActual() {
-    if (!editingCompraId) return [];
-    return compraAportesCache.filter(a => a.compra_id === editingCompraId);
-  }
+   /* ---------- APORTES DE LA COMPRA ABIERTA EN EL MODAL ---------- */
+   function aportesDeCompraActual() {
+     if (!editingCompraId) return [];
+     return compraAportesCache.filter(a => a.compra_id === editingCompraId);
+   }
+
+   // Suma de los abonos ingresados por persona (personas marcadas) en el picker.
+   function abonoClientesSeleccionados() {
+     let total = 0;
+     document.querySelectorAll('.cp-persona-check:checked').forEach(cb => {
+       const block = cb.closest('.persona-block');
+       if (block) total += parseFloat(block.querySelector('.cp-persona-abono').value) || 0;
+     });
+     return total;
+   }
+
+   // Muestra el detalle de los pedidos incluidos en el abono actual del modal.
+   function renderPedidosDetalleCompra() {
+     const cont = document.getElementById('cp-pedidos-detalle');
+     if (!cont) return;
+     if (!editingCompraId) { cont.innerHTML = ''; return; }
+     const pedidos = ventasCache.filter(v => v.compra_id === editingCompraId);
+     if (pedidos.length === 0) { cont.innerHTML = ''; return; }
+     cont.innerHTML = `
+       <h4 style="margin:0 0 8px; color:var(--thread-dark);">Pedido(s) que cubre este abono</h4>
+       ${pedidos.map(p => {
+         const cant = Number(p.cantidad) || 1;
+         const ab = Number(p.abono) || 0;
+         const costo = (Number(p.costo_unitario) || 0) * cant;
+         const resto = costo - ab;
+         return `
+           <div class="camisa-detalle-row">
+             <span class="camisa-detalle-info">
+               <b>${escSimple(p.cliente_nombre || 'Sin cliente')}</b>
+               <span style="color:var(--muted);"> · ${escSimple(p.vendedor || '')}</span>
+               <span class="sub-tag">×${cant} camisa(s) · Costo ${fmt(costo)}</span>
+             </span>
+             <span class="camisa-abono-campo" style="flex:0 0 150px;">
+               <div style="font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); font-weight:700;">Abono a Yesenia</div>
+               <div class="money" style="color:var(--ok); text-align:left; margin-top:2px;">${fmt(ab)}</div>
+             </span>
+             <span class="camisa-abono-campo" style="flex:0 0 130px;">
+               <div style="font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); font-weight:700;">Restante</div>
+               <div class="money" style="color:${resto > 0 ? 'var(--warn)' : 'var(--ok)'}; text-align:left; margin-top:2px;">${resto > 0 ? fmt(resto) : 'Liquidado'}</div>
+             </span>
+           </div>`;
+       }).join('')}
+     `;
+   }
+
+   // Rellena el resumen del aporte que se registró de forma automática.
+   function renderAporteAutoSummary() {
+     const personaEl = document.getElementById('ap-auto-persona');
+     const montoEl = document.getElementById('ap-auto-monto');
+     const fechaEl = document.getElementById('ap-auto-fecha');
+     if (!personaEl || !montoEl || !fechaEl) return;
+
+     const aportes = aportesDeCompraActual();
+     const persona = currentRole.vendedor || '';
+     if (aportes.length > 0) {
+       const a = aportes[aportes.length - 1];
+       personaEl.textContent = a.persona || persona;
+       montoEl.textContent = fmt(a.monto);
+       fechaEl.textContent = formatearFechaHumana(a.fecha).replace(/^📅\s*/, '');
+     } else {
+       const total = abonoClientesSeleccionados();
+       personaEl.textContent = persona || ('—');
+       montoEl.textContent = total ? fmt(total) : '$0';
+       fechaEl.textContent = hoyColombia();
+     }
+   }
+
+   // Registra automáticamente el aporte a Yesenia:
+   // persona = quien tiene la sesión iniciada (vendedor); si la sesión es de
+   // administrador (sin vendedor), se usa el comprador de la compra.
+   // Si ya existe un aporte automático previo de esa persona, se reemplaza
+   // para que el registro refleje siempre el valor actual del abono.
+   async function registrarAporteAutomatico(compraId, compradorFallback = '') {
+     const persona = currentRole.vendedor
+       || compradorFallback
+       || ((comprasCache.find(c => c.id === compraId) || {}).comprador || '')
+       || '';
+     if (!compraId || !persona) return false;
+     const monto = abonoClientesSeleccionados();
+     if (!(monto > 0)) return false;
+     const fecha = hoyColombia();
+     try {
+       await supabaseClient.from('compra_aportes').delete()
+         .eq('compra_id', compraId).eq('persona', persona).eq('observacion', '');
+       const { error } = await supabaseClient.from('compra_aportes').insert({
+         compra_id: compraId, persona, monto, fecha, observacion: ''
+       });
+       if (error) { mostrarToast('Error al registrar el aporte automático: ' + error.message, 'error'); return false; }
+       return true;
+     } catch (e) {
+       logError('registrarAporteAutomatico', e);
+       mostrarToast('Error al registrar el aporte automático.', 'error');
+       return false;
+     }
+   }
+
 
   function renderAportesList() {
     const list = document.getElementById('cp-aportes-list');
@@ -4237,33 +4590,16 @@
     renderLiquidacionBox();
   }
 
+  // Registrar un aporte: con el flujo actual lo hace el sistema de forma automática
+  // al guardar la compra (persona = usuario activo, valor = suma de abonos, fecha = hoy).
+  // Punto de extensión por si se quiere permitir un aporte extra manual.
   async function addAporteCompra() {
-    if (!editingCompraId) return;
-
-    const persona = document.getElementById('ap-persona').value;
-    const monto = parseFloat(document.getElementById('ap-monto').value);
-    const fecha = document.getElementById('ap-fecha').value;
-    const observacion = document.getElementById('ap-observacion').value.trim();
-
-    if (isNaN(monto) || monto <= 0 || !fecha) {
-      mostrarToast('Ingresa un monto válido y una fecha para el aporte.', 'error');
-      return;
-    }
-
-    try {
-      const { error } = await supabaseClient.from('compra_aportes').insert({
-        compra_id: editingCompraId, persona, monto, fecha, observacion
-      });
-      if (error) { mostrarToast('Error al guardar el aporte: ' + error.message, 'error'); return; }
-
-      document.getElementById('ap-monto').value = '';
-      document.getElementById('ap-observacion').value = '';
-
+    const ok = await registrarAporteAutomatico(editingCompraId);
+    if (ok) {
       await loadCompraAportes();
       renderAportesList();
       renderCompras();
-    } catch (e) {
-      mostrarToast('Error inesperado al guardar el aporte.', 'error');
+      mostrarToast('Aporte registrado correctamente.');
     }
   }
 
@@ -4329,8 +4665,7 @@
       return;
     }
 
-    const pedidosSeleccionados = Array.from(document.querySelectorAll('.cp-pedido-check:checked')).map(cb => cb.value);
-    const pedidos = pedidosSeleccionados.map(id => ventasCache.find(v => v.id === id)).filter(Boolean);
+    const pedidos = pedidosDePersonasSeleccionadas();
     const aportes = aportesDeCompraActual();
     const liq = calcularLiquidacion(pedidos, aportes);
 
