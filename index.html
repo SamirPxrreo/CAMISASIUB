@@ -2087,7 +2087,7 @@
         <div class="value gold" id="cp-resumen-costo">$0</div>
       </div>
       <div class="card">
-        <div class="eyebrow">Abono clientes (total)</div>
+        <div class="eyebrow">Total pagado a Yesenia</div>
         <div class="value ok" id="cp-resumen-abono">$0</div>
       </div>
       <div class="card">
@@ -2103,26 +2103,24 @@
       <button class="btn btn-gold" id="cp-save-btn" onclick="saveCompra()" type="button">Guardar compra</button>
     </div>
 
-    <!-- APORTES Y LIQUIDACIÓN (sólo disponible una vez la compra existe) -->
+    <!-- DETALLE DEL ABONO (sólo disponible una vez la compra existe) -->
     <div id="cp-aportes-section" class="hidden" style="margin-top:26px; border-top:2px solid var(--line); padding-top:18px;">
-      <h4 style="margin:0 0 12px; color:var(--thread-dark);">Aportes para pagar este abono</h4>
-
       <div id="cp-pedidos-detalle" style="margin-bottom:14px;"></div>
 
-      <div id="cp-aporte-auto" style="margin-bottom:14px; padding:10px 12px; border:1px solid var(--line); border-radius:10px; background:var(--accent-bg); font-size:13px;">
-        <b>Aporte registrado automáticamente</b>
-        <div style="margin-top:4px; color:var(--muted);">
-          <span>Persona: <b id="ap-auto-persona" style="color:var(--thread);"></b></span>
-          <span style="margin-left:8px;">·</span>
-          <span>Valor: <b class="money" id="ap-auto-monto"></b></span>
-          <span style="margin-left:8px;">·</span>
-          <span>Fecha: <b id="ap-auto-fecha"></b></span>
+      <!-- ABONO ADICIONAL A YESENIA: pago extra para cubrir el saldo pendiente -->
+      <div id="cp-abono-adicional" class="hidden" style="margin-top:18px; border-top:1px dashed var(--line); padding-top:14px;">
+        <h4 style="margin:0 0 4px; color:var(--thread-dark);">💰 Abonar más a Yesenia</h4>
+        <p style="color:var(--muted); font-size:12px; margin:0 0 10px;">Escribe cuánto abonas por cada pedido que aún tiene saldo pendiente.</p>
+        <div id="cp-abono-adicional-pedidos" style="margin-bottom:12px;"></div>
+        <div class="camisa-detalle-row" style="align-items:center; justify-content:flex-end;">
+          <span style="font-size:13px; color:var(--muted);">Total a registrar:</span>
+          <span class="money" id="cp-abono-adicional-total" style="font-size:15px; font-weight:700;">$0</span>
+        </div>
+        <div class="error-msg hidden" id="cp-abono-adicional-error"></div>
+        <div class="form-actions" style="margin-top:14px;">
+          <button class="btn btn-gold" onclick="registrarAbonoAdicional()" type="button">Registrar pagos</button>
         </div>
       </div>
-
-      <div id="cp-aportes-list" style="margin-bottom:14px;"></div>
-
-      <div class="liquidacion-box" id="cp-liquidacion-box"></div>
 
       <div class="form-actions" style="margin-top:18px;">
         <button class="btn-ghost btn" onclick="closeCompraModal()" type="button">Cerrar</button>
@@ -3956,10 +3954,11 @@
          ({ error } = await supabaseClient.from('ventas').insert(payload));
        }
 
-       if (error) { mostrarToast('Error al guardar: ' + error.message, 'error'); return; }
-       const eraEdicion = !!editingId;
-       await loadVentas();
-       openForm(null);
+        if (error) { mostrarToast('Error al guardar: ' + error.message, 'error'); return; }
+        const eraEdicion = !!editingId;
+        await loadVentas();
+        openForm(null);
+        if (eraEdicion) navigateTo('orders');
         mostrarToast(eraEdicion ? '✅ Venta actualizada correctamente.' : '✅ Venta registrada correctamente.');
      } catch (err) {
        mostrarToast('Error inesperado al guardar la venta.', 'error');
@@ -3977,8 +3976,9 @@
     const compraId = venta.compra_id;
     if (!compraId) return { abonado: 0, costoTotal: costoVenta, pendiente: costoVenta };
 
-    // El abono registrado en la venta es el valor exacto pagado a Yesenia por este pedido.
-    let abonado = Number(venta.abono) || 0;
+    // Lo pagado a Yesenia por este pedido se guarda por separado (abono_yesenia),
+    // distinto del abono que da el cliente (abono).
+    let abonado = Number(venta.abono_yesenia) || 0;
 
     // Respaldo: si el pedido no tiene abono propio pero la compra tiene aportes,
     // se distribuyen proporcionalmente al costo de cada pedido.
@@ -4073,14 +4073,14 @@
       const costoTotal = pedidos.reduce((s, v) => s + (Number(v.costo_unitario) || 0) * (Number(v.cantidad) || 1), 0);
       const aportesCompra = compraAportesCache.filter(a => a.compra_id === c.id);
       const aportadoAportes = aportesCompra.reduce((s, a) => s + (Number(a.monto) || 0), 0);
-      const abonoPedidos = pedidos.reduce((s, v) => s + (Number(v.abono) || 0), 0);
+      const abonoPedidos = pedidos.reduce((s, v) => s + (Number(v.abono_yesenia) || 0), 0);
       const aportado = Math.max(aportadoAportes, abonoPedidos);
       const saldo = costoTotal - aportado;
       const puedeGestionar = currentRole.role === 'admin' || c.comprador === currentRole.vendedor;
       const acciones = puedeGestionar
         ? `<button class="btn-small" onclick="openCompraModal('${c.id}')" type="button">Editar</button>
            <button class="btn-danger" onclick="deleteCompra('${c.id}')" type="button">Eliminar</button>`
-        : `<button class="btn-small" onclick="openCompraModal('${c.id}')" type="button">Aportes</button>`;
+        : `<button class="btn-small" onclick="openCompraModal('${c.id}')" type="button">Ver / Abonar</button>`;
 
       const personasAbono = [...new Set(aportesCompra.map(a => a.persona).filter(Boolean))];
       const quienesAbonanHtml = personasAbono.length === 0
@@ -4095,7 +4095,7 @@
         ? '<span style="color:var(--muted);">—</span>'
         : pedidos.map(p => {
             const cant = Number(p.cantidad) || 1;
-            const ab = Number(p.abono) || 0;
+            const ab = Number(p.abono_yesenia) || 0;
             const costo = (Number(p.costo_unitario) || 0) * cant;
             const resto = costo - ab;
             return `
@@ -4225,7 +4225,7 @@
       const checked = estaEnCompra ? 'checked' : '';
       const abonoPrev = pedidos
         .filter(v => yaAsignados.has(v.id))
-        .reduce((s, v) => s + (Number(v.abono) || 0), 0);
+        .reduce((s, v) => s + (Number(v.abono_yesenia) || 0), 0);
       const vendedores = [...new Set(pedidos.map(v => v.vendedor).filter(Boolean))].join(', ');
 
       bloques.push(`
@@ -4297,7 +4297,6 @@
        restoEl.textContent = restoTotal >= 0 ? ('-' + fmt(restoTotal)) : fmt(-restoTotal);
        restoEl.classList.toggle('warn', restoTotal > 0);
      }
-     renderLiquidacionBox();
    }
 
    // Actualiza, por persona, el restante (costo − abono) mostrado junto al input de abono.
@@ -4336,9 +4335,7 @@
        document.getElementById('cp-save-btn').classList.toggle('hidden', compraSoloAportes);
        renderPedidosPicker(c);
        aportesSection.classList.remove('hidden');
-       renderAportesList();
        renderPedidosDetalleCompra();
-       renderAporteAutoSummary();
      } else {
       compraSoloAportes = false;
       title.textContent = 'Nuevo abono a Yesenia';
@@ -4354,6 +4351,7 @@
       aportesSection.classList.add('hidden');
     }
 
+    renderAbonoAdicional();
     document.getElementById('compra-modal').classList.remove('hidden');
   }
 
@@ -4427,7 +4425,7 @@
            const cantItems = items.length || 1;
            const base = Math.floor(totalPedido / cantItems);
            const resto = totalPedido - base * cantItems;
-           items.forEach((it, idx) => { it.abono = base + (idx < resto ? 1 : 0); });
+           items.forEach((it, idx) => { it.abono_yesenia = base + (idx < resto ? 1 : 0); });
            abonoPorPedido[v.id] = { items, abono: totalPedido };
          });
        });
@@ -4436,7 +4434,7 @@
           const upd = { compra_id: compraIdGuardada };
           if (abonoPorPedido[id]) {
             upd.items_camisa = JSON.stringify(abonoPorPedido[id].items);
-            upd.abono = abonoPorPedido[id].abono;
+            upd.abono_yesenia = abonoPorPedido[id].abono;
           }
           await supabaseClient.from('ventas').update(upd).eq('id', id);
         }
@@ -4450,7 +4448,6 @@
         await loadCompraAportes();
 
         openCompraModal(compraIdGuardada);
-        renderAporteAutoSummary();
      } catch (err) {
        errEl.textContent = 'Error inesperado al guardar la compra.';
        errEl.classList.remove('hidden');
@@ -4475,12 +4472,7 @@
     } catch (e) { logError('deleteCompra', e); }
   }
 
-   /* ---------- APORTES DE LA COMPRA ABIERTA EN EL MODAL ---------- */
-   function aportesDeCompraActual() {
-     if (!editingCompraId) return [];
-     return compraAportesCache.filter(a => a.compra_id === editingCompraId);
-   }
-
+   /* ---------- ABONOS INGRESADOS POR PERSONA EN EL MODAL ---------- */
    // Suma de los abonos ingresados por persona (personas marcadas) en el picker.
    function abonoClientesSeleccionados() {
      let total = 0;
@@ -4500,11 +4492,11 @@
      if (pedidos.length === 0) { cont.innerHTML = ''; return; }
      cont.innerHTML = `
        <h4 style="margin:0 0 8px; color:var(--thread-dark);">Pedido(s) que cubre este abono</h4>
-       ${pedidos.map(p => {
-         const cant = Number(p.cantidad) || 1;
-         const ab = Number(p.abono) || 0;
-         const costo = (Number(p.costo_unitario) || 0) * cant;
-         const resto = costo - ab;
+        ${pedidos.map(p => {
+          const cant = Number(p.cantidad) || 1;
+          const ab = Number(p.abono_yesenia) || 0;
+          const costo = (Number(p.costo_unitario) || 0) * cant;
+          const resto = costo - ab;
          return `
            <div class="camisa-detalle-row">
              <span class="camisa-detalle-info">
@@ -4523,28 +4515,6 @@
            </div>`;
        }).join('')}
      `;
-   }
-
-   // Rellena el resumen del aporte que se registró de forma automática.
-   function renderAporteAutoSummary() {
-     const personaEl = document.getElementById('ap-auto-persona');
-     const montoEl = document.getElementById('ap-auto-monto');
-     const fechaEl = document.getElementById('ap-auto-fecha');
-     if (!personaEl || !montoEl || !fechaEl) return;
-
-     const aportes = aportesDeCompraActual();
-     const persona = currentRole.vendedor || '';
-     if (aportes.length > 0) {
-       const a = aportes[aportes.length - 1];
-       personaEl.textContent = a.persona || persona;
-       montoEl.textContent = fmt(a.monto);
-       fechaEl.textContent = formatearFechaHumana(a.fecha).replace(/^📅\s*/, '');
-     } else {
-       const total = abonoClientesSeleccionados();
-       personaEl.textContent = persona || ('—');
-       montoEl.textContent = total ? fmt(total) : '$0';
-       fechaEl.textContent = hoyColombia();
-     }
    }
 
    // Registra automáticamente el aporte a Yesenia:
@@ -4576,140 +4546,153 @@
      }
    }
 
+   /* ---------- ABONO ADICIONAL A YESENIA (pagar el saldo restante) ---------- */
+   // Pedidos del usuario actual dentro de un abono (para admin: todos los del abono).
+   function pedidosMiosEnCompra(compraId) {
+     const miNombre = currentRole.vendedor;
+     return ventasCache.filter(v =>
+       v.compra_id === compraId && (!miNombre || v.vendedor === miNombre)
+     );
+   }
 
-  function renderAportesList() {
-    const list = document.getElementById('cp-aportes-list');
-    const aportes = aportesDeCompraActual();
+   // Saldo pendiente de un pedido con Yesenia (costo − abonado a Yesenia).
+   function saldoPedidoCompra(v) {
+     const costo = (Number(v.costo_unitario) || 0) * (Number(v.cantidad) || 1);
+     return Math.max(costo - (Number(v.abono_yesenia) || 0), 0);
+   }
 
-    if (aportes.length === 0) {
-      list.innerHTML = '<p style="color:var(--muted); margin:0;">Todavía no hay aportes registrados para este abono.</p>';
-    } else {
-      list.innerHTML = aportes.map(a => `
-        <div class="aporte-row">
-          <span style="flex:1 1 130px;"><b>${a.persona}</b></span>
-          <span class="money" style="flex:0 0 120px;">${fmt(a.monto)}</span>
-          <span style="flex:1 1 150px; color:var(--muted);">${formatearFechaHumana(a.fecha)}</span>
-          <span style="flex:2 1 160px; color:var(--muted);">${a.observacion || ''}</span>
-          <button class="btn-danger" onclick="deleteAporteCompra('${a.id}')" type="button">Eliminar</button>
-        </div>
-      `).join('');
-    }
+   // Muestra la sección para registrar un pago adicional a Yesenia sobre el
+   // abono actual, con un campo de abono individual por pedido.
+   function renderAbonoAdicional() {
+     const section = document.getElementById('cp-abono-adicional');
+     if (!section) return;
+     section.classList.add('hidden');
+     const errEl = document.getElementById('cp-abono-adicional-error');
+     if (errEl) errEl.classList.add('hidden');
+     const totalEl = document.getElementById('cp-abono-adicional-total');
+     if (totalEl) totalEl.textContent = fmt(0);
+     if (!editingCompraId) return;
 
-    renderLiquidacionBox();
-  }
+     const conSaldo = pedidosMiosEnCompra(editingCompraId).filter(v => saldoPedidoCompra(v) > 0);
+     if (conSaldo.length === 0) return;
 
-  // Registrar un aporte: con el flujo actual lo hace el sistema de forma automática
-  // al guardar la compra (persona = usuario activo, valor = suma de abonos, fecha = hoy).
-  // Punto de extensión por si se quiere permitir un aporte extra manual.
-  async function addAporteCompra() {
-    const ok = await registrarAporteAutomatico(editingCompraId);
-    if (ok) {
-      await loadCompraAportes();
-      renderAportesList();
-      renderCompras();
-      mostrarToast('Aporte registrado correctamente.');
-    }
-  }
+     document.getElementById('cp-abono-adicional-pedidos').innerHTML = conSaldo.map(v => {
+       const cant = Number(v.cantidad) || 1;
+       const costo = (Number(v.costo_unitario) || 0) * cant;
+       const ab = Number(v.abono_yesenia) || 0;
+       const saldo = saldoPedidoCompra(v);
+       return `
+         <div class="camisa-detalle-row" style="align-items:center; margin-bottom:8px;">
+           <span class="camisa-detalle-info">
+             <b>${escSimple(v.cliente_nombre || 'Sin cliente')}</b>
+             <span class="sub-tag">×${cant} camisa(s) · Costo ${fmt(costo)} · Pagado a Yesenia ${fmt(ab)}</span>
+             <div style="font-size:12px; color:var(--warn); font-weight:700;">Saldo ${fmt(saldo)}</div>
+           </span>
+           <span class="camisa-abono-campo" style="flex:0 0 190px;">
+             <input type="number" class="caa-monto" data-id="${v.id}" data-saldo="${saldo}" min="0" step="1000" placeholder="$ Abono este pedido">
+           </span>
+         </div>`;
+     }).join('');
 
-  async function deleteAporteCompra(id) {
-    if (!confirmar('¿Eliminar este aporte?')) return;
-    try {
-      await supabaseClient.from('compra_aportes').delete().eq('id', id);
-      await loadCompraAportes();
-      renderAportesList();
-      renderCompras();
-    } catch (e) { logError('deleteAporteCompra', e); }
-  }
+     document.querySelectorAll('#cp-abono-adicional .caa-monto').forEach(inp => {
+       inp.addEventListener('input', actualizarTotalAbonoAdicional);
+     });
+     actualizarTotalAbonoAdicional();
+     section.classList.remove('hidden');
+   }
 
-  /* ---------- CÁLCULO AUTOMÁTICO DE OBLIGACIONES Y LIQUIDACIÓN ---------- */
-  function calcularLiquidacion(pedidosArr, aportesArr) {
-    const obligacionPorPersona = {};
-    pedidosArr.forEach(v => {
-      const costo = (Number(v.costo_unitario) || 0) * (Number(v.cantidad) || 1);
-      obligacionPorPersona[v.vendedor] = (obligacionPorPersona[v.vendedor] || 0) + costo;
-    });
+   // Actualiza el total de la sección "Abonar más" según los montos por pedido.
+   function actualizarTotalAbonoAdicional() {
+     const totalEl = document.getElementById('cp-abono-adicional-total');
+     if (!totalEl) return;
+     let total = 0;
+     document.querySelectorAll('#cp-abono-adicional .caa-monto').forEach(inp => {
+       total += parseFloat(inp.value) || 0;
+     });
+     totalEl.textContent = fmt(total);
+     const errEl = document.getElementById('cp-abono-adicional-error');
+     if (errEl) errEl.classList.add('hidden');
+   }
 
-    const aportePorPersona = {};
-    aportesArr.forEach(a => {
-      aportePorPersona[a.persona] = (aportePorPersona[a.persona] || 0) + (Number(a.monto) || 0);
-    });
+   async function registrarAbonoAdicional() {
+     const errEl = document.getElementById('cp-abono-adicional-error');
+     errEl.classList.add('hidden');
+     if (!editingCompraId) return;
 
-    const personas = new Set([...Object.keys(obligacionPorPersona), ...Object.keys(aportePorPersona)]);
-    const balances = {};
-    personas.forEach(p => {
-      balances[p] = (aportePorPersona[p] || 0) - (obligacionPorPersona[p] || 0);
-    });
+     const conSaldo = pedidosMiosEnCompra(editingCompraId).filter(v => saldoPedidoCompra(v) > 0);
+     if (conSaldo.length === 0) {
+       errEl.textContent = 'No hay saldo pendiente para abonar.';
+       errEl.classList.remove('hidden');
+       return;
+     }
 
-    const deudores = [];
-    const acreedores = [];
-    Object.entries(balances).forEach(([p, bal]) => {
-      if (bal < -1) deudores.push({ persona: p, monto: -bal });
-      else if (bal > 1) acreedores.push({ persona: p, monto: bal });
-    });
+     const extras = {};
+     let total = 0;
+     document.querySelectorAll('#cp-abono-adicional .caa-monto').forEach(inp => {
+       const val = parseFloat(inp.value) || 0;
+       extras[inp.dataset.id] = val;
+       total += val;
+     });
 
-    const movimientos = [];
-    let i = 0, j = 0;
-    while (i < deudores.length && j < acreedores.length) {
-      const pago = Math.min(deudores[i].monto, acreedores[j].monto);
-      if (pago > 1) movimientos.push({ de: deudores[i].persona, a: acreedores[j].persona, monto: pago });
-      deudores[i].monto -= pago;
-      acreedores[j].monto -= pago;
-      if (deudores[i].monto <= 1) i++;
-      if (acreedores[j].monto <= 1) j++;
-    }
+     if (total <= 0) {
+       errEl.textContent = 'Ingresa un monto mayor que cero en al menos un pedido.';
+       errEl.classList.remove('hidden');
+       return;
+     }
 
-    const costoTotal = Object.values(obligacionPorPersona).reduce((s, v) => s + v, 0);
-    const aportadoTotal = Object.values(aportePorPersona).reduce((s, v) => s + v, 0);
+     for (const v of conSaldo) {
+       const extra = extras[v.id] || 0;
+       if (extra < 0) {
+         errEl.textContent = 'Los montos no pueden ser negativos.';
+         errEl.classList.remove('hidden');
+         return;
+       }
+       if (extra > saldoPedidoCompra(v)) {
+         errEl.textContent = `El abono de "${escSimple(v.cliente_nombre || 'este pedido')}" supera su saldo (${fmt(saldoPedidoCompra(v))}).`;
+         errEl.classList.remove('hidden');
+         return;
+       }
+     }
 
-    return { obligacionPorPersona, aportePorPersona, movimientos, costoTotal, aportadoTotal, saldo: aportadoTotal - costoTotal };
-  }
+     try {
+       for (const v of conSaldo) {
+         const extra = extras[v.id] || 0;
+         if (extra <= 0) continue;
+         const nuevoAbono = (Number(v.abono_yesenia) || 0) + extra;
+         const upd = { abono_yesenia: nuevoAbono };
+         const items = itemsDeVentaParaAbono(v);
+         const cantItems = items.length || 1;
+         const base = Math.floor(extra / cantItems);
+         const resto = extra - base * cantItems;
+         items.forEach((it, idx) => { it.abono_yesenia = (Number(it.abono_yesenia) || 0) + base + (idx < resto ? 1 : 0); });
+         upd.items_camisa = JSON.stringify(items);
+         await supabaseClient.from('ventas').update(upd).eq('id', v.id);
+       }
 
-  function renderLiquidacionBox() {
-    const box = document.getElementById('cp-liquidacion-box');
-    if (!box) return;
+       const persona = currentRole.vendedor
+         || ((comprasCache.find(c => c.id === editingCompraId) || {}).comprador || '');
+       if (persona) {
+         await supabaseClient.from('compra_aportes').insert({
+           compra_id: editingCompraId, persona, monto: total, fecha: hoyColombia(), observacion: 'Abono adicional'
+         });
+       }
 
-    if (!editingCompraId) {
-      box.innerHTML = '<p style="color:var(--muted); margin:0;">Guarda el abono para poder registrar aportes y ver la liquidación.</p>';
-      return;
-    }
+       await loadVentas();
+       await loadCompras();
+       await loadCompraAportes();
+       openCompraModal(editingCompraId);
+       mostrarToast('✅ Pagos adicionales a Yesenia registrados.');
+     } catch (err) {
+       logError('registrarAbonoAdicional', err);
+       errEl.textContent = 'Error inesperado al registrar los pagos.';
+       errEl.classList.remove('hidden');
+     }
+   }
 
-    const pedidos = pedidosDePersonasSeleccionadas();
-    const aportes = aportesDeCompraActual();
-    const liq = calcularLiquidacion(pedidos, aportes);
-
-    const obligacionesHtml = Object.keys(liq.obligacionPorPersona).length > 0
-      ? Object.entries(liq.obligacionPorPersona).map(([p, monto]) => {
-          const aportado = liq.aportePorPersona[p] || 0;
-          const dif = aportado - monto;
-          return `
-            <div style="display:flex; justify-content:space-between; padding:4px 0;">
-              <span>${p} — costo correspondiente ${fmt(monto)}, aportó ${fmt(aportado)}</span>
-              <b style="color:${dif >= 0 ? 'var(--ok)' : 'var(--warn)'}">${dif >= 0 ? 'Excedente ' + fmt(dif) : 'Pendiente ' + fmt(-dif)}</b>
-            </div>
-          `;
-        }).join('')
-      : '<p style="color:var(--muted); margin:0;">Selecciona pedidos arriba para calcular las obligaciones.</p>';
-
-    const movimientosHtml = liq.movimientos.length > 0
-      ? liq.movimientos.map(m => `<div class="mov-row">🔁 ${m.de} le debe ${fmt(m.monto)} a ${m.a}</div>`).join('')
-      : '<div class="mov-row" style="color:var(--ok);">✅ No hay deudas pendientes entre las personas.</div>';
-
-    box.innerHTML = `
-      <div style="margin-bottom:8px;">
-        <b>Costo total:</b> ${fmt(liq.costoTotal)} &nbsp;|&nbsp;
-        <b>Aportado total:</b> ${fmt(liq.aportadoTotal)} &nbsp;|&nbsp;
-        <b style="color:${liq.saldo >= 0 ? 'var(--ok)' : 'var(--warn)'}">${liq.saldo >= 0 ? 'Saldo sobrante: ' + fmt(liq.saldo) : 'Falta por pagar: ' + fmt(-liq.saldo)}</b>
-      </div>
-      ${obligacionesHtml}
-      <div style="margin-top:10px; border-top:1px dashed var(--line); padding-top:8px;">${movimientosHtml}</div>
-    `;
-  }
-
-
-  /* =====================================================
+   /* =====================================================
      3. GANANCIAS Y LIQUIDACIONES (SAMIR & VALENTINA)
      ===================================================== */
-  async function loadLiquidaciones() {
+   async function loadLiquidaciones() {
     try {
       const { data, error } = await supabaseClient
         .from('liquidaciones')
