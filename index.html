@@ -2832,6 +2832,11 @@
       .filter(v => v.entrega_por && (esAdmin || v.entrega_por === miNombre))
       .sort(ordenarPorEntrega);
 
+    const idsVendidas = new Set(misVentas.map(v => v.id));
+    const misTodo = misVentas
+      .concat(misEntregas.filter(v => !idsVendidas.has(v.id)))
+      .sort(ordenarPorEntrega);
+
     const porComprar = camisasPorComprar();
     const porComprarPedidos = pedidosPorComprar().length;
     const sinFecha = pedidosSinFechaEntrega().length;
@@ -2895,24 +2900,13 @@
       </div>
       <div class="dash-list">
         <div class="dash-list-header">
-          <h2>🛒 Pedidos que vendí</h2>
-          <span class="dash-list-subtitle">Pedidos vendidos por mí, sin importar quién realiza la entrega.</span>
-          <span class="dash-list-count">${misVentas.length}</span>
-        </div>
-        ${misVentas.length === 0
-          ? '<div class="dash-empty">🎉 No hay pedidos pendientes.</div>'
-          : misVentas.map(v => renderOrderCard(v)).join('')
-        }
-      </div>
-      <div class="dash-list">
-        <div class="dash-list-header">
           <h2>📦 Pedidos que debo entregar</h2>
-          <span class="dash-list-subtitle">Pedidos cuya entrega está asignada a mí.</span>
-          <span class="dash-list-count">${misEntregas.length}</span>
+          <span class="dash-list-subtitle">Lo que vendí o cuya entrega está asignada a mí.</span>
+          <span class="dash-list-count">${misTodo.length}</span>
         </div>
-        ${misEntregas.length === 0
-          ? '<div class="dash-empty">🎉 No hay entregas asignadas.</div>'
-          : misEntregas.map(v => renderOrderCard(v)).join('')
+        ${misTodo.length === 0
+          ? '<div class="dash-empty">🎉 No hay pedidos pendientes.</div>'
+          : misTodo.map(v => renderOrderCard(v)).join('')
         }
       </div>
     `;
