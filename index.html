@@ -2576,9 +2576,17 @@
        actualizarTotalAbono();
      });
 
-     // Listeners
-     document.getElementById('login-button').addEventListener('click', handleLogin);
-     document.getElementById('save-sale-button').addEventListener('click', saveVenta);
+      // Listeners
+      document.getElementById('login-button').addEventListener('click', handleLogin);
+      ['login-email', 'login-password'].forEach(id => {
+        document.getElementById(id).addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            handleLogin();
+          }
+        });
+      });
+      document.getElementById('save-sale-button').addEventListener('click', saveVenta);
      document.getElementById('f-cantidad').addEventListener('input', onCantidadChange);
      document.getElementById('f-cantidad').addEventListener('change', onCantidadChange);
      document.getElementById('filter-vendedor').addEventListener('change', renderTable);
