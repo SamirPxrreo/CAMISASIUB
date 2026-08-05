@@ -2062,12 +2062,6 @@
           <option value="Yesenia">Yesenia</option>
         </select>
       </div>
-      <div>
-        <label class="label-required">Proveedor</label>
-        <select id="cp-proveedor">
-          <option value="Yesenia">Yesenia</option>
-        </select>
-      </div>
     </div>
 
     <label>Observaciones</label>
@@ -2111,6 +2105,12 @@
       <div id="cp-abono-adicional" class="hidden" style="margin-top:18px; border-top:1px dashed var(--line); padding-top:14px;">
         <h4 style="margin:0 0 4px; color:var(--thread-dark);">💰 Abonar más a Yesenia</h4>
         <p style="color:var(--muted); font-size:12px; margin:0 0 10px;">Escribe cuánto abonas por cada pedido que aún tiene saldo pendiente.</p>
+        <div class="camisa-detalle-row" style="align-items:center; margin-bottom:8px;">
+          <span class="camisa-detalle-info">👤 ¿Quién abona?</span>
+          <span class="camisa-abono-campo" style="flex:0 0 190px;">
+            <select id="cp-abono-adicional-persona" style="width:100%;"></select>
+          </span>
+        </div>
         <div id="cp-abono-adicional-pedidos" style="margin-bottom:12px;"></div>
         <div class="camisa-detalle-row" style="align-items:center; justify-content:flex-end;">
           <span style="font-size:13px; color:var(--muted);">Total a registrar:</span>
@@ -2832,11 +2832,6 @@
       .filter(v => v.entrega_por && (esAdmin || v.entrega_por === miNombre))
       .sort(ordenarPorEntrega);
 
-    const idsVendidas = new Set(misVentas.map(v => v.id));
-    const misTodo = misVentas
-      .concat(misEntregas.filter(v => !idsVendidas.has(v.id)))
-      .sort(ordenarPorEntrega);
-
     const porComprar = camisasPorComprar();
     const porComprarPedidos = pedidosPorComprar().length;
     const sinFecha = pedidosSinFechaEntrega().length;
@@ -2900,13 +2895,24 @@
       </div>
       <div class="dash-list">
         <div class="dash-list-header">
-          <h2>📦 Pedidos que debo entregar</h2>
-          <span class="dash-list-subtitle">Lo que vendí o cuya entrega está asignada a mí.</span>
-          <span class="dash-list-count">${misTodo.length}</span>
+          <h2>🛒 Pedidos que vendí</h2>
+          <span class="dash-list-subtitle">Pedidos vendidos por mí, sin importar quién realiza la entrega.</span>
+          <span class="dash-list-count">${misVentas.length}</span>
         </div>
-        ${misTodo.length === 0
+        ${misVentas.length === 0
           ? '<div class="dash-empty">🎉 No hay pedidos pendientes.</div>'
-          : misTodo.map(v => renderOrderCard(v)).join('')
+          : misVentas.map(v => renderOrderCard(v)).join('')
+        }
+      </div>
+      <div class="dash-list">
+        <div class="dash-list-header">
+          <h2>📦 Pedidos que debo entregar</h2>
+          <span class="dash-list-subtitle">Pedidos cuya entrega está asignada a mí.</span>
+          <span class="dash-list-count">${misEntregas.length}</span>
+        </div>
+        ${misEntregas.length === 0
+          ? '<div class="dash-empty">🎉 No hay entregas asignadas.</div>'
+          : misEntregas.map(v => renderOrderCard(v)).join('')
         }
       </div>
     `;
@@ -3485,7 +3491,12 @@
   }
 
   function renderTable() {
-    let rows = getVentasFiltradas().sort(ordenarPorEntrega);
+    let rows = getVentasFiltradas().sort((a, b) => {
+      const fa = a.fecha || '9999-12-31';
+      const fb = b.fecha || '9999-12-31';
+      if (fa !== fb) return fa < fb ? 1 : -1;
+      return 0;
+    });
 
     const body = document.getElementById('ventas-body');
     document.getElementById('empty-state').classList.toggle('hidden', rows.length > 0);
@@ -4321,9 +4332,8 @@
        title.textContent = compraSoloAportes ? 'Abono a Yesenia — aportes' : 'Editar abono a Yesenia';
        document.getElementById('cp-fecha').value = c.fecha || '';
        document.getElementById('cp-comprador').value = c.comprador || 'Samir';
-       document.getElementById('cp-proveedor').value = c.proveedor || 'Yesenia';
        document.getElementById('cp-observaciones').value = c.observaciones || '';
-       ['cp-fecha', 'cp-comprador', 'cp-proveedor', 'cp-observaciones'].forEach(id => {
+       ['cp-fecha', 'cp-comprador', 'cp-observaciones'].forEach(id => {
          document.getElementById(id).disabled = compraSoloAportes;
        });
        document.getElementById('cp-save-btn').classList.toggle('hidden', compraSoloAportes);
@@ -4334,11 +4344,10 @@
       compraSoloAportes = false;
       title.textContent = 'Nuevo abono a Yesenia';
       document.getElementById('cp-fecha').value = hoyColombia();
-      document.getElementById('cp-comprador').value = '';
-      document.getElementById('cp-proveedor').value = 'Yesenia';
+      document.getElementById('cp-comprador').value = currentRole.role === 'admin' ? '' : (currentRole.vendedor || '');
       document.getElementById('cp-observaciones').value = '';
-      ['cp-fecha', 'cp-comprador', 'cp-proveedor', 'cp-observaciones'].forEach(id => {
-        document.getElementById(id).disabled = false;
+      ['cp-fecha', 'cp-comprador', 'cp-observaciones'].forEach(id => {
+        document.getElementById(id).disabled = currentRole.role === 'admin' ? false : true;
       });
       document.getElementById('cp-save-btn').classList.remove('hidden');
       renderPedidosPicker(null);
@@ -4367,7 +4376,7 @@
 
       const fecha = document.getElementById('cp-fecha').value;
      const comprador = document.getElementById('cp-comprador').value;
-     const proveedor = document.getElementById('cp-proveedor').value;
+     const proveedor = 'Yesenia';
      const observaciones = document.getElementById('cp-observaciones').value.trim();
      const pedidosSeleccionados = pedidosDePersonasSeleccionadas().map(v => v.id);
 
@@ -4570,6 +4579,20 @@
      const conSaldo = pedidosMiosEnCompra(editingCompraId).filter(v => saldoPedidoCompra(v) > 0);
      if (conSaldo.length === 0) return;
 
+     // "¿Quién abona?": el admin elige; el vendedor queda fijo a su sesión.
+     const personaSel = document.getElementById('cp-abono-adicional-persona');
+     if (personaSel) {
+       const esAdmin = currentRole.role === 'admin';
+       personaSel.innerHTML = opcionesVendedoresHtml(currentRole.vendedor || '');
+       personaSel.disabled = !esAdmin;
+       if (esAdmin) {
+         const c = comprasCache.find(x => x.id === editingCompraId);
+         if (c && c.comprador && c.comprador !== 'Yesenia') personaSel.value = c.comprador;
+       } else if (currentRole.vendedor) {
+         personaSel.value = currentRole.vendedor;
+       }
+     }
+
      document.getElementById('cp-abono-adicional-pedidos').innerHTML = conSaldo.map(v => {
        const cant = Number(v.cantidad) || 1;
        const costo = (Number(v.costo_unitario) || 0) * cant;
@@ -4663,8 +4686,9 @@
          await supabaseClient.from('ventas').update(upd).eq('id', v.id);
        }
 
-       const persona = currentRole.vendedor
-         || ((comprasCache.find(c => c.id === editingCompraId) || {}).comprador || '');
+       const persona = document.getElementById('cp-abono-adicional-persona')
+         ? document.getElementById('cp-abono-adicional-persona').value
+         : '';
        if (persona) {
          await supabaseClient.from('compra_aportes').insert({
            compra_id: editingCompraId, persona, monto: total, fecha: hoyColombia(), observacion: 'Abono adicional'
