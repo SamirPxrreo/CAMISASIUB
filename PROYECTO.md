@@ -140,7 +140,7 @@ Reglas en el código:
 
 ## 7. Secciones de la app
 
-- **🏠 Inicio (dashboard):** accesos rápidos, estado del negocio, y una sola lista "Pedidos que debo entregar" = lo que vendí + lo que debo entregar (unión sin duplicados).
+- **🏠 Inicio (dashboard):** accesos rápidos, estado del negocio, y dos listas separadas: "Pedidos que vendí" y "Pedidos que debo entregar".
 - **➕ Nueva Venta / edición:** formulario con modo simple e individual (por camisa). El "Abono recibido del cliente" se reparte por camisa en `items[].abono`.
 - **📋 Pedidos:** tabla con Abono Cliente, Saldo Cliente, Pagado a Proveedor, Falta Pagar. Botones: Editar, + Abono (cliente), Finalizar, Borrar. Cambio de estado directo.
 - **🛍️ Abonos Yesenia:** lista de abonos (compras). Botón "+ Nuevo abono". Cada fila muestra pedidos con su "Abono" (a Yesenia) y "Saldo". Botón "Ver / Abonar" abre el modal; **"💰 Abonar más a Yesenia"** permite registrar otro pago por pedido para cubrir el saldo.
@@ -171,7 +171,9 @@ Reglas en el código:
 5. **"Abonar más a Yesenia":** sección en el modal con un input **por pedido** para pagar el saldo restante (antes era imposible para vendedores no-compradores).
 6. **Separación abono cliente vs abono Yesenia:** se introdujo `abono_yesenia` (columna + dentro de `items_camisa[].abono_yesenia`) para que el modal de Yesenia ya no pise el abono del cliente.
 7. **Volver a Pedidos automáticamente** tras editar una venta ("Actualizar venta").
-8. **Inicio:** fusionadas "Pedidos que vendí" + "Pedidos que debo entregar" en una sola lista.
+8. **Inicio:** dos listas separadas: "Pedidos que vendí" y "Pedidos que debo entregar" (el usuario pidió mantenerlas por separado, no fusionarlas).
+9. **Pedidos:** la tabla se ordena por fecha de pedido (más recientes primero).
+10. **Abono a Yesenia:** se quitó el campo "Proveedor" (siempre es Yesenia, fijo en el código). En el nuevo abono el "comprador" se auto-llena con la sesión del vendedor (bloqueado); el admin lo elige. En "Abonar más a Yesenia" hay selector "¿Quién abona?": admin elige, vendedor queda fijo a su sesión.
 
 ---
 
