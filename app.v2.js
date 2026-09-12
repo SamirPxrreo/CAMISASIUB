@@ -3724,7 +3724,15 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
      ===================================================== */
   function exportarCompraExcel() {
     try {
-      const dataset = pedidosPorComprar();
+      // Fix: el usuario filtra por Pedido y ve 3 pedidos (11 camisas). El export anterior usaba pedidosPorComprar()
+      // que excluye con compra_id (Sara tiene compra_id pero sigue en Pedido) y daba 7. Ahora respeta filtros.
+      const fe = document.getElementById('filter-estado')?.value || '';
+      let dataset;
+      if (fe) {
+        dataset = getVentasFiltradas().filter(v => normalizarEstado(v.estado) === fe);
+      } else {
+        dataset = pedidosPorComprar();
+      }
       if (dataset.length === 0) {
         mostrarToast('✅ No hay pedidos pendientes de comprar al proveedor.');
         return;
