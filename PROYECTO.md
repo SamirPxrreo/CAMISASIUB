@@ -202,6 +202,7 @@ Reglas en el código:
 33. **Validación fechas:** `fecha_entrega >= fecha` bloqueante, `fecha_entrega < hoy` bloqueante para nuevos y warning para ediciones (`mostrarToast`).
 34. **Botón Actualizar PWA:** `🔄 Actualizar` solo arriba junto a `☰ Menú` (`index.html:108`), `hardRefresh()` limpia `caches` y bustea `?v=Date.now()` para la app instalada.
 35. **Inicio alerta espaciada:** `#dashboard-alertas` flex gap 10px + margin-bottom 22px (`styles.v2.css:1862`) separa `⚠️ Andrea — debe $114k` de `⚡ Accesos rápidos`.
+36. **6 estados + finalizar solo si Liquidado + sugerencia auto:** `ESTADOS=['Pedido','Comprado','Bordando','Listo para entrega','Entregado','Liquidado']` con `normalizarEstado()`/`claseEstado()` (fix página en blanco por `Listo para entrega`), `statusBg/Fg` y CSS `estado-Listo-para-entrega/Bordando/Liquidado` (`app.v2.js:11`, `styles.v2.css:1357`), botón `Finalizar` deshabilitado si `!==Liquidado` + badge `✅ Listo para liquidar` cuando `Entregado` y `puedeMarcarPagado().ok` (`app.v2.js:1821/1827`), sugerencia `confirm` tras abono/liquidación (`sugerirLiquidadoSiListo`).
 
 ---
 
