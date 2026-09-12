@@ -1,0 +1,13 @@
+-- ════════════════════════════════════════════════════════════
+-- MIGRACIÓN — CAMISAS IUB
+-- Ejecutar en Supabase (SQL Editor) para aplicar los cambios.
+-- Es seguro ejecutarlo varias veces (usa IF NOT EXISTS).
+-- ════════════════════════════════════════════════════════════
+
+-- 1. Pedidos: marcar como finalizados (Historial) y fecha de entrega opcional.
+ALTER TABLE ventas ADD COLUMN IF NOT EXISTS finalizado BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE ventas ALTER COLUMN fecha_entrega DROP NOT NULL;
+
+-- 2. Hora de registro (Hora de Colombia) en Compras y Liquidaciones.
+ALTER TABLE compras_proveedor ADD COLUMN IF NOT EXISTS hora TEXT;
+ALTER TABLE liquidaciones ADD COLUMN IF NOT EXISTS hora TEXT;

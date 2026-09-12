@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Camisas IUB — Control de ventas, compras y liquidaciones</title>
+<link rel="icon" type="image/png" href="favicon.png">
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Supabase SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- SheetJS para Exportación a Excel -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<link rel="stylesheet" href="styles.v2.css">
+</head>
+
+<body>
+
+<!-- =====================================================
+     CONFIGURACIÓN DE SUPABASE Y CONSTANTES
+     ===================================================== -->
+
+
+
+<!-- =====================================================
+     VISTA LOGIN
+     ===================================================== -->
+<div id="login-view" class="login-wrap">
+  <div class="login-card">
+    <div class="login-brand">
+      <span class="brand-mark">C</span>
+    </div>
+    <span class="stitch"></span>
+    <h1>Camisas IUB</h1>
+    <p class="sub">Sistema de control de ventas, compras y socios</p>
+
+    <div id="login-form">
+      <label class="label-required">Correo electrónico</label>
+      <input type="email" id="login-email" placeholder="tucorreo@ejemplo.com" autocomplete="email">
+
+      <label class="label-required">Contraseña</label>
+      <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
+
+      <button class="btn btn-block" id="login-button" type="button">
+        Iniciar Sesión
+      </button>
+
+      <div class="error-msg hidden" id="login-error"></div>
+    </div>
+
+    <p class="login-foot">Ventas · Compras · Liquidaciones</p>
+  </div>
+</div>
+
+<div id="app-view" class="app-layout hidden">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <span class="brand-mark">C</span>
+      <span class="brand-text">
+        <strong>Camisas IUB</strong>
+        <small id="who-label">Cargando...</small>
+      </span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <p class="nav-label">Principal</p>
+      <button class="sidebar-item active" data-section="dashboard" onclick="navigateTo('dashboard')">🏠 Inicio</button>
+
+      <p class="nav-label">Ventas</p>
+      <button class="sidebar-item" data-section="new-sale" onclick="navigateTo('new-sale')">➕ Nueva Venta</button>
+      <button class="sidebar-item" data-section="orders" onclick="navigateTo('orders')">📋 Pedidos</button>
+      <button class="sidebar-item" data-section="history" onclick="navigateTo('history')">📚 Historial</button>
+
+      <p class="nav-label">Socios</p>
+      <button class="sidebar-item" data-section="purchases" onclick="navigateTo('purchases')">🧵 Abonos Yesenia</button>
+      <button class="sidebar-item" data-section="settlements" onclick="navigateTo('settlements')">💰 Liquidaciones</button>
+
+      <p class="nav-label">Datos</p>
+      <button class="sidebar-item" data-section="summaries" onclick="navigateTo('summaries')">📊 Resúmenes</button>
+      <button class="sidebar-item" data-section="reports" onclick="navigateTo('reports')">📈 Reportes</button>
+
+      <p class="nav-label">Sistema</p>
+      <button class="sidebar-item hidden" data-section="settings" id="tab-users-btn" onclick="navigateTo('settings')">⚙️ Configuración</button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <span class="user-dot"></span>
+        <span id="sidebar-user-info"></span>
+      </div>
+      <div class="footer-actions">
+        <button class="btn-ghost btn" onclick="toggleTheme()" type="button" title="Cambiar tema"><span id="theme-icon">Tema</span><span id="theme-label"></span></button>
+        <button class="btn-ghost btn" onclick="handleLogout()" type="button">🚪 Salir</button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="toggleSidebar()"></div>
+
+  <main class="main-content" id="main-content">
+
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px;">
+      <button class="sidebar-toggle" onclick="toggleSidebar()" type="button">☰ Menú</button>
+      <button class="btn-ghost btn" onclick="hardRefresh()" type="button" title="Recargar app (limpia caché)" style="padding:6px 10px; font-size:13px;">🔄 Actualizar</button>
+    </div>
+
+    <div id="section-dashboard">
+      <div id="dashboard-contenido"></div>
+    </div>
+
+    <div id="section-new-sale" class="hidden">
+      <div class="page-head">
+        <div>
+          <h2 class="page-title">Nueva Venta</h2>
+          <p class="page-sub">Registra un nuevo pedido de camisas.</p>
+        </div>
+        <div class="actions-right">
+          <button class="btn-ghost btn" onclick="navigateTo('orders')" type="button">Ver Pedidos</button>
+        </div>
+      </div>
+
+      <div id="form-validation-error" class="error-msg hidden"></div>
+
+      <div class="form-card" id="form-card">
+        <h3 id="form-title">Registrar venta</h3>
+
+        <div class="form-section">
+          <div class="form-section-header">
+            <span class="form-section-badge">1</span>
+            <h4 class="form-section-title">Cliente</h4>
+          </div>
+          <div class="form-grid">
+            <div>
+              <label class="label-required">Nombre del cliente</label>
+              <input type="text" id="f-cliente" placeholder="Ej. Juan Pérez" list="clientes-sugeridos" autocomplete="off">
+              <datalist id="clientes-sugeridos"></datalist>
+              <small id="f-cliente-hint" class="hint" style="margin-top:4px; display:none;"></small>
+            </div>
+            <div>
+              <label class="label-required">Teléfono</label>
+              <input type="text" id="f-telefono" placeholder="Ej. 300 123 4567 o @usuario">
+              <small id="f-telefono-hint" class="hint" style="margin-top:4px; display:none;"></small>
+            </div>
+            <div>
+              <label class="label-required">Vendedor asignado</label>
+              <select id="f-vendedor">
+                <option value="Samir">Samir</option>
+                <option value="Valentina">Valentina</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-header">
+            <span class="form-section-badge">2</span>
+            <h4 class="form-section-title">Camisa</h4>
+          </div>
+          <div class="form-grid form-grid-narrow">
+            <div>
+              <label class="label-required">Cantidad</label>
+              <input type="number" id="f-cantidad" value="1" min="1" max="30">
+            </div>
+          </div>
+
+          <div class="toggle-row">
+            <input type="checkbox" id="f-detalle-individual">
+            <label for="f-detalle-individual">Llenar cada camisa por separado (colores, tallas o abonos distintos)</label>
+          </div>
+
+          <div class="form-grid" id="camisa-simple-block">
+            <div>
+              <label>Versión de la camisa</label>
+              <select id="cs-modelo">
+                <option value="Viejo" selected>Versión 1</option>
+                <option value="Nuevo">Versión 2</option>
+              </select>
+            </div>
+            <div>
+              <label class="label-required">Género (todas las camisas)</label>
+              <select id="cs-genero">
+                <option value="" selected disabled>Selecciona un género</option>
+                <option value="Hombre">Hombre</option>
+                <option value="Mujer">Mujer</option>
+              </select>
+            </div>
+            <div>
+              <label class="label-required">Color (todas las camisas)</label>
+              <select id="cs-color">
+                <option value="" selected disabled>Selecciona un color</option>
+              </select>
+            </div>
+            <div>
+              <label class="label-required">Talla (todas las camisas)</label>
+              <select id="cs-talla">
+                <option value="">Selecciona una talla</option>
+              </select>
+            </div>
+            <div>
+              <label>Bordado (todas las camisas)</label>
+              <input type="text" id="cs-programa" placeholder="Ej. Ingeniería de Sistemas">
+            </div>
+            <div>
+              <label>Abono total recibido del cliente ($)</label>
+              <input type="number" id="cs-abono-total" min="0" value="20000">
+            </div>
+          </div>
+
+          <div id="camisa-items-container"></div>
+
+          <p class="hint">Activa la casilla de arriba solo si las camisas de este pedido tienen colores, tallas o abonos distintos entre sí.</p>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-header">
+            <span class="form-section-badge">3</span>
+            <h4 class="form-section-title">Pago y Costos</h4>
+          </div>
+          <div class="form-grid">
+            <div>
+              <label class="label-required">Precio por camisa ($)</label>
+              <input type="number" id="f-precio" value="39000" min="0">
+            </div>
+            <div>
+              <label class="label-required">Costo por camisa ($)</label>
+              <input type="number" id="f-costo" value="30000" min="0">
+            </div>
+            <div>
+              <label>Total abono recibido del cliente ($)</label>
+              <input type="number" id="f-abono" value="20000" min="0" disabled class="input-total">
+            </div>
+            <div>
+              <label class="label-required">Estado del pedido</label>
+              <select id="f-estado">
+                <option value="" selected disabled>Selecciona un estado</option>
+                <option value="Pedido">Pedido</option>
+                <option value="Comprado">Comprado</option>
+                <option value="Bordando">Bordando</option>
+                <option value="Listo para entrega">Listo para entrega</option>
+                <option value="Entregado">Entregado</option>
+                <option value="Liquidado">Liquidado</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-header">
+            <span class="form-section-badge">4</span>
+            <h4 class="form-section-title">Entrega</h4>
+          </div>
+          <div class="form-grid">
+            <div>
+              <label>Persona que entrega</label>
+              <select id="f-entrega-por">
+                <option value="">Selecciona quién entrega</option>
+                <option value="Samir">Samir</option>
+                <option value="Valentina">Valentina</option>
+              </select>
+            </div>
+            <div>
+              <label class="label-required">Fecha del pedido</label>
+              <input type="date" id="f-fecha">
+            </div>
+            <div>
+              <label>Fecha de entrega</label>
+              <input type="date" id="f-fecha-entrega">
+            </div>
+            <div>
+              <label>Lugar de entrega</label>
+              <select id="f-lugar-entrega">
+                <option value="">Selecciona un lugar</option>
+              </select>
+            </div>
+          </div>
+          <div id="f-lugar-otro-wrap" class="hidden" style="margin-top:10px;">
+            <label>Especifica el lugar (cuando eliges “Otro”)</label>
+            <input type="text" id="f-lugar-otro" placeholder="Ej. Casa de Ana - Calle 45 #12-34">
+          </div>
+          <div class="toggle-row toggle-row-flat">
+            <input type="checkbox" id="f-fecha-entrega-pendiente">
+            <label for="f-fecha-entrega-pendiente">La fecha de entrega aún no está definida</label>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-header">
+            <span class="form-section-badge">5</span>
+            <h4 class="form-section-title">Observaciones</h4>
+          </div>
+          <div>
+            <label>Nota / Comentarios (Opcional)</label>
+            <textarea id="f-nota" rows="2" placeholder="Detalles de entrega, instrucciones de proveedor..."></textarea>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn-ghost btn" onclick="if(editingId){navigateTo('orders')}else{closeForm()}" type="button">Cancelar</button>
+          <button class="btn btn-gold" id="save-sale-button" type="button">Guardar venta</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="section-orders" class="hidden">
+      <div class="page-head">
+        <div>
+          <h2 class="page-title">Pedidos</h2>
+          <p class="page-sub">Consulta, filtra y administra todos los pedidos.</p>
+        </div>
+        <div class="actions-right">
+          <button class="btn btn-success" id="export-buy-btn" type="button">Exportar compra</button>
+          <button class="btn btn-gold hidden" id="export-full-btn" type="button">Exportar Excel completo</button>
+          <button class="btn" onclick="navigateTo('new-sale')" type="button">Nueva venta</button>
+        </div>
+      </div>
+
+      <div class="filters-bar">
+        <div class="filters">
+          <select id="filter-vendedor" aria-label="Filtrar por vendedor">
+            <option value="">Todos los vendedores</option>
+          </select>
+          <select id="filter-estado" aria-label="Filtrar por estado">
+            <option value="">Todos los estados</option>
+            <option value="Pedido">Pedido</option>
+            <option value="Comprado">Comprado</option>
+            <option value="Bordando">Bordando</option>
+            <option value="Listo para entrega">Listo para entrega</option>
+            <option value="Entregado">Entregado</option>
+            <option value="Liquidado">Liquidado</option>
+          </select>
+          <input type="search" id="filter-search" placeholder="Buscar por nombre, teléfono, vendedor, fecha, ID..." class="search-input">
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table data-orden-clave="ordenes">
+          <thead>
+            <tr>
+              <th data-orden="fecha">Fecha Pedido</th>
+              <th data-orden="vendedor">Vendedor</th>
+              <th data-orden="cliente">Cliente</th>
+              <th>Detalle Camisa</th>
+              <th data-orden="cantidad">Cant.</th>
+              <th data-orden="venta">Venta Total</th>
+              <th data-orden="abono">Abono Cliente</th>
+              <th data-orden="saldo">Saldo Cliente</th>
+              <th data-orden="pagado">Pagado a Proveedor</th>
+              <th data-orden="falta">Falta Pagar</th>
+              <th data-orden="entrega">Entrega</th>
+              <th data-orden="estado">Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="ventas-body"></tbody>
+        </table>
+        <div class="empty hidden" id="empty-state">
+          <b>Todavía no hay ventas registradas.</b><br>
+          Usa "Nueva venta" para comenzar.<br>
+          <button class="btn" onclick="navigateTo('new-sale')" type="button">Crear primera venta</button>
+        </div>
+      </div>
+      <p class="table-hint">💡 Mantén <kbd>Shift</kbd> + rueda para desplazar lateralmente</p>
+      <div id="orders-pagination"></div>
+    </div>
+
+    <div id="section-history" class="hidden">
+      <div class="page-head">
+        <div>
+          <h2 class="page-title">Historial de pedidos</h2>
+          <p class="page-sub">Pedidos finalizados. Consulta y, si fue un error, restaura a la lista activa.</p>
+        </div>
+      </div>
+      <div class="filters-bar">
+        <div class="filters">
+          <input type="search" id="filter-historial-search" placeholder="Buscar por cliente, teléfono, vendedor, fecha..." class="search-input">
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table data-orden-clave="historial">
+          <thead>
+            <tr>
+              <th data-orden="fecha">Fecha Pedido</th>
+              <th data-orden="vendedor">Vendedor</th>
+              <th data-orden="cliente">Cliente</th>
+              <th>Detalle Camisa</th>
+              <th data-orden="cantidad">Cant.</th>
+              <th data-orden="venta">Venta Total</th>
+              <th data-orden="abono">Abono Cliente</th>
+              <th data-orden="saldo">Saldo Cliente</th>
+              <th data-orden="entrega">Entrega</th>
+              <th data-orden="estado">Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="historial-body"></tbody>
+        </table>
+        <div class="empty hidden" id="historial-empty-state">
+          <b>No hay pedidos finalizados todavía.</b><br>
+          Los pedidos que finalices en la sección "Pedidos" aparecerán aquí.<br>
+          <button class="btn" onclick="navigateTo('orders')" type="button">Ver pedidos</button>
+        </div>
+      </div>
+      <p class="table-hint">💡 Mantén <kbd>Shift</kbd> + rueda para desplazar lateralmente</p>
+      <div id="historial-pagination"></div>
+    </div>
+
+    <div id="section-purchases" class="hidden">
+      <div class="private-banner" id="compras-privacy-banner">
+        <span><b>Acceso Privado:</b> Estás viendo únicamente los abonos a Yesenia donde tienes pedidos propios.</span>
+      </div>
+      <div class="page-head">
+        <div>
+          <h2 class="page-title">Abonos Yesenia</h2>
+          <p class="page-sub">Cada abono agrupa los pedidos pagados en una misma visita a Yesenia, con los aportes de cada quien y la liquidación entre quienes participaron.</p>
+        </div>
+        <div class="actions-right">
+          <button class="btn btn-gold" onclick="openCompraModal()" type="button">Nuevo abono</button>
+        </div>
+      </div>
+      <div class="liquidacion-box" id="compras-deuda-box"></div>
+      <div class="filters-bar">
+        <div class="filters">
+          <input type="search" id="filter-compras-search" placeholder="Buscar por cliente, teléfono, comprador, fecha..." class="search-input">
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table data-orden-clave="compras">
+          <thead>
+            <tr>
+              <th data-orden="fecha">Fecha</th>
+              <th data-orden="proveedor">Proveedor</th>
+              <th data-orden="comprador">Comprador</th>
+              <th data-orden="quien">Quién abona</th>
+              <th data-orden="camisas">Camisas</th>
+              <th data-orden="costo">Costo total</th>
+              <th data-orden="aportado">Aportado</th>
+              <th data-orden="saldo">Saldo</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="compras-body"></tbody>
+        </table>
+        <div class="empty hidden" id="compras-empty-state">
+          <b>Todavía no hay abonos a Yesenia registrados.</b><br>
+          Usa "Nuevo abono" para registrar una visita a Yesenia.<br>
+          <button class="btn btn-gold" onclick="openCompraModal()" type="button">Nuevo abono</button>
+        </div>
+      </div>
+      <p class="table-hint">💡 Mantén <kbd>Shift</kbd> + rueda para desplazar lateralmente</p>
+    </div>
+
+    <div id="section-settlements" class="hidden">
+      <div class="page-head">
+        <div>
+          <h2 class="page-title">Ganancias y Liquidaciones entre Socios</h2>
+          <p class="page-sub">Reparto 50/50 de utilidades netas y control de saldos pendientes entre Samir y Valentina.</p>
+        </div>
+        <div class="actions-right">
+          <button class="btn btn-gold" onclick="openLiquidacionModal()" type="button">Registrar Pago entre Socios</button>
+        </div>
+      </div>
+
+      <div class="cards">
+        <div class="card">
+          <div class="eyebrow">Ganancia Neta Samir (50%)</div>
+          <div class="value gold" id="stat-ganancia-samir">$0</div>
+          <div class="sub">Generada por sus ventas</div>
+        </div>
+        <div class="card">
+          <div class="eyebrow">Ganancia Neta Valentina (50%)</div>
+          <div class="value gold" id="stat-ganancia-val">$0</div>
+          <div class="sub">Generada por sus ventas</div>
+        </div>
+        <div class="card">
+          <div class="eyebrow">Balance entre socios</div>
+          <div class="value ok" id="stat-balance-socios">$0</div>
+          <div class="sub" id="stat-balance-sub">Sin saldos pendientes</div>
+        </div>
+      </div>
+
+      <h3 class="section-title">Historial de Pagos entre Socios</h3>
+      <div class="filters-bar">
+        <div class="filters">
+          <input type="search" id="filter-liquidaciones-search" placeholder="Buscar por pedido, pagador, receptor..." class="search-input">
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table data-orden-clave="liquidaciones">
+          <thead>
+            <tr>
+              <th data-orden="fecha">Fecha</th>
+              <th data-orden="pedido">Pedido</th>
+              <th data-orden="pagador">Pagador</th>
+              <th data-orden="receptor">Receptor</th>
+              <th data-orden="monto">Monto</th>
+              <th data-orden="nota">Nota</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody id="liquidaciones-body"></tbody>
+        </table>
+        <div class="empty hidden" id="liquidaciones-empty">
+          No hay pagos registrados entre Samir y Valentina.<br>
+          <button class="btn btn-gold" onclick="openLiquidacionModal()" type="button">Registrar pago</button>
+        </div>
+      </div>
+      <p class="table-hint">💡 Mantén <kbd>Shift</kbd> + rueda para desplazar lateralmente</p>
+    </div>
+
+    <div id="section-summaries" class="hidden">
+      <div class="page-head">
+        <div>
+          <h2 class="page-title">Resúmenes</h2>
+          <p class="page-sub">Estadísticas y análisis del negocio con filtros por período, vendedor y cliente.</p>
+        </div>
+      </div>
+
+      <div class="filters-bar">
+        <div class="filters filters-labeled">
+          <div>
+            <label class="mini-label">Período</label>
+            <select id="res-periodo" onchange="resRangoToggle(); renderResumenes();">
+              <option value="todo" selected>Todos</option>
+              <option value="hoy">Hoy</option>
+              <option value="ayer">Ayer</option>
+              <option value="semana">Esta semana</option>
+              <option value="mes">Este mes</option>
+              <option value="anio">Este año</option>
+              <option value="rango">Rango personalizado</option>
+            </select>
+          </div>
+          <div id="res-rango-block" class="hidden rango-block">
+            <div>
+              <label class="mini-label">Desde</label>
+              <input type="date" id="res-desde" onchange="renderResumenes();">
+            </div>
+            <div>
+              <label class="mini-label">Hasta</label>
+              <input type="date" id="res-hasta" onchange="renderResumenes();">
+            </div>
+          </div>
+          <div>
+            <label class="mini-label">Vendedor</label>
+            <select id="res-vendedor" onchange="renderResumenes();">
+              <option value="">Todos</option>
+            </select>
+          </div>
+          <div>
+            <label class="mini-label">Cliente</label>
+            <select id="res-cliente" onchange="renderResumenes();">
+              <option value="">Todos</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div id="resumen-contenido"></div>
+    </div>
+
+    <div id="section-reports" class="hidden">
+      <div class="page-head">
+        <div>
+          <h2 class="page-title">Reportes</h2>
+          <p class="page-sub">Exportación de datos y estadísticas del negocio.</p>
+        </div>
+      </div>
+
+      <div class="cards">
+        <div class="card card-click" onclick="exportarCompraExcel()">
+          <div class="eyebrow">Exportar lista de compra</div>
+          <div class="value value-md">Pedidos pendientes</div>
+          <div class="sub">Solo pedidos que faltan por comprar al proveedor</div>
+        </div>
+        <div class="card card-click hidden" id="export-full-card" onclick="exportarExcelCompleto()">
+          <div class="eyebrow">Exportar Excel completo</div>
+          <div class="value value-md">Reporte general</div>
+          <div class="sub">Todos los pedidos (respeta filtros activos)</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="section-settings" class="hidden">
+      <div class="page-head">
+        <div>
+          <h2 class="page-title">Configuración — Usuarios y Permisos</h2>
+          <p class="page-sub">Gestiona las cuentas y accesos del sistema.</p>
+        </div>
+        <div class="actions-right">
+          <button class="btn btn-gold" onclick="openUserModal()" type="button">Crear Usuario</button>
+        </div>
+      </div>
+
+      <div class="filters-bar">
+        <div class="filters">
+          <input type="search" id="filter-usuarios-search" placeholder="Buscar por nombre, correo, rol..." class="search-input">
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table data-orden-clave="usuarios">
+          <thead>
+            <tr>
+              <th data-orden="nombre">Nombre</th>
+              <th data-orden="correo">Correo Electrónico</th>
+              <th data-orden="rol">Rol / Permisos</th>
+              <th data-orden="creado">Fecha de Registro</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="usuarios-body"></tbody>
+        </table>
+        <div class="empty hidden" id="users-empty-state">
+          No hay usuarios registrados en la base de datos.<br>
+          <button class="btn btn-gold" onclick="openUserModal()" type="button">Crear usuario</button>
+        </div>
+      </div>
+      <p class="table-hint">💡 Mantén <kbd>Shift</kbd> + rueda para desplazar lateralmente</p>
+    </div>
+
+  </main>
+</div>
+
+<div id="compra-modal" class="modal-backdrop hidden">
+  <div class="modal-card modal-card-wide">
+    <div class="modal-head">
+      <h3 id="compra-modal-title">Nuevo abono a Yesenia</h3>
+      <button class="btn-ghost btn modal-x" onclick="closeCompraModal()" type="button" title="Cerrar">✕</button>
+    </div>
+
+    <div class="form-grid">
+      <div>
+        <label class="label-required">Fecha de compra</label>
+        <input type="date" id="cp-fecha">
+      </div>
+      <div>
+        <label class="label-required">Persona que realizó la compra</label>
+        <select id="cp-comprador">
+          <option value="" selected disabled>Selecciona quién compró</option>
+          <option value="Samir">Samir</option>
+          <option value="Valentina">Valentina</option>
+          <option value="Yesenia">Yesenia</option>
+        </select>
+      </div>
+    </div>
+
+    <label>Observaciones</label>
+    <textarea id="cp-observaciones" rows="2" placeholder="Detalle de la visita al proveedor..."></textarea>
+
+    <label class="label-block">Clientes incluidos en esta compra</label>
+    <p class="hint">Cada cliente aparece una vez (agrupado por contacto: teléfono o @) con la suma de sus camisas. Si el mismo cliente tiene 2 pedidos, se combinan. Escribe el abono total que ese cliente paga a Yesenia.</p>
+    <div class="pedidos-picker" id="cp-pedidos-picker"></div>
+
+    <div class="cards cards-tight">
+      <div class="card">
+        <div class="eyebrow">Cantidad total de camisas</div>
+        <div class="value" id="cp-resumen-cantidad">0</div>
+      </div>
+      <div class="card">
+        <div class="eyebrow">Costo total de la compra</div>
+        <div class="value gold" id="cp-resumen-costo">$0</div>
+      </div>
+      <div class="card">
+        <div class="eyebrow">Total pagado a Yesenia</div>
+        <div class="value ok" id="cp-resumen-abono">$0</div>
+      </div>
+      <div class="card">
+        <div class="eyebrow">Saldo pendiente (costo − abono)</div>
+        <div class="value warn" id="cp-resumen-restante">$0</div>
+      </div>
+    </div>
+
+    <div class="error-msg hidden" id="cp-error"></div>
+
+    <div class="form-actions">
+      <button class="btn-ghost btn" onclick="closeCompraModal()" type="button">Cancelar</button>
+      <button class="btn btn-gold" id="cp-save-btn" onclick="saveCompra()" type="button">Guardar compra</button>
+    </div>
+
+    <div id="cp-aportes-section" class="hidden aportes-section">
+      <div id="cp-pedidos-detalle"></div>
+      <div class="form-actions">
+        <button class="btn-ghost btn" onclick="closeCompraModal()" type="button">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="liquidacion-modal" class="modal-backdrop hidden">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h3>Registrar Pago entre Socios</h3>
+      <button class="btn-ghost btn modal-x" onclick="closeLiquidacionModal()" type="button" title="Cerrar">✕</button>
+    </div>
+
+    <p class="page-sub modal-intro">Selecciona el pedido que estás liquidando. El monto sugerido es el 50% de la ganancia pendiente de ese pedido.</p>
+
+    <label class="label-required">Pagador (quien entrega el dinero)</label>
+    <select id="lq-pagador">
+      <option value="" selected disabled>Selecciona quién paga</option>
+      <option value="Samir">Samir</option>
+      <option value="Valentina">Valentina</option>
+    </select>
+
+    <label class="label-required">Pedido que se está liquidando</label>
+    <select id="lq-pedido">
+      <option value="" selected disabled>Primero elige quién paga</option>
+    </select>
+    <p class="hint hint-tight">Solo aparecen pedidos con saldo pendiente de liquidación entre socios (50% de la ganancia).</p>
+
+    <label class="label-required">Receptor (quien recibe)</label>
+    <select id="lq-receptor">
+      <option value="" selected disabled>Selecciona quién recibe</option>
+      <option value="Valentina">Valentina</option>
+      <option value="Samir">Samir</option>
+    </select>
+
+    <label class="label-required">Monto a pagar ($)</label>
+    <input type="number" id="lq-monto" min="1" placeholder="Ej. 50000">
+
+    <label class="label-required">Fecha del pago</label>
+    <input type="date" id="lq-fecha">
+
+    <label>Nota / Concepto</label>
+    <textarea id="lq-nota" rows="2" placeholder="Ej. Liquidación parcial de compras..."></textarea>
+
+    <div class="error-msg hidden" id="lq-error"></div>
+
+    <div class="form-actions">
+      <button class="btn-ghost btn" onclick="closeLiquidacionModal()" type="button">Cancelar</button>
+      <button class="btn btn-gold" onclick="saveLiquidacion()" type="button">Registrar Pago</button>
+    </div>
+  </div>
+</div>
+
+<div id="user-modal" class="modal-backdrop hidden">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h3 id="user-modal-title">Nuevo Usuario</h3>
+      <button class="btn-ghost btn modal-x" onclick="closeUserModal()" type="button" title="Cerrar">✕</button>
+    </div>
+
+    <label class="label-required">Nombre Completo</label>
+    <input type="text" id="u-nombre" placeholder="Ej. Laura Gómez">
+
+    <label class="label-required">Correo Electrónico (usuario)</label>
+    <input type="email" id="u-correo" placeholder="correo@ejemplo.com">
+
+    <label class="label-required" id="u-password-label">Contraseña</label>
+    <input type="password" id="u-password" placeholder="Mínimo 6 caracteres">
+    <div id="u-password-hint" class="hint-box">Con esta contraseña y el correo, la persona podrá iniciar sesión.</div>
+
+    <label class="label-required">Rol y Permisos</label>
+    <select id="u-rol">
+      <option value="" selected disabled>Selecciona un rol</option>
+      <option value="vendedor">VENDEDOR (Ver solo sus pedidos, sin administración)</option>
+      <option value="admin">ADMINISTRADOR (Control total del sistema)</option>
+    </select>
+
+    <div class="error-msg hidden" id="user-error"></div>
+
+    <div class="form-actions">
+      <button class="btn-ghost btn" onclick="closeUserModal()" type="button">Cancelar</button>
+      <button class="btn btn-gold" onclick="saveUser()" type="button">Guardar Usuario</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- =====================================================
+     LÓGICA JAVASCRIPT
+     ===================================================== -->
+
+
+<script src="app.v2.js"></script>
+<script src="enhance.v2.js"></script>
+</body>
+</html>
