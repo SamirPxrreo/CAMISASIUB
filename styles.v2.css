@@ -1355,7 +1355,7 @@ select.estado-select:hover { border-color: var(--thread); }
 select.estado-select.estado-Pedido { background: rgba(200, 147, 42, 0.20); color: var(--gold-ink); border: 1px solid rgba(200, 147, 42, 0.45); }
 select.estado-select.estado-Comprado { background: rgba(13, 148, 136, 0.16); color: var(--teal-ink); border: 1px solid rgba(13, 148, 136, 0.45); }
 select.estado-select.estado-Bordando { background: rgba(147, 51, 234, 0.16); color: #8b3fd9; border: 1px solid rgba(147, 51, 234, 0.45); }
-select.estado-select.estado-Listo-para-entrega { background: rgba(245, 158, 11, 0.18); color: #92400E; border: 1px solid rgba(245, 158, 11, 0.45); }
+select.estado-select.estado-Listo-para-entrega { background: rgba(132, 204, 22, 0.18); color: #3f6212; border: 1px solid rgba(132, 204, 22, 0.45); }
 select.estado-select.estado-Entregado { background: rgba(29, 95, 214, 0.14); color: var(--info-ink); border: 1px solid rgba(29, 95, 214, 0.45); }
 select.estado-select.estado-Liquidado { background: rgba(30, 122, 76, 0.16); color: var(--ok-ink); border: 1px solid rgba(30, 122, 76, 0.45); }
 /* compat viejos */
@@ -1387,7 +1387,7 @@ select.estado-select.estado-Pagado { background: rgba(30, 122, 76, 0.16); color:
 .estado-Pedido { background: rgba(200, 147, 42, 0.15); color: var(--gold-ink); }
 .estado-Comprado { background: rgba(13, 148, 136, 0.13); color: var(--teal-ink); }
 .estado-Bordando { background: rgba(147, 51, 234, 0.13); color: #8b3fd9; }
-.estado-Listo-para-entrega { background: rgba(245, 158, 11, 0.15); color: #92400E; }
+.estado-Listo-para-entrega { background: rgba(132, 204, 22, 0.15); color: #3f6212; }
 .estado-Entregado { background: rgba(29, 95, 214, 0.11); color: var(--info-ink); }
 .estado-Liquidado { background: rgba(30, 122, 76, 0.13); color: var(--ok-ink); }
 /* compat viejos */

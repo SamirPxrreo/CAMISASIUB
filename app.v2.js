@@ -3849,8 +3849,8 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
     const fmt = n => (n == null || isNaN(n)) ? '' : '$' + Math.round(n).toLocaleString('es-CO');
     const fmtNum = n => (n == null || isNaN(n)) ? '' : String(Math.round(n));
 
-    const statusBg = { 'Pedido':'#F3F4F6','Comprado':'#DBEAFE','Bordando':'#F3E8FF','Listo para entrega':'#FEF3C7','Entregado':'#DBEAFE','Liquidado':'#D1FAE5' };
-    const statusFg = { 'Pedido':'#4B5563','Comprado':'#1E40AF','Bordando':'#7C3AED','Listo para entrega':'#92400E','Entregado':'#1E3A5F','Liquidado':'#065F46' };
+    const statusBg = { 'Pedido':'#F3F4F6','Comprado':'#DBEAFE','Bordando':'#F3E8FF','Listo para entrega':'#ECFCCB','Entregado':'#DBEAFE','Liquidado':'#D1FAE5' };
+    const statusFg = { 'Pedido':'#4B5563','Comprado':'#1E40AF','Bordando':'#7C3AED','Listo para entrega':'#3F6212','Entregado':'#1E3A5F','Liquidado':'#065F46' };
 
     let html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
 <head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Reporte</x:Name><x:WorksheetOptions><x:FreezePanes/><x:FrozenNoSplit/><x:SplitHorizontal>1</x:SplitHorizontal><x:TopRowBottomPane>1</x:TopRowBottomPane></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
