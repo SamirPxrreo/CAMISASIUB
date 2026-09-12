@@ -1979,14 +1979,10 @@ return items.map((it, idx) => `
     const abonoTotal = parseFloat(document.getElementById('cs-abono-total').value);
 
     const items = [];
-    const abonoPorCamisa = isNaN(abonoTotal) ? 0 : abonoTotal / cantidad;
-    const baseAbono = Math.floor(abonoPorCamisa);
-    const restoAbono = Math.round((abonoPorCamisa - baseAbono) * cantidad);
     for (let i = 0; i < cantidad; i++) {
       const programa = document.getElementById('cs-programa').value.trim();
       const modelo = document.getElementById('cs-modelo').value || 'Viejo';
-      const abonoItem = baseAbono + (i < restoAbono ? 1 : 0);
-      items.push({ genero, color, talla, programa, modelo, abono: abonoItem });
+      items.push({ genero, color, talla, programa, modelo, abono: i === 0 ? (isNaN(abonoTotal) ? 0 : abonoTotal) : 0 });
     }
     return items;
   }
