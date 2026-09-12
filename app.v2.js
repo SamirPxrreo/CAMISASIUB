@@ -2055,7 +2055,7 @@ return items.map((it, idx) => `
       if (existentes[i]) {
         items.push(existentes[i]);
       } else {
-        items.push({ genero: '', color: '', talla: '', abono: '' });
+        items.push({ genero: '', color: '', talla: '', abono: '', modelo: 'Viejo' });
       }
     }
     renderCamisaItemsFromData(items);
