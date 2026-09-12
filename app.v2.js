@@ -3900,11 +3900,12 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
       const precio = Number(v.precio_unitario) || 0;
       const costo = Number(v.costo_unitario) || 0;
       const abono = Number(v.abono) || 0;
-      const ventaTotal = precio * cant;
-      const costoTotal = costo * cant;
-      const saldoCliente = ventaTotal - abono;
       const pagosProv = abonosProveedorPorVentaId(v.id);
-      const gananciaTotal = ventaTotal - costoTotal;
+      // Para el Excel por camisa: totales por pedido se reparten por item (fix ganancia duplicada)
+      const sinDet = !(items && Array.isArray(items) && items.length > 0);
+      const nItems = sinDet ? 1 : items.length;
+      const cantPorItemBase = sinDet ? cant : (nItems === 1 ? cant : Math.floor(cant / nItems));
+      const restoCant = sinDet ? 0 : (nItems === 1 ? 0 : cant - cantPorItemBase * nItems);
 
       let diaSemana = '';
       if (v.fecha_entrega) {
@@ -3919,7 +3920,15 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
       const eBg = statusBg[e] || 'transparent';
       const eFg = statusFg[e] || '#000';
 
-      items.forEach(it => {
+      items.forEach((it, idx) => {
+        const cantItem = sinDet ? cant : (nItems === 1 ? cant : cantPorItemBase + (idx < restoCant ? 1 : 0));
+        const ventaItem = precio * cantItem;
+        const costoItem = costo * cantItem;
+        const abonoItem = (it.abono != null && it.abono !== '' && !isNaN(Number(it.abono))) ? Number(it.abono) : (abono / nItems);
+        const abonoYesItem = (it.abono_yesenia != null && it.abono_yesenia !== '' && !isNaN(Number(it.abono_yesenia))) ? Number(it.abono_yesenia) : (pagosProv.abonado / nItems);
+        const saldoItem = ventaItem - abonoItem;
+        const pendProvItem = costoItem - abonoYesItem;
+        const gananciaItem = ventaItem - costoItem;
         html += '<tr style="background:' + bg + '">' +
           '<td class="c">' + esc(v.id) + '</td>' +
           '<td class="c">' + esc(v.fecha) + '</td>' +
@@ -3939,14 +3948,14 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
           '<td class="c">' + esc(etiquetaModelo(it.modelo)) + '</td>' +
           '<td class="m">' + fmtNum(precio) + '</td>' +
           '<td class="m">' + fmtNum(costo) + '</td>' +
-          '<td class="c">1</td>' +
-          '<td class="m">' + fmtNum(ventaTotal) + '</td>' +
-          '<td class="m">' + fmtNum(costoTotal) + '</td>' +
-          '<td class="m">' + fmtNum(abono) + '</td>' +
-          '<td class="m">' + fmtNum(saldoCliente) + '</td>' +
-          '<td class="m">' + fmtNum(pagosProv.abonado) + '</td>' +
-          '<td class="m">' + fmtNum(pagosProv.pendiente) + '</td>' +
-          '<td class="m">' + fmtNum(gananciaTotal) + '</td>' +
+          '<td class="c">' + fmtNum(cantItem) + '</td>' +
+          '<td class="m">' + fmtNum(ventaItem) + '</td>' +
+          '<td class="m">' + fmtNum(costoItem) + '</td>' +
+          '<td class="m">' + fmtNum(abonoItem) + '</td>' +
+          '<td class="m">' + fmtNum(saldoItem) + '</td>' +
+          '<td class="m">' + fmtNum(abonoYesItem) + '</td>' +
+          '<td class="m">' + fmtNum(pendProvItem) + '</td>' +
+          '<td class="m">' + fmtNum(gananciaItem) + '</td>' +
           '</tr>';
       });
     });
