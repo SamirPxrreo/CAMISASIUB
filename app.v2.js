@@ -3731,6 +3731,7 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
       }
 
       // Combina pedidos iguales: suma las unidades por Género/Color/Talla.
+      // Fix: pedidos viejos en modo simple guardaban items.length=1 con cantidad=4/6 -> contar cantidad, no 1.
       const agg = {};
       dataset.forEach(v => {
         let items = null;
@@ -3741,8 +3742,13 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
         if (!items || !Array.isArray(items) || items.length === 0) {
           items = [{ genero: v.genero, color: v.color, talla: v.talla, modelo: v.modelo }];
         }
-        items.forEach(it => {
-          const veces = sinDetalle ? (Number(v.cantidad) || 1) : 1;
+        const cant = Number(v.cantidad) || 1;
+        const pesoPorItem = sinDetalle ? cant : (items.length === 1 ? cant : cant / items.length);
+        // Si la división no es entera (datos inconsistentes), repartir el resto en las primeras filas
+        const base = Math.floor(pesoPorItem);
+        const resto = Math.round((pesoPorItem - base) * items.length);
+        items.forEach((it, idx) => {
+          const veces = sinDetalle ? cant : (items.length === 1 ? cant : base + (idx < resto ? 1 : 0));
           const key = `${it.genero || ''}|${it.color || ''}|${it.talla || ''}|${normalizarModelo(it.modelo)}`;
           if (!agg[key]) agg[key] = { genero: it.genero || '', color: it.color || '', talla: it.talla || '', modelo: normalizarModelo(it.modelo), cantidad: 0 };
           agg[key].cantidad += veces;
@@ -3779,29 +3785,38 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
         ['Ganancia estimada', '$' + Math.round(totalVenta - totalCosto).toLocaleString('es-CO')]
       ];
 
-      // Detalle por pedido (referencia interna).
+      // Detalle por pedido (referencia interna). Fix: respeta cantidad si items.length=1 (dato viejo).
       const detalle = [];
       dataset.forEach(v => {
         let items = null;
         if (v.items_camisa) {
           try { items = JSON.parse(v.items_camisa); } catch (e) { items = null; }
         }
+        const sinDetalle = !(items && Array.isArray(items) && items.length > 0);
         if (!items || !Array.isArray(items) || items.length === 0) {
           items = [{ genero: v.genero, color: v.color, talla: v.talla, programa: v.cliente_programa, modelo: v.modelo }];
         }
-        items.forEach(it => {
-          detalle.push({
-            'ID Pedido': v.id || '',
-            'Cliente': v.cliente_nombre || '',
-            'Vendedor': v.vendedor || '',
-            'Lugar Entrega': v.lugar_entrega || '',
-            'Entrega Por': v.entrega_por || '',
-            'Género': it.genero || '',
-            'Color': it.color || '',
-            'Talla': it.talla || '',
-            'Bordado': it.programa || '',
-            'Versión': etiquetaModelo(it.modelo)
-          });
+        const cant = Number(v.cantidad) || 1;
+        const peso = sinDetalle ? cant : (items.length === 1 ? cant : cant / items.length);
+        const base = Math.floor(peso);
+        const resto = Math.round((peso - base) * items.length);
+        items.forEach((it, idx) => {
+          const veces = sinDetalle ? cant : (items.length === 1 ? cant : base + (idx < resto ? 1 : 0));
+          // Duplicar fila por cada camisa para que el detalle sume la cantidad real
+          for (let k = 0; k < (veces || 1); k++) {
+            detalle.push({
+              'ID Pedido': v.id || '',
+              'Cliente': v.cliente_nombre || '',
+              'Vendedor': v.vendedor || '',
+              'Lugar Entrega': v.lugar_entrega || '',
+              'Entrega Por': v.entrega_por || '',
+              'Género': it.genero || '',
+              'Color': it.color || '',
+              'Talla': it.talla || '',
+              'Bordado': it.programa || '',
+              'Versión': etiquetaModelo(it.modelo)
+            });
+          }
         });
       });
 
