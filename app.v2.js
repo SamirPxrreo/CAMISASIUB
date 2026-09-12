@@ -1979,10 +1979,14 @@ return items.map((it, idx) => `
     const abonoTotal = parseFloat(document.getElementById('cs-abono-total').value);
 
     const items = [];
+    const abonoPorCamisa = isNaN(abonoTotal) ? 0 : abonoTotal / cantidad;
+    const baseAbono = Math.floor(abonoPorCamisa);
+    const restoAbono = Math.round((abonoPorCamisa - baseAbono) * cantidad);
     for (let i = 0; i < cantidad; i++) {
       const programa = document.getElementById('cs-programa').value.trim();
       const modelo = document.getElementById('cs-modelo').value || 'Viejo';
-      items.push({ genero, color, talla, programa, modelo, abono: i === 0 ? (isNaN(abonoTotal) ? 0 : abonoTotal) : 0 });
+      const abonoItem = baseAbono + (i < restoAbono ? 1 : 0);
+      items.push({ genero, color, talla, programa, modelo, abono: abonoItem });
     }
     return items;
   }
@@ -3864,7 +3868,7 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
       'Precio Unitario', 'Costo Unitario',
       'Cantidad', 'Venta Total', 'Costo Total', 'Abono Cliente',
       'Saldo Pendiente Cliente', 'Pagado al Proveedor', 'Saldo Pendiente Proveedor',
-      'Ganancia Total'
+      'Ganancia Total', 'Me queda (Saldo - Ganancia/2)'
     ];
 
     const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -3884,6 +3888,7 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
 
     let lastPedidoId = null;
     let rowToggle = false;
+    let excelRow = 2; // fila 1 es header, para fórmulas AA = W - Z/2
 
     data.forEach(v => {
       if (v.id !== lastPedidoId) { rowToggle = !rowToggle; lastPedidoId = v.id; }
@@ -3949,14 +3954,16 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
           '<td class="m">' + fmtNum(precio) + '</td>' +
           '<td class="m">' + fmtNum(costo) + '</td>' +
           '<td class="c">' + fmtNum(cantItem) + '</td>' +
-          '<td class="m">' + fmtNum(ventaItem) + '</td>' +
-          '<td class="m">' + fmtNum(costoItem) + '</td>' +
+          '<td class="m" x:fmla="=Q' + excelRow + '*S' + excelRow + '">' + fmtNum(ventaItem) + '</td>' +
+          '<td class="m" x:fmla="=R' + excelRow + '*S' + excelRow + '">' + fmtNum(costoItem) + '</td>' +
           '<td class="m">' + fmtNum(abonoItem) + '</td>' +
-          '<td class="m">' + fmtNum(saldoItem) + '</td>' +
+          '<td class="m" x:fmla="=T' + excelRow + '-V' + excelRow + '">' + fmtNum(saldoItem) + '</td>' +
           '<td class="m">' + fmtNum(abonoYesItem) + '</td>' +
-          '<td class="m">' + fmtNum(pendProvItem) + '</td>' +
-          '<td class="m">' + fmtNum(gananciaItem) + '</td>' +
+          '<td class="m" x:fmla="=U' + excelRow + '-X' + excelRow + '">' + fmtNum(pendProvItem) + '</td>' +
+          '<td class="m" x:fmla="=T' + excelRow + '-U' + excelRow + '">' + fmtNum(gananciaItem) + '</td>' +
+          '<td class="m" x:fmla="=W' + excelRow + '-Z' + excelRow + '/2">' + fmtNum(saldoItem - gananciaItem/2) + '</td>' +
           '</tr>';
+        excelRow++;
       });
     });
 
