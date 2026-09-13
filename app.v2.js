@@ -1428,7 +1428,6 @@ return items.map((it, idx) => `
     <div class="brand">
       <div>
         <h1>CAMISAS IUB</h1>
-        <div class="tag">Uniformes · Ibagué — Hecho a mano</div>
       </div>
       <div class="meta">
         <div class="num">RECIBO #${escSimple(String(venta.id).slice(-6).toUpperCase())}</div>
@@ -1475,11 +1474,6 @@ return items.map((it, idx) => `
     </div>
 
     ${notaTxt ? `<div class="note"><b>Nota:</b> ${escSimple(notaTxt)}</div>` : ''}
-
-    <div class="sigs">
-      <div class="sig">Firma cliente<br><span style="font-weight:700;color:var(--ink)">${escSimple(venta.cliente_nombre || '—')}</span></div>
-      <div class="sig">Firma entrega<br><span style="font-weight:700;color:var(--ink)">${escSimple(venta.entrega_por || venta.vendedor || '—')}</span></div>
-    </div>
 
     <div class="foot">
       Gracias por tu pedido 💙 — Camisas IUB<br>
