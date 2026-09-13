@@ -776,6 +776,20 @@ header.top .who {
   flex: 0 0 220px;
 }
 
+.camisa-item-money {
+  flex: 1 1 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+}
+
+.camisa-item-money .ci-estado {
+  font-size: 13px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  padding: 8px 12px;
+}
+
 @media (max-width: 720px) {
   .camisa-item-abono {
     flex: 1 1 100%;

@@ -215,10 +215,10 @@
 
           <div id="camisa-items-container"></div>
 
-          <p class="hint">Activa la casilla de arriba solo si las camisas de este pedido tienen colores, tallas o abonos distintos entre sí.</p>
+          <p class="hint">Activa la casilla de arriba solo si las camisas de este pedido tienen colores, tallas, abonos o estados distintos entre sí. Si todas son iguales pero quieres estados/precios/costos distintos por camisa, actívala igual: cada fila tiene su propio precio de venta, costo (Yesenia), abono y estado.</p>
         </div>
 
-        <div class="form-section">
+        <div class="form-section" id="form-section-pagos">
           <div class="form-section-header">
             <span class="form-section-badge">3</span>
             <h4 class="form-section-title">Pago y Costos</h4>
@@ -231,6 +231,7 @@
             <div>
               <label class="label-required">Costo por camisa ($)</label>
               <input type="number" id="f-costo" value="30000" min="0">
+              <p class="hint" style="margin-top:4px;">Auto según talla y versión: 2XL +$2.000, 3XL +$4.000, 4XL +$6.000; versión 2 +$1.000. Puedes editarlo.</p>
             </div>
             <div>
               <label>Total abono recibido del cliente ($)</label>

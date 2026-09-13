@@ -130,9 +130,9 @@
     vendedor: { val: v => (v.vendedor || '').toLowerCase(), tipo: 'text' },
     cliente:  { val: v => (v.cliente_nombre || '').toLowerCase(), tipo: 'text' },
     cantidad: { val: v => Number(v.cantidad) || 1, tipo: 'num' },
-    venta:    { val: v => (Number(v.precio_unitario) || 0) * (Number(v.cantidad) || 1), tipo: 'num' },
-    abono:    { val: v => Number(v.abono) || 0, tipo: 'num' },
-    saldo:    { val: v => (Number(v.precio_unitario) || 0) * (Number(v.cantidad) || 1) - (Number(v.abono) || 0), tipo: 'num' },
+    venta:    { val: v => precioTotalVenta(v), tipo: 'num' },
+    abono:    { val: v => abonoClienteTotal(v), tipo: 'num' },
+    saldo:    { val: v => precioTotalVenta(v) - abonoClienteTotal(v), tipo: 'num' },
     pagado:   { val: v => abonosProveedorPorVentaId(v.id).abonado, tipo: 'num' },
     falta:    { val: v => abonosProveedorPorVentaId(v.id).pendiente, tipo: 'num' },
     entrega:  { val: v => v.fecha_entrega || '', tipo: 'fecha' },
@@ -148,14 +148,14 @@
       comprador: { val: c => (c.comprador || '').toLowerCase(), tipo: 'text' },
       quien:    { val: c => compraAportesCache.filter(a => a.compra_id === c.id).map(a => (a.persona || '').toLowerCase()).filter(Boolean).join(' '), tipo: 'text' },
       camisas:  { val: c => ventasCache.filter(v => v.compra_id === c.id).reduce((s, v) => s + (Number(v.cantidad) || 1), 0), tipo: 'num' },
-      costo:    { val: c => ventasCache.filter(v => v.compra_id === c.id).reduce((s, v) => s + (Number(v.costo_unitario) || 0) * (Number(v.cantidad) || 1), 0), tipo: 'num' },
+      costo:    { val: c => ventasCache.filter(v => v.compra_id === c.id).reduce((s, v) => s + costoTotalVenta(v), 0), tipo: 'num' },
       aportado: { val: c => {
         const ap = compraAportesCache.filter(a => a.compra_id === c.id).reduce((s, a) => s + (Number(a.monto) || 0), 0);
         const ab = ventasCache.filter(v => v.compra_id === c.id).reduce((s, v) => s + (Number(v.abono_yesenia) || 0), 0);
         return Math.max(ap, ab);
       }, tipo: 'num' },
       saldo:    { val: c => {
-        const costo = ventasCache.filter(v => v.compra_id === c.id).reduce((s, v) => s + (Number(v.costo_unitario) || 0) * (Number(v.cantidad) || 1), 0);
+        const costo = ventasCache.filter(v => v.compra_id === c.id).reduce((s, v) => s + costoTotalVenta(v), 0);
         const ap = compraAportesCache.filter(a => a.compra_id === c.id).reduce((s, a) => s + (Number(a.monto) || 0), 0);
         const ab = ventasCache.filter(v => v.compra_id === c.id).reduce((s, v) => s + (Number(v.abono_yesenia) || 0), 0);
         return costo - Math.max(ap, ab);
@@ -346,6 +346,121 @@
     return badgeModelo(modeloDeVenta(v));
   }
 
+  /* =====================================================
+     PER-CAMISA: precio, costo, abono y estado
+     Cada camisa de un pedido puede tener SU PROPIO precio de venta,
+     costo con Yesenia, abono y estado. Estos helpers son la única
+     fuente de verdad del dinero: usan el dato de la camisa si existe
+     y si no (pedidos viejos) caen al valor del pedido.
+     ===================================================== */
+  const ORDEN_ESTADOS = ['Pedido', 'Comprado', 'Bordando', 'Listo para entrega', 'Entregado', 'Liquidado'];
+
+  // Items crudos del jsonb (o null si no hay / no se leen).
+  function itemsCrudosVenta(v) {
+    if (v && v.items_camisa) {
+      try {
+        const p = JSON.parse(v.items_camisa);
+        if (Array.isArray(p) && p.length) return p;
+      } catch (e) { /* venta sin items legibles */ }
+    }
+    return null;
+  }
+
+  // Precio/costo de una camisa: el de la camisa si existe, si no el del pedido.
+  function precioDeItem(it, v) { return (it.precio != null && it.precio !== '') ? (Number(it.precio) || 0) : (Number(v.precio_unitario) || 0); }
+  function costoDeItem(it, v) { return (it.costo != null && it.costo !== '') ? (Number(it.costo) || 0) : (Number(v.costo_unitario) || 0); }
+
+  // Totales de un pedido sumando camisa por camisa (respaldo = fórmula vieja).
+  function precioTotalVenta(v) {
+    const crudos = itemsCrudosVenta(v);
+    if (!crudos) return (Number(v.precio_unitario) || 0) * (Number(v.cantidad) || 1);
+    return crudos.reduce((s, it) => s + precioDeItem(it, v), 0);
+  }
+
+  function costoTotalVenta(v) {
+    const crudos = itemsCrudosVenta(v);
+    if (!crudos) return (Number(v.costo_unitario) || 0) * (Number(v.cantidad) || 1);
+    return crudos.reduce((s, it) => s + costoDeItem(it, v), 0);
+  }
+
+  function abonoClienteTotal(v) {
+    const crudos = itemsCrudosVenta(v);
+    if (!crudos) return Number(v.abono) || 0;
+    const total = crudos.reduce((s, it) => s + (Number(it.abono) || 0), 0);
+    return total || (Number(v.abono) || 0);
+  }
+
+  // Estado de cada camisa (las camisas viejas heredan el estado del pedido).
+  function estadosItemsVenta(v) {
+    const crudos = itemsCrudosVenta(v);
+    const ePedido = normalizarEstado(v.estado) || 'Pedido';
+    if (!crudos) return [ePedido];
+    return crudos.length ? crudos.map(it => normalizarEstado(it.estado || ePedido)) : [ePedido];
+  }
+
+  // Estado "general" del pedido: el común si todas las camisas están igual,
+  // o "Mixto" si hay camisas en estados distintos.
+  function estadoGeneralVenta(v) {
+    const es = estadosItemsVenta(v);
+    const primero = es[0];
+    if (es.every(e => e === primero)) return primero || 'Pedido';
+    return 'Mixto';
+  }
+
+  function estadosTodosLiquidado(v) {
+    return estadosItemsVenta(v).every(e => e === 'Liquidado');
+  }
+
+  // Todas las camisas ya fueron entregadas (o liquidadas): se puede liquidar el pedido.
+  function todosItemsListosEntrega(v) {
+    return estadosItemsVenta(v).every(e => e === 'Entregado' || e === 'Liquidado');
+  }
+
+  // Camisas de un pedido que aún faltan por comprar (estado Pedido).
+  function itemsPedidoComprar(v) {
+    const crudos = itemsCrudosVenta(v);
+    if (!crudos) return normalizarEstado(v.estado) === 'Pedido' ? (Number(v.cantidad) || 1) : 0;
+    const ePedido = normalizarEstado(v.estado) || 'Pedido';
+    return crudos.filter(it => normalizarEstado(it.estado || ePedido) === 'Pedido').length;
+  }
+
+  function badgeEstadoItem(estado) {
+    const e = normalizarEstado(estado) || 'Pedido';
+    return `<span class="badge-estado ${claseEstado(e)}" style="font-size:9.5px;padding:1px 6px;">${escSimple(e)}</span>`;
+  }
+
+  function badgeEstadoGeneral(v) {
+    const eg = estadoGeneralVenta(v);
+    return `<span class="badge-estado ${claseEstado(eg)}" style="${eg === 'Mixto' ? 'color:var(--warn);font-weight:800;' : ''}">${escSimple(eg === 'Mixto' ? 'Mixto ⚠️' : eg)}</span>`;
+  }
+
+  // Estado "principal" del pedido para la columna de Estado: el más atrasado
+  // (el que se persistiría). Así el dropdown siempre muestra un estado real.
+  function estadoResumenVenta(v) {
+    const es = estadosItemsVenta(v);
+    return es.slice().sort((a, b) => ORDEN_ESTADOS.indexOf(a) - ORDEN_ESTADOS.indexOf(b))[0] || 'Pedido';
+  }
+
+  // Cuenta compacta por estado: badge + ×n, ordenada por el orden natural.
+  function estadosCuentasHtml(v) {
+    const es = estadosItemsVenta(v);
+    const dist = [];
+    ORDEN_ESTADOS.forEach(e => {
+      const n = es.filter(x => x === e).length;
+      if (n > 0) dist.push(`${badgeEstadoItem(e)} <b style="color:var(--text);">×${n}</b>`);
+    });
+    return `<span style="display:block;font-size:10px;color:var(--thread);margin-top:4px;line-height:1.7;">${dist.join(' ')}</span>`;
+  }
+
+  // Costo sugerido a proveedor (Yesenia) según versión y talla.
+  // v1: $30.000 en S..XL · 2XL +$2.000 · 3XL +$4.000 · 4XL +$6.000
+  // v2: +$1.000 sobre la v1 (31.000 en S..XL, 33.000 en 2XL, 35.000 en 3XL, 37.000 en 4XL).
+  const EXTRA_TALLAS_COSTO = { '2XL': 2000, '3XL': 4000, '4XL': 6000 };
+  function costoProveedorSugerido(modelo, talla) {
+    const base = normalizarModelo(modelo) === 'Nuevo' ? 31000 : 30000;
+    return base + (EXTRA_TALLAS_COSTO[String(talla || '').trim()] || 0);
+  }
+
   // Opciones del select "Vendedor asignado": usuarios conocidos + vendedores con ventas + el usuario actual.
   // Así funciona automáticamente para cualquier usuario nuevo sin tocar el código.
   function opcionesVendedoresHtml(seleccionado) {
@@ -375,15 +490,15 @@
   }
 
   // Pedidos que aún NO se han comprado en la distribuidora:
-  // activos, sin compra asociada y sin estado avanzado (todo manual).
+  // activos, sin compra asociada y con al menos una camisa en estado Pedido.
   function pedidosPorComprar() {
     return ventasCache.filter(v =>
-      !v.finalizado && v.estado === 'Pedido' && !v.compra_id
+      !v.finalizado && !v.compra_id && itemsPedidoComprar(v) > 0
     );
   }
 
   function camisasPorComprar() {
-    return pedidosPorComprar().reduce((s, v) => s + (Number(v.cantidad) || 1), 0);
+    return pedidosPorComprar().reduce((s, v) => s + itemsPedidoComprar(v), 0);
   }
 
   function pedidosSinFechaEntrega() {
@@ -392,10 +507,7 @@
 
   /* ---------- Liquidación entre socios por pedido ---------- */
   function mitadGananciaPedido(v) {
-    const cant = Number(v.cantidad) || 1;
-    const precio = Number(v.precio_unitario) || 0;
-    const costo = Number(v.costo_unitario) || 0;
-    return Math.max(((precio - costo) * cant) / 2, 0);
+    return Math.max((precioTotalVenta(v) - costoTotalVenta(v)) / 2, 0);
   }
 
   function otroSocioDe(vendedor) {
@@ -440,11 +552,18 @@
 
   async function sugerirLiquidadoSiListo(ventaId) {
     const v = ventasCache.find(x => x.id === ventaId);
-    if (!v || v.finalizado || normalizarEstado(v.estado) !== 'Entregado') return;
+    if (!v || v.finalizado) return;
+    if (!todosItemsListosEntrega(v)) return;
     if (!puedeMarcarPagado(v).ok) return;
-    if (!confirmar(`✅ El pedido de "${v.cliente_nombre || 'cliente'}" ya quedó al día (proveedor y socios liquidados).\n\n¿Quieres marcarlo como "Liquidado" de una vez?`)) return;
+    if (!confirmar(`✅ El pedido de "${v.cliente_nombre || 'cliente'}" ya quedó al día (proveedor y socios liquidados).\n\n¿Quieres marcar TODAS sus camisas como "Liquidado" de una vez?`)) return;
     try {
-      await supabaseClient.from('ventas').update({ estado: 'Liquidado' }).eq('id', v.id);
+      const payload = { estado: 'Liquidado' };
+      const crudos = itemsCrudosVenta(v);
+      if (crudos) {
+        crudos.forEach(it => { it.estado = 'Liquidado'; });
+        payload.items_camisa = JSON.stringify(crudos);
+      }
+      await supabaseClient.from('ventas').update(payload).eq('id', v.id);
       await loadVentas();
       mostrarToast('✅ Pedido marcado como Liquidado. Ya puedes finalizarlo.');
     } catch (e) { logError('sugerirLiquidadoSiListo', e); }
@@ -535,7 +654,7 @@
         const telTag = telRaw
           ? `<span style="color:var(--muted); font-weight:400; font-size:12px;"> · ${escSimple(telRaw)}</span>`
           : '';
-        const estadosUnicos = [...new Set(g.ventas.map(v => v.estado || '').filter(Boolean))];
+        const estadosUnicos = [...new Set(g.ventas.map(v => estadoGeneralVenta(v)).filter(Boolean))];
         const estadoTxt = estadosUnicos.length === 0 ? '' : estadosUnicos.length === 1 ? estadosUnicos[0] : estadosUnicos.join(' · ');
         const fechasTxt = g.ventas.length === 1
           ? (g.ventas[0].fecha ? formatearFechaHumana(g.ventas[0].fecha).replace(/^📅\s*/,'') : '?')
@@ -686,6 +805,23 @@ return items.map((it, idx) => `
         e.target.dataset.userEdited = 'true';
         actualizarTotalAbono();
       });
+
+      // Costo Yesenia sugerido por talla + versión (modo simple: "todas las camisas iguales").
+      const fCostoEl = document.getElementById('f-costo');
+      if (fCostoEl) {
+        fCostoEl.addEventListener('input', () => { fCostoEl.dataset.user = fCostoEl.value === '' ? '0' : '1'; });
+      }
+      const csTallaEl = document.getElementById('cs-talla');
+      const csModeloEl = document.getElementById('cs-modelo');
+      const aplicarCostoSugeridoSimple = () => {
+        if (!fCostoEl || !csTallaEl) return;
+        if (fCostoEl.dataset.user === '1') return;
+        const t = csTallaEl.value;
+        if (!t) return;
+        fCostoEl.value = costoProveedorSugerido(csModeloEl ? csModeloEl.value : 'Viejo', t);
+      };
+      if (csTallaEl) csTallaEl.addEventListener('change', aplicarCostoSugeridoSimple);
+      if (csModeloEl) csModeloEl.addEventListener('change', aplicarCostoSugeridoSimple);
 
       // Listeners
       document.getElementById('login-button').addEventListener('click', handleLogin);
@@ -959,8 +1095,8 @@ return items.map((it, idx) => `
     const sinFecha = pedidosSinFechaEntrega().length;
     let totalPorCobrar = 0;
     ventasCache.forEach(v => {
-      if (v.finalizado || normalizarEstado(v.estado) === 'Liquidado') return;
-      totalPorCobrar += Math.max((Number(v.precio_unitario) || 0) * (Number(v.cantidad) || 1) - (Number(v.abono) || 0), 0);
+      if (v.finalizado || estadosTodosLiquidado(v)) return;
+      totalPorCobrar += Math.max(precioTotalVenta(v) - abonoClienteTotal(v), 0);
     });
 
     document.getElementById('dashboard-contenido').innerHTML = `
@@ -1052,8 +1188,29 @@ return items.map((it, idx) => `
     }
     return items.map(it => {
       const base = `${it.genero || '?'} · ${capitalizarColor(it.color)} · ${it.talla || '?'}`;
-      return it.programa ? `• ${base} · ${it.programa}` : `• ${base}`;
+      let linea = it.programa ? `• ${base} · ${it.programa}` : `• ${base}`;
+      const e = it.estado ? normalizarEstado(it.estado) : null;
+      if (e && e !== 'Pedido') linea += ` — ${e}`;
+      return linea;
     });
+  }
+
+  // Detalle de camisas para la tabla de Pedidos/Historial: por camisa muestra
+  // género/color/talla, su precio→costo (si la camisa tiene) y su estado propio.
+  function itemsDetalleHtml(v) {
+    const crudos = itemsCrudosVenta(v);
+    if (!crudos) {
+      return `<div style="font-size:12px; line-height:1.6;">${itemsParaDashboard(v).join('<br>')}</div>`;
+    }
+    const mostrarPrecios = crudos.some(it => (it.precio != null && it.precio !== '') || (it.costo != null && it.costo !== ''));
+    return `<div style="font-size:12px; line-height:1.7;">` + crudos.map(it => {
+      const base = `${it.genero || '?'} · ${capitalizarColor(it.color)} · ${it.talla || '?'}`;
+      const progr = it.programa ? ` · <span style="color:var(--thread);">${escSimple(it.programa)}</span>` : '';
+      const prec = mostrarPrecios ? ` · <span class="money" style="font-size:11px;">${fmt(precioDeItem(it, v))}/${fmt(costoDeItem(it, v))}</span>` : '';
+      const e = it.estado ? normalizarEstado(it.estado) : null;
+      const bd = e ? ` ${badgeEstadoItem(e)}` : '';
+      return `<div>• ${base}${progr}${prec}${bd}</div>`;
+    }).join('') + `</div>`;
   }
 
   function esUsuarioWhatsApp(tel) {
@@ -1103,9 +1260,9 @@ return items.map((it, idx) => `
 
   function renderOrderCard(v) {
     const cant = Number(v.cantidad) || 1;
-    const precio = Number(v.precio_unitario) || 0;
-    const abono = Number(v.abono) || 0;
-    const saldo = (precio * cant) - abono;
+    const precio = precioTotalVenta(v);
+    const abono = abonoClienteTotal(v);
+    const saldo = precio - abono;
     const items = itemsParaDashboard(v);
     const telefonoCrudo = String(v.cliente_telefono || '').trim();
     const telefonoLimpio = telefonoCrudo.replace(/\D/g, '');
@@ -1167,7 +1324,7 @@ return items.map((it, idx) => `
     const misVentas = (esAdmin ? ventasCache : ventasCache.filter(v => v.vendedor === miNombre)).filter(v => !v.finalizado);
 
     misVentas.forEach(v => {
-      if (!v.fecha_entrega || normalizarEstado(v.estado) === 'Liquidado' || normalizarEstado(v.estado) === 'Entregado') return;
+      if (!v.fecha_entrega || todosItemsListosEntrega(v)) return;
       if (v.fecha_entrega < hoy) {
         alertas.push({ tipo: 'critical', msg: `⏰ Pedido vencido: <b>${v.cliente_nombre}</b> (${v.vendedor}) — debía entregarse el ${formatearFechaHumana(v.fecha_entrega)}` });
       }
@@ -1175,11 +1332,8 @@ return items.map((it, idx) => `
 
     const clientesDeuda = {};
     misVentas.forEach(v => {
-      if (normalizarEstado(v.estado) === 'Liquidado') return;
-      const cant = Number(v.cantidad) || 1;
-      const precio = Number(v.precio_unitario) || 0;
-      const abono = Number(v.abono) || 0;
-      const saldo = (precio * cant) - abono;
+      if (estadosTodosLiquidado(v)) return;
+      const saldo = precioTotalVenta(v) - abonoClienteTotal(v);
       if (saldo > 0) clientesDeuda[v.cliente_nombre] = (clientesDeuda[v.cliente_nombre] || 0) + saldo;
     });
     Object.entries(clientesDeuda).forEach(([nombre, deuda]) => {
@@ -1352,12 +1506,12 @@ return items.map((it, idx) => `
     const productos = {};
     ventasFiltradas.forEach(v => {
       const cant = Number(v.cantidad) || 1;
-      const precio = Number(v.precio_unitario) || 0;
-      const costoU = Number(v.costo_unitario) || 0;
-      const abono = Number(v.abono) || 0;
+      const precio = precioTotalVenta(v);
+      const costoU = costoTotalVenta(v);
+      const abono = abonoClienteTotal(v);
       totalCamisas += cant;
-      totalVendido += precio * cant;
-      totalCosto += costoU * cant;
+      totalVendido += precio;
+      totalCosto += costoU;
       totalAbonos += abono;
       let detalleIndividual = null;
       if (v.items_camisa) {
@@ -1382,7 +1536,6 @@ return items.map((it, idx) => `
     // ---------- POR MODELO ----------
     const porModelo = { Viejo: { camisas: 0, vendido: 0 }, Nuevo: { camisas: 0, vendido: 0 } };
     ventasFiltradas.forEach(v => {
-      const precio = Number(v.precio_unitario) || 0;
       let detalleIndividual = null;
       if (v.items_camisa) {
         try {
@@ -1394,13 +1547,13 @@ return items.map((it, idx) => `
         detalleIndividual.forEach(it => {
           const m = normalizarModelo(it.modelo);
           porModelo[m].camisas += 1;
-          porModelo[m].vendido += precio;
+          porModelo[m].vendido += precioDeItem(it, v);
         });
       } else {
         const m = normalizarModelo(v.modelo);
         const cant = Number(v.cantidad) || 1;
         porModelo[m].camisas += cant;
-        porModelo[m].vendido += precio * cant;
+        porModelo[m].vendido += (Number(v.precio_unitario) || 0) * cant;
       }
     });
     const camisasModelo = porModelo.Viejo.camisas + porModelo.Nuevo.camisas;
@@ -1410,16 +1563,16 @@ return items.map((it, idx) => `
     const pctLider = liderModelo === 'Viejo' ? pctViejo : pctNuevo;
 
     // ---------- PEDIDOS ----------
-    const pedidosActivos = ventasFiltradas.filter(v => !v.finalizado && normalizarEstado(v.estado) !== 'Liquidado').length;
+    const pedidosActivos = ventasFiltradas.filter(v => !v.finalizado && estadoGeneralVenta(v) !== 'Liquidado').length;
     const pedidosFinalizados = ventasFiltradas.filter(v => v.finalizado).length;
-    const entregados = ventasFiltradas.filter(v => normalizarEstado(v.estado) === 'Entregado').length;
+    const entregados = ventasFiltradas.filter(v => todosItemsListosEntrega(v) && estadoGeneralVenta(v) !== 'Liquidado').length;
 
     // ---------- COMPRAS PENDIENTES (estado actual, sin filtro de período) ----------
     const porComprar = pedidosPorComprar().filter(v =>
       (!fVendedor || v.vendedor === fVendedor) &&
       (!fCliente || (v.cliente_nombre || '') === fCliente)
     );
-    const camisasPorComprarN = porComprar.reduce((s, v) => s + (Number(v.cantidad) || 1), 0);
+    const camisasPorComprarN = porComprar.reduce((s, v) => s + itemsPedidoComprar(v), 0);
     const sinFecha = pedidosSinFechaEntrega().filter(v =>
       (!fVendedor || v.vendedor === fVendedor) &&
       (!fCliente || (v.cliente_nombre || '') === fCliente)
@@ -1429,29 +1582,29 @@ return items.map((it, idx) => `
     const porVendedor = {};
     ventasFiltradas.forEach(v => {
       const cant = Number(v.cantidad) || 1;
-      const precio = Number(v.precio_unitario) || 0;
-      const costoU = Number(v.costo_unitario) || 0;
-      const abono = Number(v.abono) || 0;
+      const precio = precioTotalVenta(v);
+      const costoU = costoTotalVenta(v);
+      const abono = abonoClienteTotal(v);
       const nombre = v.vendedor || 'Sin asignar';
       if (!porVendedor[nombre]) porVendedor[nombre] = { camisas: 0, vendido: 0, ganancia: 0, restante: 0 };
       porVendedor[nombre].camisas += cant;
-      porVendedor[nombre].vendido += precio * cant;
-      porVendedor[nombre].ganancia += (precio - costoU) * cant;
-      porVendedor[nombre].restante += Math.max(precio * cant - abono, 0);
+      porVendedor[nombre].vendido += precio;
+      porVendedor[nombre].ganancia += precio - costoU;
+      porVendedor[nombre].restante += Math.max(precio - abono, 0);
     });
 
     // ---------- CLIENTES ----------
     const porCliente = {};
     ventasFiltradas.forEach(v => {
       const cant = Number(v.cantidad) || 1;
-      const precio = Number(v.precio_unitario) || 0;
-      const abono = Number(v.abono) || 0;
+      const precio = precioTotalVenta(v);
+      const abono = abonoClienteTotal(v);
       const nombre = v.cliente_nombre || 'Sin nombre';
       if (!porCliente[nombre]) porCliente[nombre] = { pedidos: 0, camisas: 0, vendido: 0, deuda: 0 };
       porCliente[nombre].pedidos += 1;
       porCliente[nombre].camisas += cant;
-      porCliente[nombre].vendido += precio * cant;
-      porCliente[nombre].deuda += Math.max(precio * cant - abono, 0);
+      porCliente[nombre].vendido += precio;
+      porCliente[nombre].deuda += Math.max(precio - abono, 0);
     });
 
     // ---------- COMPRAS ----------
@@ -1461,7 +1614,7 @@ return items.map((it, idx) => `
     const comprasInvertido = comprasFiltradas.reduce((s, c) => {
       const costo = ventasCache
         .filter(v => v.compra_id === c.id)
-        .reduce((ss, v) => ss + (Number(v.costo_unitario) || 0) * (Number(v.cantidad) || 1), 0);
+        .reduce((ss, v) => ss + costoTotalVenta(v), 0);
       return s + costo;
     }, 0);
 
@@ -1481,8 +1634,8 @@ return items.map((it, idx) => `
       const cant = Number(v.cantidad) || 1;
       b.pedidos += 1;
       b.camisas += cant;
-      b.vendido += (Number(v.precio_unitario) || 0) * cant;
-      b.costo += (Number(v.costo_unitario) || 0) * cant;
+      b.vendido += precioTotalVenta(v);
+      b.costo += costoTotalVenta(v);
     });
 
     const camposVendedor = {
@@ -1750,7 +1903,10 @@ return items.map((it, idx) => `
     return ventasCache.filter(v => {
       if (v.finalizado) return false;
       if (fv && v.vendedor !== fv) return false;
-      if (fe && v.estado !== fe) return false;
+      // El filtro por estado incluye el pedido si ALGUNA de sus camisas está
+      // en ese estado (pedidos que mezclan: ej. 2 Listo para entrega + 4 Bordando
+      //). Así no se "pierde" ningún pedido al filtrar.
+      if (fe && !estadosItemsVenta(v).includes(fe)) return false;
       if (fs && !(
         (v.cliente_nombre || '').toLowerCase().includes(fs) ||
         (v.cliente_telefono || '').toLowerCase().includes(fs) ||
@@ -1760,6 +1916,7 @@ return items.map((it, idx) => `
         (v.fecha_entrega || '').includes(fs) ||
         (v.lugar_entrega || '').toLowerCase().includes(fs) ||
         (v.estado || '').toLowerCase().includes(fs) ||
+        estadosItemsVenta(v).some(e => e.toLowerCase().includes(fs)) ||
         (formatearFechaHumana(v.fecha) || '').toLowerCase().includes(fs) ||
         (formatearFechaHumana(v.fecha_entrega) || '').toLowerCase().includes(fs)
       )) return false;
@@ -1791,19 +1948,19 @@ return items.map((it, idx) => `
 
     body.innerHTML = pageRows.map(v => {
       const cant = Number(v.cantidad) || 1;
-      const precio = Number(v.precio_unitario) || 0;
-      const costoUnitario = Number(v.costo_unitario) || 0;
-      const abonoCliente = Number(v.abono) || 0;
-      const venta = precio * cant;
+      const venta = precioTotalVenta(v);
+      const abonoCliente = abonoClienteTotal(v);
       const pagosProv = abonosProveedorPorVentaId(v.id);
       const costoPagado = pagosProv.abonado;
-      const costoTotal = costoUnitario * cant;
+      const costoTotal = pagosProv.costoTotal;
       const restanteCliente = venta - abonoCliente;
       const pendienteYesenia = pagosProv.pendiente;
+      const eg = estadoResumenVenta(v);
+      const esMixto = estadoGeneralVenta(v) === 'Mixto';
 
       const fechaEntregaHumana = textoFechaEntrega(v);
 
-      const items = itemsParaDashboard(v);
+      const detalle = itemsDetalleHtml(v);
 
       return `
         <tr>
@@ -1815,7 +1972,7 @@ return items.map((it, idx) => `
           </td>
           <td>
             <div style="margin-bottom:6px;">${badgeModeloVenta(v)}</div>
-            <div style="font-size:12px; line-height:1.6;">${items.join('<br>')}</div>
+            ${detalle}
           </td>
           <td><b>${cant}</b></td>
           <td class="money">${fmt(venta)}</td>
@@ -1828,18 +1985,19 @@ return items.map((it, idx) => `
             <span class="sub-tag">📍 ${escSimple(v.lugar_entrega || 'Sin definir')} · 🚚 ${escSimple(v.entrega_por || 'Sin asignar')}</span>
           </td>
           <td>
-            <select class="estado-select ${claseEstado(v.estado)}" data-id="${v.id}" data-prev="${v.estado}">
+            <select class="estado-select ${claseEstado(eg)}" data-id="${v.id}" data-prev="${v.estado}">
               ${ESTADOS
-                .map(e => `<option value="${e}" ${normalizarEstado(v.estado) === e ? 'selected' : ''}>${e}</option>`)
+                .map(e => `<option value="${e}" ${eg === e ? 'selected' : ''}>${e}</option>`)
                 .join('')}
             </select>
-            ${(() => { const listo = puedeMarcarPagado(v).ok && normalizarEstado(v.estado) === 'Entregado'; const pend = !pedidoSocioLiquidado(v) || !costoProveedorPagado(v); if (listo) return '<span class="sub-tag" style="color:var(--ok);font-weight:700;">✅ Listo para liquidar</span>'; if (pend) return '<span class="sub-tag" style="color:var(--warn);">Socio/proveedor pendiente</span>'; return ''; })()}
+            ${esMixto ? estadosCuentasHtml(v) : ''}
+            ${(() => { const listo = puedeMarcarPagado(v).ok && todosItemsListosEntrega(v); const pend = !pedidoSocioLiquidado(v) || !costoProveedorPagado(v); if (listo) return '<span class="sub-tag" style="color:var(--ok);font-weight:700;">✅ Listo para liquidar</span>'; if (pend) return '<span class="sub-tag" style="color:var(--warn);">Socio/proveedor pendiente</span>'; return ''; })()}
           </td>
           <td>
             <div class="action-group">
               <button class="btn-small editar-button" data-id="${v.id}" type="button">Editar</button>
               <button class="btn-small abono-button" data-id="${v.id}" type="button">+ Abono</button>
-              <button class="btn-small finalizar-button" data-id="${v.id}" type="button" ${normalizarEstado(v.estado) !== 'Liquidado' ? 'disabled title="Solo se puede finalizar cuando está Liquidado (proveedor y socios liquidados)" style="opacity:0.45;cursor:not-allowed;"' : 'title="Finalizar pedido (mover a Historial)"'}>Finalizar</button>
+              <button class="btn-small finalizar-button" data-id="${v.id}" type="button" ${!estadosTodosLiquidado(v) ? 'disabled title="Solo se puede finalizar cuando TODAS las camisas están Liquidado (proveedor y socios liquidados)" style="opacity:0.45;cursor:not-allowed;"' : 'title="Finalizar pedido (mover a Historial)"'}>Finalizar</button>
               <button class="btn-danger borrar-button" data-id="${v.id}" type="button">Borrar</button>
             </div>
           </td>
@@ -1901,7 +2059,9 @@ return items.map((it, idx) => `
 
   function renderCamisaItemsFromData(items) {
     const container = document.getElementById('camisa-items-container');
-    container.innerHTML = items.map((item, i) => `
+    container.innerHTML = items.map((item, i) => {
+      const estadoItem = item.estado ? normalizarEstado(item.estado) : 'Pedido';
+      return `
       <div class="camisa-item-row" data-index="${i}">
         <span class="camisa-item-number">Camisa #${i + 1}</span>
         <div class="camisa-item-fields">
@@ -1936,15 +2096,49 @@ return items.map((it, idx) => `
             <input type="text" class="ci-programa" value="${item.programa || ''}" placeholder="Ej. Ingeniería">
           </div>
         </div>
-        <div class="camisa-item-abono">
-          <label class="label-required">Abono recibido del cliente ($)</label>
-          <input type="number" class="ci-abono" min="0" value="${item.abono !== undefined && item.abono !== null && item.abono !== '' ? item.abono : ''}" placeholder="0">
+        <div class="camisa-item-money">
+          <div>
+            <label class="label-required">Precio venta ($)</label>
+            <input type="number" class="ci-precio" min="0" value="${item.precio !== undefined && item.precio !== null && item.precio !== '' ? item.precio : ''}" placeholder="${(document.getElementById('f-precio') || {}).value || 39000}">
+          </div>
+          <div>
+            <label class="label-required">Costo Yesenia ($)</label>
+            <input type="number" class="ci-costo" min="0" value="${item.costo != null && item.costo !== '' ? item.costo : ''}" placeholder="${(document.getElementById('f-costo') || {}).value || 30000}">
+          </div>
+          <div>
+            <label class="label-required">Abono recibido ($)</label>
+            <input type="number" class="ci-abono" min="0" value="${item.abono !== undefined && item.abono !== null && item.abono !== '' ? item.abono : ''}" placeholder="0">
+          </div>
+          <div>
+            <label class="label-required">Estado</label>
+            <select class="ci-estado">
+              ${ESTADOS.map(e => `<option value="${e}" ${estadoItem === e ? 'selected' : ''}>${e}</option>`).join('')}
+            </select>
+          </div>
         </div>
       </div>
-    `).join('');
+      `;
+    }).join('');
 
     container.querySelectorAll('.ci-abono').forEach(input => {
       input.addEventListener('input', actualizarTotalAbono);
+    });
+
+    container.querySelectorAll('.camisa-item-row').forEach(row => {
+      const costoInp = row.querySelector('.ci-costo');
+      if (!costoInp) return;
+      costoInp.dataset.user = costoInp.value === '' ? '0' : '1';
+      costoInp.addEventListener('input', () => {
+        costoInp.dataset.user = costoInp.value === '' ? '0' : '1';
+      });
+      const aplicaCosto = () => {
+        if (costoInp.dataset.user === '1') return;
+        const talla = row.querySelector('.ci-talla').value;
+        if (!talla) return;
+        costoInp.value = costoProveedorSugerido(row.querySelector('.ci-modelo').value, talla);
+      };
+      row.querySelector('.ci-talla').addEventListener('change', aplicaCosto);
+      row.querySelector('.ci-modelo').addEventListener('change', aplicaCosto);
     });
 
     actualizarTotalAbono();
@@ -1965,7 +2159,10 @@ return items.map((it, idx) => `
           color: row.querySelector('.ci-color').value.trim(),
           talla: row.querySelector('.ci-talla').value,
           programa: row.querySelector('.ci-programa').value.trim(),
-          abono: parseFloat(row.querySelector('.ci-abono').value)
+          precio: parseFloat(row.querySelector('.ci-precio').value),
+          costo: parseFloat(row.querySelector('.ci-costo').value),
+          abono: parseFloat(row.querySelector('.ci-abono').value),
+          estado: row.querySelector('.ci-estado').value
         });
       });
       return items;
@@ -1977,12 +2174,21 @@ return items.map((it, idx) => `
     const color = document.getElementById('cs-color').value;
     const talla = document.getElementById('cs-talla').value;
     const abonoTotal = parseFloat(document.getElementById('cs-abono-total').value);
+    const precioSimple = parseFloat(document.getElementById('f-precio').value);
+    const costoSimple = parseFloat(document.getElementById('f-costo').value);
+    const estadoSimple = document.getElementById('f-estado').value;
 
     const items = [];
     for (let i = 0; i < cantidad; i++) {
       const programa = document.getElementById('cs-programa').value.trim();
       const modelo = document.getElementById('cs-modelo').value || 'Viejo';
-      items.push({ genero, color, talla, programa, modelo, abono: i === 0 ? (isNaN(abonoTotal) ? 0 : abonoTotal) : 0 });
+      items.push({
+        genero, color, talla, programa, modelo,
+        precio: isNaN(precioSimple) ? '' : precioSimple,
+        costo: isNaN(costoSimple) ? '' : costoSimple,
+        abono: i === 0 ? (isNaN(abonoTotal) ? 0 : abonoTotal) : 0,
+        estado: estadoSimple || 'Pedido'
+      });
     }
     return items;
   }
@@ -2007,6 +2213,16 @@ return items.map((it, idx) => `
       itemsContainer.classList.add('hidden');
       actualizarTotalAbono();
     }
+    actualizarSeccionPagos();
+  }
+
+  // La sección "Pago y Costos" solo tiene sentido en el modo simple
+  // ("todas las camisas iguales"): en modo individual cada fila ya trae
+  // su precio, costo, abono y estado, así que se oculta.
+  function actualizarSeccionPagos() {
+    const sec = document.getElementById('form-section-pagos');
+    if (!sec) return;
+    sec.classList.toggle('hidden', esModoIndividual());
   }
 
   function actualizarLugarOtro() {
@@ -2172,7 +2388,14 @@ return items.map((it, idx) => `
       }
       document.getElementById('f-cantidad').value = items.length;
 
-      const uniforme = items.every(it => it.genero === items[0].genero && it.color === items[0].color && it.talla === items[0].talla);
+      const uniforme = items.every(it =>
+        it.genero === items[0].genero &&
+        it.color === items[0].color &&
+        it.talla === items[0].talla &&
+        (it.precio != null ? it.precio === items[0].precio : items[0].precio == null) &&
+        (it.costo != null ? it.costo === items[0].costo : items[0].costo == null) &&
+        (it.estado != null ? it.estado === items[0].estado : items[0].estado == null)
+      );
       const toggle = document.getElementById('f-detalle-individual');
 
       if (uniforme) {
@@ -2195,9 +2418,17 @@ return items.map((it, idx) => `
         renderCamisaItemsFromData(items);
       }
 
-      document.getElementById('f-precio').value = venta.precio_unitario || 39000;
-      document.getElementById('f-costo').value = venta.costo_unitario || 30000;
-      document.getElementById('f-estado').value = venta.estado || 'Pedido';
+      const pDef = items[0] && items[0].precio != null && items[0].precio !== '' ? items[0].precio : (venta.precio_unitario || 39000);
+      const cDef = items[0] && items[0].costo != null && items[0].costo !== '' ? items[0].costo : (venta.costo_unitario || 30000);
+      document.getElementById('f-precio').value = pDef;
+      document.getElementById('f-costo').value = cDef;
+      // Al editar, el costo registrado manda: no se re-autocompleta al cambiar talla/versión.
+      document.getElementById('f-costo').dataset.user = '1';
+      const eiItems = items.map(it => (it.estado ? normalizarEstado(it.estado) : null)).filter(Boolean);
+      const rollupEst = eiItems.length
+        ? eiItems.slice().sort((a, b) => ORDEN_ESTADOS.indexOf(a) - ORDEN_ESTADOS.indexOf(b))[0]
+        : (venta.estado || 'Pedido');
+      document.getElementById('f-estado').value = rollupEst;
       entregaSelect.value = venta.entrega_por || '';
       document.getElementById('f-fecha').value = venta.fecha || '';
       document.getElementById('f-fecha-entrega').value = venta.fecha_entrega || '';
@@ -2235,6 +2466,7 @@ return items.map((it, idx) => `
       actualizarTotalAbono();
       document.getElementById('f-precio').value = 39000;
       document.getElementById('f-costo').value = 30000;
+      document.getElementById('f-costo').dataset.user = '0';
       document.getElementById('f-estado').value = '';
       document.getElementById('f-fecha').value = hoyColombia();
       document.getElementById('f-fecha-entrega').value = '';
@@ -2257,6 +2489,8 @@ return items.map((it, idx) => `
       vendedorSelect.disabled = true;
       vendedorSelect.innerHTML = opcionesVendedoresHtml(currentRole.vendedor || miNombre);
     }
+
+    actualizarSeccionPagos();
 
     document.getElementById('form-card').classList.remove('hidden');
     document.getElementById('form-card').scrollIntoView({ behavior: 'smooth' });
@@ -2303,6 +2537,17 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
         items_camisa: JSON.stringify(items)
      };
 
+     const pr1 = items[0] && items[0].precio != null && items[0].precio !== '' ? Number(items[0].precio) : parseFloat(document.getElementById('f-precio').value);
+     const co1 = items[0] && items[0].costo != null && items[0].costo !== '' ? Number(items[0].costo) : parseFloat(document.getElementById('f-costo').value);
+     const estadosItems = items
+       .map(it => (it.estado ? normalizarEstado(it.estado) : null))
+       .filter(Boolean);
+     payload.estado = estadosItems.length
+       ? estadosItems.slice().sort((a, b) => ORDEN_ESTADOS.indexOf(a) - ORDEN_ESTADOS.indexOf(b))[0]
+       : String(document.getElementById('f-estado').value || '').trim();
+     payload.precio_unitario = isNaN(pr1) ? null : pr1;
+     payload.costo_unitario = isNaN(co1) ? null : co1;
+
      if (currentRole.role !== 'admin' && currentRole.vendedor) {
        payload.vendedor = currentRole.vendedor;
      }
@@ -2323,11 +2568,19 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
          if (!it.color) faltantes.push(`Color de la camisa #${idx + 1}`);
          if (!it.talla) faltantes.push(`Talla de la camisa #${idx + 1}`);
          if (isNaN(it.abono) || it.abono < 0) faltantes.push(`Abono válido de la camisa #${idx + 1}`);
+         const pI = Number(it.precio);
+         const cI = Number(it.costo);
+         if (isNaN(pI) || pI <= 0) faltantes.push(`Precio de venta de la camisa #${idx + 1}`);
+         if (isNaN(cI) || cI < 0) faltantes.push(`Costo (Yesenia) de la camisa #${idx + 1}`);
        });
      }
+     if (payload.estado === 'Liquidado' || items.some(it => it.estado === 'Liquidado')) {
+       const listas = items.every(it => ['Entregado', 'Liquidado'].includes(it.estado ? normalizarEstado(it.estado) : (payload.estado || 'Pedido') || 'Pedido'));
+       if (!listas) faltantes.push("Para liquidar un pedido, TODAS sus camisas deben estar Entregado o Liquidado");
+     }
      if (isNaN(payload.cantidad) || payload.cantidad <= 0) faltantes.push("Cantidad válida");
-     if (isNaN(payload.precio_unitario)) faltantes.push("Precio por camisa");
-     if (isNaN(payload.costo_unitario)) faltantes.push("Costo por camisa");
+     if (payload.precio_unitario == null || isNaN(payload.precio_unitario) || payload.precio_unitario <= 0) faltantes.push("Precio por camisa");
+     if (payload.costo_unitario == null || isNaN(payload.costo_unitario) || payload.costo_unitario < 0) faltantes.push("Costo por camisa");
      if (!payload.estado) faltantes.push("Estado");
      if (!payload.fecha) faltantes.push("Fecha del pedido");
       if (!document.getElementById('f-fecha-entrega-pendiente').checked && !payload.fecha_entrega) faltantes.push("Fecha de entrega");
@@ -2390,19 +2643,26 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
     const venta = ventasCache.find(v => v.id === ventaId);
     if (!venta) return { abonado: 0, costoTotal: 0, pendiente: 0 };
 
-    const costoVenta = (Number(venta.costo_unitario) || 0) * (Number(venta.cantidad) || 1);
+    const costoVenta = costoTotalVenta(venta);
     const compraId = venta.compra_id;
     if (!compraId) return { abonado: 0, costoTotal: costoVenta, pendiente: costoVenta };
 
-    // Lo pagado a Yesenia por este pedido se guarda por separado (abono_yesenia),
-    // distinto del abono que da el cliente (abono).
-    let abonado = Number(venta.abono_yesenia) || 0;
+    // Lo pagado a Yesenia por este pedido se prefiere camisa por camisa
+    // (items[].abono_yesenia); si la venta vieja no tiene ese detalle, se usa
+    // el abono_yesenia del pedido.
+    let abonado = 0;
+    const crudos = itemsCrudosVenta(venta);
+    if (crudos && crudos.some(it => it.abono_yesenia != null && it.abono_yesenia !== '')) {
+      abonado = crudos.reduce((s, it) => s + (Number(it.abono_yesenia) || 0), 0);
+    } else {
+      abonado = Number(venta.abono_yesenia) || 0;
+    }
 
     // Respaldo: si el pedido no tiene abono propio pero la compra tiene aportes,
     // se distribuyen proporcionalmente al costo de cada pedido.
     if (!abonado) {
       const pedidos = ventasCache.filter(v => v.compra_id === compraId);
-      const costoTotalCompra = pedidos.reduce((s, v) => s + (Number(v.costo_unitario) || 0) * (Number(v.cantidad) || 1), 0);
+      const costoTotalCompra = pedidos.reduce((s, v) => s + costoTotalVenta(v), 0);
       const aportes = compraAportesCache.filter(a => a.compra_id === compraId);
       const totalAportado = aportes.reduce((s, a) => s + (Number(a.monto) || 0), 0);
       if (costoTotalCompra > 0) {
@@ -2503,7 +2763,7 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
     body.innerHTML = pageRows.map(c => {
       const pedidos = ventasCache.filter(v => v.compra_id === c.id);
       const cantidad = pedidos.reduce((s, v) => s + (Number(v.cantidad) || 1), 0);
-      const costoTotal = pedidos.reduce((s, v) => s + (Number(v.costo_unitario) || 0) * (Number(v.cantidad) || 1), 0);
+      const costoTotal = pedidos.reduce((s, v) => s + costoTotalVenta(v), 0);
       const aportesCompra = compraAportesCache.filter(a => a.compra_id === c.id);
       const aportadoAportes = aportesCompra.reduce((s, a) => s + (Number(a.monto) || 0), 0);
       const abonoPedidos = pedidos.reduce((s, v) => s + (Number(v.abono_yesenia) || 0), 0);
@@ -2536,7 +2796,7 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
         g.telefono = telMuestra ? String(telMuestra.cliente_telefono).trim() : '';
         g.cantidad = g.pedidos.reduce((s, pp) => s + (Number(pp.cantidad) || 1), 0);
         g.abono = g.pedidos.reduce((s, pp) => s + (Number(pp.abono_yesenia) || 0), 0);
-        g.costo = g.pedidos.reduce((s, pp) => s + (Number(pp.costo_unitario) || 0) * (Number(pp.cantidad) || 1), 0);
+        g.costo = g.pedidos.reduce((s, pp) => s + costoTotalVenta(pp), 0);
       });
       const detallePedidos = pedidos.length === 0
         ? '<span style="color:var(--muted);">—</span>'
@@ -2605,7 +2865,12 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
         color: v.color || '',
         talla: v.talla || '',
         programa: v.cliente_programa || '',
-        abono: cant > 0 ? Math.round(abonoTotal / cant) : 0
+        modelo: normalizarModelo(v.modelo),
+        precio: Number(v.precio_unitario) || 0,
+        costo: Number(v.costo_unitario) || 0,
+        abono: cant > 0 ? Math.round(abonoTotal / cant) : 0,
+        abono_yesenia: 0,
+        estado: normalizarEstado(v.estado)
       }));
     }
     return items;
@@ -2629,7 +2894,7 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
       pedidos.forEach(v => { r[v.id] = 0; });
       return r;
     }
-    const costos = pedidos.map(v => (Number(v.costo_unitario) || 0) * (Number(v.cantidad) || 1));
+    const costos = pedidos.map(v => costoTotalVenta(v));
     const costoTotal = costos.reduce((a, b) => a + b, 0);
     let asignado = 0;
     pedidos.forEach((v, idx) => {
@@ -2644,17 +2909,19 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
     return r;
   }
 
-  // Reparto equitativo por camisa (híbrido): $ total se divide entre camisas, no por costo.
-  function distribuirAbonoEquitativo(abonoTotal, pedidos) {
+// Reparto proporcional al costo de cada pedido (híbrido): sugiere dividir el
+// $ total según cuánto cuesta cada pedido con Yesenia, no por igual por camisa.
+function distribuirAbonoEquitativo(abonoTotal, pedidos) {
     const r = {};
     if (!pedidos || pedidos.length === 0) return r;
     if (!(abonoTotal > 0)) { pedidos.forEach(v => { r[v.id] = 0; }); return r; }
-    const totalCamisas = pedidos.reduce((s, v) => s + (Number(v.cantidad) || 1), 0);
+    const costos = pedidos.map(v => costoTotalVenta(v));
+    const sumC = costos.reduce((a, b) => a + b, 0);
     let asignado = 0;
     pedidos.forEach((v, idx) => {
       if (idx === pedidos.length - 1) r[v.id] = abonoTotal - asignado;
       else {
-        const parte = totalCamisas > 0 ? Math.floor(abonoTotal * (Number(v.cantidad) || 1) / totalCamisas) : 0;
+        const parte = sumC > 0 ? Math.floor(abonoTotal * costos[idx] / sumC) : Math.floor(abonoTotal / pedidos.length);
         asignado += parte;
         r[v.id] = parte;
       }
@@ -2694,7 +2961,7 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
       const nombre = grupo.displayNombre;
       const telefono = grupo.displayTelefono;
       const cant = pedidos.reduce((s, v) => s + (Number(v.cantidad) || 1), 0);
-      const costo = pedidos.reduce((s, v) => s + (Number(v.costo_unitario) || 0) * (Number(v.cantidad) || 1), 0);
+      const costo = pedidos.reduce((s, v) => s + costoTotalVenta(v), 0);
       const estaEnCompra = pedidos.some(v => yaAsignados.has(v.id));
       const checked = estaEnCompra ? 'checked' : '';
       const abonoPrev = pedidos
@@ -2711,20 +2978,20 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
             <div class="reparto-box">
               <div class="reparto-header">
                 <span class="reparto-title">Desglose por pedido</span>
-                <span class="reparto-hint">Sugerido equitativo por camisa · ajusta cada fila si necesitas</span>
+                <span class="reparto-hint">Sugerido proporcional al costo · ajusta cada fila si necesitas</span>
               </div>
               <div class="pedidos-sublista">
                 ${pedidos.map(p => {
-                  const costoPedido = (Number(p.costo_unitario) || 0) * (Number(p.cantidad) || 1);
+                  const costoPedido = costoTotalVenta(p);
                   const cantPedido = Number(p.cantidad) || 1;
                   const abPedido = yaAsignados.has(p.id) ? (Number(p.abono_yesenia) || 0) : 0;
                   const fechaTxt = p.fecha ? formatearFechaHumana(p.fecha).replace(/^📅\s*/,'') : '?';
-                  const estadoBadge = p.estado ? `<span class="badge-estado ${claseEstado(p.estado)}" style="font-size:10px; padding:2px 6px;">${escSimple(normalizarEstado(p.estado))}</span>` : '';
+                  const estadoBadge = badgeEstadoGeneral(p);
                   return `
                   <div class="pedido-sub-row">
                     <div class="sub-info">
                       <b>${escSimple(fechaTxt)} · ×${cantPedido} camisa(s) · ${fmt(costoPedido)}</b>
-                      <span class="sub-tag">${estadoBadge} ${p.costo_unitario ? `costo ${fmt(p.costo_unitario)} c/u` : ''}</span>
+                      <span class="sub-tag">${estadoBadge}</span>
                     </div>
                     <span class="camisa-abono-campo">
                       <input type="number" class="cp-pedido-abono" data-pedido-id="${p.id}" data-persona="${escSimple(clave)}" min="0" step="1000" placeholder="$ Abono" value="${abPedido || ''}" ${soloAportes ? 'disabled' : ''}>
@@ -2804,7 +3071,7 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
      let cantidad = 0, costo = 0;
      pedidos.forEach(v => {
        cantidad += Number(v.cantidad) || 1;
-       costo += (Number(v.costo_unitario) || 0) * (Number(v.cantidad) || 1);
+       costo += costoTotalVenta(v);
      });
 
      const personas = personasSeleccionadasActuales();
@@ -2957,7 +3224,7 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
      if (pedidosSeleccionados.length === 0) { errEl.textContent = 'Selecciona al menos una persona para esta compra.'; errEl.classList.remove('hidden'); return; }
 
      const pedidosObjs = pedidosSeleccionados.map(id => ventasCache.find(v => v.id === id)).filter(Boolean);
-     const costoTotal = pedidosObjs.reduce((s, v) => s + (Number(v.costo_unitario) || 0) * (Number(v.cantidad) || 1), 0);
+     const costoTotal = pedidosObjs.reduce((s, v) => s + costoTotalVenta(v), 0);
 
      const payload = { fecha, comprador, proveedor, observaciones, total: costoTotal, hora: horaColombia() };
 
@@ -3009,10 +3276,17 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
           pedidosPersona.forEach(v => {
             const items = itemsDeVentaParaAbono(v);
             const totalPedido = porPedido[v.id] || 0;
-            const cantItems = items.length || 1;
-            const base = Math.floor(totalPedido / cantItems);
-            const resto = totalPedido - base * cantItems;
-            items.forEach((it, idx) => { it.abono_yesenia = base + (idx < resto ? 1 : 0); });
+            const costos = items.map(it => Number(it.costo) || Number(v.costo_unitario) || 0);
+            const sumC = costos.reduce((a, b) => a + b, 0);
+            let asignado = 0;
+            items.forEach((it, idx) => {
+              if (idx === items.length - 1) it.abono_yesenia = totalPedido - asignado;
+              else {
+                const parte = sumC > 0 ? Math.floor(totalPedido * costos[idx] / sumC) : Math.floor(totalPedido / items.length);
+                asignado += parte;
+                it.abono_yesenia = parte;
+              }
+            });
             abonoPorPedido[v.id] = { items, abono: totalPedido };
           });
         });
@@ -3084,7 +3358,7 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
         ${pedidos.map(p => {
           const cant = Number(p.cantidad) || 1;
           const ab = Number(p.abono_yesenia) || 0;
-          const costo = (Number(p.costo_unitario) || 0) * cant;
+          const costo = costoTotalVenta(p);
           const resto = costo - ab;
          return `
            <div class="camisa-detalle-row">
@@ -3146,8 +3420,7 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
 
    // Saldo pendiente de un pedido con Yesenia (costo − abonado a Yesenia).
    function saldoPedidoCompra(v) {
-     const costo = (Number(v.costo_unitario) || 0) * (Number(v.cantidad) || 1);
-     return Math.max(costo - (Number(v.abono_yesenia) || 0), 0);
+     return Math.max(costoTotalVenta(v) - (Number(v.abono_yesenia) || 0), 0);
    }
 
     // "Abonar más a Yesenia" removido por solicitud: el flujo ahora es
@@ -3313,7 +3586,7 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
       samirCard.classList.remove('hidden');
       document.getElementById('stat-ganancia-samir').textContent = fmt(
         ventasCache.filter(v => v.vendedor === 'Samir').reduce((s, v) =>
-          s + ((Number(v.precio_unitario) || 0) - (Number(v.costo_unitario) || 0)) * (Number(v.cantidad) || 1) / 2, 0
+          s + (precioTotalVenta(v) - costoTotalVenta(v)) / 2, 0
         )
       );
     }
@@ -3324,7 +3597,7 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
       valCard.classList.remove('hidden');
       document.getElementById('stat-ganancia-val').textContent = fmt(
         ventasCache.filter(v => v.vendedor === 'Valentina').reduce((s, v) =>
-          s + ((Number(v.precio_unitario) || 0) - (Number(v.costo_unitario) || 0)) * (Number(v.cantidad) || 1) / 2, 0
+          s + (precioTotalVenta(v) - costoTotalVenta(v)) / 2, 0
         )
       );
     }
@@ -3729,7 +4002,8 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
       const fe = document.getElementById('filter-estado')?.value || '';
       let dataset;
       if (fe) {
-        dataset = getVentasFiltradas().filter(v => normalizarEstado(v.estado) === fe);
+        // getVentasFiltradas ya incluye pedidos con ALGUNA camisa en ese estado.
+        dataset = getVentasFiltradas();
       } else {
         dataset = pedidosPorComprar();
       }
@@ -3740,6 +4014,8 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
 
       // Combina pedidos iguales: suma las unidades por Género/Color/Talla.
       // Fix: pedidos viejos en modo simple guardaban items.length=1 con cantidad=4/6 -> contar cantidad, no 1.
+      // Solo se listan camisas en estado Pedido (las que aún hay que comprar).
+      const soloPedido = !fe || fe === 'Pedido';
       const agg = {};
       dataset.forEach(v => {
         let items = null;
@@ -3750,13 +4026,15 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
         if (!items || !Array.isArray(items) || items.length === 0) {
           items = [{ genero: v.genero, color: v.color, talla: v.talla, modelo: v.modelo }];
         }
+        const eligibles = items.filter(it => soloPedido ? ((it.estado ? normalizarEstado(it.estado) === 'Pedido' : true)) : true);
+        if (eligibles.length === 0) return;
         const cant = Number(v.cantidad) || 1;
-        const pesoPorItem = sinDetalle ? cant : (items.length === 1 ? cant : cant / items.length);
+        const pesoPorItem = sinDetalle ? cant : (eligibles.length === 1 ? cant : cant / eligibles.length);
         // Si la división no es entera (datos inconsistentes), repartir el resto en las primeras filas
         const base = Math.floor(pesoPorItem);
-        const resto = Math.round((pesoPorItem - base) * items.length);
-        items.forEach((it, idx) => {
-          const veces = sinDetalle ? cant : (items.length === 1 ? cant : base + (idx < resto ? 1 : 0));
+        const resto = Math.round((pesoPorItem - base) * eligibles.length);
+        eligibles.forEach((it, idx) => {
+          const veces = sinDetalle ? cant : (eligibles.length === 1 ? cant : base + (idx < resto ? 1 : 0));
           const key = `${it.genero || ''}|${it.color || ''}|${it.talla || ''}|${normalizarModelo(it.modelo)}`;
           if (!agg[key]) agg[key] = { genero: it.genero || '', color: it.color || '', talla: it.talla || '', modelo: normalizarModelo(it.modelo), cantidad: 0 };
           agg[key].cantidad += veces;
@@ -3772,15 +4050,26 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
         )
         .map(g => ({ Cantidad: g.cantidad, Género: g.genero, Color: g.color, Talla: g.talla, Versión: etiquetaModelo(g.modelo) }));
 
-      // Totales para la hoja de resumen.
+      // Totales para la hoja de resumen (solo camisas en estado Pedido).
       let totalCamisas = 0;
       let totalVenta = 0;
       let totalCosto = 0;
       dataset.forEach(v => {
-        const cant = Number(v.cantidad) || 1;
-        totalCamisas += cant;
-        totalVenta += (Number(v.precio_unitario) || 0) * cant;
-        totalCosto += (Number(v.costo_unitario) || 0) * cant;
+        const crudos = itemsCrudosVenta(v);
+        const solo = soloPedido && crudos ? crudos.filter(it => (it.estado ? normalizarEstado(it.estado) === 'Pedido' : true)) : null;
+        if (solo) {
+          if (solo.length === 0) return;
+          solo.forEach(it => {
+            totalCamisas += 1;
+            totalVenta += precioDeItem(it, v);
+            totalCosto += costoDeItem(it, v);
+          });
+        } else {
+          const cant = Number(v.cantidad) || 1;
+          totalCamisas += cant;
+          totalVenta += (Number(v.precio_unitario) || 0) * cant;
+          totalCosto += (Number(v.costo_unitario) || 0) * cant;
+        }
       });
 
       const resumen = [
@@ -3794,6 +4083,7 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
       ];
 
       // Detalle por pedido (referencia interna). Fix: respeta cantidad si items.length=1 (dato viejo).
+      // Solo incluye camisas en estado Pedido cuando el filtro es "por comprar".
       const detalle = [];
       dataset.forEach(v => {
         let items = null;
@@ -3801,15 +4091,17 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
           try { items = JSON.parse(v.items_camisa); } catch (e) { items = null; }
         }
         const sinDetalle = !(items && Array.isArray(items) && items.length > 0);
+        const eligibles = (items || []).filter(it => soloPedido ? ((it.estado ? normalizarEstado(it.estado) === 'Pedido' : true)) : true);
+        if (eligibles.length === 0) return;
         if (!items || !Array.isArray(items) || items.length === 0) {
           items = [{ genero: v.genero, color: v.color, talla: v.talla, programa: v.cliente_programa, modelo: v.modelo }];
         }
         const cant = Number(v.cantidad) || 1;
-        const peso = sinDetalle ? cant : (items.length === 1 ? cant : cant / items.length);
+        const peso = sinDetalle ? cant : (eligibles.length === 1 ? cant : cant / eligibles.length);
         const base = Math.floor(peso);
-        const resto = Math.round((peso - base) * items.length);
-        items.forEach((it, idx) => {
-          const veces = sinDetalle ? cant : (items.length === 1 ? cant : base + (idx < resto ? 1 : 0));
+        const resto = Math.round((peso - base) * eligibles.length);
+        eligibles.forEach((it, idx) => {
+          const veces = sinDetalle ? cant : (eligibles.length === 1 ? cant : base + (idx < resto ? 1 : 0));
           // Duplicar fila por cada camisa para que el detalle sume la cantidad real
           for (let k = 0; k < (veces || 1); k++) {
             detalle.push({
@@ -3898,8 +4190,6 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
       }
 
       const cant = Number(v.cantidad) || 1;
-      const precio = Number(v.precio_unitario) || 0;
-      const costo = Number(v.costo_unitario) || 0;
       const abono = Number(v.abono) || 0;
       const pagosProv = abonosProveedorPorVentaId(v.id);
       // Para el Excel por camisa: totales por pedido se reparten por item (fix ganancia duplicada)
@@ -3923,19 +4213,24 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
 
       items.forEach((it, idx) => {
         const cantItem = sinDet ? cant : (nItems === 1 ? cant : cantPorItemBase + (idx < restoCant ? 1 : 0));
-        const ventaItem = precio * cantItem;
-        const costoItem = costo * cantItem;
+        const pItem = precioDeItem(it, v);
+        const cItem = costoDeItem(it, v);
+        const ventaItem = pItem * cantItem;
+        const costoItem = cItem * cantItem;
         const abonoItem = (it.abono != null && it.abono !== '' && !isNaN(Number(it.abono))) ? Number(it.abono) : (abono / nItems);
         const abonoYesItem = (it.abono_yesenia != null && it.abono_yesenia !== '' && !isNaN(Number(it.abono_yesenia))) ? Number(it.abono_yesenia) : (pagosProv.abonado / nItems);
         const saldoItem = ventaItem - abonoItem;
         const pendProvItem = costoItem - abonoYesItem;
         const gananciaItem = ventaItem - costoItem;
+        const eItem = it.estado ? normalizarEstado(it.estado) : e;
+        const eiBg = statusBg[eItem] || statusBg[e] || 'transparent';
+        const eiFg = statusFg[eItem] || statusFg[e] || '#000';
         html += '<tr style="background:' + bg + '">' +
           '<td class="c">' + esc(v.id) + '</td>' +
           '<td class="c">' + esc(v.fecha) + '</td>' +
           '<td class="c">' + esc(v.fecha_entrega || 'Pendiente por definir') + '</td>' +
           '<td class="c">' + esc(diaSemana) + '</td>' +
-          '<td style="background:' + eBg + ';color:' + eFg + ';font-weight:700;text-align:center">' + esc(e) + '</td>' +
+          '<td style="background:' + eiBg + ';color:' + eiFg + ';font-weight:700;text-align:center">' + esc(eItem) + '</td>' +
           '<td style="' + venClr + ';text-align:center">' + esc(v.vendedor) + '</td>' +
           '<td>' + esc(v.cliente_nombre) + '</td>' +
           '<td class="c">' + esc(v.cliente_telefono) + '</td>' +
@@ -3947,8 +4242,8 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
           '<td class="c">' + esc(it.talla) + '</td>' +
           '<td>' + esc(it.programa) + '</td>' +
           '<td class="c">' + esc(etiquetaModelo(it.modelo)) + '</td>' +
-          '<td class="m">' + fmtNum(precio) + '</td>' +
-          '<td class="m">' + fmtNum(costo) + '</td>' +
+          '<td class="m">' + fmtNum(pItem) + '</td>' +
+          '<td class="m">' + fmtNum(cItem) + '</td>' +
           '<td class="c">' + fmtNum(cantItem) + '</td>' +
           '<td class="m" x:fmla="=Q' + excelRow + '*S' + excelRow + '">' + fmtNum(ventaItem) + '</td>' +
           '<td class="m" x:fmla="=R' + excelRow + '*S' + excelRow + '">' + fmtNum(costoItem) + '</td>' +
@@ -3983,6 +4278,11 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
   async function updateEstado(id, estado, selectEl) {
     const venta = ventasCache.find(v => v.id === id);
     if (estado === 'Liquidado' && venta) {
+      if (!todosItemsListosEntrega(venta)) {
+        mostrarToast('Para liquidar un pedido, TODAS sus camisas deben estar Entregado (o Liquidado). Mira el estado de cada camisa.', 'error');
+        if (selectEl) selectEl.value = selectEl.dataset.prev || venta.estado;
+        return;
+      }
       const check = puedeMarcarPagado(venta);
       if (!check.ok) {
         mostrarToast('No puedes marcar como Liquidado:\n\n• ' + check.faltas.join('\n• '), 'error');
@@ -3992,7 +4292,13 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
     }
 
     try {
-      await supabaseClient.from('ventas').update({ estado }).eq('id', id);
+      const payload = { estado };
+      const crudos = itemsCrudosVenta(venta);
+      if (crudos) {
+        crudos.forEach(it => { it.estado = estado; });
+        payload.items_camisa = JSON.stringify(crudos);
+      }
+      await supabaseClient.from('ventas').update(payload).eq('id', id);
       await loadVentas();
     } catch (err) {
       if (selectEl && venta) selectEl.value = selectEl.dataset.prev || venta.estado;
@@ -4045,8 +4351,8 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
   async function finalizarVenta(id) {
     const venta = ventasCache.find(v => v.id === id);
     if (!venta) return;
-    if (normalizarEstado(venta.estado) !== 'Liquidado') {
-      mostrarToast('Para finalizar el pedido, primero debes marcarlo como Liquidado.', 'error');
+    if (!estadosTodosLiquidado(venta)) {
+      mostrarToast('Para finalizar el pedido, TODAS sus camisas deben estar en estado Liquidado.', 'error');
       return;
     }
     if (!confirmar(`¿Finalizar el pedido de ${venta.cliente_nombre || 'cliente'}?\n\nPasará al Historial de pedidos y dejará de aparecer en "Pedidos".`)) return;
@@ -4081,6 +4387,7 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
         (v.cliente_telefono || '').toLowerCase().includes(qh) ||
         (v.vendedor || '').toLowerCase().includes(qh) ||
         (v.estado || '').toLowerCase().includes(qh) ||
+        estadosItemsVenta(v).some(e => e.toLowerCase().includes(qh)) ||
         (v.fecha || '').includes(qh) ||
         (v.id || '').toLowerCase().includes(qh)
       ));
@@ -4097,11 +4404,10 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
 
     body.innerHTML = pageRows.map(v => {
       const cant = Number(v.cantidad) || 1;
-      const precio = Number(v.precio_unitario) || 0;
-      const abonoCliente = Number(v.abono) || 0;
-      const venta = precio * cant;
+      const venta = precioTotalVenta(v);
+      const abonoCliente = abonoClienteTotal(v);
       const restanteCliente = venta - abonoCliente;
-      const items = itemsParaDashboard(v);
+      const detalle = itemsDetalleHtml(v);
 
       return `
         <tr>
@@ -4113,7 +4419,7 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
           </td>
           <td>
             <div style="margin-bottom:6px;">${badgeModeloVenta(v)}</div>
-            <div style="font-size:12px; line-height:1.6;">${items.join('<br>')}</div>
+            ${detalle}
           </td>
           <td><b>${cant}</b></td>
           <td class="money">${fmt(venta)}</td>
@@ -4123,7 +4429,7 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
             <span class="humano-fecha">${textoFechaEntrega(v)}</span>
             <span class="sub-tag">📍 ${escSimple(v.lugar_entrega || 'Sin definir')} · 🚚 ${escSimple(v.entrega_por || 'Sin asignar')}</span>
           </td>
-          <td><span class="badge-estado ${claseEstado(v.estado || '')}">${escSimple(normalizarEstado(v.estado) || '—')}</span></td>
+          <td>${badgeEstadoGeneral(v)}</td>
           <td>
             <div class="action-group">
               <button class="btn-small restaurar-button" data-id="${v.id}" type="button">Restaurar</button>
