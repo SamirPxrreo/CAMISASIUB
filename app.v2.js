@@ -3196,9 +3196,26 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
 
   function renderPedidosPicker(compra) {
     const yaAsignados = new Set(compra ? ventasCache.filter(v => v.compra_id === compra.id).map(v => v.id) : []);
-    const disponibles = pedidosDisponiblesParaCompra(compra ? compra.id : null);
+    let disponibles = pedidosDisponiblesParaCompra(compra ? compra.id : null);
     const picker = document.getElementById('cp-pedidos-picker');
     const soloAportes = compraSoloAportes;
+
+    // Admin: filtrar por persona que realiza el abono (Samir/Valentina).
+    const seleccion = document.getElementById('cp-comprador')?.value || '';
+    if (currentRole.role === 'admin') {
+      if (!seleccion) {
+        pedidosDisponiblesPickers = [];
+        picker.innerHTML = '<p style="color:var(--muted); margin:6px 0;">Selecciona quién realiza el abono para ver sus pedidos.</p>';
+        actualizarResumenCompraModal();
+        return;
+      }
+      if (seleccion === 'Samir' || seleccion === 'Valentina') {
+        const filtrados = disponibles.filter(v => v.vendedor === seleccion);
+        // Mantener los ya asignados a esta compra aunque el filtro no los incluya (por si se cambió el vendedor).
+        const extras = disponibles.filter(v => yaAsignados.has(v.id) && !filtrados.some(f => f.id === v.id));
+        disponibles = [...filtrados, ...extras];
+      }
+    }
 
     pedidosDisponiblesPickers = disponibles;
 
@@ -3456,6 +3473,17 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
       aportesSection.classList.add('hidden');
     }
 
+    // Admin: al cambiar persona que realiza el abono, filtrar los pedidos que se muestran.
+    const selComprador = document.getElementById('cp-comprador');
+    if (selComprador) {
+      selComprador.onchange = () => {
+        if (currentRole.role === 'admin') {
+          const comp = editingCompraId ? comprasCache.find(x => x.id === editingCompraId) : null;
+          renderPedidosPicker(comp);
+        }
+      };
+    }
+
     renderAbonoAdicional();
     document.getElementById('compra-modal').classList.remove('hidden');
     bloquearScrollFondo();
@@ -3485,7 +3513,7 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
      const pedidosSeleccionados = pedidosDePersonasSeleccionadas().map(v => v.id);
 
      if (!fecha) { errEl.textContent = 'Ingresa la fecha de la compra.'; errEl.classList.remove('hidden'); return; }
-     if (!comprador) { errEl.textContent = 'Selecciona quién realizó la compra.'; errEl.classList.remove('hidden'); return; }
+      if (!comprador) { errEl.textContent = 'Selecciona quién realiza el abono.'; errEl.classList.remove('hidden'); return; }
      if (pedidosSeleccionados.length === 0) { errEl.textContent = 'Selecciona al menos una persona para esta compra.'; errEl.classList.remove('hidden'); return; }
 
      const pedidosObjs = pedidosSeleccionados.map(id => ventasCache.find(v => v.id === id)).filter(Boolean);
