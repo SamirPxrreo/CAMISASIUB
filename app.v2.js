@@ -1346,13 +1346,13 @@ return items.map((it, idx) => `
     const filas = items.map((it, i) => {
       const precio = precioDeItem(it, venta);
       const abono = (it.abono != null && it.abono !== '') ? (Number(it.abono) || 0) : 0;
-      const programa = it.programa ? `<div class="rec-prog">Bordado: ${escSimple(it.programa)}</div>` : '';
+      const modeloTxt = (typeof etiquetaModelo === 'function' ? etiquetaModelo(it.modelo) : (it.modelo || '')) || '';
+      const desc = [capitalizarColor(it.color), it.talla ? `Talla ${it.talla}` : '', it.genero || '', modeloTxt].filter(Boolean).join(' · ');
+      const prog = it.programa ? `<div class="prog">Bordado: ${escSimple(it.programa)}</div>` : '';
       return `
         <tr>
           <td class="c">${i + 1}</td>
-          <td>${escSimple(capitalizarColor(it.color))}</td>
-          <td class="c">${escSimple(it.talla || '?')}</td>
-          <td>${escSimple(it.genero || '?')}${programa}</td>
+          <td>${escSimple(desc)}${prog}</td>
           <td class="c">1</td>
           <td class="money">${fmt(precio)}</td>
           <td class="money">${fmt(abono)}</td>
@@ -1365,83 +1365,126 @@ return items.map((it, idx) => `
     const fechaEntrega = textoFechaEntrega(venta);
     const programaTexto = items.filter(it => it.programa).map(it => escSimple(it.programa)).join(', ');
 
+    // Plantilla recibo v2 — lista para ajustar con Samir (colores, logo, textos)
+    const fechaPedidoTxt = formatearFechaHumana(venta.fecha);
+    const saldoPos = Math.max(saldo, 0);
+    const estadoPill = stateText(venta);
+    const notaTxt = (venta.nota || '').trim();
     const html = `<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Recibo — ${escSimple(venta.cliente_nombre || 'Pedido')}</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recibo #${escSimple(String(venta.id).slice(-6).toUpperCase())} — ${escSimple(venta.cliente_nombre || 'Pedido')}</title>
 <style>
-  body { font-family: Arial, Helvetica, sans-serif; color: #1a1a1a; margin: 24px; font-size: 13px; }
-  .rec-header { text-align: center; border-bottom: 2px solid #111; padding-bottom: 12px; margin-bottom: 16px; }
-  .rec-header h1 { margin: 0; font-size: 22px; letter-spacing: 1px; }
-  .rec-header .rec-sub { font-size: 12px; color: #555; margin-top: 4px; }
-  .rec-box { border: 1px solid #ccc; border-radius: 8px; padding: 10px 12px; margin-bottom: 14px; }
-  .rec-grid { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px 24px; }
-  .rec-grid > div { min-width: 200px; }
-  .rec-label { font-size: 10.5px; text-transform: uppercase; color: #777; letter-spacing: .5px; }
-  .rec-value { font-weight: 700; font-size: 14px; margin-top: 2px; }
-  table { width: 100%; border-collapse: collapse; margin: 12px 0; }
-  th, td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; }
-  th { background: #f1f1f1; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
-  .c { text-align: center; }
-  .money { text-align: right; font-variant-numeric: tabular-nums; }
-  .rec-totals { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; margin-top: 12px; font-size: 14px; }
-  .rec-totals .row { display: flex; justify-content: space-between; width: 260px; }
-  .rec-totals .row b { font-variant-numeric: tabular-nums; }
-  .rec-total { font-size: 16px; font-weight: 800; align-items: center; border-top: 2px solid #111; padding-top: 8px; }
-  .rec-footer { margin-top: 26px; text-align: center; color: #888; font-size: 11px; border-top: 1px dashed #ccc; padding-top: 10px; }
-  .rec-prog { font-size: 11px; color: #444; margin-top: 2px; }
-  @media print { body { margin: 8mm; } }
+  :root{--ink:#0F172A;--muted:#64748B;--line:#E2E8F0;--bg:#F8FAFC;--gold:#B45309}
+  *{box-sizing:border-box}
+  body{font-family:Inter, Segoe UI, Arial, Helvetica, sans-serif; color:var(--ink); margin:0; background:#fff; font-size:13px; line-height:1.45}
+  .sheet{max-width:780px; margin:0 auto; padding:24px}
+  .toolbar{display:flex; gap:8px; justify-content:flex-end; margin-bottom:14px}
+  .btn{padding:8px 14px; border-radius:8px; border:1px solid var(--line); background:#fff; cursor:pointer; font-weight:700; font-size:12px}
+  .btn-primary{background:var(--ink); color:#fff; border-color:var(--ink)}
+  .brand{display:flex; justify-content:space-between; align-items:flex-start; gap:16px; border-bottom:3px solid var(--ink); padding-bottom:14px; margin-bottom:16px}
+  .brand h1{margin:0; font-size:26px; letter-spacing:.06em; line-height:1}
+  .brand .tag{font-size:11px; color:var(--muted); letter-spacing:.1em; text-transform:uppercase; margin-top:4px}
+  .meta{text-align:right; font-size:12px; line-height:1.35}
+  .meta .num{font-size:18px; font-weight:800; letter-spacing:.02em}
+  .meta .date{color:var(--muted)}
+  .meta .pill{display:inline-block; margin-top:6px; padding:3px 9px; border-radius:999px; font-size:11px; font-weight:800; border:1px solid var(--line); background:#fff}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px}
+  @media(max-width:640px){.grid2{grid-template-columns:1fr}}
+  .card{border:1px solid var(--line); border-radius:10px; padding:12px; background:var(--bg)}
+  .card h3{margin:0 0 8px; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted)}
+  .kv{display:grid; grid-template-columns:108px 1fr; gap:4px 8px; font-size:13px}
+  .kv dt{color:var(--muted)}
+  .kv dd{margin:0; font-weight:600; word-break:break-word}
+  table{width:100%; border-collapse:collapse; border:1px solid var(--line); border-radius:10px; overflow:hidden; margin:0}
+  th{background:var(--ink); color:#fff; font-size:11px; letter-spacing:.06em; text-transform:uppercase; padding:9px 8px; text-align:left}
+  th.c, td.c{text-align:center}
+  th.money, td.money{text-align:right}
+  td{padding:9px 8px; border-top:1px solid var(--line); vertical-align:top; font-size:13px}
+  tr:nth-child(even) td{background:#F8FAFC}
+  .prog{font-size:11px; color:#475569; margin-top:3px}
+  .totals{display:flex; justify-content:flex-end; margin-top:14px}
+  .totals-box{width:340px; border:1px solid var(--line); border-radius:10px; overflow:hidden}
+  .row{display:flex; justify-content:space-between; padding:10px 12px; border-top:1px solid var(--line); background:#fff}
+  .row:first-child{border-top:none}
+  .row.total{background:var(--ink); color:#fff; font-weight:800; font-size:15px}
+  .row b{font-variant-numeric:tabular-nums}
+  .note{margin-top:12px; border:1px dashed var(--line); border-radius:10px; padding:10px 12px; background:#FFFEFB; font-size:12px; color:#334155}
+  .sigs{display:grid; grid-template-columns:1fr 1fr; gap:32px; margin-top:30px; text-align:center}
+  .sig{border-top:1px solid var(--ink); padding-top:8px; font-size:11px; color:var(--muted); margin-top:40px}
+  .foot{text-align:center; color:var(--muted); font-size:11px; margin-top:16px; border-top:1px solid var(--line); padding-top:10px}
+  @media print{.toolbar{display:none} body{margin:0} .sheet{padding:10mm} @page{margin:10mm}}
 </style>
 </head>
 <body>
-  <div class="rec-header">
-    <h1>CAMISAS IUB</h1>
-    <div class="rec-sub">Recibo de pedido · ${escSimple(vendedorLabel(venta))}</div>
-  </div>
+  <div class="sheet">
+    <div class="toolbar">
+      <button class="btn" onclick="window.close()" type="button">Cerrar</button>
+      <button class="btn btn-primary" onclick="window.print()" type="button">🖨️ Imprimir / Guardar PDF</button>
+    </div>
 
-  <div class="rec-box">
-    <div class="rec-grid">
+    <div class="brand">
       <div>
-        <div class="rec-label">Cliente</div>
-        <div class="rec-value">${escSimple(venta.cliente_nombre || '—')}</div>
+        <h1>CAMISAS IUB</h1>
+        <div class="tag">Uniformes · Ibagué — Hecho a mano</div>
       </div>
-      <div>
-        <div class="rec-label">Teléfono</div>
-        <div class="rec-value">${escSimple(venta.cliente_telefono || '—')}</div>
-      </div>
-      <div>
-        <div class="rec-label">Fecha del pedido</div>
-        <div class="rec-value">${formatearFechaHumana(venta.fecha)}</div>
-      </div>
-      <div>
-        <div class="rec-label">Entrega</div>
-        <div class="rec-value">${fechaEntrega} · ${escSimple(venta.lugar_entrega || 'Sin definir')}</div>
-      </div>
-      <div>
-        <div class="rec-label">Estado</div>
-        <div class="rec-value">${stateText(venta)}</div>
+      <div class="meta">
+        <div class="num">RECIBO #${escSimple(String(venta.id).slice(-6).toUpperCase())}</div>
+        <div class="date">${fechaPedidoTxt} · ${escSimple(vendedorLabel(venta))}</div>
+        <div class="pill">${estadoPill}</div>
       </div>
     </div>
-  </div>
 
-  <table>
-    <thead>
-      <tr><th>#</th><th>Color</th><th>Talla</th><th>Género</th><th class="c">Cant.</th><th class="money">Precio</th><th class="money">Abono</th></tr>
-    </thead>
-    <tbody>${filas}</tbody>
-  </table>
-  ${programaTexto ? `<div style="font-size:12px; color:#333;"><b>Bordados:</b> ${programaTexto}</div>` : ''}
+    <div class="grid2">
+      <div class="card">
+        <h3>Cliente</h3>
+        <dl class="kv">
+          <dt>Nombre</dt><dd>${escSimple(venta.cliente_nombre || '—')}</dd>
+          <dt>Teléfono</dt><dd>${escSimple(venta.cliente_telefono || '—')}</dd>
+          <dt>Lugar</dt><dd>${escSimple(venta.lugar_entrega || 'Por definir')}</dd>
+          ${notaTxt ? `<dt>Nota</dt><dd>${escSimple(notaTxt)}</dd>` : ''}
+        </dl>
+      </div>
+      <div class="card">
+        <h3>Entrega</h3>
+        <dl class="kv">
+          <dt>Fecha</dt><dd>${fechaEntrega}</dd>
+          <dt>Entrega por</dt><dd>${escSimple(venta.entrega_por || 'Sin asignar')}</dd>
+          <dt>Vendedor</dt><dd>${escSimple(venta.vendedor || '—')}</dd>
+          <dt>Pedido del</dt><dd>${fechaPedidoTxt}</dd>
+        </dl>
+      </div>
+    </div>
 
-  <div class="rec-totals">
-    <div class="row"><span>Total del pedido</span><b>${fmt(total)}</b></div>
-    <div class="row"><span>Abono cliente</span><b>${fmt(abonoTotal)}</b></div>
-    <div class="row rec-total"><span>Saldo por pagar</span><b>${fmt(Math.max(saldo, 0))}</b></div>
-  </div>
+    <table>
+      <thead>
+        <tr><th style="width:36px">#</th><th>Descripción</th><th class="c" style="width:52px">Cant.</th><th class="money" style="width:96px">Precio</th><th class="money" style="width:96px">Abono</th></tr>
+      </thead>
+      <tbody>${filas}</tbody>
+    </table>
+    ${programaTexto ? `<div class="note"><b>Bordados:</b> ${programaTexto}</div>` : ''}
 
-  <div class="rec-footer">
-    Gracias por tu pedido 💙<br>
-    ${new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota', dateStyle: 'full', timeStyle: 'short' })}
+    <div class="totals">
+      <div class="totals-box">
+        <div class="row"><span>Total del pedido</span><b>${fmt(total)}</b></div>
+        <div class="row"><span>Abono cliente</span><b>${fmt(abonoTotal)}</b></div>
+        <div class="row total"><span>Saldo por pagar</span><b>${fmt(saldoPos)}</b></div>
+      </div>
+    </div>
+
+    ${notaTxt ? `<div class="note"><b>Nota:</b> ${escSimple(notaTxt)}</div>` : ''}
+
+    <div class="sigs">
+      <div class="sig">Firma cliente<br><span style="font-weight:700;color:var(--ink)">${escSimple(venta.cliente_nombre || '—')}</span></div>
+      <div class="sig">Firma entrega<br><span style="font-weight:700;color:var(--ink)">${escSimple(venta.entrega_por || venta.vendedor || '—')}</span></div>
+    </div>
+
+    <div class="foot">
+      Gracias por tu pedido 💙 — Camisas IUB<br>
+      ${new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota', dateStyle: 'full', timeStyle: 'short' })} · Este recibo no es factura fiscal
+    </div>
   </div>
 
   <script>
@@ -1452,7 +1495,7 @@ return items.map((it, idx) => `
 </body>
 </html>`;
 
-    const w = window.open('', '_blank', 'width=420,height=640');
+    const w = window.open('', '_blank', 'width=820,height=720');
     if (!w) {
       mostrarToast('Permite las ventanas emergentes para imprimir.', 'error');
       return;
