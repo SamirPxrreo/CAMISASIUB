@@ -492,10 +492,16 @@
     const fa = a.fecha_entrega || '9999-12-31';
     const fb = b.fecha_entrega || '9999-12-31';
     if (fa !== fb) return fa < fb ? -1 : 1;
+    const ea = (a.entrega_por || '').toLowerCase();
+    const eb = (b.entrega_por || '').toLowerCase();
+    if (ea !== eb) return ea < eb ? -1 : 1;
+    const ca = (a.cliente_nombre || '').toLowerCase().trim();
+    const cb = (b.cliente_nombre || '').toLowerCase().trim();
+    if (ca !== cb) return ca < cb ? -1 : 1;
     const pa = a.fecha || '9999-12-31';
     const pb = b.fecha || '9999-12-31';
     if (pa !== pb) return pa < pb ? -1 : 1;
-    return 0;
+    return String(a.id).localeCompare(String(b.id));
   }
 
   // Pedidos que aún NO se han comprado en la distribuidora:
