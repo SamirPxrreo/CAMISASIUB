@@ -1898,9 +1898,11 @@ html.modal-lock {
 .alert-item.critical { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
 .alert-item.warning { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
 .alert-item.success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+.alert-item.info { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
 [data-theme="dark"] .alert-item.critical { background: #450a0a; color: #fca5a5; border-color: #7f1d1d; }
 [data-theme="dark"] .alert-item.warning { background: #451a03; color: #fcd34d; border-color: #78350f; }
 [data-theme="dark"] .alert-item.success { background: #052e16; color: #86efac; border-color: #166534; }
+[data-theme="dark"] .alert-item.info { background: #172554; color: #93c5fd; border-color: #1e40af; }
 
 .sidebar-toggle {
   display: flex; align-items: center; gap: 8px;
@@ -2110,6 +2112,11 @@ html.modal-lock {
   color: #fff;
 }
 .order-card-copy .btn-copy-card:active { transform: scale(0.96); }
+.order-card-copy .btn-copy-card.btn-copy-ok {
+  background: var(--ok);
+  border-color: var(--ok);
+  color: #fff;
+}
 
 .order-card-divider {
   border: none;
