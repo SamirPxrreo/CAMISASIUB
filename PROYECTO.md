@@ -1,6 +1,9 @@
 # Camisas IUB — Sistema de control de ventas
 
-Aplicación web de **página única (un solo archivo HTML)** para controlar la venta de camisas del negocio de Samir y Valentina, con base de datos en **Supabase (Postgres)**.
+Aplicación web para controlar la venta de camisas del negocio de Samir y Valentina, con base de datos en **Supabase (Postgres)**. Se **despliega automáticamente en GitHub Pages** con cada `git push` a la rama `main`.
+
+- **Página pública:** <https://SamirPxrreo.github.io/CAMISASIUB/>
+- **Repo:** <https://github.com/SamirPxrreo/CAMISASIUB>
 
 ---
 
@@ -8,24 +11,40 @@ Aplicación web de **página única (un solo archivo HTML)** para controlar la v
 
 | Archivo | Descripción |
 |---|---|
-| `index.html` | Estructura de la app (login, sidebar, secciones, modales). Carga `styles.css`, `app.js` y `enhance.js`. |
+| `index.html` | Estructura de la app (login, sidebar, secciones, modales). Carga `styles.v2.css`, `app.v2.js` y `enhance.v2.js`. |
 | `styles.v2.css` | Todo el diseño (claro/oscuro, responsive, impresión). |
-| `app.v2.js` | **Toda la lógica**: Supabase, cálculos, renders. No tocar cálculos ni flujos. |
+| `app.v2.js` | **Toda la lógica**: Supabase, cálculos, renders. No tocar cálculos ni flujos de dinero sin confirmar. |
 | `enhance.v2.js` | Solo mejoras visuales (etiquetas móvil, animación de avisos). No tiene lógica de negocio. |
+| `migracion.sql` | Migraciones de Supabase (ver sección 9). |
 | `PROYECTO.md` | Este documento. |
+| `backup/` | Copia de seguridad (ver sección 11). |
 
-- El desarrollo visual se hace en **`index.html` + `styles.css`**.
-- La lógica vive en **`app.js`** (extraído tal cual del `index.html` original).
+> ⚠️ Los archivos se llaman `*.v2.*` (no `styles.css` / `app.js` — esos nombres ya no existen).
 - No hay build, ni npm, ni dependencias locales: los CDN de Supabase y SheetJS se cargan en el `<head>` de `index.html`.
 
 ---
 
 ## 2. Cómo ejecutar
 
-1. Abrir `index.html` con el navegador (doble clic o arrastrar a Chrome).
+1. **En línea (normal):** abrir <https://SamirPxrreo.github.io/CAMISASIUB/>.
 2. Iniciar sesión con un correo/contraseña de Supabase Auth.
+3. **Probar cambios en local:** abrir `index.html` con el navegador (doble clic o arrastrar a Chrome). La base está en la nube (Supabase), así que funciona igual en cualquier PC.
 
-> No requiere servidor. La base de datos está en la nube (Supabase), por lo que **funciona igual en cualquier PC** mientras el `index.html` esté actualizado.
+### Cómo publicar cambios (despliegue)
+
+El sitio vive en GitHub Pages y se **reconstruye solo con cada `git push` a `main`**:
+
+```bash
+git add .
+git commit -m "descripcion del cambio"
+git push origin main
+```
+
+- Luego la URL pública queda actualizada (el build de Pages tarda ~1–2 min; a veces el primer intento falla y hay que re-dispararlo vía API `POST /pages/builds`).
+- **⚠️ Política de deployments:** GitHub conserva *todos* los deployments de Pages. Para no acumularlos, se borran los antiguos dejando siempre **2**: el más reciente (estado actual) y el `07d914b` (último de respaldo). El borrado requiere primero marcarlos "inactivos" vía API (los "active" dan error 422 si no son los únicos).
+- El acceso a la API de despliegue usa un **token personal (`repo`)**. No compartir ni subir este token al repo.
+
+> No requiere servidor para la app; solo el `git push` para publicar.
 
 ### Credenciales Supabase (ya embebidas en `index.html`)
 ```js
@@ -68,7 +87,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_GnC8zI1oNOWrRTxO8iVqEA_E-yf68uq";
 
 ## 5. Modelo de datos (Supabase)
 
-> ⚠️ **IMPORTANTE:** el negocio maneja **dos montos distintos** por pedido (ver sección 6). La tabla `ventas` debe tener la columna **`abono_yesenia`** (migración en sección 9).
+> ⚠️ **IMPORTANTE:** el negocio maneja **dos montos distintos** por pedido (ver sección 6): el abono del `cliente` y el `abono_yesenia`. La tabla `ventas` tiene la columna **`abono_yesenia`** (migración ya aplicada, ver sección 9).
 
 ### `ventas` — un pedido de camisas (una fila por pedido/cliente)
 | Columna | Tipo | Uso |
@@ -86,7 +105,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_GnC8zI1oNOWrRTxO8iVqEA_E-yf68uq";
 | `vendedor` | text | Quién vendió (Samir / Valentina) |
 | `entrega_por` | text | Quién entrega el pedido (opcional) |
 | `fecha`, `fecha_entrega`, `lugar_entrega`, `nota` | | Fechas y detalle de entrega |
-| `items_camisa` | jsonb | Detalle **por camisa/unidad**: `[{ genero, color, talla, programa, abono, abono_yesenia, modelo }, ...]` |
+| `items_camisa` | jsonb | Detalle **por camisa/unidad**: `[{ genero, color, talla, modelo, programa, precio, costo, abono, abono_yesenia, estado }, ...]` |
 | `compra_id` | uuid | FK a `compras_proveedor` (abono de Yesenia al que pertenece) |
 | `finalizado` | bool | `true` = movido al Historial |
 | `created_at` | timestamptz | |
@@ -143,14 +162,15 @@ Reglas en el código:
 
 ## 7. Secciones de la app
 
-- **🏠 Inicio (dashboard):** accesos rápidos, estado del negocio, y dos listas separadas: "Pedidos que vendí" y "Pedidos que debo entregar".
+- **🏠 Inicio (dashboard):** accesos rápidos, KPIs, alertas (vencidas, tiempo muerto por estado, recordatorios de entrega, clientes con deuda alta) y dos listas separadas: "Pedidos que vendí" y "Pedidos que debo entregar".
 - **➕ Nueva Venta / edición:** formulario con modo simple e individual (por camisa), con versión **1/2** (por defecto 1). El "Abono recibido del cliente" se reparte por camisa en `items[].abono`.
-- **📋 Pedidos:** tabla con Abono Cliente, Saldo Cliente, Pagado a Proveedor, Falta Pagar. Columna Entrega ahora muestra `📍 lugar · 🚚 quien entrega` (como en Inicio). Botones: Editar, + Abono (cliente), Finalizar, Borrar. Cambio de estado directo.
+- **📋 Pedidos:** tabla con Abono Cliente, Saldo Cliente, Pagado a Proveedor, Falta Pagar. Columna Entrega muestra `📍 lugar · 🚚 quien entrega`. Cambio de estado directo por dropdown (aplica a todas las camisas) + badge de estado por camisa. Botones: Editar, + Abono (cliente), 🧾 Recibo (imprimir), Finalizar, Borrar.
 - **🛍️ Abonos Yesenia:** lista de abonos (compras). Botón "+ Nuevo abono". Cada fila agrupa por contacto (tel/@) — 1 fila por cliente con `cliente(s) · pedido(s)`, muestra Camisas/Abono/Saldo agregados. Botón "Ver / Abonar" abre el modal con desglose editable equitativo por camisa.
 - **💰 Liquidaciones:** pagos entre socios (50% de la ganancia por pedido). Selecciona pedido con saldo pendiente.
-- **📊 Resúmenes / 📈 Reportes:** estadísticas, ventas, por vendedor, por cliente, compras, KPIs.
+- **💵 Caja (Arqueo):** revisa un día: **Vendido del día**, **Esperado en caja (abonos del día)**, y registra Efectivo + Nequi reales contados → **Diferencia** (cuadra ≈ $0, tolerancia $500). Guarda cada arqueo en localStorage por fecha y muestra historial. Sirve para cuadrar caja al cierre del día.
+- **📊 Resúmenes / 📈 Reportes:** estadísticas, ventas, por vendedor, por cliente, compras, KPIs. Exportaciones Excel.
 - **⚙️ Configuración (solo admin):** CRUD de filas en `usuarios`.
-- **📚 Historial:** pedidos finalizados (restaurar / borrar).
+- **📚 Historial:** pedidos finalizados (restaurar / 🧾 recibo / borrar).
 
 ### Flujo de un "Abono a Yesenia" (modal)
 1. `+ Nuevo abono` → se eligen clientes agrupados por contacto (`claveCliente` tel/@) — 1 checkbox por cliente sumando camisas/costo. Se escribe **"Abono total que paga a Yesenia"** por cliente; si el cliente tiene varios pedidos se muestra desglose editable por pedido (sugerido equitativo por camisa: `total ÷ camisas`).
@@ -186,8 +206,8 @@ Reglas en el código:
 17. **Balance entre socios simplificado:** la tarjeta de Liquidaciones muestra solo "Samir le debe liquidar a Valentina: $X", "Valentina le debe liquidar a Samir: $Y" y "Total pendiente por liquidar: $X+$Y" (o "Cuentas al día"). Los montos siguen siendo el 50% de la ganancia de cada pedido (`mitadGananciaPedido`).
 18. **Tarjetas del inicio reordenadas:** ahora se leen como las leería quien entrega: primero 📅 fecha de entrega + 📍 lugar y persona que entrega + vendedor; después 👤 cliente + teléfono/WhatsApp + saldo; luego estado y versión; al final la descripción de las camisas.
 19. **"Modelo Viejo/Nuevo" → "Versión 1/2":** solo cambió la etiqueta visible (badges, formulario, Resúmenes, Excel). En la base se siguen guardando los valores `Viejo`/`Nuevo`, así que **no hay que cambiar nada en Supabase**.
-20. **Tablas en teléfono:** celdas más compactas y columna de Acciones angosta con solo iconos (✏️ Editar, 💰 Abono, ✅ Finalizar, 🗑️ Borrar, ↩️ Restaurar, 👁️ Ver/Abonar; encabezado ⚙️), manteniéndola fija al lado derecho. En computador sigue igual.
-21. **Menú con iconos:** cada opción del menú lateral lleva su emoji (🏠 ➕ 📋 📚 🧵 💰 📊 📈 ⚙️), más ☰ Menú y 🚪 Salir.
+20. **Tablas en teléfono:** celdas más compactas y columna de Acciones angosta con solo iconos (✏️ Editar, 💰 Abono, ✅ Finalizar, 🧾 Recibo, 🗑️ Borrar, ↩️ Restaurar, 👁️ Ver/Abonar; encabezado ⚙️), manteniéndola fija al lado derecho. En computador sigue igual.
+21. **Menú con iconos:** cada opción del menú lateral lleva su emoji (🏠 ➕ 📋 📚 🧵 💰 💵 📊 📈 ⚙️), más ☰ Menú y 🚪 Salir.
 22. **Agrupación por contacto en Abonos Yesenia:** `claveCliente()` (tel dígitos/@) + `etiquetaClienteGrupo()` — 1 checkbox por cliente sumando camisas/costo, tabla agrupa por `claveCliente` y deuda no duplica (Milher 2 pedidos → 1 fila $38k).
 23. **Deuda con Yesenia pulida:** card con dot warn/ok, pill total, grid 2 columnas para admin (Valentina/Valu), descripción con badge-estado y fecha humana, sin duplicados.
 24. **Scroll Shift+rueda:** `Shift+rueda` = horizontal, rueda sola = vertical (`app.v2.js:194`); hints `🔄 Mantén Shift+rueda` en 5 tablas (`styles.v2.css:829`).
@@ -206,47 +226,39 @@ Reglas en el código:
 37. **Precio, costo, abono y estado POR CAMISA:** `items_camisa[]` ahora guarda `precio`, `costo`, `abono` y `estado` por camisa (misma fila de venta, sin migración: es jsonb). Helpers únicos de dinero en `app.v2.js:349`: `precioDeItem`/`costoDeItem`, `precioTotalVenta`/`costoTotalVenta`/`abonoClienteTotal` (suma por camisa con respaldo a la fórmula vieja `precio_unitario*cantidad` para pedidos anteriores), `estadosItemsVenta`/`estadoGeneralVenta` (`Mixto` cuando difieren, no se persiste: al guardar se rollupea al estado más atrasado según `ORDEN_ESTADOS`), `todosItemsListosEntrega` (todas Entregado/Liquidado) y `estadosTodosLiquidado` (finalizables). Tabla Pedidos/Historial: badge de estado por camisa + dropdown global que aplica el estado a TODAS las camisas (`updateEstado` reescribe `items_camisa[].estado`); la columna Estado muestra el estado más atrasado y, si mezcla, una filita con la cuenta por estado (`estadosCuentasHtml`, ej. "Bordando ×4 · Listo para entrega ×2"), badge "✅ Listo para liquidar" exige todas entregadas, `Finalizar` solo si todas Liquidado. Filtro por estado incluye el pedido si ALGUNA camisa coincide. Formulario: en modo individual cada fila tiene Precio venta, Costo Yesenia, Abono y Estado (`camisa-item-money`); en modo simple las camisas heredan `f-precio`/`f-costo`/`f-estado`. Abonos Yesenia: `abonosProveedorPorVentaId` prefiere la suma de `items[].abono_yesenia`, reparto equitativo proporcional al costo de cada camisa. Excel: `exportarExcelCompleto` con precio/costo/estado por camisa; `exportarCompraExcel` solo lista las camisas en estado `Pedido` (y totales) cuando el filtro es "por comprar". Sin cambios en Supabase.
 38. **Costo a proveedor sugerido por talla y versión:** `costoProveedorSugerido()` (`app.v2.js`, `EXTRA_TALLAS_COSTO`) calcula el costo Yesenia: v1 base $30.000 (S..XL), 2XL +$2.000 (32.000), 3XL +$4.000 (34.000), 4XL +$6.000 (36.000); **versión 2 = +$1.000** (31.000, 33.000, 35.000, 37.000). Se autocompleta el campo Costo al elegir talla/versión en modo simple (`cs-talla`/`cs-modelo`) y en cada fila del modo individual (`ci-talla`/`ci-modelo`); si el usuario edita el costo a mano, ya no se pisa. Al editar una venta existente el costo registrado manda. Hint en el formulario. Sin cambios en Supabase.
 39. **Operaciones diarias (4 ítems):** **(a) Alertas de tiempo muerto** — `calcularAlertas()` avisa camisas atascadas en `Pedido` (≥3 d), `Comprado` (≥5 d) o `Bordando` (≥7 d) contando por estado (`UMBRAL_DIAS_ESTADO` + `diasTranscurridos()`), con nota si en Pedido ya tiene `compra_id`; también avisa pedidos "Listo para entrega" sin fecha o sin entregarse ≥2 d desde su fecha (`alertasTiempoMuerto`/`alertasListosSinEntrega`). **(b) "🗓️ Recordar mañana"** — botón en la tarjeta del inicio que guarda un recordatorio en localStorage (`camisasIUB_recordatorios`, `recordarEntrega`/`hayRecordatorio`): se muestra como alerta `🗓️ Recordatorios de entrega` con enlace WhatsApp cuando la fecha es hoy/pasada y el pedido sigue sin entregar; el botón alterna guardado/borrado (✅ Recordado). **(c) Arqueo de caja** — nueva sección `💵 Caja` (sidebar + `section-caja`): elige fecha, muestra **Vendido del día**, **Esperado (abonos del día)**, inputs Efectivo/Nequi reales con **Diferencia** en vivo (cuadra ≤ $500), historial por fecha pues en localStorage (`camisasIUB_arqueos`), botones Guardar/Borrar. **(d) Recibo imprimible** — botón `🧾 Recibo` en Pedidos e Historial (`imprimirRecibo(id)`) que abre una ventana autocontenida con datos del pedido, desglose por camisa (color, talla, género, precio, abono), total, abono, saldo, entrega y bordados; lista para imprimir. Todo localStorage (sin migración) excepto la lectura existente de ventas. `escSimple` para escapar texto en recibo. Sin cambios en Supabase.
+40. **Despliegue en GitHub Pages + limpieza de deployments:** el sitio se publica en <https://SamirPxrreo.github.io/CAMISASIUB/> con cada `git push` a `main` (Pages `build_type=legacy`). Se eliminaron los deployments históricos (GitHub conserva todos y no deja borrar los "active" salvo marcar su estado `inactive` vía API primero: `POST /deployments/{id}/statuses` con `{"state":"inactive"}` y luego `DELETE`). Quedaron solo **2 deployments**: el actual y el `07d914b` de respaldo. Documentado en secciones 2 y 12.
 
 ---
 
-## 9. ⚠️ Migración pendiente en Supabase (SQL Editor)
+## 9. Migraciones en Supabase (base en la nube)
 
-Requiere que la tabla `ventas` tenga la columna `abono_yesenia`. Ejecutar **una vez** en el SQL Editor de Supabase:
+> ✅ **Todas estas migraciones YA se ejecutaron en la base (Postgres en Supabase).** No volver a ejecutarlas si se clona el repo; están aquí como referencia del esquema.
 
+### Aplicadas: columna `abono_yesenia`
 ```sql
 ALTER TABLE ventas ADD COLUMN abono_yesenia numeric DEFAULT 0;
-
 -- Migrar datos existentes: para pedidos ya vinculados a un abono,
 -- lo que estaba en "abono" era lo pagado a Yesenia (bug anterior).
 UPDATE ventas SET abono_yesenia = abono
 WHERE compra_id IS NOT NULL AND (abono_yesenia IS NULL OR abono_yesenia = 0);
 ```
+> **Nota:** los pedidos viejos que ya estaban en un abono quedaron con el abono del cliente corregible manualmente (su columna "Abono Cliente" mostraba el valor de Yesenia por el bug).
 
-> Esto ya se ejecutó en la base en la nube, por lo que también aplica a cualquier otro PC. **Nota:** los pedidos viejos que ya estaban en un abono quedaron con el abono del cliente corregible manualmente (su columna "Abono Cliente" mostraba el valor de Yesenia por el bug).
-
-### Migración pendiente: columna `modelo` (nueva feature)
-
-Requiere que la tabla `ventas` tenga la columna `modelo`. Ejecutar **una vez** (después, recargar con Ctrl+F5):
-
+### Aplicadas: columna `modelo`
 ```sql
 ALTER TABLE ventas ADD COLUMN IF NOT EXISTS modelo text;
 UPDATE ventas SET modelo = 'Viejo' WHERE modelo IS NULL OR trim(modelo) = '';
 ```
 
-> Sin esto, no se puede guardar una venta nueva (el INSERT incluye el campo `modelo`). Los pedidos existentes sin valor se muestran como "Versión 1".
-
-### Migración: 6 estados (2026-09-11)
+### Aplicadas: 6 estados (2026-09-11)
 - `Otro` no requiere migración: `lugar_entrega` es `text` libre, guarda el texto custom directamente.
-- Estados finales: `Pedido → Comprado → Bordando → Listo para entrega → Entregado → Liquidado`. El código es compatible hacia atrás con `Bordado`/`Pagado` vía `normalizarEstado()` + `claseEstado()` (corrige bug de página en blanco por clase con espacios). El `CHECK` ahora permite 8 valores durante transición para no romper datos viejos. Ejecutar en Supabase SQL Editor:
+- Estados finales: `Pedido → Comprado → Bordando → Listo para entrega → Entregado → Liquidado`. El código es compatible hacia atrás con `Bordado`/`Pagado` vía `normalizarEstado()` + `claseEstado()`.
 ```sql
 ALTER TABLE ventas DROP CONSTRAINT IF EXISTS ventas_estado_check;
 ALTER TABLE ventas ADD CONSTRAINT ventas_estado_check CHECK (estado IN ('Pedido','Comprado','Bordado','Bordando','Listo para entrega','Entregado','Pagado','Liquidado'));
 -- migrar datos viejos al nuevo flujo:
 UPDATE ventas SET estado='Bordando' WHERE estado='Bordado';
 UPDATE ventas SET estado='Liquidado' WHERE estado='Pagado';
--- cuando ya no queden viejos, opcional dejar solo los 6 finales:
--- ALTER TABLE ventas DROP CONSTRAINT ventas_estado_check;
--- ALTER TABLE ventas ADD CONSTRAINT ventas_estado_check CHECK (estado IN ('Pedido','Comprado','Bordando','Listo para entrega','Entregado','Liquidado'));
 ```
 
 ---
@@ -271,4 +283,29 @@ UPDATE ventas SET estado='Liquidado' WHERE estado='Pagado';
 - Los botones "+ Abono" de la tabla de pedidos son abonos **del cliente**; el pago a Yesenia se hace en **Abonos Yesenia**. Evitar mezclarlos.
 - `compra_aportes` con `observacion = ''` es el aporte automático (se reemplaza al re-guardar el abono); los "Abono adicional" usan `observacion = 'Abono adicional'`.
 - El registro de usuarios de la app no crea credenciales de Supabase Auth (hacerlo manualmente en el panel).
-- Los respaldos `backup/` están desactualizados; si se necesita un respaldo nuevo, copiar `index.html` a `backup/` con nombre y fecha.
+- Los recordatorios "🗓️ Recordar mañana" y los arqueos de caja viven en **localStorage del navegador** (no en Supabase): se pierden si se usa otro dispositivo o se limpia el navegador.
+- Los respaldos en `backup/` son una fotografía de antes de la feature por-camisa (#37). Para un respaldo nuevo, copiar `index.html`, `app.v2.js`, `styles.v2.css`, `enhance.v2.js`, `PROYECTO.md` y `migracion.sql` a `backup/` con nombre y fecha.
+
+---
+
+## 12. Despliegue y GitHub Pages (detalle técnico)
+
+- **Cómo funciona:** cada `git push` a `main` dispara el build de Pages (`build_type=legacy`) y publica <https://SamirPxrreo.github.io/CAMISASIUB/>. No hay acciones de GitHub (Actions): es Pages clásico sobre la rama.
+- **Deployments:** GitHub crea un deployment por cada build exitoso y los conserva a todos. La URL canónica siempre apunta al más reciente, pero los obsoletos se acumulan en `<repo>/deployments`.
+- **Política "2 deployments":** se borran los antiguos dejando el reciente + uno de respaldo (`07d914b`). Comandos con la API REST (GitHub no permite borrar un deployment "active" salvo que sea el único de su environment, devuelve **422**):
+  ```bash
+  # 1) marcar inactivo
+  curl -X POST -H "Authorization: Bearer $TOKEN" \
+    -H "Content-Type: application/json" \
+    --data-binary '{"state":"inactive"}' \
+    https://api.github.com/repos/SamirPxrreo/CAMISASIUB/deployments/{id}/statuses
+  # 2) borrar
+  curl -X DELETE -H "Authorization: Bearer $TOKEN" \
+    https://api.github.com/repos/SamirPxrreo/CAMISASIUB/deployments/{id}
+  ```
+- **Build fallido / colgado:** a veces `pages/builds/latest` reporta `"building"` con `updated_at` congelado y el deployment correcto no se crea. Se re-dispara con:
+  ```bash
+  curl -X POST -H "Authorization: Bearer $TOKEN" \
+    https://api.github.com/repos/SamirPxrreo/CAMISASIUB/pages/builds
+  ```
+- **Token:** las llamadas a la API usan un token personal con scope `repo`. **No** debe subirse al repo ni pegarse en el chat. Si se expone, revocarlo en GitHub → Settings → Developer settings → Personal access tokens.
