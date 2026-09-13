@@ -317,71 +317,6 @@
     return Math.round((hoy - f) / 86400000);
   }
 
-  // Suma/resta días a una fecha YYYY-MM-DD (negativo = hacia el pasado).
-  function sumarDias(fechaStr, n) {
-    const f = new Date(String(fechaStr).slice(0, 10) + 'T00:00:00');
-    f.setDate(f.getDate() + n);
-    return f.toISOString().slice(0, 10);
-  }
-
-  /* ---------- Recordatorios de entrega (localStorage) ---------- */
-  const STORAGE_RECORDATORIOS = 'camisasIUB_recordatorios';
-
-  function recordatoriosLeer() {
-    try {
-      const raw = JSON.parse(localStorage.getItem(STORAGE_RECORDATORIOS) || '{}');
-      return raw && typeof raw === 'object' ? raw : {};
-    } catch (e) { return {}; }
-  }
-
-  function recordatoriosGuardar(datos) {
-    try { localStorage.setItem(STORAGE_RECORDATORIOS, JSON.stringify(datos)); } catch (e) { /* almacenamiento no disponible */ }
-  }
-
-  // Marca el pedido para recordarlo mañana (o desmarca si ya estaba).
-  function recordarEntrega(id) {
-    const venta = ventasCache.find(v => String(v.id) === String(id));
-    if (!venta) return;
-    const hoy = hoyColombia();
-    let datos = recordatoriosLeer();
-    if (datos[id]) {
-      delete datos[id];
-      recordatoriosGuardar(datos);
-      mostrarToast('Recordatorio eliminado.');
-      renderDashboard();
-      return;
-    }
-    datos[id] = {
-      fecha: sumarDias(hoy, 1),
-      creado: hoy,
-      nombre: venta.cliente_nombre || 'Cliente',
-      telefono: venta.cliente_telefono || '',
-      vendedor: venta.vendedor || ''
-    };
-    recordatoriosGuardar(datos);
-    mostrarToast('🗓️ Te recordaremos la entrega de ' + (venta.cliente_nombre || 'este pedido') + ' mañana.');
-    renderDashboard();
-  }
-
-  // ¿Hay recordatorio pendiente para este pedido?
-  function hayRecordatorio(id) {
-    return !!(recordatoriosLeer()[id]);
-  }
-
-  // Recordatorios activos (válidos hoy o vencidos) para pedidos aún sin entregar.
-  function recordatoriosPendientes() {
-    const hoy = hoyColombia();
-    const datos = recordatoriosLeer();
-    const resultado = [];
-    Object.entries(datos).forEach(([id, r]) => {
-      const venta = ventasCache.find(v => String(v.id) === String(id));
-      if (!venta || venta.finalizado || todosItemsListosEntrega(venta)) return;
-      if (!r || !r.fecha) return;
-      if (r.fecha <= hoy) resultado.push({ id, r, venta });
-    });
-    return resultado;
-  }
-
   // Muestra el color con su inicial en mayúscula (ej. "negro" → "Negro").
   function capitalizarColor(color) {
     const c = String(color == null ? '' : color).trim();
@@ -1198,6 +1133,11 @@ return items.map((it, idx) => `
             <div class="kpi-value" style="font-size:16px;">Ver</div>
             <div class="kpi-sub">Saldos y ganancias entre socios</div>
           </div>
+          <div class="kpi-card" style="cursor:pointer;" onclick="exportarCalendarioICS()">
+            <div class="kpi-label">📅 Calendario</div>
+            <div class="kpi-value" style="font-size:16px;">Exportar</div>
+            <div class="kpi-sub">Envía las entregas pendientes a tu calendario (iPhone/Android)</div>
+          </div>
         </div>
       </div>
       <div class="dash-section" style="margin-bottom:24px;">
@@ -1359,8 +1299,7 @@ return items.map((it, idx) => `
           <span class="order-card-client">👤 ${v.cliente_nombre || '—'}</span>
           <span class="order-card-phone">📞 ${v.cliente_telefono || '—'}${waLink ? ` · <a href="${waLink}" target="_blank" style="color:var(--ok);font-weight:600;text-decoration:none;">WhatsApp</a>` : (waUsuario ? ` · <a href="#" onclick="copiarUsuarioWhatsApp('${waUsuario}');return false;" style="color:var(--ok);font-weight:600;text-decoration:none;">Copiar @</a>` : '')}</span>
           <span class="order-card-saldo" style="color:${saldo > 0 ? 'var(--warn)' : 'var(--ok)'}">💰 ${fmt(saldo)}</span>
-          <span class="order-card-copy"><button class="btn-copy-card" onclick="copiarWhatsApp('${msgWhatsApp}')" type="button">📋 Copiar</button>
-          <button class="btn-copy-card ${hayRecordatorio(v.id) ? 'btn-copy-ok' : ''}" onclick="recordarEntrega('${v.id}')" type="button" title="Recordar entregar mañana a este cliente">${hayRecordatorio(v.id) ? '✅ Recordado' : '🗓️ Recordar mañana'}</button></span>
+          <span class="order-card-copy"><button class="btn-copy-card" onclick="copiarWhatsApp('${msgWhatsApp}')" type="button">📋 Copiar</button></span>
         </div>
         <div class="order-card-row">
           <span class="badge-estado ${claseEstado(v.estado)}">${escSimple(normalizarEstado(v.estado))}</span>
@@ -1627,19 +1566,6 @@ return items.map((it, idx) => `
     const listosSinEntrega = alertasListosSinEntrega();
     if (listosSinEntrega.length) {
       alertas.push({ tipo: 'info', msg: listosSinEntrega.join('<br>') });
-    }
-
-    // Ítem 5 — recordatorios de entrega guardados (fecha <= hoy y pedido sin entregar).
-    const pendientes = recordatoriosPendientes();
-    if (pendientes.length) {
-      const lineas = pendientes.map(({ r, venta }) => {
-        const cumplida = r.fecha < hoy ? `(para el ${formatearFechaHumana(r.fecha)})` : '';
-        const wa = r.telefono && !/^@/.test(r.telefono)
-          ? ` · <a href="https://wa.me/57${String(r.telefono).replace(/\D/g, '')}" target="_blank" style="color:var(--ok);font-weight:600;">WhatsApp</a>`
-          : '';
-        return `• <b>${venta.cliente_nombre || r.nombre}</b> (${venta.vendedor || r.vendedor}) ${cumplida}${wa}`;
-      });
-      alertas.push({ tipo: 'info', msg: '🗓️ <b>Recordatorios de entrega:</b><br>' + lineas.join('<br>') });
     }
 
     if (alertas.length === 0) alertas.push({ tipo: 'success', msg: '✅ Todo al día — No hay alertas pendientes.' });
@@ -4576,6 +4502,96 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  }
+
+  /* =====================================================
+     CALENDARIO — Exporta entregas pendientes a .ics
+     (compatible con Calendario de Apple iOS y Google Android)
+     ===================================================== */
+  function exportarCalendarioICS() {
+    if (currentRole.role !== 'admin') return;
+
+    // Eventos: pedidos con fecha de entrega definida y sin entregar (ni liquidado).
+    const candidatos = ventasCache.filter(v =>
+      v.fecha_entrega &&
+      !v.finalizado &&
+      normalizarEstado(v.estado) !== 'Entregado' &&
+      normalizarEstado(v.estado) !== 'Liquidado' &&
+      !todosItemsListosEntrega(v)
+    ).sort((a, b) => String(a.fecha_entrega).localeCompare(String(b.fecha_entrega)));
+
+    if (candidatos.length === 0) {
+      mostrarToast('No hay entregas pendientes con fecha definida para exportar.', 'error');
+      return;
+    }
+
+    // CRLF obligatorio en ICS; línea comienza con "BEGIN:VCALENDAR".
+    let ics = 'BEGIN:VCALENDAR\r\n';
+    ics += 'VERSION:2.0\r\n';
+    ics += 'PRODID:-//Camisas IUB//Camisas IUB//ES\r\n';
+    ics += 'CALSCALE:GREGORIAN\r\n';
+    ics += 'METHOD:PUBLISH\r\n';
+    ics += 'X-WR-CALNAME:Camisas IUB - Entregas\r\n';
+    ics += 'X-WR-TIMEZONE:America/Bogota\r\n';
+
+    const escIcs = s => String(s == null ? '' : s)
+      .replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,')
+      .replace(/\r?\n/g, '\\n');
+
+    const fechaIcs = (f) => {
+      const d = String(f).slice(0, 10).split('-');
+      return (d.length === 3) ? d.join('') : '';
+    };
+
+    candidatos.forEach((v) => {
+      const items = itemsCrudosVenta(v) || [];
+      const resumen = items.length
+        ? items.map(it => `${capitalizarColor(it.color)} ${it.talla}${it.genero ? ' (' + it.genero + ')' : ''}`).join(', ')
+        : 'Camisas';
+      const entregaPor = v.entrega_por || 'Sin asignar';
+      const fecha = fechaIcs(v.fecha_entrega);
+      if (!fecha) return;
+      const uid = 'camisasiub-' + v.id + '-' + fecha + '@camisasiub';
+
+      const descripcion = [
+        'Pedido #' + v.id,
+        'Cliente: ' + (v.cliente_nombre || '—'),
+        'Teléfono: ' + (v.cliente_telefono || '—'),
+        'Entrega por: ' + entregaPor,
+        'Lugar: ' + (v.lugar_entrega || 'Por definir'),
+        'Camisas: ' + resumen,
+        'Vendedor: ' + (v.vendedor || '—')
+      ].join('\\n');
+
+      ics += 'BEGIN:VEVENT\r\n';
+      ics += 'UID:' + uid + '\r\n';
+      ics += 'DTSTAMP:' + hoyColombia().replace(/-/g, '') + 'T120000Z\r\n';
+      ics += 'DTSTART;VALUE=DATE:' + fecha + '\r\n';
+      ics += 'SUMMARY:📦 Entrega camisas — ' + escIcs(v.cliente_nombre || 'Cliente') + ' (' + escIcs(entregaPor) + ')\r\n';
+      ics += 'DESCRIPTION:' + descripcion + '\r\n';
+      ics += 'LOCATION:' + escIcs(v.lugar_entrega || '') + '\r\n';
+      ics += 'STATUS:CONFIRMED\r\n';
+      ics += 'BEGIN:VALARM\r\n';
+      ics += 'ACTION:DISPLAY\r\n';
+      ics += 'DESCRIPTION:Mañana hay que entregar camisas\r\n';
+      ics += 'TRIGGER:-PT15H\r\n';
+      ics += 'END:VALARM\r\n';
+      ics += 'END:VEVENT\r\n';
+    });
+
+    ics += 'END:VCALENDAR\r\n';
+
+    const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Entregas_Camisas_IUB_' + hoyColombia() + '.ics';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+    mostrarToast('📅 Se exportaron ' + candidatos.length + ' entregas al calendario. Abre el archivo .ics para agregarlas.');
   }
 
 
