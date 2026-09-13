@@ -309,3 +309,19 @@ UPDATE ventas SET estado='Liquidado' WHERE estado='Pagado';
     https://api.github.com/repos/SamirPxrreo/CAMISASIUB/pages/builds
   ```
 - **Token:** las llamadas a la API usan un token personal con scope `repo`. **No** debe subirse al repo ni pegarse en el chat. Si se expone, revocarlo en GitHub → Settings → Developer settings → Personal access tokens.
+
+---
+
+## 13. 📌 Notas de Samir (2026-09-13, pendientes para mañana)
+
+> Lo que Samir pidió que le recuerde mañana. Ideas en borrador, sin decidir aún:
+
+1. **Recibo imprimible (`imprimirRecibo`, #39d):** le gusta, pero quiere **crear una plantilla** (con ayuda) y sobre esa plantilla seguir trabajando/mejorando el formato.
+2. **Arqueo de caja (#39c):** no está seguro de quererlo/necesitarlo. → Explicarle mañana bien qué hace, para qué sirve, y decidir si se queda o se elimina.
+3. **REVISAR con él: todos los cambios que se hicieron esta sesión** (operaciones diarias #39 a–d + docs #40): resumen claro de cada uno.
+4. **Eliminar el botón "🗓️ Recordar mañana"** del inicio (`renderOrderCard`, junto a "📋 Copiar"): NO le parece útil como está.
+5. **En su lugar, contrato de calendario (proponer solución):** su idea es un botón que conecte con el **Calendario de Apple (iPhone)** y el **Calendario de Google (Android)** para que las **fechas de entrega de los pedidos** aparezcan como recordatorio. Opciones a plantear mañana:
+   - (a) Botón único "Sincronizar entregas" en el inicio que exporte TODOS los pedidos con `fecha_entrega` pendiente.
+   - (b) En **Nueva Venta**, al guardar, preguntar "¿Quieres recordatorio en el calendario?" por pedido.
+   - **Destinatario del recordatorio:** la persona puesta en `entrega_por` (quién entrega el pedido). Si Samir lo entrega → recordatorio para Samir; si Valentina → para Valentina. Decidir si va a 1 solo o a ambos (por si a Valentina se le olvida).
+   - Requiere evaluar técnica: websharetarget / `ics` (generar archivo `.ics` con eventos) para iOS y Android, o enlaces `cal:`. Mi propuesta: generar un archivo `.ics` descargable (funciona en ambos calendarios). Confirmar enfoque mañana.
