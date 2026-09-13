@@ -4582,10 +4582,27 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
     ics += 'END:VCALENDAR\r\n';
 
     const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+    const nombre = 'Entregas_Camisas_IUB_' + hoyColombia() + '.ics';
+
+    // En móvil: hoja de compartir (a "Calendario" en iPhone / Google Calendar en Android).
+    // El navegador del celular bloquea la descarga por a.click(), por eso no se usa aquí.
+    const esMovil = /iphone|ipad|ipod|android/i.test(navigator.userAgent || '');
+    const archivo = new File([blob], nombre, { type: 'text/calendar;charset=utf-8' });
+    if (esMovil && navigator.canShare && navigator.canShare({ files: [archivo] }) && navigator.share) {
+      navigator.share({ files: [archivo], title: 'Camisas IUB - Entregas', text: candidatos.length + ' entregas pendientes' })
+        .then(() => mostrarToast('📅 Listo. Si no lo agregaste, abre el archivo .ics en tu calendario.'))
+        .catch((err) => {
+          if (err && err.name !== 'AbortError') {
+            mostrarToast('No se pudo compartir, se descargará el archivo .ics.', 'error');
+          }
+        });
+      return;
+    }
+
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'Entregas_Camisas_IUB_' + hoyColombia() + '.ics';
+    a.download = nombre;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
