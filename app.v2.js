@@ -1133,11 +1133,6 @@ return items.map((it, idx) => `
             <div class="kpi-value" style="font-size:16px;">Ver</div>
             <div class="kpi-sub">Saldos y ganancias entre socios</div>
           </div>
-          <div class="kpi-card" style="cursor:pointer;" onclick="exportarCalendarioICS()">
-            <div class="kpi-label">📅 Calendario</div>
-            <div class="kpi-value" style="font-size:16px;">Exportar</div>
-            <div class="kpi-sub">Envía las entregas pendientes a tu calendario (iPhone/Android)</div>
-          </div>
         </div>
       </div>
       <div class="dash-section" style="margin-bottom:24px;">
@@ -4503,114 +4498,6 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   }
-
-  /* =====================================================
-     CALENDARIO — Exporta entregas pendientes a .ics
-     (compatible con Calendario de Apple iOS y Google Android)
-     ===================================================== */
-  function exportarCalendarioICS() {
-    if (currentRole.role !== 'admin') return;
-
-    // Eventos: pedidos con fecha de entrega definida y sin entregar (ni liquidado).
-    const candidatos = ventasCache.filter(v =>
-      v.fecha_entrega &&
-      !v.finalizado &&
-      normalizarEstado(v.estado) !== 'Entregado' &&
-      normalizarEstado(v.estado) !== 'Liquidado' &&
-      !todosItemsListosEntrega(v)
-    ).sort((a, b) => String(a.fecha_entrega).localeCompare(String(b.fecha_entrega)));
-
-    if (candidatos.length === 0) {
-      mostrarToast('No hay entregas pendientes con fecha definida para exportar.', 'error');
-      return;
-    }
-
-    // CRLF obligatorio en ICS; línea comienza con "BEGIN:VCALENDAR".
-    let ics = 'BEGIN:VCALENDAR\r\n';
-    ics += 'VERSION:2.0\r\n';
-    ics += 'PRODID:-//Camisas IUB//Camisas IUB//ES\r\n';
-    ics += 'CALSCALE:GREGORIAN\r\n';
-    ics += 'METHOD:PUBLISH\r\n';
-    ics += 'X-WR-CALNAME:Camisas IUB - Entregas\r\n';
-    ics += 'X-WR-TIMEZONE:America/Bogota\r\n';
-
-    const escIcs = s => String(s == null ? '' : s)
-      .replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,')
-      .replace(/\r?\n/g, '\\n');
-
-    const fechaIcs = (f) => {
-      const d = String(f).slice(0, 10).split('-');
-      return (d.length === 3) ? d.join('') : '';
-    };
-
-    candidatos.forEach((v) => {
-      const items = itemsCrudosVenta(v) || [];
-      const resumen = items.length
-        ? items.map(it => `${capitalizarColor(it.color)} ${it.talla}${it.genero ? ' (' + it.genero + ')' : ''}`).join(', ')
-        : 'Camisas';
-      const entregaPor = v.entrega_por || 'Sin asignar';
-      const fecha = fechaIcs(v.fecha_entrega);
-      if (!fecha) return;
-      const uid = 'camisasiub-' + v.id + '-' + fecha + '@camisasiub';
-
-      const descripcion = [
-        'Pedido #' + v.id,
-        'Cliente: ' + (v.cliente_nombre || '—'),
-        'Teléfono: ' + (v.cliente_telefono || '—'),
-        'Entrega por: ' + entregaPor,
-        'Lugar: ' + (v.lugar_entrega || 'Por definir'),
-        'Camisas: ' + resumen,
-        'Vendedor: ' + (v.vendedor || '—')
-      ].join('\\n');
-
-      ics += 'BEGIN:VEVENT\r\n';
-      ics += 'UID:' + uid + '\r\n';
-      ics += 'DTSTAMP:' + hoyColombia().replace(/-/g, '') + 'T120000Z\r\n';
-      ics += 'DTSTART;VALUE=DATE:' + fecha + '\r\n';
-      ics += 'SUMMARY:📦 Entrega camisas — ' + escIcs(v.cliente_nombre || 'Cliente') + ' (' + escIcs(entregaPor) + ')\r\n';
-      ics += 'DESCRIPTION:' + descripcion + '\r\n';
-      ics += 'LOCATION:' + escIcs(v.lugar_entrega || '') + '\r\n';
-      ics += 'STATUS:CONFIRMED\r\n';
-      ics += 'BEGIN:VALARM\r\n';
-      ics += 'ACTION:DISPLAY\r\n';
-      ics += 'DESCRIPTION:Mañana hay que entregar camisas\r\n';
-      ics += 'TRIGGER:-PT15H\r\n';
-      ics += 'END:VALARM\r\n';
-      ics += 'END:VEVENT\r\n';
-    });
-
-    ics += 'END:VCALENDAR\r\n';
-
-    const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
-    const nombre = 'Entregas_Camisas_IUB_' + hoyColombia() + '.ics';
-
-    // En móvil: hoja de compartir (a "Calendario" en iPhone / Google Calendar en Android).
-    // El navegador del celular bloquea la descarga por a.click(), por eso no se usa aquí.
-    const esMovil = /iphone|ipad|ipod|android/i.test(navigator.userAgent || '');
-    const archivo = new File([blob], nombre, { type: 'text/calendar;charset=utf-8' });
-    if (esMovil && navigator.canShare && navigator.canShare({ files: [archivo] }) && navigator.share) {
-      navigator.share({ files: [archivo], title: 'Camisas IUB - Entregas', text: candidatos.length + ' entregas pendientes' })
-        .then(() => mostrarToast('📅 Listo. Si no lo agregaste, abre el archivo .ics en tu calendario.'))
-        .catch((err) => {
-          if (err && err.name !== 'AbortError') {
-            mostrarToast('No se pudo compartir, se descargará el archivo .ics.', 'error');
-          }
-        });
-      return;
-    }
-
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = nombre;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-
-    mostrarToast('📅 Se exportaron ' + candidatos.length + ' entregas al calendario. Abre el archivo .ics para agregarlas.');
-  }
-
 
   /* =====================================================
      ACCIONES DIRECTAS VENTAS
