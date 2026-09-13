@@ -85,6 +85,7 @@
       <p class="nav-label">Datos</p>
       <button class="sidebar-item" data-section="summaries" onclick="navigateTo('summaries')">📊 Resúmenes</button>
       <button class="sidebar-item" data-section="reports" onclick="navigateTo('reports')">📈 Reportes</button>
+      <button class="sidebar-item" data-section="caja" onclick="navigateTo('caja')">💵 Arqueo de caja</button>
 
       <p class="nav-label">Sistema</p>
       <button class="sidebar-item hidden" data-section="settings" id="tab-users-btn" onclick="navigateTo('settings')">⚙️ Configuración</button>
@@ -585,6 +586,29 @@
           <div class="sub">Todos los pedidos (respeta filtros activos)</div>
         </div>
       </div>
+    </div>
+
+    <div id="section-caja" class="hidden">
+      <div class="page-head">
+        <div>
+          <h2 class="page-title">💵 Arqueo de caja</h2>
+          <p class="page-sub">Revisa las ventas del día y registra cuánto hay realmente en caja (efectivo y Nequi).</p>
+        </div>
+        <div class="actions-right">
+          <button class="btn btn-gold" onclick="cajaAbrirHoy()" type="button" style="padding:8px 14px; font-size:13px;">📅 Ir a hoy</button>
+        </div>
+      </div>
+
+      <div class="filters-bar">
+        <div class="filters">
+          <div>
+            <label class="mini-label">Fecha del arqueo</label>
+            <input type="date" id="caja-fecha" onchange="renderCaja()">
+          </div>
+        </div>
+      </div>
+
+      <div id="caja-contenido"></div>
     </div>
 
     <div id="section-settings" class="hidden">

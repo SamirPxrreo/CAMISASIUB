@@ -308,6 +308,80 @@
     return formatearFechaHumana(v.fecha_entrega).replace(/^📅\s*/, '');
   }
 
+  // Días enteros entre hoy (Colombia) y una fecha YYYY-MM-DD. Positivo = han pasado N días.
+  function diasTranscurridos(fechaStr) {
+    if (!fechaStr || !String(fechaStr).trim()) return null;
+    const hoy = new Date(hoyColombia() + 'T00:00:00');
+    const f = new Date(String(fechaStr).slice(0, 10) + 'T00:00:00');
+    if (isNaN(f.getTime())) return null;
+    return Math.round((hoy - f) / 86400000);
+  }
+
+  // Suma/resta días a una fecha YYYY-MM-DD (negativo = hacia el pasado).
+  function sumarDias(fechaStr, n) {
+    const f = new Date(String(fechaStr).slice(0, 10) + 'T00:00:00');
+    f.setDate(f.getDate() + n);
+    return f.toISOString().slice(0, 10);
+  }
+
+  /* ---------- Recordatorios de entrega (localStorage) ---------- */
+  const STORAGE_RECORDATORIOS = 'camisasIUB_recordatorios';
+
+  function recordatoriosLeer() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(STORAGE_RECORDATORIOS) || '{}');
+      return raw && typeof raw === 'object' ? raw : {};
+    } catch (e) { return {}; }
+  }
+
+  function recordatoriosGuardar(datos) {
+    try { localStorage.setItem(STORAGE_RECORDATORIOS, JSON.stringify(datos)); } catch (e) { /* almacenamiento no disponible */ }
+  }
+
+  // Marca el pedido para recordarlo mañana (o desmarca si ya estaba).
+  function recordarEntrega(id) {
+    const venta = ventasCache.find(v => String(v.id) === String(id));
+    if (!venta) return;
+    const hoy = hoyColombia();
+    let datos = recordatoriosLeer();
+    if (datos[id]) {
+      delete datos[id];
+      recordatoriosGuardar(datos);
+      mostrarToast('Recordatorio eliminado.');
+      renderDashboard();
+      return;
+    }
+    datos[id] = {
+      fecha: sumarDias(hoy, 1),
+      creado: hoy,
+      nombre: venta.cliente_nombre || 'Cliente',
+      telefono: venta.cliente_telefono || '',
+      vendedor: venta.vendedor || ''
+    };
+    recordatoriosGuardar(datos);
+    mostrarToast('🗓️ Te recordaremos la entrega de ' + (venta.cliente_nombre || 'este pedido') + ' mañana.');
+    renderDashboard();
+  }
+
+  // ¿Hay recordatorio pendiente para este pedido?
+  function hayRecordatorio(id) {
+    return !!(recordatoriosLeer()[id]);
+  }
+
+  // Recordatorios activos (válidos hoy o vencidos) para pedidos aún sin entregar.
+  function recordatoriosPendientes() {
+    const hoy = hoyColombia();
+    const datos = recordatoriosLeer();
+    const resultado = [];
+    Object.entries(datos).forEach(([id, r]) => {
+      const venta = ventasCache.find(v => String(v.id) === String(id));
+      if (!venta || venta.finalizado || todosItemsListosEntrega(venta)) return;
+      if (!r || !r.fecha) return;
+      if (r.fecha <= hoy) resultado.push({ id, r, venta });
+    });
+    return resultado;
+  }
+
   // Muestra el color con su inicial en mayúscula (ej. "negro" → "Negro").
   function capitalizarColor(color) {
     const c = String(color == null ? '' : color).trim();
@@ -988,7 +1062,7 @@ return items.map((it, idx) => `
      NAVEGACIÓN POR SIDEBAR
      ===================================================== */
   function navigateTo(section) {
-    const sections = ['dashboard', 'new-sale', 'orders', 'purchases', 'settlements', 'summaries', 'reports', 'settings', 'history'];
+    const sections = ['dashboard', 'new-sale', 'orders', 'purchases', 'settlements', 'summaries', 'reports', 'settings', 'history', 'caja'];
     sections.forEach(s => {
       document.getElementById(`section-${s}`).classList.add('hidden');
     });
@@ -1016,6 +1090,8 @@ return items.map((it, idx) => `
       renderResumenes();
     } else if (section === 'settings' && currentRole.role === 'admin') {
       loadUsuarios();
+    } else if (section === 'caja') {
+      renderCaja();
     }
 
     document.getElementById('sidebar').classList.remove('open');
@@ -1285,7 +1361,8 @@ return items.map((it, idx) => `
           <span class="order-card-client">👤 ${v.cliente_nombre || '—'}</span>
           <span class="order-card-phone">📞 ${v.cliente_telefono || '—'}${waLink ? ` · <a href="${waLink}" target="_blank" style="color:var(--ok);font-weight:600;text-decoration:none;">WhatsApp</a>` : (waUsuario ? ` · <a href="#" onclick="copiarUsuarioWhatsApp('${waUsuario}');return false;" style="color:var(--ok);font-weight:600;text-decoration:none;">Copiar @</a>` : '')}</span>
           <span class="order-card-saldo" style="color:${saldo > 0 ? 'var(--warn)' : 'var(--ok)'}">💰 ${fmt(saldo)}</span>
-          <span class="order-card-copy"><button class="btn-copy-card" onclick="copiarWhatsApp('${msgWhatsApp}')" type="button">📋 Copiar</button></span>
+          <span class="order-card-copy"><button class="btn-copy-card" onclick="copiarWhatsApp('${msgWhatsApp}')" type="button">📋 Copiar</button>
+          <button class="btn-copy-card ${hayRecordatorio(v.id) ? 'btn-copy-ok' : ''}" onclick="recordarEntrega('${v.id}')" type="button" title="Recordar entregar mañana a este cliente">${hayRecordatorio(v.id) ? '✅ Recordado' : '🗓️ Recordar mañana'}</button></span>
         </div>
         <div class="order-card-row">
           <span class="badge-estado ${claseEstado(v.estado)}">${escSimple(normalizarEstado(v.estado))}</span>
@@ -1314,6 +1391,208 @@ return items.map((it, idx) => `
     });
   }
 
+  // Recibo imprimible de un pedido (ventana de impresión autocontenida).
+  function imprimirRecibo(ventaId) {
+    const venta = ventasCache.find(v => String(v.id) === String(ventaId));
+    if (!venta) {
+      mostrarToast('No se encontró el pedido.', 'error');
+      return;
+    }
+
+    const crudos = itemsCrudosVenta(venta);
+    const items = crudos && crudos.length
+      ? crudos
+      : [{
+          genero: venta.genero || '?',
+          color: venta.color || '?',
+          talla: venta.talla || '?',
+          precio: Number(venta.precio_unitario) || 0,
+          costo: Number(venta.costo_unitario) || 0,
+          abono: Number(venta.abono) || 0
+        }];
+
+    const filas = items.map((it, i) => {
+      const precio = precioDeItem(it, venta);
+      const abono = (it.abono != null && it.abono !== '') ? (Number(it.abono) || 0) : 0;
+      const programa = it.programa ? `<div class="rec-prog">Bordado: ${escSimple(it.programa)}</div>` : '';
+      return `
+        <tr>
+          <td class="c">${i + 1}</td>
+          <td>${escSimple(capitalizarColor(it.color))}</td>
+          <td class="c">${escSimple(it.talla || '?')}</td>
+          <td>${escSimple(it.genero || '?')}${programa}</td>
+          <td class="c">1</td>
+          <td class="money">${fmt(precio)}</td>
+          <td class="money">${fmt(abono)}</td>
+        </tr>`;
+    }).join('');
+
+    const total = precioTotalVenta(venta);
+    const abonoTotal = abonoClienteTotal(venta);
+    const saldo = total - abonoTotal;
+    const fechaEntrega = textoFechaEntrega(venta);
+    const programaTexto = items.filter(it => it.programa).map(it => escSimple(it.programa)).join(', ');
+
+    const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Recibo — ${escSimple(venta.cliente_nombre || 'Pedido')}</title>
+<style>
+  body { font-family: Arial, Helvetica, sans-serif; color: #1a1a1a; margin: 24px; font-size: 13px; }
+  .rec-header { text-align: center; border-bottom: 2px solid #111; padding-bottom: 12px; margin-bottom: 16px; }
+  .rec-header h1 { margin: 0; font-size: 22px; letter-spacing: 1px; }
+  .rec-header .rec-sub { font-size: 12px; color: #555; margin-top: 4px; }
+  .rec-box { border: 1px solid #ccc; border-radius: 8px; padding: 10px 12px; margin-bottom: 14px; }
+  .rec-grid { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px 24px; }
+  .rec-grid > div { min-width: 200px; }
+  .rec-label { font-size: 10.5px; text-transform: uppercase; color: #777; letter-spacing: .5px; }
+  .rec-value { font-weight: 700; font-size: 14px; margin-top: 2px; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+  th, td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; }
+  th { background: #f1f1f1; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
+  .c { text-align: center; }
+  .money { text-align: right; font-variant-numeric: tabular-nums; }
+  .rec-totals { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; margin-top: 12px; font-size: 14px; }
+  .rec-totals .row { display: flex; justify-content: space-between; width: 260px; }
+  .rec-totals .row b { font-variant-numeric: tabular-nums; }
+  .rec-total { font-size: 16px; font-weight: 800; align-items: center; border-top: 2px solid #111; padding-top: 8px; }
+  .rec-footer { margin-top: 26px; text-align: center; color: #888; font-size: 11px; border-top: 1px dashed #ccc; padding-top: 10px; }
+  .rec-prog { font-size: 11px; color: #444; margin-top: 2px; }
+  @media print { body { margin: 8mm; } }
+</style>
+</head>
+<body>
+  <div class="rec-header">
+    <h1>CAMISAS IUB</h1>
+    <div class="rec-sub">Recibo de pedido · ${escSimple(vendedorLabel(venta))}</div>
+  </div>
+
+  <div class="rec-box">
+    <div class="rec-grid">
+      <div>
+        <div class="rec-label">Cliente</div>
+        <div class="rec-value">${escSimple(venta.cliente_nombre || '—')}</div>
+      </div>
+      <div>
+        <div class="rec-label">Teléfono</div>
+        <div class="rec-value">${escSimple(venta.cliente_telefono || '—')}</div>
+      </div>
+      <div>
+        <div class="rec-label">Fecha del pedido</div>
+        <div class="rec-value">${formatearFechaHumana(venta.fecha)}</div>
+      </div>
+      <div>
+        <div class="rec-label">Entrega</div>
+        <div class="rec-value">${fechaEntrega} · ${escSimple(venta.lugar_entrega || 'Sin definir')}</div>
+      </div>
+      <div>
+        <div class="rec-label">Estado</div>
+        <div class="rec-value">${stateText(venta)}</div>
+      </div>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>#</th><th>Color</th><th>Talla</th><th>Género</th><th class="c">Cant.</th><th class="money">Precio</th><th class="money">Abono</th></tr>
+    </thead>
+    <tbody>${filas}</tbody>
+  </table>
+  ${programaTexto ? `<div style="font-size:12px; color:#333;"><b>Bordados:</b> ${programaTexto}</div>` : ''}
+
+  <div class="rec-totals">
+    <div class="row"><span>Total del pedido</span><b>${fmt(total)}</b></div>
+    <div class="row"><span>Abono cliente</span><b>${fmt(abonoTotal)}</b></div>
+    <div class="row rec-total"><span>Saldo por pagar</span><b>${fmt(Math.max(saldo, 0))}</b></div>
+  </div>
+
+  <div class="rec-footer">
+    Gracias por tu pedido 💙<br>
+    ${new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota', dateStyle: 'full', timeStyle: 'short' })}
+  </div>
+
+  <script>
+    window.onload = function () {
+      setTimeout(function () { window.print(); }, 150);
+    };
+  <\/script>
+</body>
+</html>`;
+
+    const w = window.open('', '_blank', 'width=420,height=640');
+    if (!w) {
+      mostrarToast('Permite las ventanas emergentes para imprimir.', 'error');
+      return;
+    }
+    w.document.write(html);
+    w.document.close();
+  }
+
+  function vendedorLabel(v) {
+    return escSimple(v.vendedor || 'Sin vendedor');
+  }
+
+  function stateText(v) {
+    const eg = estadoGeneralVenta(v);
+    return eg === 'Mixto' ? 'En proceso (Mixto)' : escSimple(eg);
+  }
+
+  // Umbral de días sin avanzar por estado (tiempo muerto).
+  const UMBRAL_DIAS_ESTADO = {
+    'Pedido': 3,
+    'Comprado': 5,
+    'Bordando': 7
+  };
+
+  // Alertas de tiempo muerto: camisas atascadas en un estado demasiados días.
+  // Cuenta camisa por camisa (estadosItemsVenta) y solo de pedidos activos.
+  function alertasTiempoMuerto() {
+    const esAdmin = currentRole.role === 'admin';
+    const miNombre = currentRole.vendedor;
+    const listas = [];
+    ventasCache.forEach(v => {
+      if (v.finalizado || estadosTodosLiquidado(v)) return;
+      if (!esAdmin && v.vendedor !== miNombre) return;
+      const dias = diasTranscurridos(v.fecha);
+      if (dias === null) return;
+      const conteoPorEstado = {};
+      estadosItemsVenta(v).forEach(e => {
+        if (UMBRAL_DIAS_ESTADO[e]) conteoPorEstado[e] = (conteoPorEstado[e] || 0) + 1;
+      });
+      Object.entries(conteoPorEstado).forEach(([e, n]) => {
+        if (dias <= UMBRAL_DIAS_ESTADO[e]) return;
+        const extra = e === 'Pedido'
+          ? (v.compra_id ? ' (ya comprado, falta actualizar estado)' : ' — aún no se compra al proveedor')
+          : '';
+        const camisa = n > 1 ? `${n} camisas` : `1 camisa`;
+        listas.push(`• <b>${v.cliente_nombre}</b> (${v.vendedor}) — ${dias} días con ${camisa} en <b>${e}</b>${extra}`);
+      });
+    });
+    return listas;
+  }
+
+  // Alerta si un pedido "Listo para entrega" no tiene fecha de entrega definida
+  // (nadie sabe cuándo se entrega) o lleva varios días listo sin entregarse.
+  function alertasListosSinEntrega() {
+    const esAdmin = currentRole.role === 'admin';
+    const miNombre = currentRole.vendedor;
+    const listas = [];
+    ventasCache.forEach(v => {
+      if (v.finalizado || estadosTodosLiquidado(v) || !todosItemsListosEntrega(v)) return;
+      if (!esAdmin && v.vendedor !== miNombre) return;
+      if (!v.fecha_entrega) {
+        listas.push(`📦 <b>${v.cliente_nombre}</b> (${v.vendedor}) está <b>Listo para entrega</b> pero sin fecha de entrega definida`);
+        return;
+      }
+      const dias = diasTranscurridos(v.fecha_entrega);
+      if (dias !== null && dias >= 2) {
+        listas.push(`📦 <b>${v.cliente_nombre}</b> (${v.vendedor}) lleva ${dias} días <b>Listo para entrega</b> sin entregarse (fue el ${formatearFechaHumana(v.fecha_entrega)})`);
+      }
+    });
+    return listas;
+  }
+
   // ALERTAS — dashboard
   function calcularAlertas() {
     const container = document.getElementById('dashboard-alertas');
@@ -1340,9 +1619,238 @@ return items.map((it, idx) => `
       if (deuda > 100000) alertas.push({ tipo: 'warning', msg: `⚠️ Cliente con deuda alta: <b>${nombre}</b> — debe ${fmt(deuda)}` });
     });
 
+    // Ítem 4 — tiempo muerto por estado (camisa atascada demasiados días).
+    const muertos = alertasTiempoMuerto();
+    if (muertos.length) {
+      alertas.push({ tipo: 'warning', msg: '🕐 <b>Tiempo muerto en estados:</b><br>' + muertos.join('<br>') });
+    }
+
+    // "Listo para entrega" sin fecha o sin entregarse.
+    const listosSinEntrega = alertasListosSinEntrega();
+    if (listosSinEntrega.length) {
+      alertas.push({ tipo: 'info', msg: listosSinEntrega.join('<br>') });
+    }
+
+    // Ítem 5 — recordatorios de entrega guardados (fecha <= hoy y pedido sin entregar).
+    const pendientes = recordatoriosPendientes();
+    if (pendientes.length) {
+      const lineas = pendientes.map(({ r, venta }) => {
+        const cumplida = r.fecha < hoy ? `(para el ${formatearFechaHumana(r.fecha)})` : '';
+        const wa = r.telefono && !/^@/.test(r.telefono)
+          ? ` · <a href="https://wa.me/57${String(r.telefono).replace(/\D/g, '')}" target="_blank" style="color:var(--ok);font-weight:600;">WhatsApp</a>`
+          : '';
+        return `• <b>${venta.cliente_nombre || r.nombre}</b> (${venta.vendedor || r.vendedor}) ${cumplida}${wa}`;
+      });
+      alertas.push({ tipo: 'info', msg: '🗓️ <b>Recordatorios de entrega:</b><br>' + lineas.join('<br>') });
+    }
+
     if (alertas.length === 0) alertas.push({ tipo: 'success', msg: '✅ Todo al día — No hay alertas pendientes.' });
 
     container.innerHTML = alertas.map(a => `<div class="alert-item ${a.tipo}">${a.msg}</div>`).join('');
+  }
+
+  /* =====================================================
+     ARQUEO DE CAJA (ÍTEM 6)
+     Compara lo que la app espera vs lo que hay realmente.
+     Guardado en localStorage por fecha.
+     ===================================================== */
+  const STORAGE_CAJA = 'camisasIUB_arqueos';
+  let cajaDia = { ef: '', nequi: '', nota: '' };
+
+  function cajaArqueosLeer() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_CAJA) || '{}'); } catch (e) { return {}; }
+  }
+  function cajaArqueosGuardar(datos) {
+    try { localStorage.setItem(STORAGE_CAJA, JSON.stringify(datos)); } catch (e) { /* almacenamiento no disponible */ }
+  }
+
+  function cajaAbrirHoy() {
+    const inp = document.getElementById('caja-fecha');
+    if (inp) inp.value = hoyColombia();
+    renderCaja();
+  }
+
+  // Ventas cuyo pedido se registró en la fecha dada.
+  function cajaVentasDelDia(fecha) {
+    return ventasCache.filter(v => (v.fecha || '').slice(0, 10) === fecha);
+  }
+
+  // Lo que la app espera en caja para el día: abonos recibidos ese día
+  // (los clientes abonan normalmente el mismo día del pedido).
+  function cajaEsperado(fecha) {
+    return cajaVentasDelDia(fecha).reduce((s, v) => s + abonoClienteTotal(v), 0);
+  }
+
+  function renderCaja() {
+    const inp = document.getElementById('caja-fecha');
+    if (!inp) return;
+    const fecha = inp.value || hoyColombia();
+    const cont = document.getElementById('caja-contenido');
+    const arqueos = cajaArqueosLeer();
+    const guardado = arqueos[fecha];
+
+    const ventasDia = cajaVentasDelDia(fecha);
+    const totalVendido = ventasDia.reduce((s, v) => s + precioTotalVenta(v), 0);
+    const esperado = cajaEsperado(fecha);
+    cajaDia = guardado ? { ef: guardado.ef, nequi: guardado.nequi, nota: guardado.nota || '' } : cajaDia;
+
+    const ef = Number(cajaDia.ef) || 0;
+    const nq = Number(cajaDia.nequi) || 0;
+    const real = ef + nq;
+    const dif = real - esperado;
+    const difLabel = dif === 0
+      ? 'Cuadra exacto'
+      : (dif > 0 ? `Sobran ${fmt(dif)}` : `Faltan ${fmt(-dif)}`);
+    const difColor = Math.abs(dif) <= 500 ? 'var(--ok)' : 'var(--warn)';
+
+    const listaVentas = ventasDia.length
+      ? `<table data-orden-clave="caja-dia">
+          <thead><tr>
+            <th data-orden="cliente">Cliente</th>
+            <th data-orden="vendedor">Vendedor</th>
+            <th data-orden="precio">Total</th>
+            <th data-orden="abono">Abono</th>
+            <th data-orden="saldo">Saldo</th>
+          </tr></thead>
+          <tbody>
+            ${ventasDia.map(v => {
+              const total = precioTotalVenta(v);
+              const ab = abonoClienteTotal(v);
+              return `<tr>
+                <td>${escSimple(v.cliente_nombre || '—')}</td>
+                <td>${escSimple(v.vendedor || '—')}</td>
+                <td>${fmt(total)}</td>
+                <td>${fmt(ab)}</td>
+                <td style="color:${total - ab > 0 ? 'var(--warn)' : 'var(--ok)'}">${fmt(total - ab)}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>`
+      : '<div class="empty" style="margin-top:0;">No hay ventas registradas este día.</div>';
+
+    const historial = Object.entries(arqueos)
+      .filter(([d]) => ventasDia.length === 0 || true)
+      .sort(([a], [b]) => b.localeCompare(a))
+      .slice(0, 20)
+      .map(([d, r]) => {
+        const realH = (Number(r.ef) || 0) + (Number(r.nequi) || 0);
+        const espH = cajaEsperado(d);
+        const difH = realH - espH;
+        return `<tr>
+          <td>${formatearFechaHumana(d).replace(/^📅\s*/, '')}</td>
+          <td>${fmt(Number(r.ef) || 0)}</td>
+          <td>${fmt(Number(r.nequi) || 0)}</td>
+          <td>${fmt(realH)}</td>
+          <td>${fmt(espH)}</td>
+          <td style="color:${Math.abs(difH) <= 500 ? 'var(--ok)' : 'var(--warn)'}">${difH === 0 ? '—' : (difH > 0 ? `+${fmt(difH)}` : fmt(difH))}</td>
+          <td>${escSimple(r.nota || '')}</td>
+        </tr>`;
+      }).join('');
+
+    cont.innerHTML = `
+      <div class="cards">
+        <div class="card">
+          <div class="eyebrow">Vendido el día</div>
+          <div class="value value-md">${fmt(totalVendido)}</div>
+          <div class="sub">${ventasDia.length} pedido${ventasDia.length === 1 ? '' : 's'} registrados</div>
+        </div>
+        <div class="card">
+          <div class="eyebrow">Esperado en caja (abonos)</div>
+          <div class="value value-md">${fmt(esperado)}</div>
+          <div class="sub">Lo que la app estima recibido este día</div>
+        </div>
+        <div class="card">
+          <div class="eyebrow">Real contado</div>
+          <div class="value value-md" style="color:${difColor}">${fmt(real)}</div>
+          <div class="sub">Efectivo + Nequi que cuentas</div>
+        </div>
+        <div class="card">
+          <div class="eyebrow">Diferencia (real − esperado)</div>
+          <div class="value value-md" style="color:${difColor}">${difLabel}</div>
+          <div class="sub">${difColor === 'var(--ok)' ? 'Caja cuadrada' : 'Revisa el efectivo o Nequi contado'}</div>
+        </div>
+      </div>
+
+      <div class="filters-bar">
+        <div class="filters" style="flex-wrap:wrap;">
+          <div><label class="mini-label">Efectivo contado</label><input type="number" id="caja-ef" min="0" value="${cajaDia.ef}" oninput="cajaDia.ef=this.value; recalcularCaja()" placeholder="0"></div>
+          <div><label class="mini-label">Nequi contado</label><input type="number" id="caja-nequi" min="0" value="${cajaDia.nequi}" oninput="cajaDia.nequi=this.value; recalcularCaja()" placeholder="0"></div>
+          <div style="min-width:220px;"><label class="mini-label">Nota</label><input type="text" id="caja-nota" value="${escSimple(cajaDia.nota)}" oninput="cajaDia.nota=this.value" placeholder="Ej. faltan vueltas, cajero pag$..."></div>
+        </div>
+        <div class="actions-right" style="gap:8px;">
+          <button class="btn btn-gold" onclick="cajaGuardar()" type="button">💾 Guardar arqueo</button>
+          ${guardado ? `<button class="btn" onclick="cajaBorrar()" type="button">🗑️ Borrar ${formatearFechaHumana(fecha).replace(/^📅\s*/, '')}</button>` : ''}
+        </div>
+        <p class="table-hint" id="caja-guardado-hint" style="margin-top:6px;">${guardado ? '✅ Arqueo guardado para este día.' : 'Aún no guardas este arqueo.'}</p>
+      </div>
+
+      <div class="table-wrap">${listaVentas}</div>
+
+      <p class="table-hint">💡 La estimación asume que los clientes abonan el mismo día en que se registra el pedido.</p>
+
+      <h3 class="page-title" style="font-size:18px; margin-top:26px;">Historial de arqueos</h3>
+      <p class="table-hint">Se estima el esperado de cada fecha con los abonos de sus pedidos. Aunque cambies datos, el historial queda guardado.</p>
+      <div class="table-wrap">
+        <table data-orden-clave="caja-historico">
+          <thead><tr>
+            <th data-orden="fecha">Fecha</th>
+            <th data-orden="efectivo">Efectivo</th>
+            <th data-orden="nequi">Nequi</th>
+            <th data-orden="real">Real</th>
+            <th data-orden="esperado">Esperado</th>
+            <th data-orden="dif">Diferencia</th>
+            <th>Nota</th>
+          </tr></thead>
+          <tbody>${historial || '<tr><td colspan="7">No hay arqueos guardados todavía.</td></tr>'}</tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  function recalcularCaja() {
+    const inp = document.getElementById('caja-fecha');
+    if (!inp) return;
+    const fecha = inp.value || hoyColombia();
+    const esperado = cajaEsperado(fecha);
+    const ef = Number(cajaDia.ef) || 0;
+    const nq = Number(cajaDia.nequi) || 0;
+    const real = ef + nq;
+    const dif = real - esperado;
+    const difColor = Math.abs(dif) <= 500 ? 'var(--ok)' : 'var(--warn)';
+    const card = document.querySelector('#caja-contenido .cards .card:nth-child(3) .value');
+    if (card) {
+      card.textContent = fmt(real);
+      card.style.color = difColor;
+    }
+    const cardDif = document.querySelector('#caja-contenido .cards .card:nth-child(4) .value');
+    if (cardDif) {
+      cardDif.textContent = dif === 0 ? 'Cuadra exacto' : (dif > 0 ? `Sobran ${fmt(dif)}` : `Faltan ${fmt(-dif)}`);
+      cardDif.style.color = difColor;
+    }
+  }
+
+  function cajaGuardar() {
+    const inp = document.getElementById('caja-fecha');
+    if (!inp) return;
+    const fecha = inp.value || hoyColombia();
+    const arqueos = cajaArqueosLeer();
+    arqueos[fecha] = { ef: Number(cajaDia.ef) || 0, nequi: Number(cajaDia.nequi) || 0, nota: cajaDia.nota || '' };
+    cajaArqueosGuardar(arqueos);
+    mostrarToast('✅ Arqueo guardado.');
+    renderCaja();
+  }
+
+  function cajaBorrar() {
+    const inp = document.getElementById('caja-fecha');
+    if (!inp) return;
+    const fecha = inp.value || hoyColombia();
+    if (!confirmar('¿Borrar el arqueo guardado para este día?')) return;
+    const arqueos = cajaArqueosLeer();
+    delete arqueos[fecha];
+    cajaArqueosGuardar(arqueos);
+    cajaDia = { ef: '', nequi: '', nota: '' };
+    mostrarToast('Arqueo eliminado.');
+    renderCaja();
   }
 
   /* =====================================================
@@ -1997,6 +2505,7 @@ return items.map((it, idx) => `
             <div class="action-group">
               <button class="btn-small editar-button" data-id="${v.id}" type="button">Editar</button>
               <button class="btn-small abono-button" data-id="${v.id}" type="button">+ Abono</button>
+              <button class="btn-small recibo-button" data-id="${v.id}" type="button" title="Imprimir recibo del pedido">🧾 Recibo</button>
               <button class="btn-small finalizar-button" data-id="${v.id}" type="button" ${!estadosTodosLiquidado(v) ? 'disabled title="Solo se puede finalizar cuando TODAS las camisas están Liquidado (proveedor y socios liquidados)" style="opacity:0.45;cursor:not-allowed;"' : 'title="Finalizar pedido (mover a Historial)"'}>Finalizar</button>
               <button class="btn-danger borrar-button" data-id="${v.id}" type="button">Borrar</button>
             </div>
@@ -2031,6 +2540,10 @@ return items.map((it, idx) => `
 
     document.querySelectorAll('.abono-button').forEach(button => {
       button.addEventListener('click', () => addAbono(button.dataset.id));
+    });
+
+    document.querySelectorAll('.recibo-button').forEach(button => {
+      button.addEventListener('click', () => imprimirRecibo(button.dataset.id));
     });
 
     document.querySelectorAll('.finalizar-button').forEach(button => {
@@ -4433,6 +4946,7 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
           <td>
             <div class="action-group">
               <button class="btn-small restaurar-button" data-id="${v.id}" type="button">Restaurar</button>
+              <button class="btn-small recibo-button" data-id="${v.id}" type="button" title="Imprimir recibo del pedido">🧾 Recibo</button>
               <button class="btn-danger borrar-historial-button" data-id="${v.id}" type="button">Borrar</button>
             </div>
           </td>
@@ -4442,6 +4956,10 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
 
     document.querySelectorAll('.restaurar-button').forEach(button => {
       button.addEventListener('click', () => restaurarPedido(button.dataset.id));
+    });
+
+    document.querySelectorAll('.recibo-button').forEach(button => {
+      button.addEventListener('click', () => imprimirRecibo(button.dataset.id));
     });
 
     document.querySelectorAll('.borrar-historial-button').forEach(button => {
