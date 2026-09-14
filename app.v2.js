@@ -1283,7 +1283,7 @@ return items.map((it, idx) => `
     const telefonoLimpio = telefonoCrudo.replace(/\D/g, '');
     const waLink = telefonoLimpio ? `https://wa.me/57${telefonoLimpio}` : '';
     const waUsuario = (!telefonoLimpio && esUsuarioWhatsApp(telefonoCrudo)) ? telefonoCrudo.replace(/'/g, "\\'") : '';
-    const detalleWhatsApp = items.map(it => it.replace(/^• /, '')).join('\n     ');
+    const detalleWhatsApp = items.map(it => it.replace(/^• /, '').replace(/\s—\s.+$/, '').trim()).join('\n     ');
     const msgWhatsApp = encodeURIComponent(
       `📌 *Recordatorio Camisas IUB* 🧵\n\n👤 *Cliente:* ${v.cliente_nombre}\n📞 *Teléfono:* ${v.cliente_telefono}\n👕 *Detalle:* \n     ${detalleWhatsApp}\n🔢 *Cantidad:* ${cant}\n💰 *Saldo Pendiente:* ${fmt(saldo)}\n*Fecha Entrega:* ${textoFechaEntrega(v)}\n📍 *Lugar:* ${v.lugar_entrega || 'Sin definir'}`
     );
