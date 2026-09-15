@@ -3071,15 +3071,17 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
     // el abono_yesenia del pedido.
     let abonado = 0;
     const crudos = itemsCrudosVenta(venta);
+    let tieneAbonoDefinido = false;
     if (crudos && crudos.some(it => it.abono_yesenia != null && it.abono_yesenia !== '')) {
       abonado = crudos.reduce((s, it) => s + (Number(it.abono_yesenia) || 0), 0);
+      tieneAbonoDefinido = true;
     } else {
       abonado = Number(venta.abono_yesenia) || 0;
+      tieneAbonoDefinido = venta.abono_yesenia != null && venta.abono_yesenia !== '';
     }
 
-    // Respaldo: si el pedido no tiene abono propio pero la compra tiene aportes,
-    // se distribuyen proporcionalmente al costo de cada pedido.
-    if (!abonado) {
+    // Respaldo solo si no hay abono definido (venta vieja sin campo), no cuando es 0 explícito
+    if (!tieneAbonoDefinido) {
       const pedidos = ventasCache.filter(v => v.compra_id === compraId);
       const costoTotalCompra = pedidos.reduce((s, v) => s + costoTotalVenta(v), 0);
       const aportes = compraAportesCache.filter(a => a.compra_id === compraId);
