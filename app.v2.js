@@ -4761,6 +4761,11 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
   }
 
   async function deleteVenta(id) {
+    const ventaDel = ventasCache.find(v => v.id === id);
+    if (ventaDel && ventaDel.finalizado && currentRole.role !== 'admin') {
+      mostrarToast('Solo el administrador puede borrar pedidos del historial.', 'error');
+      return;
+    }
     if (!confirmar('¿Deseas borrar permanentemente este pedido?')) return;
     try {
       await supabaseClient.from('ventas').delete().eq('id', id);
@@ -4832,6 +4837,7 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
       const abonoCliente = abonoClienteTotal(v);
       const restanteCliente = venta - abonoCliente;
       const detalle = itemsDetalleHtml(v);
+      const esAdmin = currentRole.role === 'admin';
 
       return `
         <tr>
@@ -4856,14 +4862,23 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
           <td>${badgeEstadoGeneral(v)}</td>
           <td>
             <div class="action-group">
+              ${esAdmin ? `<button class="btn-small editar-historial-button" data-id="${v.id}" type="button">✏️ Editar</button>` : ''}
               <button class="btn-small restaurar-button" data-id="${v.id}" type="button">Restaurar</button>
               <button class="btn-small recibo-button" data-id="${v.id}" type="button" title="Imprimir recibo del pedido">🧾 Recibo</button>
-              <button class="btn-danger borrar-historial-button" data-id="${v.id}" type="button">Borrar</button>
+              ${esAdmin ? `<button class="btn-danger borrar-historial-button" data-id="${v.id}" type="button">Borrar</button>` : ''}
             </div>
           </td>
         </tr>
       `;
     }).join('');
+
+    document.querySelectorAll('.editar-historial-button').forEach(button => {
+      button.addEventListener('click', (e) => {
+        e.preventDefault();
+        const venta = ventasCache.find(v => v.id === button.dataset.id);
+        if (venta) openForm(venta);
+      });
+    });
 
     document.querySelectorAll('.restaurar-button').forEach(button => {
       button.addEventListener('click', () => restaurarPedido(button.dataset.id));
