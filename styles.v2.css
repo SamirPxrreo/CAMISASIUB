@@ -2003,6 +2003,20 @@ html.modal-lock {
   font-variant-numeric: tabular-nums;
 }
 
+.dash-search-wrap { margin: 8px 0 10px; }
+.dash-search {
+  width: 260px;
+  max-width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 13px;
+  background: var(--card);
+  color: var(--ink);
+}
+.dash-search:focus { outline: none; border-color: var(--ink); box-shadow: 0 0 0 2px var(--line); }
+.dash-search::placeholder { color: var(--muted); }
+
 .dash-empty {
   padding: 28px 20px;
   text-align: center;

@@ -269,6 +269,8 @@
   let editingCompraId = null;
   let compraSoloAportes = false;
   let pedidosDisponiblesPickers = [];
+  let dashFiltroVentas = '';
+  let dashFiltroEntregas = '';
 
 
   /* =====================================================
@@ -1105,6 +1107,25 @@ return items.map((it, idx) => `
       .filter(v => v.entrega_por && (esAdmin || v.entrega_por === miNombre))
       .sort(ordenarPorEntrega);
 
+    // Filtro de búsqueda del inicio (por cliente, teléfono, @, lugar).
+    const _qV = (dashFiltroVentas || '').trim().toLowerCase();
+    const _qE = (dashFiltroEntregas || '').trim().toLowerCase();
+    const _coincide = (v, q) => {
+      if (!q) return true;
+      const tel = String(v.cliente_telefono || '').toLowerCase();
+      const hay = [
+        v.cliente_nombre || '',
+        tel,
+        claveCliente(v) || '',
+        v.lugar_entrega || '',
+        v.vendedor || '',
+        v.entrega_por || ''
+      ].join(' ').toLowerCase();
+      return hay.includes(q);
+    };
+    const misVentasFiltr = _qV ? misVentas.filter(v => _coincide(v, _qV)) : misVentas;
+    const misEntregasFiltr = _qE ? misEntregas.filter(v => _coincide(v, _qE)) : misEntregas;
+
     const porComprar = camisasPorComprar();
     const porComprarPedidos = pedidosPorComprar().length;
     const sinFecha = pedidosSinFechaEntrega().length;
@@ -1170,27 +1191,57 @@ return items.map((it, idx) => `
         <div class="dash-list-header">
           <h2>🛒 Pedidos que vendí</h2>
           <span class="dash-list-subtitle">Pedidos vendidos por mí, sin importar quién realiza la entrega.</span>
-          <span class="dash-list-count">${misVentas.length}</span>
+          <span class="dash-list-count">${_qV ? `${misVentasFiltr.length} de ${misVentas.length}` : misVentas.length}</span>
         </div>
-        ${misVentas.length === 0
-          ? '<div class="dash-empty">🎉 No hay pedidos pendientes.</div>'
-          : misVentas.map(v => renderOrderCard(v)).join('')
+        <div class="dash-search-wrap">
+          <input type="text" id="dash-search-ventas" class="dash-search" placeholder="🔍 Buscar cliente, teléfono o @" value="${escSimple(dashFiltroVentas)}" autocomplete="off">
+        </div>
+        ${misVentasFiltr.length === 0
+          ? (_qV ? '<div class="dash-empty">🔍 Sin resultados para esa búsqueda.</div>' : '<div class="dash-empty">🎉 No hay pedidos pendientes.</div>')
+          : misVentasFiltr.map(v => renderOrderCard(v)).join('')
         }
       </div>
       <div class="dash-list">
         <div class="dash-list-header">
           <h2>📦 Pedidos que debo entregar</h2>
           <span class="dash-list-subtitle">Pedidos cuya entrega está asignada a mí.</span>
-          <span class="dash-list-count">${misEntregas.length}</span>
+          <span class="dash-list-count">${_qE ? `${misEntregasFiltr.length} de ${misEntregas.length}` : misEntregas.length}</span>
         </div>
-        ${misEntregas.length === 0
-          ? '<div class="dash-empty">🎉 No hay entregas asignadas.</div>'
-          : misEntregas.map(v => renderOrderCard(v)).join('')
+        <div class="dash-search-wrap">
+          <input type="text" id="dash-search-entregas" class="dash-search" placeholder="🔍 Buscar cliente, teléfono o @" value="${escSimple(dashFiltroEntregas)}" autocomplete="off">
+        </div>
+        ${misEntregasFiltr.length === 0
+          ? (_qE ? '<div class="dash-empty">🔍 Sin resultados para esa búsqueda.</div>' : '<div class="dash-empty">🎉 No hay entregas asignadas.</div>')
+          : misEntregasFiltr.map(v => renderOrderCard(v)).join('')
         }
       </div>
     `;
 
     calcularAlertas();
+
+    // Buscadores del inicio (pequeñitos, no desordenan): filtran por cliente/tel/@/lugar.
+    setTimeout(() => {
+      const iv = document.getElementById('dash-search-ventas');
+      const ie = document.getElementById('dash-search-entregas');
+      if (iv) iv.addEventListener('input', e => {
+        dashFiltroVentas = e.target.value;
+        const pos = e.target.selectionStart;
+        renderDashboard();
+        setTimeout(() => {
+          const n = document.getElementById('dash-search-ventas');
+          if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (err) {} }
+        }, 0);
+      });
+      if (ie) ie.addEventListener('input', e => {
+        dashFiltroEntregas = e.target.value;
+        const pos = e.target.selectionStart;
+        renderDashboard();
+        setTimeout(() => {
+          const n = document.getElementById('dash-search-entregas');
+          if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (err) {} }
+        }, 0);
+      });
+    }, 0);
   }
 
   function itemsParaDashboard(v) {
