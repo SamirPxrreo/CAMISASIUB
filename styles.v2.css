@@ -670,7 +670,16 @@ header.top .who {
   padding-right: 34px;
 }
 .search-wrap .dash-search {
+  width: 100%;
   padding-right: 34px;
+}
+.dash-search-wrap {
+  display: flex;
+}
+.dash-search-wrap .search-wrap {
+  flex: 0 1 260px;
+  min-width: 0;
+  max-width: 100%;
 }
 .search-clear {
   position: absolute;
