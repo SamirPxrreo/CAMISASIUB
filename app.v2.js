@@ -4417,7 +4417,8 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
         // getVentasFiltradas ya incluye pedidos con ALGUNA camisa en ese estado.
         dataset = getVentasFiltradas();
       } else {
-        dataset = pedidosPorComprar();
+        // Sin filtro: todos los que aún tienen al menos una camisa en Pedido, aunque ya tengan abono Yesenia
+        dataset = ventasCache.filter(v => !v.finalizado && itemsPedidoComprar(v) > 0);
       }
       if (dataset.length === 0) {
         mostrarToast('✅ No hay pedidos pendientes de comprar al proveedor.');
