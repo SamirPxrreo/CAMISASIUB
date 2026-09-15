@@ -324,9 +324,18 @@ UPDATE ventas SET estado='Liquidado' WHERE estado='Pagado';
 4. **Eliminar el botón "🗓️ Recordar mañana"** del inicio (`renderOrderCard`, junto a "📋 Copiar"): NO le parece útil como está. → **✅ HECHO (2026-09-13):** se eliminó el botón, todo el sistema de recordatorios (localStorage) y la regla CSS `.btn-copy-ok`.
 5. **Calendario → ❌ CERRADO (2026-09-13).** Se implementó el botón "📅 Calendario" con exportación a `.ics` y hoja de compartir en móvil, pero **no funcionó en el teléfono de Samir** y pidió eliminarlo. → **Eliminado por completo** (tarjeta del inicio + función `exportarCalendarioICS`). Si en el futuro quiere retomar recordatorios, recordar: descarga `.ics` por `a.click()` está bloqueada en iOS/Android; el share con archivos no fue fiable. Queda anotado el botón "🗓️ Recordar mañana" también se eliminó (ver punto 4). **Pendiente de Samir queda: nada de calendario por ahora.**
 
-### ✅ Estado al cierre — 2026-09-13 noche (para retomar mañana en PC del trabajo)
+### ✅ Estado al cierre — 2026-09-15 noche (para retomar en otro PC)
 
-- **HEAD actual:** `6fb20c4` (fix WhatsApp sin estado). Historial del día: `6f8cd15` (eliminar calendario) → `a83ec21` (recibo v2) → `4690df0` (quitar Ibagué/firmas) → `eb69a9c` (filtro abono por persona) → `a6298ae` (agrupar Aleja por cliente) → `6fb20c4`.
-- **Deployments (2):** `6fb20c4` (actual) + `07d914b` (respaldo). Build `built` OK.
-- **Todo del día HECHO:** (1) explicar cambios, (2) arqueo eliminado, (3) recordar mañana eliminado, (4) calendario cerrado, (5) recibo v2 con ajustes (sin firmas/Ibagué), (6) abonos Yesenia ahora filtra por vendedor al elegir persona, (7) "Pedidos que debo entregar" agrupa por cliente en misma fecha (Aleja), (8) copiar a WhatsApp sin "— Listo para entrega".
-- **Pendiente real para mañana:** nada bloqueante. Si quieres, seguimos puliendo el recibo (logo, teléfono/IG del negocio en footer) o cualquier otra idea que tengas en el trabajo. Todo está commiteado y deployado.
+- **HEAD actual:** `60ee18d` (fix deuda 12k vs abono 60k) + `b5e6d67` revert + `a94f579` X en búsquedas + `e4e8b8c` fix Azul turquesa en compra + `72979d7` fix abonos + `66d72a1` X en búsquedas + `0cb7ccd` fix Excel + `ce571dc` chore deployments + `60ee18d`. Ver `git log --oneline -15`.
+- **Deployments (2):** `60ee18d` (actual) + `72979d7` (anterior). Limpieza con `clean-deployments.ps1` + `token.txt` local (no se sube, en `.gitignore`). Cada `git push` crea uno nuevo, se limpia a 2 con `.\clean-deployments.ps1`.
+- **Cambios 2026-09-15:**
+  1. **Hora en Pedidos/Historial** `app.v2.js:491` — `horaDeVenta()` (`updated_at || created_at` en `America/Bogota`) bajo `Fecha Pedido` + orden por `fecha+hora`.
+  2. **Hora se actualiza al editar** — `saveVenta`/`updateEstado`/`addAbono`/`saveCompra` setean `updated_at`; migración en `migracion.sql:15` (`updated_at timestamptz` + trigger).
+  3. **Auto-finalizar** `app.v2.js:597` — al liquidar Yesenia + socio y estar `Entregado`, marca `Liquidado` y `finalizado=true` → Historial sin confirm.
+  4. **Historial permisos** `app.v2.js:4763` — vendedor no ve `Borrar`, admin ve `✏️ Editar` en Historial.
+  5. **Excel Azul turquesa** `app.v2.js:4538` — columnas Color `16` + BOM UTF-8; `exportarCompraExcel` ahora incluye `Pedido` aunque tenga `compra_id`.
+  6. **Búsqueda con X** `index.html:339` `styles.v2.css:660` `app.v2.js:61` — `×` dentro del cuadro en Pedidos/Historial/Abonos/Liquidaciones/Usuarios + Inicio (2 dash).
+  7. **Botón Copiar** `app.v2.js:1398` `styles.v2.css:2120` — movido al pie de la tarjeta (`order-card-footer`).
+  8. **Deuda vs Abonos Yesenia** `app.v2.js:3061` — `abonosProveedorPorVentaId` solo hace reparto proporcional si no hay `abono_yesenia` definido, no cuando es `0` explícito → `Samir $60k` concuerda con `Abono $240k Saldo $60k` (Kiara Polo 10c).
+  9. **Deployments** — `clean-deployments.ps1` + `.gitignore` (`token.txt` local, no se sube).
+- **Pendiente:** nada bloqueante. Próximo: pulir recibo (logo/contacto) o lo que salga en el otro PC. Todo commiteado y deployado en `https://SamirPxrreo.github.io/CAMISASIUB/`.
