@@ -2319,7 +2319,7 @@ return items.map((it, idx) => `
      ITEMS DINÁMICOS DE CAMISA (uno por unidad, según Cantidad)
      ===================================================== */
   const TALLAS_DISPONIBLES = ['S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'];
-  const COLORES_DISPONIBLES = ['Negro', 'Blanco', 'Gris', 'Turquí', 'Camel', 'Vinotinto', 'Palo de Rosa'];
+  const COLORES_DISPONIBLES = ['Negro', 'Blanco', 'Gris', 'Turquí', 'Azul turquesa', 'Camel', 'Vinotinto', 'Palo de Rosa'];
 
   function coloresOptionsHtml(valorSeleccionado) {
     const valorActual = valorSeleccionado || '';
