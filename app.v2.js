@@ -192,17 +192,8 @@
       quien:    { val: c => compraAportesCache.filter(a => a.compra_id === c.id).map(a => (a.persona || '').toLowerCase()).filter(Boolean).join(' '), tipo: 'text' },
       camisas:  { val: c => ventasCache.filter(v => v.compra_id === c.id).reduce((s, v) => s + (Number(v.cantidad) || 1), 0), tipo: 'num' },
       costo:    { val: c => ventasCache.filter(v => v.compra_id === c.id).reduce((s, v) => s + costoTotalVenta(v), 0), tipo: 'num' },
-      aportado: { val: c => {
-        const ap = compraAportesCache.filter(a => a.compra_id === c.id).reduce((s, a) => s + (Number(a.monto) || 0), 0);
-        const ab = ventasCache.filter(v => v.compra_id === c.id).reduce((s, v) => s + (Number(v.abono_yesenia) || 0), 0);
-        return Math.max(ap, ab);
-      }, tipo: 'num' },
-      saldo:    { val: c => {
-        const costo = ventasCache.filter(v => v.compra_id === c.id).reduce((s, v) => s + costoTotalVenta(v), 0);
-        const ap = compraAportesCache.filter(a => a.compra_id === c.id).reduce((s, a) => s + (Number(a.monto) || 0), 0);
-        const ab = ventasCache.filter(v => v.compra_id === c.id).reduce((s, v) => s + (Number(v.abono_yesenia) || 0), 0);
-        return costo - Math.max(ap, ab);
-      }, tipo: 'num' }
+      aportado: { val: c => ventasCache.filter(v => v.compra_id === c.id).reduce((s, v) => s + abonosProveedorPorVentaId(v.id).abonado, 0), tipo: 'num' },
+      saldo:    { val: c => ventasCache.filter(v => v.compra_id === c.id).reduce((s, v) => s + abonosProveedorPorVentaId(v.id).pendiente, 0), tipo: 'num' }
     } },
     liquidaciones: { render: renderLiquidaciones, campos: {
       fecha:   { val: l => l.fecha ? l.fecha + ' ' + (l.hora || '00:00') : '', tipo: 'fecha' },
@@ -3184,10 +3175,9 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
       const cantidad = pedidos.reduce((s, v) => s + (Number(v.cantidad) || 1), 0);
       const costoTotal = pedidos.reduce((s, v) => s + costoTotalVenta(v), 0);
       const aportesCompra = compraAportesCache.filter(a => a.compra_id === c.id);
-      const aportadoAportes = aportesCompra.reduce((s, a) => s + (Number(a.monto) || 0), 0);
-      const abonoPedidos = pedidos.reduce((s, v) => s + (Number(v.abono_yesenia) || 0), 0);
-      const aportado = Math.max(aportadoAportes, abonoPedidos);
-      const saldo = costoTotal - aportado;
+      // Para que coincida con la deuda por vendedor, sumamos lo realmente abonado por venta (incluye reparto proporcional si ay=0)
+      const aportado = pedidos.reduce((s, v) => s + abonosProveedorPorVentaId(v.id).abonado, 0);
+      const saldo = pedidos.reduce((s, v) => s + abonosProveedorPorVentaId(v.id).pendiente, 0);
       const puedeGestionar = currentRole.role === 'admin' || c.comprador === currentRole.vendedor;
       const acciones = puedeGestionar
         ? `<button class="btn-small" onclick="openCompraModal('${c.id}')" type="button">Editar</button>
@@ -3214,7 +3204,7 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
         const telMuestra = g.pedidos.find(pp => String(pp.cliente_telefono || '').trim());
         g.telefono = telMuestra ? String(telMuestra.cliente_telefono).trim() : '';
         g.cantidad = g.pedidos.reduce((s, pp) => s + (Number(pp.cantidad) || 1), 0);
-        g.abono = g.pedidos.reduce((s, pp) => s + (Number(pp.abono_yesenia) || 0), 0);
+        g.abono = g.pedidos.reduce((s, pp) => s + abonosProveedorPorVentaId(pp.id).abonado, 0);
         g.costo = g.pedidos.reduce((s, pp) => s + costoTotalVenta(pp), 0);
       });
       const detallePedidos = pedidos.length === 0
