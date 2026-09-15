@@ -1187,33 +1187,35 @@ return items.map((it, idx) => `
           </div>
         </div>
       </div>
-      <div class="dash-list">
-        <div class="dash-list-header">
-          <h2>🛒 Pedidos que vendí</h2>
-          <span class="dash-list-subtitle">Pedidos vendidos por mí, sin importar quién realiza la entrega.</span>
-          <span class="dash-list-count">${_qV ? `${misVentasFiltr.length} de ${misVentas.length}` : misVentas.length}</span>
+      <div class="dash-two-col">
+        <div class="dash-list">
+          <div class="dash-list-header">
+            <h2>🛒 Pedidos que vendí</h2>
+            <span class="dash-list-subtitle">Pedidos vendidos por mí, sin importar quién realiza la entrega.</span>
+            <span class="dash-list-count">${_qV ? `${misVentasFiltr.length} de ${misVentas.length}` : misVentas.length}</span>
+          </div>
+          <div class="dash-search-wrap">
+            <input type="text" id="dash-search-ventas" class="dash-search" placeholder="🔍 Buscar cliente, teléfono o @" value="${escSimple(dashFiltroVentas)}" autocomplete="off">
+          </div>
+          ${misVentasFiltr.length === 0
+            ? (_qV ? '<div class="dash-empty">🔍 Sin resultados para esa búsqueda.</div>' : '<div class="dash-empty">🎉 No hay pedidos pendientes.</div>')
+            : misVentasFiltr.map(v => renderOrderCard(v)).join('')
+          }
         </div>
-        <div class="dash-search-wrap">
-          <input type="text" id="dash-search-ventas" class="dash-search" placeholder="🔍 Buscar cliente, teléfono o @" value="${escSimple(dashFiltroVentas)}" autocomplete="off">
+        <div class="dash-list">
+          <div class="dash-list-header">
+            <h2>📦 Pedidos que debo entregar</h2>
+            <span class="dash-list-subtitle">Pedidos cuya entrega está asignada a mí.</span>
+            <span class="dash-list-count">${_qE ? `${misEntregasFiltr.length} de ${misEntregas.length}` : misEntregas.length}</span>
+          </div>
+          <div class="dash-search-wrap">
+            <input type="text" id="dash-search-entregas" class="dash-search" placeholder="🔍 Buscar cliente, teléfono o @" value="${escSimple(dashFiltroEntregas)}" autocomplete="off">
+          </div>
+          ${misEntregasFiltr.length === 0
+            ? (_qE ? '<div class="dash-empty">🔍 Sin resultados para esa búsqueda.</div>' : '<div class="dash-empty">🎉 No hay entregas asignadas.</div>')
+            : misEntregasFiltr.map(v => renderOrderCard(v)).join('')
+          }
         </div>
-        ${misVentasFiltr.length === 0
-          ? (_qV ? '<div class="dash-empty">🔍 Sin resultados para esa búsqueda.</div>' : '<div class="dash-empty">🎉 No hay pedidos pendientes.</div>')
-          : misVentasFiltr.map(v => renderOrderCard(v)).join('')
-        }
-      </div>
-      <div class="dash-list">
-        <div class="dash-list-header">
-          <h2>📦 Pedidos que debo entregar</h2>
-          <span class="dash-list-subtitle">Pedidos cuya entrega está asignada a mí.</span>
-          <span class="dash-list-count">${_qE ? `${misEntregasFiltr.length} de ${misEntregas.length}` : misEntregas.length}</span>
-        </div>
-        <div class="dash-search-wrap">
-          <input type="text" id="dash-search-entregas" class="dash-search" placeholder="🔍 Buscar cliente, teléfono o @" value="${escSimple(dashFiltroEntregas)}" autocomplete="off">
-        </div>
-        ${misEntregasFiltr.length === 0
-          ? (_qE ? '<div class="dash-empty">🔍 Sin resultados para esa búsqueda.</div>' : '<div class="dash-empty">🎉 No hay entregas asignadas.</div>')
-          : misEntregasFiltr.map(v => renderOrderCard(v)).join('')
-        }
       </div>
     `;
 
