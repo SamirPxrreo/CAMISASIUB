@@ -1277,7 +1277,7 @@ return items.map((it, idx) => `
             <span class="dash-list-count">${_qV ? `${misVentasFiltr.length} de ${misVentas.length}` : misVentas.length}</span>
           </div>
           <div class="dash-search-wrap">
-            <div class="search-wrap" style="flex:1"><input type="text" id="dash-search-ventas" class="dash-search" placeholder="🔍 Buscar cliente, teléfono o @" value="${escSimple(dashFiltroVentas)}" autocomplete="off"><button class="search-clear" data-target="dash-search-ventas" type="button" aria-label="Limpiar búsqueda">×</button></div>
+            <div class="search-wrap"><input type="text" id="dash-search-ventas" class="dash-search" placeholder="🔍 Buscar cliente, teléfono o @" value="${escSimple(dashFiltroVentas)}" autocomplete="off"><button class="search-clear" data-target="dash-search-ventas" type="button" aria-label="Limpiar búsqueda">×</button></div>
           </div>
           ${misVentasFiltr.length === 0
             ? (_qV ? '<div class="dash-empty">🔍 Sin resultados para esa búsqueda.</div>' : '<div class="dash-empty">🎉 No hay pedidos pendientes.</div>')
@@ -1291,7 +1291,7 @@ return items.map((it, idx) => `
             <span class="dash-list-count">${_qE ? `${misEntregasFiltr.length} de ${misEntregas.length}` : misEntregas.length}</span>
           </div>
           <div class="dash-search-wrap">
-            <div class="search-wrap" style="flex:1"><input type="text" id="dash-search-entregas" class="dash-search" placeholder="🔍 Buscar cliente, teléfono o @" value="${escSimple(dashFiltroEntregas)}" autocomplete="off"><button class="search-clear" data-target="dash-search-entregas" type="button" aria-label="Limpiar búsqueda">×</button></div>
+            <div class="search-wrap"><input type="text" id="dash-search-entregas" class="dash-search" placeholder="🔍 Buscar cliente, teléfono o @" value="${escSimple(dashFiltroEntregas)}" autocomplete="off"><button class="search-clear" data-target="dash-search-entregas" type="button" aria-label="Limpiar búsqueda">×</button></div>
           </div>
           ${misEntregasFiltr.length === 0
             ? (_qE ? '<div class="dash-empty">🔍 Sin resultados para esa búsqueda.</div>' : '<div class="dash-empty">🎉 No hay entregas asignadas.</div>')
