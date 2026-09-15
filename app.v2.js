@@ -4535,7 +4535,7 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
       const wb = XLSX.utils.book_new();
 
       const wsLista = XLSX.utils.json_to_sheet(listaCompra);
-      wsLista['!cols'] = [{ wch: 9 }, { wch: 10 }, { wch: 10 }, { wch: 8 }, { wch: 11 }];
+      wsLista['!cols'] = [{ wch: 9 }, { wch: 12 }, { wch: 16 }, { wch: 8 }, { wch: 11 }];
       XLSX.utils.book_append_sheet(wb, wsLista, 'Lista de compra');
 
       const wsResumen = XLSX.utils.aoa_to_sheet(resumen);
@@ -4543,7 +4543,7 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
       XLSX.utils.book_append_sheet(wb, wsResumen, 'Resumen');
 
       const wsDetalle = XLSX.utils.json_to_sheet(detalle);
-      wsDetalle['!cols'] = [{ wch: 16 }, { wch: 18 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 10 }, { wch: 10 }, { wch: 8 }, { wch: 18 }, { wch: 10 }];
+      wsDetalle['!cols'] = [{ wch: 16 }, { wch: 18 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 10 }, { wch: 16 }, { wch: 8 }, { wch: 18 }, { wch: 10 }];
       XLSX.utils.book_append_sheet(wb, wsDetalle, 'Detalle por pedido');
 
       XLSX.writeFile(wb, `Compra_camisas_${hoyColombia()}.xlsx`);
@@ -4672,7 +4672,7 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
 
     html += '</table></body></html>';
 
-    const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
+    const blob = new Blob(["\uFEFF" + html], { type: 'application/vnd.ms-excel;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
