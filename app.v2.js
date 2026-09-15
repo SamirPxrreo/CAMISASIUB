@@ -126,7 +126,7 @@
 
   // Campos de orden por tipo de fila (ventas / historial comparten los mismos)
   const camposVenta = {
-    fecha:    { val: v => v.fecha || '', tipo: 'fecha' },
+    fecha:    { val: v => fechaHoraVentaParaOrden(v), tipo: 'fecha' },
     vendedor: { val: v => (v.vendedor || '').toLowerCase(), tipo: 'text' },
     cliente:  { val: v => (v.cliente_nombre || '').toLowerCase(), tipo: 'text' },
     cantidad: { val: v => Number(v.cantidad) || 1, tipo: 'num' },
@@ -488,6 +488,33 @@
     return new Date().toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit', hour12: false });
   }
 
+  function horaDeVenta(v) {
+    const ts = (v && (v.updated_at || v.created_at)) || '';
+    if (ts) {
+      try {
+        const d = new Date(ts);
+        if (!isNaN(d.getTime())) {
+          return d.toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit', hour12: false });
+        }
+      } catch (e) { /* sin hora */ }
+    }
+    return '';
+  }
+
+  function fechaHoraVentaParaOrden(v) {
+    const ts = (v && (v.updated_at || v.created_at)) || '';
+    if (ts) {
+      try {
+        const d = new Date(ts);
+        if (!isNaN(d.getTime())) {
+          const iso = d.toISOString().slice(0, 16).replace('T', ' ');
+          return (v.fecha || '') + ' ' + iso;
+        }
+      } catch (e) {}
+    }
+    return (v.fecha || '') + ' ' + (horaDeVenta(v) || '');
+  }
+
   // Ordena pedidos por fecha de entrega (ascendente). Los que no tienen fecha
   // ("Pendiente por definir") siempre quedan al final. Desempate: fecha de pedido.
   function ordenarPorEntrega(a, b) {
@@ -570,19 +597,29 @@
   async function sugerirLiquidadoSiListo(ventaId) {
     const v = ventasCache.find(x => x.id === ventaId);
     if (!v || v.finalizado) return;
-    if (!todosItemsListosEntrega(v)) return;
     if (!puedeMarcarPagado(v).ok) return;
-    if (!confirmar(`✅ El pedido de "${v.cliente_nombre || 'cliente'}" ya quedó al día (proveedor y socios liquidados).\n\n¿Quieres marcar TODAS sus camisas como "Liquidado" de una vez?`)) return;
+    if (!todosItemsListosEntrega(v) && !estadosTodosLiquidado(v)) return;
     try {
-      const payload = { estado: 'Liquidado' };
+      const payload = {};
       const crudos = itemsCrudosVenta(v);
-      if (crudos) {
-        crudos.forEach(it => { it.estado = 'Liquidado'; });
-        payload.items_camisa = JSON.stringify(crudos);
+      const necesitaLiquidado = !estadosTodosLiquidado(v);
+      if (necesitaLiquidado) {
+        payload.estado = 'Liquidado';
+        if (crudos) {
+          crudos.forEach(it => { it.estado = 'Liquidado'; });
+          payload.items_camisa = JSON.stringify(crudos);
+        }
       }
-      await supabaseClient.from('ventas').update(payload).eq('id', v.id);
+      payload.finalizado = true;
+      payload.updated_at = new Date().toISOString();
+      let resFin = await supabaseClient.from('ventas').update(payload).eq('id', v.id);
+      if (resFin.error && String(resFin.error.message).toLowerCase().includes('updated_at')) {
+        delete payload.updated_at;
+        resFin = await supabaseClient.from('ventas').update(payload).eq('id', v.id);
+        if (resFin.error) throw resFin.error;
+      } else if (resFin.error) throw resFin.error;
       await loadVentas();
-      mostrarToast('✅ Pedido marcado como Liquidado. Ya puedes finalizarlo.');
+      mostrarToast('✅ Pedido liquidado y finalizado automáticamente → Historial.');
     } catch (e) { logError('sugerirLiquidadoSiListo', e); }
   }
   async function sugerirLiquidadoParaVarios(ids) {
@@ -1353,7 +1390,6 @@ return items.map((it, idx) => `
           <span class="order-card-client">👤 ${v.cliente_nombre || '—'}</span>
           <span class="order-card-phone">📞 ${v.cliente_telefono || '—'}${waLink ? ` · <a href="${waLink}" target="_blank" style="color:var(--ok);font-weight:600;text-decoration:none;">WhatsApp</a>` : (waUsuario ? ` · <a href="#" onclick="copiarUsuarioWhatsApp('${waUsuario}');return false;" style="color:var(--ok);font-weight:600;text-decoration:none;">Copiar @</a>` : '')}</span>
           <span class="order-card-saldo" style="color:${saldo > 0 ? 'var(--warn)' : 'var(--ok)'}">💰 ${fmt(saldo)}</span>
-          <span class="order-card-copy"><button class="btn-copy-card" onclick="copiarWhatsApp('${msgWhatsApp}')" type="button">📋 Copiar</button></span>
         </div>
         <div class="order-card-row">
           <span class="badge-estado ${claseEstado(v.estado)}">${escSimple(normalizarEstado(v.estado))}</span>
@@ -1362,6 +1398,9 @@ return items.map((it, idx) => `
         <hr class="order-card-divider">
         <div class="order-card-items">
           ${items.map(it => `<div class="order-card-item">${it}</div>`).join('')}
+        </div>
+        <div class="order-card-footer">
+          <button class="btn-copy-card" onclick="copiarWhatsApp('${msgWhatsApp}')" type="button">📋 Copiar para WhatsApp</button>
         </div>
       </div>
     `;
@@ -2283,7 +2322,7 @@ return items.map((it, idx) => `
 
       return `
         <tr>
-          <td>${v.fecha ? formatearFechaHumana(v.fecha) : ''}</td>
+          <td>${v.fecha ? formatearFechaHumana(v.fecha) : ''}<span class="sub-tag">🕐 ${horaDeVenta(v) || ''}</span></td>
           <td><b>${v.vendedor || ''}</b></td>
           <td>
             <b>${v.cliente_nombre || ''}</b>
@@ -2869,12 +2908,13 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
      payload.estado = estadosItems.length
        ? estadosItems.slice().sort((a, b) => ORDEN_ESTADOS.indexOf(a) - ORDEN_ESTADOS.indexOf(b))[0]
        : String(document.getElementById('f-estado').value || '').trim();
-     payload.precio_unitario = isNaN(pr1) ? null : pr1;
-     payload.costo_unitario = isNaN(co1) ? null : co1;
+      payload.precio_unitario = isNaN(pr1) ? null : pr1;
+      payload.costo_unitario = isNaN(co1) ? null : co1;
+      payload.updated_at = new Date().toISOString();
 
-     if (currentRole.role !== 'admin' && currentRole.vendedor) {
-       payload.vendedor = currentRole.vendedor;
-     }
+      if (currentRole.role !== 'admin' && currentRole.vendedor) {
+        payload.vendedor = currentRole.vendedor;
+      }
 
      const faltantes = [];
      if (!payload.cliente_nombre) faltantes.push("Nombre del cliente");
@@ -2941,15 +2981,25 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
        }
      }
 
-     try {
-       let error;
-       if (editingId) {
-         ({ error } = await supabaseClient.from('ventas').update(payload).eq('id', editingId));
-       } else {
-         ({ error } = await supabaseClient.from('ventas').insert(payload));
-       }
+      try {
+        let error;
+        if (editingId) {
+          let res = await supabaseClient.from('ventas').update(payload).eq('id', editingId);
+          if (res.error && String(res.error.message).toLowerCase().includes('updated_at')) {
+            delete payload.updated_at;
+            res = await supabaseClient.from('ventas').update(payload).eq('id', editingId);
+          }
+          error = res.error;
+        } else {
+          let res = await supabaseClient.from('ventas').insert(payload);
+          if (res.error && String(res.error.message).toLowerCase().includes('updated_at')) {
+            delete payload.updated_at;
+            res = await supabaseClient.from('ventas').insert(payload);
+          }
+          error = res.error;
+        }
 
-        if (error) { mostrarToast('Error al guardar: ' + error.message, 'error'); return; }
+         if (error) { mostrarToast('Error al guardar: ' + error.message, 'error'); return; }
         const eraEdicion = !!editingId;
         await loadVentas();
         openForm(null);
@@ -3594,15 +3644,20 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
 
        if (error) { errEl.textContent = error.message; errEl.classList.remove('hidden'); return; }
 
-       // Desvincular pedidos que ya no están seleccionados (edición)
-       if (editingCompraId) {
-         const anteriores = ventasCache.filter(v => v.compra_id === editingCompraId);
-         for (const v of anteriores) {
-           if (!pedidosSeleccionados.includes(v.id)) {
-             await supabaseClient.from('ventas').update({ compra_id: null, estado: 'Pedido' }).eq('id', v.id);
-           }
-         }
-       }
+        // Desvincular pedidos que ya no están seleccionados (edición)
+        if (editingCompraId) {
+          const anteriores = ventasCache.filter(v => v.compra_id === editingCompraId);
+          for (const v of anteriores) {
+            if (!pedidosSeleccionados.includes(v.id)) {
+              const updDes = { compra_id: null, estado: 'Pedido', updated_at: new Date().toISOString() };
+              let rDes = await supabaseClient.from('ventas').update(updDes).eq('id', v.id);
+              if (rDes.error && String(rDes.error.message).toLowerCase().includes('updated_at')) {
+                delete updDes.updated_at;
+                await supabaseClient.from('ventas').update(updDes).eq('id', v.id);
+              }
+            }
+          }
+        }
 
         // Vincular pedidos seleccionados: si la persona tiene desglose por pedido (varios pedidos),
         // se respeta lo escrito en cada fila; si no, se reparte equitativo por camisa.
@@ -3644,12 +3699,16 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
         });
 
         for (const id of pedidosSeleccionados) {
-          const upd = { compra_id: compraIdGuardada };
+          const upd = { compra_id: compraIdGuardada, updated_at: new Date().toISOString() };
           if (abonoPorPedido[id]) {
             upd.items_camisa = JSON.stringify(abonoPorPedido[id].items);
             upd.abono_yesenia = abonoPorPedido[id].abono;
           }
-          await supabaseClient.from('ventas').update(upd).eq('id', id);
+          let resUpd = await supabaseClient.from('ventas').update(upd).eq('id', id);
+          if (resUpd.error && String(resUpd.error.message).toLowerCase().includes('updated_at')) {
+            delete upd.updated_at;
+            await supabaseClient.from('ventas').update(upd).eq('id', id);
+          }
         }
 
         // Registrar el aporte a Yesenia de forma automática: quien tiene la sesión
@@ -4644,14 +4703,22 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
     }
 
     try {
-      const payload = { estado };
+      const payload = { estado, updated_at: new Date().toISOString() };
       const crudos = itemsCrudosVenta(venta);
       if (crudos) {
         crudos.forEach(it => { it.estado = estado; });
         payload.items_camisa = JSON.stringify(crudos);
       }
-      await supabaseClient.from('ventas').update(payload).eq('id', id);
+      let res = await supabaseClient.from('ventas').update(payload).eq('id', id);
+      if (res.error && String(res.error.message).toLowerCase().includes('updated_at')) {
+        delete payload.updated_at;
+        res = await supabaseClient.from('ventas').update(payload).eq('id', id);
+        if (res.error) throw res.error;
+      } else if (res.error) throw res.error;
       await loadVentas();
+      if (estado === 'Liquidado') {
+        await sugerirLiquidadoSiListo(id);
+      }
     } catch (err) {
       if (selectEl && venta) selectEl.value = selectEl.dataset.prev || venta.estado;
     }
@@ -4668,7 +4735,7 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
     if (isNaN(monto) || monto <= 0) { mostrarToast('Ingresa un monto válido.', 'error'); return; }
 
     const nuevoAbono = (Number(venta.abono) || 0) + monto;
-    const payload = { abono: nuevoAbono };
+    const payload = { abono: nuevoAbono, updated_at: new Date().toISOString() };
 
     if (venta.items_camisa) {
       try {
@@ -4682,7 +4749,12 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
     }
 
     try {
-      await supabaseClient.from('ventas').update(payload).eq('id', id);
+      let res = await supabaseClient.from('ventas').update(payload).eq('id', id);
+      if (res.error && String(res.error.message).toLowerCase().includes('updated_at')) {
+        delete payload.updated_at;
+        res = await supabaseClient.from('ventas').update(payload).eq('id', id);
+        if (res.error) throw res.error;
+      } else if (res.error) throw res.error;
       await loadVentas();
       mostrarToast('Abono agregado correctamente');
     } catch (err) { logError('addAbono:update', err); mostrarToast('Error al agregar abono', 'error'); }
@@ -4763,7 +4835,7 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
 
       return `
         <tr>
-          <td>${v.fecha ? formatearFechaHumana(v.fecha) : ''}</td>
+          <td>${v.fecha ? formatearFechaHumana(v.fecha) : ''}<span class="sub-tag">🕐 ${horaDeVenta(v) || ''}</span></td>
           <td><b>${v.vendedor || ''}</b></td>
           <td>
             <b>${v.cliente_nombre || ''}</b>
