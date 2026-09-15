@@ -11,3 +11,10 @@ ALTER TABLE ventas ALTER COLUMN fecha_entrega DROP NOT NULL;
 -- 2. Hora de registro (Hora de Colombia) en Compras y Liquidaciones.
 ALTER TABLE compras_proveedor ADD COLUMN IF NOT EXISTS hora TEXT;
 ALTER TABLE liquidaciones ADD COLUMN IF NOT EXISTS hora TEXT;
+
+-- 3. Hora de creación/edición en Pedidos (para mostrar 🕐 en la tabla).
+ALTER TABLE ventas ADD COLUMN IF NOT EXISTS updated_at timestamptz DEFAULT now();
+-- Opcional: trigger para actualizar automáticamente en cada UPDATE
+CREATE OR REPLACE FUNCTION update_updated_at() RETURNS TRIGGER AS $$ BEGIN NEW.updated_at = now(); RETURN NEW; END; $$ LANGUAGE plpgsql;
+DROP TRIGGER IF EXISTS ventas_updated_at ON ventas;
+CREATE TRIGGER ventas_updated_at BEFORE UPDATE ON ventas FOR EACH ROW EXECUTE FUNCTION update_updated_at();
