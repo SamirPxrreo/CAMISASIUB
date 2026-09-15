@@ -162,7 +162,7 @@
       }, tipo: 'num' }
     } },
     liquidaciones: { render: renderLiquidaciones, campos: {
-      fecha:   { val: l => l.fecha || '', tipo: 'fecha' },
+      fecha:   { val: l => l.fecha ? l.fecha + ' ' + (l.hora || '00:00') : '', tipo: 'fecha' },
       pedido:  { val: l => { const v = ventasCache.find(x => x.id === l.venta_id); return v ? ((v.cliente_nombre || '') + ' ' + (v.fecha || '')) : (l.venta_id || ''); }, tipo: 'text' },
       pagador: { val: l => (l.pagador || '').toLowerCase(), tipo: 'text' },
       receptor: { val: l => (l.receptor || '').toLowerCase(), tipo: 'text' },
