@@ -2160,9 +2160,13 @@ html.modal-lock {
 @media (max-width: 640px) {
   .order-card { padding: 10px 12px; }
   .order-card-client { width: 100%; font-size: 14px; }
-  .order-card-row { gap: 2px 12px; }
+  .order-card-row { gap: 4px 8px; }
+  .order-card-entrega { flex: 1 1 100%; min-width: 0; word-break: break-word; white-space: normal; }
+  .order-card-copy { margin-left: 0; flex-basis: 100%; }
+  .order-card-copy .btn-copy-card { width: 100%; text-align: center; }
   .order-card-meta { gap: 6px 12px; }
   .order-card-item { font-size: 12px; }
+  .dash-search { width: 100%; }
 }
 
 @media (max-width: 768px) {
