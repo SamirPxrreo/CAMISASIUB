@@ -86,7 +86,7 @@
   }
 
   /* ---------- ORDENAMIENTO POR CLIC EN ENCABEZADOS ---------- */
-  const ordenTablas = {};
+  const ordenTablas = { liquidaciones: { campo: 'fecha', dir: -1 } };
 
   function compararValoresOrden(a, b, tipo) {
     const ea = a == null || a === '';
@@ -3881,7 +3881,8 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
       const { data, error } = await supabaseClient
         .from('liquidaciones')
         .select('*')
-        .order('fecha', { ascending: false });
+        .order('fecha', { ascending: false })
+        .order('hora', { ascending: false });
 
       if (error) logError('loadLiquidaciones', error);
       liquidacionesCache = data || [];
