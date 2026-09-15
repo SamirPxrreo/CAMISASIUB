@@ -63,6 +63,49 @@
     return function(...args) { clearTimeout(timer); timer = setTimeout(() => fn.apply(this, args), ms); };
   }
 
+  function initSearchClears() {
+    function updateVisibility(input) {
+      if (!input || !input.id) return;
+      const btn = document.querySelector(`.search-clear[data-target="${input.id}"]`);
+      if (!btn) return;
+      btn.classList.toggle('visible', !!input.value);
+    }
+    // Delegado para inputs dinámicos (dash se re-renderiza)
+    document.addEventListener('input', (e) => {
+      if (e.target.matches && e.target.matches('.search-input, .dash-search')) {
+        updateVisibility(e.target);
+      }
+    });
+    // Inicial
+    document.querySelectorAll('.search-input, .dash-search').forEach(updateVisibility);
+    // Delegado para clicks en X
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest && e.target.closest('.search-clear');
+      if (!btn) return;
+      const target = document.getElementById(btn.dataset.target);
+      if (!target) return;
+      target.value = '';
+      target.dispatchEvent(new Event('input', { bubbles: true }));
+      if (target.id === 'dash-search-ventas') dashFiltroVentas = '';
+      if (target.id === 'dash-search-entregas') dashFiltroEntregas = '';
+      target.focus();
+      updateVisibility(target);
+      if (target.id === 'filter-search') { paginationState.orders = 0; renderTable(); }
+      if (target.id === 'filter-historial-search') { paginationState.historial = 0; renderHistorial(); }
+      if (target.id === 'filter-compras-search') { paginationState.compras = 0; renderCompras(); }
+      if (target.id === 'filter-liquidaciones-search') { paginationState.liquidaciones = 0; renderLiquidaciones(); }
+      if (target.id === 'filter-usuarios-search') { renderUsuariosTable(); }
+      if (target.id === 'dash-search-ventas' || target.id === 'dash-search-entregas') { renderDashboard(); }
+    });
+    const dashCont = document.getElementById('dashboard-contenido');
+    if (dashCont) {
+      const obs = new MutationObserver(() => {
+        document.querySelectorAll('.dash-search').forEach(updateVisibility);
+      });
+      obs.observe(dashCont, { childList: true, subtree: true });
+    }
+  }
+
   /* ---------- PAGINACIÓN ---------- */
   const PAGE_SIZE = 15;
   let paginationState = { orders: 0, compras: 0, liquidaciones: 0, historial: 0 };
@@ -916,16 +959,18 @@ return items.map((it, idx) => `
        }
      });
 
-     // Attach all action buttons
-     document.querySelectorAll('.editar-button').forEach(button => {
-       button.addEventListener('click', (e) => {
-         e.preventDefault();
-         const venta = ventasCache.find(v => v.id === button.dataset.id);
-         if (venta) openForm(venta);
-       });
-     });
+      // Attach all action buttons
+      document.querySelectorAll('.editar-button').forEach(button => {
+        button.addEventListener('click', (e) => {
+          e.preventDefault();
+          const venta = ventasCache.find(v => v.id === button.dataset.id);
+          if (venta) openForm(venta);
+        });
+      });
 
-     await checkSession();
+      initSearchClears();
+
+      await checkSession();
    });
 
 
@@ -1232,7 +1277,7 @@ return items.map((it, idx) => `
             <span class="dash-list-count">${_qV ? `${misVentasFiltr.length} de ${misVentas.length}` : misVentas.length}</span>
           </div>
           <div class="dash-search-wrap">
-            <input type="text" id="dash-search-ventas" class="dash-search" placeholder="🔍 Buscar cliente, teléfono o @" value="${escSimple(dashFiltroVentas)}" autocomplete="off">
+            <div class="search-wrap" style="flex:1"><input type="text" id="dash-search-ventas" class="dash-search" placeholder="🔍 Buscar cliente, teléfono o @" value="${escSimple(dashFiltroVentas)}" autocomplete="off"><button class="search-clear" data-target="dash-search-ventas" type="button" aria-label="Limpiar búsqueda">×</button></div>
           </div>
           ${misVentasFiltr.length === 0
             ? (_qV ? '<div class="dash-empty">🔍 Sin resultados para esa búsqueda.</div>' : '<div class="dash-empty">🎉 No hay pedidos pendientes.</div>')
@@ -1246,7 +1291,7 @@ return items.map((it, idx) => `
             <span class="dash-list-count">${_qE ? `${misEntregasFiltr.length} de ${misEntregas.length}` : misEntregas.length}</span>
           </div>
           <div class="dash-search-wrap">
-            <input type="text" id="dash-search-entregas" class="dash-search" placeholder="🔍 Buscar cliente, teléfono o @" value="${escSimple(dashFiltroEntregas)}" autocomplete="off">
+            <div class="search-wrap" style="flex:1"><input type="text" id="dash-search-entregas" class="dash-search" placeholder="🔍 Buscar cliente, teléfono o @" value="${escSimple(dashFiltroEntregas)}" autocomplete="off"><button class="search-clear" data-target="dash-search-entregas" type="button" aria-label="Limpiar búsqueda">×</button></div>
           </div>
           ${misEntregasFiltr.length === 0
             ? (_qE ? '<div class="dash-empty">🔍 Sin resultados para esa búsqueda.</div>' : '<div class="dash-empty">🎉 No hay entregas asignadas.</div>')
