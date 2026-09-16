@@ -2642,6 +2642,39 @@ return items.map((it, idx) => `
     if (esModoIndividual()) {
       simpleBlock.classList.add('hidden');
       itemsContainer.classList.remove('hidden');
+      // Si venía de modo simple con datos llenos, preservar la primera camisa
+      const filasExistentes = document.querySelectorAll('#camisa-items-container .camisa-item-row');
+      if (filasExistentes.length === 0) {
+        const cantidad = parseInt(document.getElementById('f-cantidad').value, 10) || 1;
+        const genero = document.getElementById('cs-genero').value;
+        const color = document.getElementById('cs-color').value.trim();
+        const talla = document.getElementById('cs-talla').value;
+        const programa = document.getElementById('cs-programa').value.trim();
+        const modelo = document.getElementById('cs-modelo').value || 'Viejo';
+        const precioVal = document.getElementById('f-precio').value;
+        const costoVal = document.getElementById('f-costo').value;
+        const abonoVal = document.getElementById('cs-abono-total').value;
+        const estadoVal = document.getElementById('f-estado').value;
+        const hasData = genero || color || talla || programa || precioVal || costoVal || abonoVal;
+        if (hasData) {
+          const seed = {
+            genero: genero || 'Hombre',
+            color, talla, programa, modelo,
+            precio: precioVal !== '' ? parseFloat(precioVal) : '',
+            costo: costoVal !== '' ? parseFloat(costoVal) : '',
+            abono: abonoVal !== '' ? parseFloat(abonoVal) : '',
+            estado: estadoVal || 'Pedido'
+          };
+          const items = [];
+          for (let i = 0; i < cantidad; i++) {
+            if (i === 0) items.push(seed);
+            else items.push({ genero: '', color: '', talla: '', programa: '', modelo: 'Viejo', precio: '', costo: '', abono: '', estado: estadoVal || 'Pedido' });
+          }
+          renderCamisaItemsFromData(items);
+          actualizarSeccionPagos();
+          return;
+        }
+      }
       onCantidadChange();
     } else {
       simpleBlock.classList.remove('hidden');
