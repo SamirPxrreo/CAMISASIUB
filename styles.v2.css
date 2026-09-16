@@ -2253,6 +2253,12 @@ html.modal-lock {
   .vendor-split { grid-template-columns: 1fr; }
   .table-wrap { overflow-x: auto; }
   table { min-width: 980px; }
+  #section-summaries .table-wrap table,
+  #section-reports .table-wrap table { min-width: 620px; }
+  #section-summaries .table-wrap th,
+  #section-summaries .table-wrap td,
+  #section-reports .table-wrap th,
+  #section-reports .table-wrap td { padding: 6px 8px; font-size: 12px; }
   .modal-card { max-height: calc(100vh - 24px); }
 }
 
