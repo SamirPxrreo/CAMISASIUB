@@ -302,6 +302,11 @@
           </div>
         </div>
 
+        <div id="form-comprado-actions" class="hidden" style="margin-top:10px; padding:10px 14px; border:1px dashed var(--line); border-radius:10px; background:var(--accent-bg); display:flex; justify-content:space-between; align-items:center; gap:12px;">
+          <span style="font-size:13px; color:var(--muted);"><span id="form-comprado-info"></span></span>
+          <button class="btn-danger btn" id="clear-comprado-btn" type="button" onclick="clearCompradoAt()" title="Borrar fecha de compra">🗑️ Eliminar fecha de compra</button>
+        </div>
+
         <div class="form-actions">
           <button class="btn-ghost btn" onclick="if(editingId){navigateTo('orders')}else{closeForm()}" type="button">Cancelar</button>
           <button class="btn btn-gold" id="save-sale-button" type="button">Guardar venta</button>

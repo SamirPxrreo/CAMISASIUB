@@ -558,6 +558,18 @@
     return (v.fecha || '') + ' ' + (horaDeVenta(v) || '');
   }
 
+  function formatearCompradoAt(v) {
+    const ts = v && v.comprado_at;
+    if (!ts) return '';
+    try {
+      const d = new Date(ts);
+      if (isNaN(d.getTime())) return '';
+      const fecha = d.toLocaleDateString('es-CO', { timeZone: 'America/Bogota', day: '2-digit', month: 'short' });
+      const hora = d.toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit', hour12: false });
+      return `${fecha} · ${hora}`;
+    } catch (e) { return ''; }
+  }
+
   // Ordena pedidos por fecha de entrega (ascendente). Los que no tienen fecha
   // ("Pendiente por definir") siempre quedan al final. Desempate: fecha de pedido.
   function ordenarPorEntrega(a, b) {
@@ -2393,6 +2405,7 @@ return items.map((it, idx) => `
                 .map(e => `<option value="${e}" ${eg === e ? 'selected' : ''}>${e}</option>`)
                 .join('')}
             </select>
+            ${v.comprado_at ? `<span class="sub-tag" style="color:var(--teal-ink);">🛒 ${formatearCompradoAt(v)}</span>` : ''}
             ${esMixto ? estadosCuentasHtml(v) : ''}
             ${(() => { const listo = puedeMarcarPagado(v).ok && todosItemsListosEntrega(v); const pend = !pedidoSocioLiquidado(v) || !costoProveedorPagado(v); if (listo) return '<span class="sub-tag" style="color:var(--ok);font-weight:700;">✅ Listo para liquidar</span>'; if (pend) return '<span class="sub-tag" style="color:var(--warn);">Socio/proveedor pendiente</span>'; return ''; })()}
           </td>
@@ -2904,6 +2917,15 @@ return items.map((it, idx) => `
 
     actualizarSeccionPagos();
 
+    const compradoBox = document.getElementById('form-comprado-actions');
+    const compradoInfo = document.getElementById('form-comprado-info');
+    if (venta && venta.comprado_at) {
+      compradoBox.classList.remove('hidden');
+      compradoInfo.textContent = `🛒 Comprado: ${formatearCompradoAt(venta)}`;
+    } else {
+      compradoBox.classList.add('hidden');
+    }
+
     document.getElementById('form-card').classList.remove('hidden');
     document.getElementById('form-card').scrollIntoView({ behavior: 'smooth' });
   }
@@ -2912,7 +2934,38 @@ return items.map((it, idx) => `
     editingId = null;
     document.getElementById('form-card').classList.add('hidden');
     document.getElementById('form-validation-error').classList.add('hidden');
+    const cb = document.getElementById('form-comprado-actions');
+    if (cb) cb.classList.add('hidden');
   }
+
+  async function clearCompradoAt() {
+    if (!editingId) return;
+    const venta = ventasCache.find(v => v.id === editingId);
+    if (!venta || !venta.comprado_at) return;
+    if (!confirmar(`¿Eliminar la fecha de compra de "${venta.cliente_nombre || 'este pedido'}"?\n\nQuedará como si nunca se hubiera marcado Comprado (se borrará 🛒 ${formatearCompradoAt(venta)}).`)) return;
+    try {
+      const payload = { comprado_at: null, updated_at: new Date().toISOString() };
+      let res = await supabaseClient.from('ventas').update(payload).eq('id', editingId);
+      if (res.error && String(res.error.message).toLowerCase().match(/comprado_at|updated_at/)) {
+        delete payload.comprado_at;
+        // si no existe la columna, solo actualizar updated_at o nada
+        delete payload.updated_at;
+        res = await supabaseClient.from('ventas').update({}).eq('id', editingId);
+        // fallback: intentar solo con null si la columna existe pero el error es otro
+        if (res.error) throw res.error;
+      } else if (res.error) throw res.error;
+      // Actualizar cache local
+      venta.comprado_at = null;
+      const box = document.getElementById('form-comprado-actions');
+      if (box) box.classList.add('hidden');
+      await loadVentas();
+      mostrarToast('✅ Fecha de compra eliminada.');
+    } catch (e) {
+      logError('clearCompradoAt', e);
+      mostrarToast('Error al eliminar la fecha de compra.', 'error');
+    }
+  }
+  window.clearCompradoAt = clearCompradoAt;
 
    async function saveVenta() {
      const errorContainer = document.getElementById('form-validation-error');
@@ -2957,9 +3010,19 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
      payload.estado = estadosItems.length
        ? estadosItems.slice().sort((a, b) => ORDEN_ESTADOS.indexOf(a) - ORDEN_ESTADOS.indexOf(b))[0]
        : String(document.getElementById('f-estado').value || '').trim();
-      payload.precio_unitario = isNaN(pr1) ? null : pr1;
+       payload.precio_unitario = isNaN(pr1) ? null : pr1;
       payload.costo_unitario = isNaN(co1) ? null : co1;
       payload.updated_at = new Date().toISOString();
+      // Guardar fecha de compra si pasa a Comprado (conservar si ya tenía)
+      const yaCompradoAt = editingId ? (ventasCache.find(v => v.id === editingId)?.comprado_at || null) : null;
+      if (payload.estado === 'Comprado' && !yaCompradoAt) {
+        payload.comprado_at = new Date().toISOString();
+      } else if (payload.estado === 'Comprado' && yaCompradoAt) {
+        // conservar la primera fecha de compra
+      } else if (yaCompradoAt) {
+        // si ya tenía fecha y cambia a otro estado, conservarla
+        payload.comprado_at = yaCompradoAt;
+      }
 
       if (currentRole.role !== 'admin' && currentRole.vendedor) {
         payload.vendedor = currentRole.vendedor;
@@ -3034,15 +3097,15 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
         let error;
         if (editingId) {
           let res = await supabaseClient.from('ventas').update(payload).eq('id', editingId);
-          if (res.error && String(res.error.message).toLowerCase().includes('updated_at')) {
-            delete payload.updated_at;
+          if (res.error && String(res.error.message).toLowerCase().match(/updated_at|comprado_at/)) {
+            delete payload.updated_at; delete payload.comprado_at;
             res = await supabaseClient.from('ventas').update(payload).eq('id', editingId);
           }
           error = res.error;
         } else {
           let res = await supabaseClient.from('ventas').insert(payload);
-          if (res.error && String(res.error.message).toLowerCase().includes('updated_at')) {
-            delete payload.updated_at;
+          if (res.error && String(res.error.message).toLowerCase().match(/updated_at|comprado_at/)) {
+            delete payload.updated_at; delete payload.comprado_at;
             res = await supabaseClient.from('ventas').insert(payload);
           }
           error = res.error;
@@ -4756,14 +4819,19 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
 
     try {
       const payload = { estado, updated_at: new Date().toISOString() };
+      if (estado === 'Comprado' && !venta.comprado_at) {
+        payload.comprado_at = new Date().toISOString();
+      } else if (venta.comprado_at) {
+        payload.comprado_at = venta.comprado_at;
+      }
       const crudos = itemsCrudosVenta(venta);
       if (crudos) {
         crudos.forEach(it => { it.estado = estado; });
         payload.items_camisa = JSON.stringify(crudos);
       }
       let res = await supabaseClient.from('ventas').update(payload).eq('id', id);
-      if (res.error && String(res.error.message).toLowerCase().includes('updated_at')) {
-        delete payload.updated_at;
+      if (res.error && String(res.error.message).toLowerCase().match(/updated_at|comprado_at/)) {
+        delete payload.updated_at; delete payload.comprado_at;
         res = await supabaseClient.from('ventas').update(payload).eq('id', id);
         if (res.error) throw res.error;
       } else if (res.error) throw res.error;
@@ -4911,7 +4979,7 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
             <span class="humano-fecha">${textoFechaEntrega(v)}</span>
             <span class="sub-tag">📍 ${escSimple(v.lugar_entrega || 'Sin definir')} · 🚚 ${escSimple(v.entrega_por || 'Sin asignar')}</span>
           </td>
-          <td>${badgeEstadoGeneral(v)}</td>
+          <td>${badgeEstadoGeneral(v)}${v.comprado_at ? `<span class="sub-tag" style="color:var(--teal-ink);">🛒 ${formatearCompradoAt(v)}</span>` : ''}</td>
           <td>
             <div class="action-group">
               ${esAdmin ? `<button class="btn-small editar-historial-button" data-id="${v.id}" type="button">✏️ Editar</button>` : ''}
