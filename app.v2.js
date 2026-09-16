@@ -2657,10 +2657,14 @@ return items.map((it, idx) => `
   }
 
   function onCantidadChange() {
-    let cantidad = parseInt(document.getElementById('f-cantidad').value, 10);
+    const el = document.getElementById('f-cantidad');
+    const raw = el.value.trim();
+    // En teléfono, permitir borrar el "1" y dejar vacío mientras se escribe
+    if (raw === '' && document.activeElement === el) return;
+    let cantidad = parseInt(raw, 10);
     if (isNaN(cantidad) || cantidad < 1) cantidad = 1;
     if (cantidad > 30) cantidad = 30;
-    document.getElementById('f-cantidad').value = cantidad;
+    if (String(cantidad) !== raw) el.value = cantidad;
 
     const sugerido = cantidad * 20000;
     const abonoInput = document.getElementById('cs-abono-total');
