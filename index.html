@@ -76,6 +76,7 @@
       <p class="nav-label">Ventas</p>
       <button class="sidebar-item" data-section="new-sale" onclick="navigateTo('new-sale')">➕ Nueva Venta</button>
       <button class="sidebar-item" data-section="orders" onclick="navigateTo('orders')">📋 Pedidos</button>
+      <button class="sidebar-item" data-section="cuentas" onclick="navigateTo('cuentas')">💳 Cuentas</button>
       <button class="sidebar-item" data-section="history" onclick="navigateTo('history')">📚 Historial</button>
 
       <p class="nav-label">Socios</p>
@@ -592,6 +593,42 @@
       </div>
     </div>
 
+    <div id="section-cuentas" class="hidden">
+      <div class="page-head">
+        <div>
+          <h2 class="page-title">Cuentas por cliente</h2>
+          <p class="page-sub">Saldo total por cliente sumando sus pedidos activos. Usa 🧾 Factura para entregar varios pedidos/camisas juntos.</p>
+        </div>
+      </div>
+      <div class="cards" id="cuentas-kpis"></div>
+      <div class="filters-bar">
+        <div class="filters">
+          <div class="search-wrap"><input type="search" id="filter-cuentas-search" placeholder="Buscar por cliente, teléfono..." class="search-input"><button class="search-clear" data-target="filter-cuentas-search" type="button" aria-label="Limpiar búsqueda">×</button></div>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table data-orden-clave="cuentas">
+          <thead>
+            <tr>
+              <th data-orden="cliente">Cliente</th>
+              <th data-orden="pedidos">Pedidos</th>
+              <th data-orden="camisas">Camisas</th>
+              <th data-orden="vendido">Vendido</th>
+              <th data-orden="abono">Abonado</th>
+              <th data-orden="saldo">Saldo</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="cuentas-body"></tbody>
+        </table>
+        <div class="empty hidden" id="cuentas-empty-state">
+          <b>No hay cuentas pendientes.</b><br>Todos los clientes están al día.
+        </div>
+      </div>
+      <p class="table-hint">💡 Mantén <kbd>Shift</kbd> + rueda para desplazar lateralmente</p>
+      <div id="cuentas-pagination"></div>
+    </div>
+
     <div id="section-settings" class="hidden">
       <div class="page-head">
         <div>
@@ -777,6 +814,41 @@
   </div>
 </div>
 
+
+<div id="factura-modal" class="modal-backdrop hidden">
+  <div class="modal-card modal-card-wide">
+    <div class="modal-head">
+      <h3 id="factura-modal-title">Factura personalizada</h3>
+      <button class="btn-ghost btn modal-x" onclick="closeFacturaModal()" type="button" title="Cerrar">✕</button>
+    </div>
+    <p class="page-sub modal-intro" id="factura-modal-sub"></p>
+    <div id="factura-pedidos-lista" class="pedidos-picker" style="max-height:420px; overflow-y:auto;"></div>
+    <div class="cards cards-tight" style="margin-top:14px;">
+      <div class="card">
+        <div class="eyebrow">Camisas seleccionadas</div>
+        <div class="value" id="factura-resumen-camisas">0</div>
+      </div>
+      <div class="card">
+        <div class="eyebrow">Total</div>
+        <div class="value gold" id="factura-resumen-total">$0</div>
+      </div>
+      <div class="card">
+        <div class="eyebrow">Abono</div>
+        <div class="value ok" id="factura-resumen-abono">$0</div>
+      </div>
+      <div class="card">
+        <div class="eyebrow">Saldo</div>
+        <div class="value warn" id="factura-resumen-saldo">$0</div>
+      </div>
+    </div>
+    <div id="factura-notas-preview" class="hint" style="margin-top:10px;"></div>
+    <div class="error-msg hidden" id="factura-error"></div>
+    <div class="form-actions">
+      <button class="btn-ghost btn" onclick="closeFacturaModal()" type="button">Cancelar</button>
+      <button class="btn btn-gold" onclick="generarFacturaPersonalizada()" type="button">🧾 Generar PDF</button>
+    </div>
+  </div>
+</div>
 
 <!-- =====================================================
      LÓGICA JAVASCRIPT

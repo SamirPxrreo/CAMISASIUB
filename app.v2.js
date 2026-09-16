@@ -95,6 +95,7 @@
       if (target.id === 'filter-compras-search') { paginationState.compras = 0; renderCompras(); }
       if (target.id === 'filter-liquidaciones-search') { paginationState.liquidaciones = 0; renderLiquidaciones(); }
       if (target.id === 'filter-usuarios-search') { renderUsuariosTable(); }
+      if (target.id === 'filter-cuentas-search') { paginationState.cuentas = 0; renderCuentas(); }
       if (target.id === 'dash-search-ventas' || target.id === 'dash-search-entregas') { renderDashboard(); }
     });
     const dashCont = document.getElementById('dashboard-contenido');
@@ -108,7 +109,7 @@
 
   /* ---------- PAGINACIÓN ---------- */
   const PAGE_SIZE = 15;
-  let paginationState = { orders: 0, compras: 0, liquidaciones: 0, historial: 0 };
+  let paginationState = { orders: 0, compras: 0, liquidaciones: 0, historial: 0, cuentas: 0 };
 
   function renderPagination(total, currentPage, key, onPageChange) {
     const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
@@ -217,6 +218,14 @@
       correo: { val: u => (u.correo || '').toLowerCase(), tipo: 'text' },
       rol:    { val: u => (u.rol || '').toLowerCase(), tipo: 'text' },
       creado: { val: u => (u.created_at || '').split('T')[0], tipo: 'fecha' }
+    } },
+    cuentas: { render: renderCuentas, campos: {
+      cliente: { val: r => (r.cliente || '').toLowerCase(), tipo: 'text' },
+      pedidos: { val: r => r.pedidos.length, tipo: 'num' },
+      camisas: { val: r => r.camisas, tipo: 'num' },
+      vendido: { val: r => r.vendido, tipo: 'num' },
+      abono:   { val: r => r.abono, tipo: 'num' },
+      saldo:   { val: r => r.saldo, tipo: 'num' }
     } }
   };
 
@@ -233,6 +242,7 @@
     else if (clave === 'compras') paginationState.compras = 0;
     else if (clave === 'liquidaciones') paginationState.liquidaciones = 0;
     else if (clave === 'historial') paginationState.historial = 0;
+    else if (clave === 'cuentas') paginationState.cuentas = 0;
     if (REGISTRO_ORDEN[clave]) {
       REGISTRO_ORDEN[clave].render();
     } else if (clave.indexOf('resumen') === 0) {
@@ -952,6 +962,7 @@ return items.map((it, idx) => `
       const fc = document.getElementById('filter-compras-search'); if (fc) fc.addEventListener('input', debounce(() => { paginationState.compras = 0; renderCompras(); }, 300));
       const fl = document.getElementById('filter-liquidaciones-search'); if (fl) fl.addEventListener('input', debounce(() => { paginationState.liquidaciones = 0; renderLiquidaciones(); }, 300));
       const fu = document.getElementById('filter-usuarios-search'); if (fu) fu.addEventListener('input', debounce(() => { renderUsuariosTable(); }, 300));
+      const fcu = document.getElementById('filter-cuentas-search'); if (fcu) fcu.addEventListener('input', debounce(() => { paginationState.cuentas = 0; renderCuentas(); }, 300));
       const inpCliente = document.getElementById('f-cliente'); if (inpCliente) { inpCliente.addEventListener('input', onClienteInput); inpCliente.addEventListener('change', onClienteInput); }
       const inpTel = document.getElementById('f-telefono'); if (inpTel) inpTel.addEventListener('input', validarTelefonoInput);
 
@@ -1099,7 +1110,7 @@ return items.map((it, idx) => `
      NAVEGACIÓN POR SIDEBAR
      ===================================================== */
   function navigateTo(section) {
-    const sections = ['dashboard', 'new-sale', 'orders', 'purchases', 'settlements', 'summaries', 'reports', 'settings', 'history'];
+    const sections = ['dashboard', 'new-sale', 'orders', 'cuentas', 'purchases', 'settlements', 'summaries', 'reports', 'settings', 'history'];
     sections.forEach(s => {
       document.getElementById(`section-${s}`).classList.add('hidden');
     });
@@ -1125,6 +1136,8 @@ return items.map((it, idx) => `
       renderLiquidaciones();
     } else if (section === 'summaries') {
       renderResumenes();
+    } else if (section === 'cuentas') {
+      renderCuentas();
     } else if (section === 'settings' && currentRole.role === 'admin') {
       loadUsuarios();
     }
@@ -1141,6 +1154,8 @@ return items.map((it, idx) => `
   // Close modals on Escape key — usa los close* para desbloquear scroll y limpiar estado
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
+      const fm = document.getElementById('factura-modal');
+      if (fm && !fm.classList.contains('hidden')) { closeFacturaModal(); return; }
       const cm = document.getElementById('compra-modal');
       if (cm && !cm.classList.contains('hidden')) closeCompraModal();
       const lm = document.getElementById('liquidacion-modal');
@@ -5023,5 +5038,238 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
   }
 
   function irPaginaHistorial(p) { paginationState.historial = p; renderHistorial(); }
+
+  /* =====================================================
+     CUENTAS POR CLIENTE + FACTURA PERSONALIZADA
+     ===================================================== */
+  function getCuentasAgrupadas() {
+    const esAdmin = currentRole.role === 'admin';
+    const miNombre = currentRole.vendedor;
+    let base = ventasCache.filter(v => !v.finalizado && !estadosTodosLiquidado(v));
+    if (!esAdmin && miNombre) base = base.filter(v => v.vendedor === miNombre);
+    const grupos = new Map();
+    base.forEach(v => {
+      const clave = claveCliente(v);
+      if (!grupos.has(clave)) grupos.set(clave, { clave, pedidos: [], telefono: '' });
+      grupos.get(clave).pedidos.push(v);
+    });
+    const filas = [];
+    grupos.forEach(g => {
+      g.cliente = etiquetaClienteGrupo(g.pedidos);
+      const tel = g.pedidos.find(p => String(p.cliente_telefono||'').trim());
+      g.telefono = tel ? String(tel.cliente_telefono).trim() : '';
+      g.pedidos.sort((a,b)=> String(a.fecha||'').localeCompare(String(b.fecha||'')));
+      g.camisas = g.pedidos.reduce((s,v)=> s + (Number(v.cantidad)||1), 0);
+      g.vendido = g.pedidos.reduce((s,v)=> s + precioTotalVenta(v), 0);
+      g.abono = g.pedidos.reduce((s,v)=> s + abonoClienteTotal(v), 0);
+      g.saldo = Math.max(g.vendido - g.abono, 0);
+      g.ultimaEntrega = g.pedidos.map(v=>v.fecha_entrega).filter(Boolean).sort().pop() || '';
+      filas.push(g);
+    });
+    return filas;
+  }
+
+  function renderCuentas() {
+    const q = (document.getElementById('filter-cuentas-search')?.value || '').toLowerCase().trim();
+    let filas = getCuentasAgrupadas();
+    if (q) {
+      filas = filas.filter(r => (r.cliente||'').toLowerCase().includes(q) || (r.telefono||'').toLowerCase().includes(q) || r.clave.toLowerCase().includes(q));
+    }
+    filas = ordenarFilas(filas, 'cuentas', REGISTRO_ORDEN.cuentas.campos);
+    const body = document.getElementById('cuentas-body');
+    const empty = document.getElementById('cuentas-empty-state');
+    if (!body) return;
+    const totalSaldo = filas.reduce((s,r)=> s + r.saldo, 0);
+    const totalClientes = filas.length;
+    const totalCamisas = filas.reduce((s,r)=> s + r.camisas, 0);
+    const kpis = document.getElementById('cuentas-kpis');
+    if (kpis) {
+      kpis.innerHTML = `
+        <div class="card"><div class="eyebrow">Total por cobrar</div><div class="value warn">${fmt(totalSaldo)}</div><div class="sub">${totalClientes} clientes · ${totalCamisas} camisas</div></div>
+        <div class="card"><div class="eyebrow">Clientes con deuda</div><div class="value">${filas.filter(r=>r.saldo>0).length}</div><div class="sub">Con saldo &gt; 0</div></div>
+        <div class="card"><div class="eyebrow">Deuda promedio</div><div class="value">${fmt(totalClientes ? Math.round(totalSaldo/totalClientes) : 0)}</div><div class="sub">Por cliente</div></div>
+      `;
+    }
+    if (empty) empty.classList.toggle('hidden', filas.length > 0);
+    const totalPages = Math.ceil(filas.length / PAGE_SIZE) || 1;
+    if (paginationState.cuentas > totalPages - 1) paginationState.cuentas = totalPages - 1;
+    const start = paginationState.cuentas * PAGE_SIZE;
+    const pageRows = filas.slice(start, start + PAGE_SIZE);
+    body.innerHTML = pageRows.map(r => {
+      const pedidosTxt = r.pedidos.length === 1 ? '1 pedido' : `${r.pedidos.length} pedidos`;
+      const entregaTxt = r.ultimaEntrega ? formatearFechaHumana(r.ultimaEntrega).replace(/^📅\s*/,'') : 'Sin fecha';
+      return `
+        <tr>
+          <td><b>${escSimple(r.cliente)}</b><span class="sub-tag">📞 ${escSimple(r.telefono||r.clave)} · ${pedidosTxt}</span></td>
+          <td class="c"><b>${r.pedidos.length}</b></td>
+          <td class="c">${r.camisas}</td>
+          <td class="money">${fmt(r.vendido)}</td>
+          <td class="money" style="color:var(--ok)">${fmt(r.abono)}</td>
+          <td class="money" style="color:${r.saldo>0?'var(--warn)':'var(--ok)'}"><b>${fmt(r.saldo)}</b></td>
+          <td>
+            <div class="action-group">
+              <button class="btn-small" onclick="openFacturaModal('${r.clave.replace(/'/g, "\\'")}')" type="button">🧾 Factura</button>
+              <button class="btn-small" onclick="verPedidosCliente('${r.clave.replace(/'/g, "\\'")}')" type="button">👁️ Pedidos</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+    let pag = document.getElementById('cuentas-pagination');
+    if (!pag) { pag = document.createElement('div'); pag.id='cuentas-pagination'; body.parentElement.appendChild(pag); }
+    pag.innerHTML = renderPagination(filas.length, paginationState.cuentas, 'cuentas', 'irPaginaCuentas');
+    marcarOrdenTabla('cuentas');
+  }
+  function irPaginaCuentas(p){ paginationState.cuentas = p; renderCuentas(); }
+  function verPedidosCliente(clave){
+    const inp = document.getElementById('filter-search');
+    if (inp) { inp.value = clave; inp.dispatchEvent(new Event('input', {bubbles:true})); }
+    navigateTo('orders');
+    paginationState.orders = 0; renderTable();
+  }
+  let facturaClienteClave = null;
+  function openFacturaModal(clave){
+    facturaClienteClave = clave;
+    const grupo = getCuentasAgrupadas().find(g=> g.clave===clave);
+    if (!grupo) { mostrarToast('Cliente no encontrado', 'error'); return; }
+    document.getElementById('factura-modal-title').textContent = `Factura — ${grupo.cliente}`;
+    document.getElementById('factura-modal-sub').textContent = `${grupo.pedidos.length} pedido(s) · ${grupo.camisas} camisa(s) · Saldo ${fmt(grupo.saldo)} · Elige qué pedidos y camisas incluir`;
+    const cont = document.getElementById('factura-pedidos-lista');
+    cont.innerHTML = grupo.pedidos.map(v=>{
+      const crudos = itemsCrudosVenta(v);
+      const items = crudos && crudos.length ? crudos : [{genero:v.genero||'', color:v.color||'', talla:v.talla||'', programa:v.cliente_programa||'', precio:v.precio_unitario||0, costo:v.costo_unitario||0, abono:0, estado: v.estado||'Pedido'}];
+      const fechaTxt = v.fecha ? formatearFechaHumana(v.fecha).replace(/^📅\s*/,'') : '?';
+      const compradoTag = v.comprado_at ? `<span class="sub-tag" style="color:var(--teal-ink)">🛒 ${formatearCompradoAt(v)}</span>` : '';
+      const notaTag = v.nota ? `<span class="sub-tag" style="color:var(--warn)">📝 ${escSimple(v.nota.slice(0,60))}${v.nota.length>60?'…':''}</span>` : '';
+      return `
+        <div class="pedido-block" data-pedido-id="${v.id}">
+          <label class="pedido-check-row" style="background:var(--accent-bg); font-weight:700;">
+            <input type="checkbox" class="factura-pedido-check" data-pedido-id="${v.id}" checked>
+            <span>${escSimple(fechaTxt)} · ${badgeEstadoGeneral(v)} · ${items.length} camisa(s) · ${fmt(precioTotalVenta(v))}</span>
+            <span class="pedido-costo-tag">${fmt(abonoClienteTotal(v))} abono</span>
+          </label>
+          <div class="factura-camisa-lista" style="padding:8px 10px; background:var(--card);">
+            ${items.map((it, idx)=>{
+              const desc = `${it.genero||'?'} · ${capitalizarColor(it.color)} · ${it.talla||'?'}${it.programa ? ' · '+escSimple(it.programa) : ''}`;
+              const p = precioDeItem(it, v);
+              const ab = Number(it.abono)||0;
+              return `
+                <label class="pedido-check-row" style="padding:6px 6px;">
+                  <input type="checkbox" class="factura-camisa-check" data-pedido-id="${v.id}" data-item-idx="${idx}" checked>
+                  <span style="flex:1">• ${escSimple(desc)} <span class="money" style="font-size:11px; color:var(--muted)">${fmt(p)}/${fmt(ab)}${it.estado ? ' · '+escSimple(it.estado) : ''}</span></span>
+                  ${compradoTag} ${notaTag}
+                </label>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }).join('');
+    cont.querySelectorAll('.factura-pedido-check').forEach(cb=>{
+      cb.addEventListener('change', ()=>{
+        const pid = cb.dataset.pedidoId;
+        cont.querySelectorAll(`.factura-camisa-check[data-pedido-id="${pid}"]`).forEach(c=> { c.checked = cb.checked; });
+        actualizarResumenFactura();
+      });
+    });
+    cont.querySelectorAll('.factura-camisa-check').forEach(cb=>{
+      cb.addEventListener('change', ()=>{
+        const pid = cb.dataset.pedidoId;
+        const pChecks = Array.from(cont.querySelectorAll(`.factura-camisa-check[data-pedido-id="${pid}"]`));
+        const all = pChecks.every(c=>c.checked);
+        const none = pChecks.every(c=>!c.checked);
+        const pedCb = cont.querySelector(`.factura-pedido-check[data-pedido-id="${pid}"]`);
+        if (pedCb) pedCb.checked = all;
+        if (none) pedCb.checked = false;
+        if (!all && !none) pedCb.checked = true;
+        actualizarResumenFactura();
+      });
+    });
+    actualizarResumenFactura();
+    document.getElementById('factura-modal').classList.remove('hidden');
+    bloquearScrollFondo();
+  }
+  function closeFacturaModal(){ document.getElementById('factura-modal').classList.add('hidden'); desbloquearScrollFondo(); facturaClienteClave=null; }
+  function actualizarResumenFactura(){
+    const cont = document.getElementById('factura-pedidos-lista');
+    if (!cont) return;
+    let camisas=0, total=0, abono=0;
+    const notasSet = new Set();
+    cont.querySelectorAll('.factura-camisa-check:checked').forEach(cb=>{
+      const v = ventasCache.find(x=> x.id===cb.dataset.pedidoId);
+      if (!v) return;
+      const crudos = itemsCrudosVenta(v);
+      const it = crudos && crudos[Number(cb.dataset.itemIdx)] ? crudos[Number(cb.dataset.itemIdx)] : null;
+      const p = it ? precioDeItem(it, v) : (Number(v.precio_unitario)||0);
+      const a = it ? (Number(it.abono)||0) : 0;
+      camisas += 1;
+      total += p;
+      abono += a;
+      if (v.nota && String(v.nota).trim()) notasSet.add(String(v.nota).trim());
+    });
+    document.getElementById('factura-resumen-camisas').textContent = camisas;
+    document.getElementById('factura-resumen-total').textContent = fmt(total);
+    document.getElementById('factura-resumen-abono').textContent = fmt(abono);
+    document.getElementById('factura-resumen-saldo').textContent = fmt(Math.max(total-abono,0));
+    const notasPrev = document.getElementById('factura-notas-preview');
+    if (notasPrev) {
+      if (notasSet.size) notasPrev.innerHTML = `<b>Notas incluidas:</b> ${Array.from(notasSet).map(n=> escSimple(n)).join(' · ')}`;
+      else notasPrev.textContent = 'Sin notas en los pedidos seleccionados';
+    }
+  }
+  function generarFacturaPersonalizada(){
+    const cont = document.getElementById('factura-pedidos-lista');
+    if (!cont || !facturaClienteClave) return;
+    const grupo = getCuentasAgrupadas().find(g=> g.clave===facturaClienteClave);
+    if (!grupo) return;
+    const seleccion = [];
+    cont.querySelectorAll('.factura-camisa-check:checked').forEach(cb=>{
+      const v = ventasCache.find(x=> x.id===cb.dataset.pedidoId);
+      if (!v) return;
+      const crudos = itemsCrudosVenta(v);
+      const it = crudos && crudos[Number(cb.dataset.itemIdx)] ? crudos[Number(cb.dataset.itemIdx)] : {genero:v.genero, color:v.color, talla:v.talla, programa:v.cliente_programa, precio:v.precio_unitario, costo:v.costo_unitario, abono:0};
+      seleccion.push({ venta:v, item:it, pedidoId:v.id });
+    });
+    if (seleccion.length===0){ document.getElementById('factura-error').textContent='Selecciona al menos una camisa'; document.getElementById('factura-error').classList.remove('hidden'); return; }
+    document.getElementById('factura-error').classList.add('hidden');
+    // Reusar plantilla de imprimirRecibo pero con múltiples pedidos
+    const cliente = grupo.cliente;
+    const telefono = grupo.telefono;
+    const total = seleccion.reduce((s,x)=> s + precioDeItem(x.item, x.venta), 0);
+    const abonoTot = seleccion.reduce((s,x)=> s + (Number(x.item.abono)||0), 0);
+    const saldo = Math.max(total - abonoTot, 0);
+    const notasUnicas = Array.from(new Set(seleccion.map(x=> String(x.venta.nota||'').trim()).filter(Boolean)));
+    const notaTxt = notasUnicas.join(' · ');
+    const filas = seleccion.map((x,i)=>{
+      const it = x.item; const v = x.venta;
+      const p = precioDeItem(it, v);
+      const ab = Number(it.abono)||0;
+      const desc = [capitalizarColor(it.color), it.talla ? `Talla ${it.talla}` : '', it.genero||'', etiquetaModelo(it.modelo)||''].filter(Boolean).join(' · ');
+      const prog = it.programa ? `<div class="prog">Bordado: ${escSimple(it.programa)}</div><div class="prog" style="font-size:10px;color:var(--muted)">Pedido: ${escSimple(v.fecha||'')} · ${escSimple(v.estado||'')}</div>` : `<div class="prog" style="font-size:10px;color:var(--muted)">Pedido: ${escSimple(v.fecha||'')} · ${escSimple(v.estado||'')}</div>`;
+      return `<tr><td class="c">${i+1}</td><td>${escSimple(desc)}${prog}</td><td class="c">1</td><td class="money">${fmt(p)}</td><td class="money">${fmt(ab)}</td></tr>`;
+    }).join('');
+    const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Factura — ${escSimple(cliente)}</title><style>
+  :root{--ink:#0F172A;--muted:#64748B;--line:#E2E8F0;--bg:#F8FAFC;--gold:#B45309}
+  *{box-sizing:border-box} body{font-family:Inter, Segoe UI, Arial, sans-serif; color:var(--ink); margin:0; background:#fff; font-size:13px; line-height:1.45}
+  .sheet{max-width:780px; margin:0 auto; padding:24px} .toolbar{display:flex; gap:8px; justify-content:flex-end; margin-bottom:14px} .btn{padding:8px 14px; border-radius:8px; border:1px solid var(--line); background:#fff; cursor:pointer; font-weight:700; font-size:12px} .btn-primary{background:var(--ink); color:#fff; border-color:var(--ink)}
+  .brand{display:flex; justify-content:space-between; align-items:flex-start; gap:16px; border-bottom:3px solid var(--ink); padding-bottom:14px; margin-bottom:16px} .brand h1{margin:0; font-size:26px; letter-spacing:.06em; line-height:1} .meta{text-align:right; font-size:12px; line-height:1.35} .meta .num{font-size:18px; font-weight:800} .meta .date{color:var(--muted)}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px} @media(max-width:640px){.grid2{grid-template-columns:1fr}} .card{border:1px solid var(--line); border-radius:10px; padding:12px; background:var(--bg)} .card h3{margin:0 0 8px; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted)} .kv{display:grid; grid-template-columns:108px 1fr; gap:4px 8px; font-size:13px} .kv dt{color:var(--muted)} .kv dd{margin:0; font-weight:600; word-break:break-word}
+  table{width:100%; border-collapse:collapse; border:1px solid var(--line); border-radius:10px; overflow:hidden; margin:0} th{background:var(--ink); color:#fff; font-size:11px; letter-spacing:.06em; text-transform:uppercase; padding:9px 8px; text-align:left} th.c, td.c{text-align:center} th.money, td.money{text-align:right} td{padding:9px 8px; border-top:1px solid var(--line); vertical-align:top; font-size:13px} tr:nth-child(even) td{background:#F8FAFC} .prog{font-size:11px; color:#475569; margin-top:3px}
+  .totals{display:flex; justify-content:flex-end; margin-top:14px} .totals-box{width:340px; border:1px solid var(--line); border-radius:10px; overflow:hidden} .row{display:flex; justify-content:space-between; padding:10px 12px; border-top:1px solid var(--line); background:#fff} .row:first-child{border-top:none} .row.total{background:var(--ink); color:#fff; font-weight:800; font-size:15px} .row b{font-variant-numeric:tabular-nums} .note{margin-top:12px; border:1px dashed var(--line); border-radius:10px; padding:10px 12px; background:#FFFEFB; font-size:12px; color:#334155} .foot{text-align:center; color:var(--muted); font-size:11px; margin-top:16px; border-top:1px solid var(--line); padding-top:10px} @media print{.toolbar{display:none} body{margin:0} .sheet{padding:10mm} @page{margin:10mm}}
+  </style></head><body><div class="sheet"><div class="toolbar"><button class="btn" onclick="window.close()" type="button">Cerrar</button><button class="btn btn-primary" onclick="window.print()" type="button">🖨️ Imprimir / Guardar PDF</button></div>
+    <div class="brand"><div><h1>CAMISAS IUB</h1><div class="tag">Factura personalizada</div></div><div class="meta"><div class="num">FACTURA — ${escSimple(cliente)}</div><div class="date">${new Date().toLocaleDateString('es-CO',{timeZone:'America/Bogota'})} · ${seleccion.length} camisa(s) · ${grupo.pedidos.length} pedido(s) cliente</div></div></div>
+    <div class="grid2"><div class="card"><h3>Cliente</h3><dl class="kv"><dt>Nombre</dt><dd>${escSimple(cliente)}</dd><dt>Teléfono</dt><dd>${escSimple(telefono||'—')}</dd><dt>Entrega</dt><dd>Entrega conjunta</dd></dl></div><div class="card"><h3>Resumen</h3><dl class="kv"><dt>Pedidos incluidos</dt><dd>${seleccion.length} camisas seleccionadas</dd><dt>Total</dt><dd>${fmt(total)}</dd><dt>Abono</dt><dd>${fmt(abonoTot)}</dd><dt>Saldo</dt><dd>${fmt(saldo)}</dd></dl></div></div>
+    <table><thead><tr><th style="width:36px">#</th><th>Descripción</th><th class="c" style="width:52px">Cant.</th><th class="money" style="width:96px">Precio</th><th class="money" style="width:96px">Abono</th></tr></thead><tbody>${filas}</tbody></table>
+    ${notaTxt ? `<div class="note"><b>Notas de los pedidos:</b> ${escSimple(notaTxt)}</div>` : ''}
+    <div class="totals"><div class="totals-box"><div class="row"><span>Total</span><b>${fmt(total)}</b></div><div class="row"><span>Abono</span><b>${fmt(abonoTot)}</b></div><div class="row total"><span>Saldo por pagar</span><b>${fmt(saldo)}</b></div></div></div>
+    <div class="foot">Gracias por tu pedido 💙 — Camisas IUB<br>${new Date().toLocaleString('es-CO',{timeZone:'America/Bogota', dateStyle:'full', timeStyle:'short'})} · Este documento no es factura fiscal</div></div><script>window.onload=function(){ setTimeout(function(){ window.print(); },150);}<\/script></body></html>`;
+    const w = window.open('', '_blank', 'width=820,height=720');
+    if (!w){ mostrarToast('Permite las ventanas emergentes para imprimir.', 'error'); return; }
+    w.document.write(html); w.document.close();
+  }
+  window.closeFacturaModal = closeFacturaModal;
+  window.openFacturaModal = openFacturaModal;
+  window.generarFacturaPersonalizada = generarFacturaPersonalizada;
+  window.verPedidosCliente = verPedidosCliente;
 
 
