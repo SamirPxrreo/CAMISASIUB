@@ -1317,6 +1317,7 @@ header.top .who {
   max-width: 180px;
   white-space: normal;
 }
+#section-cuentas .table-wrap table { min-width: 860px; }
 #section-settlements .table-wrap table { min-width: 980px; }
 #section-settlements .table-wrap th:nth-child(1),
 #section-settlements .table-wrap td:nth-child(1) {
@@ -2026,20 +2027,25 @@ html.modal-lock {
   #section-orders .borrar-button::after { content: '🗑️'; }
   #section-history .restaurar-button::after { content: '↩️'; }
   #section-history .borrar-historial-button::after { content: '🗑️'; }
+  #section-history .editar-historial-button::after { content: '✏️'; }
   #section-purchases .action-group .btn-small::after { content: '👁️'; }
   #section-settlements .action-group .btn-danger::after { content: '🗑️'; }
   #section-settings button[onclick^="editUser"]::after { content: '✏️'; }
   #section-settings button[onclick^="deleteUser"]::after { content: '🗑️'; }
+  #section-cuentas .action-group .btn-small:nth-child(1)::after { content: '🧾'; }
+  #section-cuentas .action-group .btn-small:nth-child(2)::after { content: '👁️'; }
   #section-orders .table-wrap table th:last-child,
   #section-history .table-wrap table th:last-child,
   #section-purchases .table-wrap table th:last-child,
   #section-settlements .table-wrap table th:last-child,
-  #section-settings .table-wrap table th:last-child { font-size: 0; }
+  #section-settings .table-wrap table th:last-child,
+  #section-cuentas .table-wrap table th:last-child { font-size: 0; }
   #section-orders .table-wrap table th:last-child::after,
   #section-history .table-wrap table th:last-child::after,
   #section-purchases .table-wrap table th:last-child::after,
   #section-settlements .table-wrap table th:last-child::after,
-  #section-settings .table-wrap table th:last-child::after { content: '⚙️'; font-size: 14px; }
+  #section-settings .table-wrap table th:last-child::after,
+  #section-cuentas .table-wrap table th:last-child::after { content: '⚙️'; font-size: 14px; }
 }
 
 .dash-list { margin-bottom: 32px; }
