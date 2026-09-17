@@ -2368,6 +2368,32 @@ return items.map((it, idx) => `
       });
     }
 
+    // Resumen de pedidos: cuántos hay filtrados vs totales (para no perder la cuenta al filtrar)
+    const _totalBase = ventasCache.filter(v => !v.finalizado && (currentRole.role === 'admin' || v.vendedor === currentRole.vendedor));
+    const _totalPedidos = _totalBase.length;
+    const _totalCamisas = _totalBase.reduce((s, v) => s + (Number(v.cantidad) || 1), 0);
+    const _totalSaldo = _totalBase.reduce((s, v) => s + Math.max(precioTotalVenta(v) - abonoClienteTotal(v), 0), 0);
+    const _filtradosPedidos = rows.length;
+    const _filtradosCamisas = rows.reduce((s, v) => s + (Number(v.cantidad) || 1), 0);
+    const _filtradosSaldo = rows.reduce((s, v) => s + Math.max(precioTotalVenta(v) - abonoClienteTotal(v), 0), 0);
+    const _summaryEl = document.getElementById('orders-summary');
+    if (_summaryEl) {
+      const _fv = document.getElementById('filter-vendedor')?.value || '';
+      const _fe = document.getElementById('filter-estado')?.value || '';
+      const _fs = (document.getElementById('filter-search')?.value || '').trim();
+      const _filtrando = !!(_fv || _fe || _fs);
+      if (_totalPedidos === 0) {
+        _summaryEl.classList.add('hidden');
+        _summaryEl.innerHTML = '';
+      } else if (_filtrando) {
+        _summaryEl.innerHTML = `Filtrado: <b>${_filtradosPedidos} de ${_totalPedidos} pedidos</b> · <b>${_filtradosCamisas} de ${_totalCamisas} camisas</b> · Saldo: <b>${fmt(_filtradosSaldo)}</b> de ${fmt(_totalSaldo)}`;
+        _summaryEl.classList.remove('hidden');
+      } else {
+        _summaryEl.innerHTML = `<b>${_totalPedidos} pedidos</b> · <b>${_totalCamisas} camisas</b> · Saldo pendiente: <b>${fmt(_totalSaldo)}</b>`;
+        _summaryEl.classList.remove('hidden');
+      }
+    }
+
     const body = document.getElementById('ventas-body');
     document.getElementById('empty-state').classList.toggle('hidden', rows.length > 0);
 
