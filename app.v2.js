@@ -956,7 +956,26 @@ return items.map((it, idx) => `
      document.getElementById('f-cantidad').addEventListener('input', onCantidadChange);
      document.getElementById('f-cantidad').addEventListener('change', onCantidadChange);
       document.getElementById('filter-vendedor').addEventListener('change', renderTable);
-      document.getElementById('filter-estado').addEventListener('change', renderTable);
+      // Filtro multi-estado: checkboxes en dropdown
+      const _feTrigger = document.getElementById('filter-estado-trigger');
+      const _feDropdown = document.getElementById('filter-estado-dropdown');
+      if (_feTrigger && _feDropdown) {
+        _feTrigger.addEventListener('click', (e) => {
+          e.stopPropagation();
+          _feDropdown.classList.toggle('hidden');
+        });
+        document.addEventListener('click', (e) => {
+          if (!_feTrigger.contains(e.target) && !_feDropdown.contains(e.target)) _feDropdown.classList.add('hidden');
+        });
+        document.querySelectorAll('.filter-estado-check').forEach(ch => ch.addEventListener('change', () => {
+          const sel = Array.from(document.querySelectorAll('.filter-estado-check:checked')).map(c => c.value);
+          if (sel.length === 0) _feTrigger.textContent = 'Todos los estados ▾';
+          else if (sel.length === 1) _feTrigger.textContent = sel[0] + ' ▾';
+          else _feTrigger.textContent = sel.length + ' estados ▾';
+          paginationState.orders = 0;
+          renderTable();
+        }));
+      }
        document.getElementById('filter-search').addEventListener('input', debounce(() => { paginationState.orders = 0; renderTable(); }, 300));
       const fh = document.getElementById('filter-historial-search'); if (fh) fh.addEventListener('input', debounce(() => { paginationState.historial = 0; renderHistorial(); }, 300));
       const fc = document.getElementById('filter-compras-search'); if (fc) fc.addEventListener('input', debounce(() => { paginationState.compras = 0; renderCompras(); }, 300));
@@ -2327,16 +2346,15 @@ return items.map((it, idx) => `
   // TABLA DE PEDIDOS (PERSONAL POR VENDEDOR)
   function getVentasFiltradas() {
     const fv = document.getElementById('filter-vendedor').value;
-    const fe = document.getElementById('filter-estado').value;
+    const _feChecks = document.querySelectorAll('.filter-estado-check:checked');
+    const _fes = Array.from(_feChecks).map(c => c.value);
     const fs = (document.getElementById('filter-search').value || '').toLowerCase().trim();
 
     return ventasCache.filter(v => {
       if (v.finalizado) return false;
       if (fv && v.vendedor !== fv) return false;
-      // El filtro por estado incluye el pedido si ALGUNA de sus camisas está
-      // en ese estado (pedidos que mezclan: ej. 2 Listo para entrega + 4 Bordando
-      //). Así no se "pierde" ningún pedido al filtrar.
-      if (fe && !estadosItemsVenta(v).includes(fe)) return false;
+      // Filtro multi-estado: incluye el pedido si ALGUNA de sus camisas está en alguno de los estados seleccionados.
+      if (_fes.length > 0 && !estadosItemsVenta(v).some(e => _fes.includes(e))) return false;
       if (fs && !(
         (v.cliente_nombre || '').toLowerCase().includes(fs) ||
         (v.cliente_telefono || '').toLowerCase().includes(fs) ||
@@ -2368,7 +2386,7 @@ return items.map((it, idx) => `
       });
     }
 
-    // Resumen de pedidos: cuántos hay filtrados vs totales (para no perder la cuenta al filtrar)
+    // Resumen de pedidos: cantidad exacta filtrada (sin "de total") + saldo cliente
     const _totalBase = ventasCache.filter(v => !v.finalizado && (currentRole.role === 'admin' || v.vendedor === currentRole.vendedor));
     const _totalPedidos = _totalBase.length;
     const _totalCamisas = _totalBase.reduce((s, v) => s + (Number(v.cantidad) || 1), 0);
@@ -2379,17 +2397,18 @@ return items.map((it, idx) => `
     const _summaryEl = document.getElementById('orders-summary');
     if (_summaryEl) {
       const _fv = document.getElementById('filter-vendedor')?.value || '';
-      const _fe = document.getElementById('filter-estado')?.value || '';
+      const _feChecks = document.querySelectorAll('.filter-estado-check:checked');
+      const _fe = _feChecks.length ? 'x' : '';
       const _fs = (document.getElementById('filter-search')?.value || '').trim();
       const _filtrando = !!(_fv || _fe || _fs);
       if (_totalPedidos === 0) {
         _summaryEl.classList.add('hidden');
         _summaryEl.innerHTML = '';
       } else if (_filtrando) {
-        _summaryEl.innerHTML = `Filtrado: <b>${_filtradosPedidos} de ${_totalPedidos} pedidos</b> · <b>${_filtradosCamisas} de ${_totalCamisas} camisas</b> · Saldo: <b>${fmt(_filtradosSaldo)}</b> de ${fmt(_totalSaldo)}`;
+        _summaryEl.innerHTML = `<b>${_filtradosPedidos} pedidos</b> · <b>${_filtradosCamisas} camisas</b> · Saldo cliente: <b>${fmt(_filtradosSaldo)}</b>`;
         _summaryEl.classList.remove('hidden');
       } else {
-        _summaryEl.innerHTML = `<b>${_totalPedidos} pedidos</b> · <b>${_totalCamisas} camisas</b> · Saldo pendiente: <b>${fmt(_totalSaldo)}</b>`;
+        _summaryEl.innerHTML = `<b>${_totalPedidos} pedidos</b> · <b>${_totalCamisas} camisas</b> · Saldo cliente: <b>${fmt(_totalSaldo)}</b>`;
         _summaryEl.classList.remove('hidden');
       }
     }

@@ -652,6 +652,47 @@ header.top .who {
   padding: 8px 12px;
   font-size: 13.5px;
 }
+.filter-estado-multi { position: relative; }
+.filter-estado-trigger {
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--ink);
+  font-size: 13.5px;
+  cursor: pointer;
+  min-width: 170px;
+  text-align: left;
+  line-height: 1.2;
+}
+.filter-estado-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow-md, 0 8px 24px rgba(0,0,0,0.12));
+  padding: 8px;
+  z-index: 20;
+  min-width: 210px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.filter-estado-dropdown.hidden { display: none; }
+.filter-estado-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 5px 6px;
+  border-radius: 6px;
+  user-select: none;
+}
+.filter-estado-option:hover { background: var(--accent-bg); }
+.filter-estado-option input { accent-color: var(--thread); }
 
 .filters-labeled {
   align-items: flex-end;
