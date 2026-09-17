@@ -333,17 +333,15 @@
           <select id="filter-vendedor" aria-label="Filtrar por vendedor">
             <option value="">Todos los vendedores</option>
           </select>
-          <div class="filter-estado-multi" id="filter-estado-multi">
-            <button type="button" class="filter-estado-trigger" id="filter-estado-trigger" aria-label="Filtrar por estado">Todos los estados ▾</button>
-            <div class="filter-estado-dropdown hidden" id="filter-estado-dropdown">
-              <label class="filter-estado-option"><input type="checkbox" value="Pedido" class="filter-estado-check"> Pedido</label>
-              <label class="filter-estado-option"><input type="checkbox" value="Comprado" class="filter-estado-check"> Comprado</label>
-              <label class="filter-estado-option"><input type="checkbox" value="Bordando" class="filter-estado-check"> Bordando</label>
-              <label class="filter-estado-option"><input type="checkbox" value="Listo para entrega" class="filter-estado-check"> Listo para entrega</label>
-              <label class="filter-estado-option"><input type="checkbox" value="Entregado" class="filter-estado-check"> Entregado</label>
-              <label class="filter-estado-option"><input type="checkbox" value="Liquidado" class="filter-estado-check"> Liquidado</label>
-            </div>
-          </div>
+          <select id="filter-estado" aria-label="Filtrar por estado">
+            <option value="">Todos los estados</option>
+            <option value="Pedido">Pedido</option>
+            <option value="Comprado">Comprado</option>
+            <option value="Bordando">Bordando</option>
+            <option value="Listo para entrega">Listo para entrega</option>
+            <option value="Entregado">Entregado</option>
+            <option value="Liquidado">Liquidado</option>
+          </select>
           <div class="search-wrap"><input type="search" id="filter-search" placeholder="Buscar por nombre, teléfono, vendedor, fecha, ID..." class="search-input"><button class="search-clear" data-target="filter-search" type="button" aria-label="Limpiar búsqueda">×</button></div>
         </div>
       </div>
