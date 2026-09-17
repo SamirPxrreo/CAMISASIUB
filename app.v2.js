@@ -4757,7 +4757,7 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
     }
   }
 
-  function exportarExcelCompleto() {
+  async function exportarExcelCompleto() {
     if (currentRole.role !== 'admin') return;
 
     const data = getVentasFiltradas().sort(ordenarPorEntrega);
@@ -4765,6 +4765,15 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
       mostrarToast('No hay datos para exportar con los filtros actuales.', 'error');
       return;
     }
+
+    // ExcelJS genera el .xlsx con 2 hojas y diseño real.
+    // SheetJS Community no escribe estilos (por eso se veía simple), y el HTML
+    // mete las 2 tablas en la misma hoja (por eso todo salía en Reporte).
+    if (typeof ExcelJS === 'undefined') {
+      mostrarToast('No se pudo cargar ExcelJS. Revisa tu conexión e intenta de nuevo.', 'error');
+      return;
+    }
+    showLoading(true);
 
     const headers = [
       'ID Pedido', 'Fecha Pedido', 'Fecha Entrega', 'Día de entrega', 'Estado',
@@ -4776,28 +4785,55 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
       'Ganancia Total', 'Me queda (Saldo - Ganancia/2)'
     ];
 
-    const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-
-    const fmt = n => (n == null || isNaN(n)) ? '' : '$' + Math.round(n).toLocaleString('es-CO');
-    const fmtNum = n => (n == null || isNaN(n)) ? '' : String(Math.round(n));
-
     const statusBg = { 'Pedido':'#F3F4F6','Comprado':'#DBEAFE','Bordando':'#F3E8FF','Listo para entrega':'#ECFCCB','Entregado':'#DBEAFE','Liquidado':'#D1FAE5' };
     const statusFg = { 'Pedido':'#4B5563','Comprado':'#1E40AF','Bordando':'#7C3AED','Listo para entrega':'#3F6212','Entregado':'#1E3A5F','Liquidado':'#065F46' };
 
-    let html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-<head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Reporte</x:Name><x:WorksheetOptions><x:FreezePanes/><x:FrozenNoSplit/><x:SplitHorizontal>1</x:SplitHorizontal><x:TopRowBottomPane>1</x:TopRowBottomPane></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
-<style>td,th{border:1px solid #CBD5E1;padding:4px 8px;font-family:Calibri,sans-serif;font-size:10pt}th{background:#1E293B;color:#FFF;font-weight:700;text-align:center}.c{text-align:center}.r{text-align:right}.m{mso-number-format:'\\0022$\\0022#,##0';text-align:right}</style></head><body><table>`;
+    const headersCuentas = ['Fecha Pedido','Entrega','Estado','Vendedor','Cliente','Nota','Género','Color','Talla','Precio Unitario','Costo Unitario','Cantidad','Venta Total','Costo Total','Abono Cliente','Saldo Pendiente Cliente','Ganancia Total','Me queda (Saldo - Ganancia/2)'];
 
-    // Header
-    html += '<tr>' + headers.map(h => '<th>' + esc(h) + '</th>').join('') + '</tr>';
+    // ---- Estilos compartidos (tu plantilla) ----
+    const THEME = {
+      headerFill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } },
+      headerFont: { name: 'Calibri', size: 10, bold: true, color: { argb: 'FFFFFFFF' } },
+      bodyFont: { name: 'Calibri', size: 10 },
+      thinBorder: { top: { style: 'thin', color: { argb: 'FFCBD5E1' } }, bottom: { style: 'thin', color: { argb: 'FFCBD5E1' } }, left: { style: 'thin', color: { argb: 'FFCBD5E1' } }, right: { style: 'thin', color: { argb: 'FFCBD5E1' } } },
+      zebraA: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } },
+      zebraB: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } },
+      moneyFmt: '"$"#,##0'
+    };
+    const hexToArgb = h => 'FF' + String(h || 'FFFFFF').replace('#', '').toUpperCase();
+    function styleHeaderRow(row) {
+      row.eachCell(c => {
+        c.fill = THEME.headerFill;
+        c.font = THEME.headerFont;
+        c.border = THEME.thinBorder;
+        c.alignment = { horizontal: 'center', vertical: 'center', wrapText: true };
+      });
+      row.height = 22;
+    }
 
+    const wb = new ExcelJS.Workbook();
+    wb.creator = 'Camisas IUB';
+    wb.created = new Date();
+    const wsR = wb.addWorksheet('Reporte');
+    const wsC = wb.addWorksheet('Cuentas');
+    wsR.views = [{ state: 'frozen', ySplit: 1 }];
+    wsC.views = [{ state: 'frozen', ySplit: 1 }];
+    wsR.autoFilter = 'A1:AA1';
+    wsC.autoFilter = 'A1:R1';
+    wsR.columns = [{ width: 16 }, { width: 12 }, { width: 16 }, { width: 12 }, { width: 13 }, { width: 12 }, { width: 15 }, { width: 14 }, { width: 15 }, { width: 14 }, { width: 20 }, { width: 9 }, { width: 11 }, { width: 9 }, { width: 15 }, { width: 10 }, { width: 12 }, { width: 11 }, { width: 9 }, { width: 12 }, { width: 12 }, { width: 12 }, { width: 15 }, { width: 13 }, { width: 15 }, { width: 12 }, { width: 17 }];
+    wsC.columns = [{ width: 12 }, { width: 20 }, { width: 14 }, { width: 12 }, { width: 16 }, { width: 22 }, { width: 9 }, { width: 13 }, { width: 9 }, { width: 12 }, { width: 11 }, { width: 9 }, { width: 12 }, { width: 12 }, { width: 12 }, { width: 15 }, { width: 12 }, { width: 17 }];
+    styleHeaderRow(wsR.addRow(headers));
+    styleHeaderRow(wsC.addRow(headersCuentas));
+
+    try {
     let lastPedidoId = null;
     let rowToggle = false;
-    let excelRow = 2; // fila 1 es header, para fórmulas AA = W - Z/2
+    const MONEY_R = new Set([17, 18, 20, 21, 22, 23, 24, 25, 26, 27]);
+    const CENTER_R = new Set([1, 2, 3, 4, 5, 6, 8, 12, 13, 14, 16, 19]);
 
     data.forEach(v => {
       if (v.id !== lastPedidoId) { rowToggle = !rowToggle; lastPedidoId = v.id; }
-      const bg = rowToggle ? '#F8FAFC' : '#FFFFFF';
+      const zebra = rowToggle ? THEME.zebraA : THEME.zebraB;
       let items = null;
       if (v.items_camisa) {
         try { items = JSON.parse(v.items_camisa); } catch (e) { items = null; }
@@ -4809,7 +4845,7 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
       const cant = Number(v.cantidad) || 1;
       const abono = Number(v.abono) || 0;
       const pagosProv = abonosProveedorPorVentaId(v.id);
-      // Para el Excel por camisa: totales por pedido se reparten por item (fix ganancia duplicada)
+      // Por camisa: totales por pedido se reparten por item (fix ganancia duplicada)
       const sinDet = !(items && Array.isArray(items) && items.length > 0);
       const nItems = sinDet ? 1 : items.length;
       const cantPorItemBase = sinDet ? cant : (nItems === 1 ? cant : Math.floor(cant / nItems));
@@ -4822,11 +4858,7 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
         } catch (e) { logError('diaSemana', e); }
       }
 
-      const venClr = v.vendedor === 'Samir' ? 'background:#EFF6FF;color:#1D4ED8;font-weight:700' : v.vendedor === 'Valentina' ? 'background:#FDF2F8;color:#BE185D;font-weight:700' : '';
-
       const e = normalizarEstado(v.estado || '');
-      const eBg = statusBg[e] || 'transparent';
-      const eFg = statusFg[e] || '#000';
 
       items.forEach((it, idx) => {
         const cantItem = sinDet ? cant : (nItems === 1 ? cant : cantPorItemBase + (idx < restoCant ? 1 : 0));
@@ -4840,52 +4872,112 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
         const pendProvItem = costoItem - abonoYesItem;
         const gananciaItem = ventaItem - costoItem;
         const eItem = it.estado ? normalizarEstado(it.estado) : e;
-        const eiBg = statusBg[eItem] || statusBg[e] || 'transparent';
-        const eiFg = statusFg[eItem] || statusFg[e] || '#000';
-        html += '<tr style="background:' + bg + '">' +
-          '<td class="c">' + esc(v.id) + '</td>' +
-          '<td class="c">' + esc(v.fecha) + '</td>' +
-          '<td class="c">' + esc(v.fecha_entrega || 'Pendiente por definir') + '</td>' +
-          '<td class="c">' + esc(diaSemana) + '</td>' +
-          '<td style="background:' + eiBg + ';color:' + eiFg + ';font-weight:700;text-align:center">' + esc(eItem) + '</td>' +
-          '<td style="' + venClr + ';text-align:center">' + esc(v.vendedor) + '</td>' +
-          '<td>' + esc(v.cliente_nombre) + '</td>' +
-          '<td class="c">' + esc(v.cliente_telefono) + '</td>' +
-          '<td>' + esc(v.lugar_entrega) + '</td>' +
-          '<td>' + esc(v.entrega_por || 'Sin asignar') + '</td>' +
-          '<td>' + esc(v.nota) + '</td>' +
-          '<td class="c">' + esc(it.genero) + '</td>' +
-          '<td class="c">' + esc(capitalizarColor(it.color)) + '</td>' +
-          '<td class="c">' + esc(it.talla) + '</td>' +
-          '<td>' + esc(it.programa) + '</td>' +
-          '<td class="c">' + esc(etiquetaModelo(it.modelo)) + '</td>' +
-          '<td class="m">' + fmtNum(pItem) + '</td>' +
-          '<td class="m">' + fmtNum(cItem) + '</td>' +
-          '<td class="c">' + fmtNum(cantItem) + '</td>' +
-          '<td class="m" x:fmla="=Q' + excelRow + '*S' + excelRow + '">' + fmtNum(ventaItem) + '</td>' +
-          '<td class="m" x:fmla="=R' + excelRow + '*S' + excelRow + '">' + fmtNum(costoItem) + '</td>' +
-          '<td class="m">' + fmtNum(abonoItem) + '</td>' +
-          '<td class="m" x:fmla="=T' + excelRow + '-V' + excelRow + '">' + fmtNum(saldoItem) + '</td>' +
-          '<td class="m">' + fmtNum(abonoYesItem) + '</td>' +
-          '<td class="m" x:fmla="=U' + excelRow + '-X' + excelRow + '">' + fmtNum(pendProvItem) + '</td>' +
-          '<td class="m" x:fmla="=T' + excelRow + '-U' + excelRow + '">' + fmtNum(gananciaItem) + '</td>' +
-          '<td class="m" x:fmla="=W' + excelRow + '-Z' + excelRow + '/2">' + fmtNum(saldoItem - gananciaItem/2) + '</td>' +
-          '</tr>';
-        excelRow++;
+        const r = wsR.rowCount + 1;
+        const row = wsR.addRow([
+          v.id, v.fecha, v.fecha_entrega || 'Pendiente por definir', diaSemana, eItem,
+          v.vendedor, v.cliente_nombre, v.cliente_telefono, v.lugar_entrega, v.entrega_por || 'Sin asignar', v.nota,
+          it.genero, capitalizarColor(it.color), it.talla, it.programa, etiquetaModelo(it.modelo),
+          pItem, cItem, cantItem,
+          { formula: `Q${r}*S${r}`, result: ventaItem },
+          { formula: `R${r}*S${r}`, result: costoItem },
+          abonoItem,
+          { formula: `T${r}-V${r}`, result: saldoItem },
+          abonoYesItem,
+          { formula: `U${r}-X${r}`, result: pendProvItem },
+          { formula: `T${r}-U${r}`, result: gananciaItem },
+          { formula: `W${r}-Z${r}/2`, result: saldoItem - gananciaItem / 2 }
+        ]);
+        row.eachCell((cell, colNumber) => {
+          cell.font = THEME.bodyFont;
+          cell.border = THEME.thinBorder;
+          cell.fill = zebra;
+          cell.alignment = { vertical: 'center', wrapText: colNumber === 11 };
+          if (MONEY_R.has(colNumber)) { cell.numFmt = THEME.moneyFmt; cell.alignment = { horizontal: 'right', vertical: 'center' }; }
+          else if (CENTER_R.has(colNumber)) { cell.alignment = { horizontal: 'center', vertical: 'center' }; }
+          // Estado con color
+          if (colNumber === 5) {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: hexToArgb(statusBg[eItem] || '#FFFFFF') } };
+            cell.font = { name: 'Calibri', size: 10, bold: true, color: { argb: hexToArgb(statusFg[eItem] || '#000000') } };
+            cell.alignment = { horizontal: 'center', vertical: 'center' };
+          }
+          // Vendedor con color
+          if (colNumber === 6) {
+            if (v.vendedor === 'Samir') { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEFF6FF' } }; cell.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF1D4ED8' } }; }
+            else if (v.vendedor === 'Valentina') { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFDF2F8' } }; cell.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FFBE185D' } }; }
+            cell.alignment = { horizontal: 'center', vertical: 'center' };
+          }
+          // Negritas: Saldo y Me queda
+          if (colNumber === 23 || colNumber === 27) { cell.font = { name: 'Calibri', size: 10, bold: true }; }
+        });
+      });
+    });
+    // ---- Hoja Cuentas (18 columnas, fórmulas =J*L, =M-O, =M-N, =P-Q/2) ----
+    const MONEY_C = new Set([10, 11, 13, 14, 15, 16, 17, 18]);
+    const CENTER_C = new Set([1, 2, 3, 4, 7, 8, 9, 12]);
+    let lastC = null; let toggleC = false;
+    data.forEach(v => {
+      if (v.id !== lastC) { toggleC = !toggleC; lastC = v.id; }
+      const zebraC = toggleC ? THEME.zebraA : THEME.zebraB;
+      let itemsC = null;
+      try { itemsC = JSON.parse(v.items_camisa); } catch (e) { itemsC = null; }
+      if (!itemsC || !Array.isArray(itemsC) || itemsC.length === 0) itemsC = [{ genero: v.genero || '', color: v.color || '', talla: v.talla || '', programa: v.cliente_programa || '' }];
+      const cantAllC = Number(v.cantidad) || 1;
+      const nIC = itemsC.length;
+      const baseC = nIC === 1 ? cantAllC : Math.floor(cantAllC / nIC);
+      const restoC = nIC === 1 ? 0 : cantAllC - baseC * nIC;
+      const entregaC = (v.fecha_entrega || 'Pendiente por definir') + (v.lugar_entrega ? ' · ' + v.lugar_entrega : '');
+      const eCb = normalizarEstado(v.estado || '');
+      itemsC.forEach((it, idxC) => {
+        const cantItemC = nIC === 1 ? cantAllC : baseC + (idxC < restoC ? 1 : 0);
+        const pC = precioDeItem(it, v);
+        const cC = costoDeItem(it, v);
+        const abC = (it.abono != null && it.abono !== '' && !isNaN(Number(it.abono))) ? Number(it.abono) : (Number(v.abono) || 0) / nIC;
+        const eItemC = it.estado ? normalizarEstado(it.estado) : eCb;
+        const r = wsC.rowCount + 1;
+        const rowC = wsC.addRow([
+          v.fecha, entregaC, eItemC, v.vendedor, v.cliente_nombre, v.nota,
+          it.genero, capitalizarColor(it.color), it.talla, pC, cC, cantItemC,
+          { formula: `J${r}*L${r}`, result: pC * cantItemC },
+          { formula: `K${r}*L${r}`, result: cC * cantItemC },
+          abC,
+          { formula: `M${r}-O${r}`, result: (pC * cantItemC) - abC },
+          { formula: `M${r}-N${r}`, result: (pC * cantItemC) - (cC * cantItemC) },
+          { formula: `P${r}-Q${r}/2`, result: ((pC * cantItemC) - abC) - (((pC * cantItemC) - (cC * cantItemC)) / 2) }
+        ]);
+        rowC.eachCell((cell, colNumber) => {
+          cell.font = THEME.bodyFont;
+          cell.border = THEME.thinBorder;
+          cell.fill = zebraC;
+          cell.alignment = { vertical: 'center', wrapText: colNumber === 6 };
+          if (MONEY_C.has(colNumber)) { cell.numFmt = THEME.moneyFmt; cell.alignment = { horizontal: 'right', vertical: 'center' }; }
+          else if (CENTER_C.has(colNumber)) { cell.alignment = { horizontal: 'center', vertical: 'center' }; }
+          if (colNumber === 3) {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: hexToArgb(statusBg[eItemC] || '#FFFFFF') } };
+            cell.font = { name: 'Calibri', size: 10, bold: true, color: { argb: hexToArgb(statusFg[eItemC] || '#000000') } };
+            cell.alignment = { horizontal: 'center', vertical: 'center' };
+          }
+          if (colNumber === 16 || colNumber === 18) { cell.font = { name: 'Calibri', size: 10, bold: true }; }
+        });
       });
     });
 
-    html += '</table></body></html>';
-
-    const blob = new Blob(["\uFEFF" + html], { type: 'application/vnd.ms-excel;charset=utf-8' });
+    const buf = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'Reporte_Ventas_Camisas_IUB_' + hoyColombia() + '.xls';
+    a.download = 'Reporte_Ventas_Camisas_IUB_' + hoyColombia() + '.xlsx';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    mostrarToast('✅ Reporte Excel exportado (Reporte + Cuentas).');
+    } catch (err) {
+      logError('exportarExcelCompleto', err);
+      mostrarToast('Error al exportar: ' + (err.message || err), 'error');
+    } finally {
+      showLoading(false);
+    }
   }
 
   /* =====================================================
