@@ -1732,9 +1732,9 @@ return items.map((it, idx) => `
     const listas = [];
     porClave.forEach(g => {
       if (g.sinFecha) {
-        listas.push(`📦 <b>${g.cliente}</b> (${g.vendedor}) está <b>Listo para entrega</b> pero sin fecha de entrega definida${g.count > 1 ? ` — ${g.count} pedidos` : ''}`);
+        listas.push(`📦 <b>${g.cliente}</b> (${g.vendedor}) — ${g.count} pedido${g.count > 1 ? 's' : ''} en <b>Listo para entrega</b> sin fecha`);
       } else if (g.dias !== null && g.dias >= 2) {
-        listas.push(`📦 <b>${g.cliente}</b> (${g.vendedor}) lleva ${g.dias} días <b>Listo para entrega</b> sin entregarse (fue el ${formatearFechaHumana(g.fecha)})${g.count > 1 ? ` — ${g.count} pedidos` : ''}`);
+        listas.push(`📦 <b>${g.cliente}</b> (${g.vendedor}) — ${g.count} pedido${g.count > 1 ? 's' : ''} en <b>Listo para entrega</b> desde ${formatearFechaHumana(g.fecha)} (hace ${g.dias} días)`);
       }
     });
     return listas;
