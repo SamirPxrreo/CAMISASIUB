@@ -2906,13 +2906,21 @@ return items.map((it, idx) => `
       }
       document.getElementById('f-cantidad').value = items.length;
 
+      const abonosTmp = items.map(it => Number(it.abono) || 0);
+      const totalAbonoTmp = abonosTmp.reduce((s, v) => s + v, 0);
+      const abonosUniformTmp = abonosTmp.every(v => v === abonosTmp[0]);
+      const abonosSimplePatTmp = abonosTmp[0] === totalAbonoTmp && abonosTmp.slice(1).every(v => v === 0);
+      const abonoUniformeTmp = abonosUniformTmp || abonosSimplePatTmp;
       const uniforme = items.every(it =>
         it.genero === items[0].genero &&
         it.color === items[0].color &&
         it.talla === items[0].talla &&
+        (it.programa || '') === (items[0].programa || '') &&
+        normalizarModelo(it.modelo) === normalizarModelo(items[0].modelo) &&
         (it.precio != null ? it.precio === items[0].precio : items[0].precio == null) &&
         (it.costo != null ? it.costo === items[0].costo : items[0].costo == null) &&
-        (it.estado != null ? it.estado === items[0].estado : items[0].estado == null)
+        (it.estado != null ? it.estado === items[0].estado : items[0].estado == null) &&
+        abonoUniformeTmp
       );
       const toggle = document.getElementById('f-detalle-individual');
 
