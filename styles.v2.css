@@ -1335,6 +1335,9 @@ header.top .who {
 #section-orders .table-wrap td:nth-child(10),
 #section-orders .table-wrap td:nth-child(12),
 #section-orders .table-wrap td:nth-child(13) { white-space: nowrap; }
+#section-orders .table-wrap th:nth-child(12),
+#section-orders .table-wrap td:nth-child(12) { text-align: center; }
+#section-orders .table-wrap td:nth-child(12) .estado-select { margin: 0 auto; display: block; }
 #section-orders .table-wrap th:nth-child(1),
 #section-orders .table-wrap th:nth-child(2),
 #section-orders .table-wrap th:nth-child(3),
@@ -1489,6 +1492,8 @@ select.estado-select {
   min-width: 110px;
   cursor: pointer;
   transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
+  text-align: center;
+  text-align-last: center;
 }
 select.estado-select:hover { border-color: var(--thread); }
 select.estado-select.estado-Pedido { background: rgba(200, 147, 42, 0.20); color: var(--gold-ink); border: 1px solid rgba(200, 147, 42, 0.45); }
@@ -2195,6 +2200,7 @@ html.modal-lock {
   align-items: center;
   gap: 4px 16px;
 }
+.order-card-row:has(.badge-estado) { justify-content: center; }
 .order-card-row + .order-card-row { margin-top: 6px; }
 
 .order-card-client {
@@ -2301,6 +2307,8 @@ html.modal-lock {
   .order-card-row { gap: 4px 8px; }
   .order-card-entrega { flex: 1 1 100%; min-width: 0; word-break: break-word; white-space: normal; }
   .order-card-footer .btn-copy-card { width: 100%; text-align: center; justify-content: center; }
+  .order-card-copy .btn-copy-card { width: 100%; text-align: center; justify-content: center; }
+  select.estado-select { min-width: 90px; font-size: 12px; padding: 5px 8px; }
   .order-card-item { font-size: 12px; }
   .dash-search { width: 100%; }
 }
