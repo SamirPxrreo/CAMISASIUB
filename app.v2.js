@@ -1711,22 +1711,30 @@ return items.map((it, idx) => `
     return listas;
   }
 
-  // Alerta si un pedido "Listo para entrega" no tiene fecha de entrega definida
-  // (nadie sabe cuándo se entrega) o lleva varios días listo sin entregarse.
+  // Alerta si un pedido "Listo para entrega" no tiene fecha o lleva días sin entregarse.
+  // Agrupa por cliente+vendedor+fecha para no repetir 5 veces el mismo aviso (ej. Sara 5 pedidos iguales).
   function alertasListosSinEntrega() {
     const esAdmin = currentRole.role === 'admin';
     const miNombre = currentRole.vendedor;
-    const listas = [];
+    const porClave = new Map();
     ventasCache.forEach(v => {
       if (v.finalizado || estadosTodosLiquidado(v) || !todosItemsListosEntrega(v)) return;
       if (!esAdmin && v.vendedor !== miNombre) return;
-      if (!v.fecha_entrega) {
-        listas.push(`📦 <b>${v.cliente_nombre}</b> (${v.vendedor}) está <b>Listo para entrega</b> pero sin fecha de entrega definida`);
-        return;
+      const clave = `${v.cliente_nombre || ''}|${v.vendedor || ''}|${v.fecha_entrega || ''}`;
+      if (!porClave.has(clave)) porClave.set(clave, { cliente: v.cliente_nombre, vendedor: v.vendedor, fecha: v.fecha_entrega, count: 0, dias: null, sinFecha: !v.fecha_entrega });
+      const g = porClave.get(clave);
+      g.count += 1;
+      if (v.fecha_entrega) {
+        const d = diasTranscurridos(v.fecha_entrega);
+        if (d !== null) g.dias = d;
       }
-      const dias = diasTranscurridos(v.fecha_entrega);
-      if (dias !== null && dias >= 2) {
-        listas.push(`📦 <b>${v.cliente_nombre}</b> (${v.vendedor}) lleva ${dias} días <b>Listo para entrega</b> sin entregarse (fue el ${formatearFechaHumana(v.fecha_entrega)})`);
+    });
+    const listas = [];
+    porClave.forEach(g => {
+      if (g.sinFecha) {
+        listas.push(`📦 <b>${g.cliente}</b> (${g.vendedor}) está <b>Listo para entrega</b> pero sin fecha de entrega definida${g.count > 1 ? ` — ${g.count} pedidos` : ''}`);
+      } else if (g.dias !== null && g.dias >= 2) {
+        listas.push(`📦 <b>${g.cliente}</b> (${g.vendedor}) lleva ${g.dias} días <b>Listo para entrega</b> sin entregarse (fue el ${formatearFechaHumana(g.fecha)})${g.count > 1 ? ` — ${g.count} pedidos` : ''}`);
       }
     });
     return listas;
