@@ -1269,6 +1269,21 @@ header.top .who {
 .table-wrap table thead th:last-child { z-index: 12; }
 .table-wrap table td:last-child { z-index: 4; }
 .table-wrap tbody tr:hover td:last-child { background: var(--table-hover); }
+.orders-summary {
+  margin: 10px 0 12px;
+  padding: 9px 12px;
+  background: var(--accent-bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  align-items: center;
+}
+.orders-summary b { color: var(--ink); font-weight: 700; }
+.orders-summary.hidden { display: none; }
 .table-wrap th, .table-wrap td { padding: 8px 24px; }
 #section-orders .table-wrap td:nth-child(4) { white-space: normal; min-width: 350px; }
 #section-orders .table-wrap td:nth-child(5),
