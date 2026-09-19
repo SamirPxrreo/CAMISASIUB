@@ -1331,7 +1331,11 @@ header.top .who {
   max-width: 180px;
   white-space: normal;
 }
-#section-cuentas .table-wrap table { min-width: 860px; }
+#section-cuentas .table-wrap table { min-width: 960px; }
+#section-cuentas .table-wrap th:nth-child(1),
+#section-cuentas .table-wrap td:nth-child(1) { max-width: 220px; }
+#section-cuentas .table-wrap th:nth-child(2),
+#section-cuentas .table-wrap td:nth-child(2) { min-width: 110px; white-space: nowrap; }
 #section-settlements .table-wrap table { min-width: 980px; }
 #section-settlements .table-wrap th:nth-child(1),
 #section-settlements .table-wrap td:nth-child(1) {
