@@ -649,6 +649,10 @@
 
   function puedeMarcarPagado(v) {
     const faltas = [];
+    const saldoCliente = Math.max(precioTotalVenta(v) - abonoClienteTotal(v), 0);
+    if (saldoCliente > 1) {
+      faltas.push(`Falta cobrar ${fmt(saldoCliente)} al cliente — revisa si ya terminó de abonar antes de liquidar.`);
+    }
     if (!costoProveedorPagado(v)) {
       const pagos = abonosProveedorPorVentaId(v.id);
       faltas.push(`Falta pagar ${fmt(pagos.pendiente)} al proveedor (registra abonos en Abonos Yesenia).`);
