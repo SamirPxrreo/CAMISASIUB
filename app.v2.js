@@ -221,6 +221,7 @@
     } },
     cuentas: { render: renderCuentas, campos: {
       cliente: { val: r => (r.cliente || '').toLowerCase(), tipo: 'text' },
+      vendedor:{ val: r => (r.vendedores || '').toLowerCase(), tipo: 'text' },
       pedidos: { val: r => r.pedidos.length, tipo: 'num' },
       camisas: { val: r => r.camisas, tipo: 'num' },
       vendido: { val: r => r.vendido, tipo: 'num' },
@@ -5229,6 +5230,7 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
       g.cliente = etiquetaClienteGrupo(g.pedidos);
       const tel = g.pedidos.find(p => String(p.cliente_telefono||'').trim());
       g.telefono = tel ? String(tel.cliente_telefono).trim() : '';
+      g.vendedores = [...new Set(g.pedidos.map(p => p.vendedor).filter(Boolean))].join(', ');
       g.pedidos.sort((a,b)=> String(a.fecha||'').localeCompare(String(b.fecha||'')));
       g.camisas = g.pedidos.reduce((s,v)=> s + (Number(v.cantidad)||1), 0);
       g.vendido = g.pedidos.reduce((s,v)=> s + precioTotalVenta(v), 0);
@@ -5244,7 +5246,7 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
     const q = (document.getElementById('filter-cuentas-search')?.value || '').toLowerCase().trim();
     let filas = getCuentasAgrupadas();
     if (q) {
-      filas = filas.filter(r => (r.cliente||'').toLowerCase().includes(q) || (r.telefono||'').toLowerCase().includes(q) || r.clave.toLowerCase().includes(q));
+      filas = filas.filter(r => (r.cliente||'').toLowerCase().includes(q) || (r.telefono||'').toLowerCase().includes(q) || r.clave.toLowerCase().includes(q) || (r.vendedores||'').toLowerCase().includes(q));
     }
     filas = ordenarFilas(filas, 'cuentas', REGISTRO_ORDEN.cuentas.campos);
     const body = document.getElementById('cuentas-body');
@@ -5271,7 +5273,8 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
       const entregaTxt = r.ultimaEntrega ? formatearFechaHumana(r.ultimaEntrega).replace(/^📅\s*/,'') : 'Sin fecha';
       return `
         <tr>
-          <td><b>${escSimple(r.cliente)}</b><span class="sub-tag">📞 ${escSimple(r.telefono||r.clave)} · ${pedidosTxt}</span></td>
+          <td style="max-width:220px;"><b>${escSimple(r.cliente)}</b><span class="sub-tag">📞 ${escSimple(r.telefono||r.clave)} · ${pedidosTxt}</span></td>
+          <td>${escSimple(r.vendedores || '—')}</td>
           <td class="c"><b>${r.pedidos.length}</b></td>
           <td class="c">${r.camisas}</td>
           <td class="money">${fmt(r.vendido)}</td>
