@@ -1082,20 +1082,30 @@
         .filter(v => !v.eliminado_at)
         .map(r => `${r.id}.${r.updated_at || r.created_at || ''}.${r.finalizado ? 1 : 0}.${r.abono || 0}.${r.abono_yesenia || 0}`)
         .sort().join('|');
-      if (firmaDe(data) !== firmaDe(ventasCache)) marcarCambioPendiente();
+      if (firmaDe(data) !== firmaDe(ventasCache)) {
+        console.info('[sync] el SONDEO detecto un cambio (realtime no llego)');
+        marcarCambioPendiente();
+      }
     } catch (e) { /* silencioso: el sondeo es opcional */ }
   }
 
   function iniciarSync() {
     detenerSync();
+    const alRecibir = (tabla) => (carga) => {
+      console.info(`[sync] EVENTO realtime en ${tabla}: ${carga.eventType}`);
+      marcarCambioPendente();
+    };
     try {
       canalSync = supabaseClient.channel('sync-camisas-iub')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'ventas' }, marcarCambioPendiente)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'compras_proveedor' }, marcarCambioPendiente)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'compra_aportes' }, marcarCambioPendiente)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'liquidaciones' }, marcarCambioPendiente)
-        .subscribe();
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'ventas' }, alRecibir('ventas'))
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'compras_proveedor' }, alRecibir('compras_proveedor'))
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'compra_aportes' }, alRecibir('compra_aportes'))
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'liquidaciones' }, alRecibir('liquidaciones'))
+        .subscribe((estado, err) => {
+          console.info(`[sync] canal realtime: ${estado}` + (err ? ' | ' + (err.message || err) : ''));
+        });
     } catch (e) { logError('iniciarSync', e); canalSync = null; }
+    console.info(`[sync] sondeo cada ${INTERVALO_SONDEO_MS / 1000} s`);
     temporizadorSync = setInterval(detectarCambios, INTERVALO_SONDEO_MS);
   }
 
