@@ -964,7 +964,7 @@
      abierto, NO se le refresca nada — solo se le avisa.
      ===================================================== */
   const TABLAS_SINCRONIZADAS = ['ventas', 'compras_proveedor', 'compra_aportes', 'liquidaciones'];
-  const INTERVALO_SONDEO_MS = 60000;
+  const INTERVALO_SONDEO_MS = 30000;
   let canalSync = null;
   let temporizadorSync = null;
   let pendientesSync = false;
@@ -972,9 +972,14 @@
   let ultimaEntradaUsuario = 0;
 
   // ¿Está el usuario a mitad de algo? Si sí, jamás se le refresca.
+  // OJO: hay que mirar la SECCIÓN, no #form-card. #form-card nunca lleva la
+  // clase hidden en el HTML (solo se la pone closeForm), así que consultarla
+  // daba true siempre y, con un cliente ya escrito en el campo, bloqueaba la
+  // sincronización para siempre. La visibilidad real la controla la sección.
   function usuarioOcupado() {
-    const form = document.getElementById('form-card');
-    if (form && !form.classList.contains('hidden')) {
+    const seccion = document.getElementById('section-new-sale');
+    const enFormulario = seccion && !seccion.classList.contains('hidden');
+    if (enFormulario) {
       if (editingId) return true;                      // editando un pedido existente
       if ((document.getElementById('f-cliente')?.value || '').trim()) return true;  // pedido nuevo ya empezado
     }
@@ -1013,7 +1018,10 @@
   }
 
   async function aplicarCambiosExternos(silencioso) {
-    if (syncEnVuelo || !currentUser) return;
+    if (!currentUser) return;
+    // Si ya hay una sincronización en marcha, no se pierde este cambio:
+    // se marca para repetir al terminar.
+    if (syncEnVuelo) { pendientesSync = true; return; }
     syncEnVuelo = true;
     pendientesSync = false;
     ocultarAvisoSync();
@@ -1022,11 +1030,17 @@
       await loadLiquidaciones();
       await loadCuentasSilencioso();
       renderResumenesSiVisible();
+      console.info('[sync] datos actualizados' + (silencioso ? ' (silencioso)' : ''));
       if (!silencioso) mostrarToast('🔔 Actualizado con cambios de otro dispositivo.', 'info');
     } catch (e) {
       logError('aplicarCambiosExternos', e);
     } finally {
       syncEnVuelo = false;
+      // Llegó otro cambio mientras corría esta: se aplica ahora.
+      if (pendientesSync && !usuarioOcupado()) {
+        pendientesSync = false;
+        setTimeout(() => aplicarCambiosExternos(true), 400);
+      }
     }
   }
 
@@ -1050,19 +1064,20 @@
   }
 
   // Firma barata del estado: solo id + updated_at. Si cambia, hay algo nuevo.
+  // OJO: hay que aplicar el MISMO filtro que loadVentas (quitar eliminados).
+  // Sin eso, la fila de la papelera estaba en la firma pero no en el cache y
+  // la app detectaba "cambios" eternamente, recargando sin parar.
   async function detectarCambios() {
     if (!currentUser || syncEnVuelo) return;
     try {
       const { data, error } = await supabaseClient
-        .from('ventas').select('id, updated_at, created_at, finalizado, abono, abono_yesenia');
+        .from('ventas').select('id, updated_at, created_at, finalizado, abono, abono_yesenia, eliminado_at');
       if (error) return;
-      const firma = (data || [])
+      const firmaDe = lista => (lista || [])
+        .filter(v => !v.eliminado_at)
         .map(r => `${r.id}.${r.updated_at || r.created_at || ''}.${r.finalizado ? 1 : 0}.${r.abono || 0}.${r.abono_yesenia || 0}`)
         .sort().join('|');
-      const actual = ventasCache
-        .map(r => `${r.id}.${r.updated_at || r.created_at || ''}.${r.finalizado ? 1 : 0}.${r.abono || 0}.${r.abono_yesenia || 0}`)
-        .sort().join('|');
-      if (firma !== actual) marcarCambioPendiente();
+      if (firmaDe(data) !== firmaDe(ventasCache)) marcarCambioPendiente();
     } catch (e) { /* silencioso: el sondeo es opcional */ }
   }
 
