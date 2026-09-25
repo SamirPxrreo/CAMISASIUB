@@ -166,10 +166,11 @@ Reglas en el código:
 - **➕ Nueva Venta / edición:** formulario con modo simple e individual (por camisa), con versión **1/2** (por defecto 1). El "Abono recibido del cliente" se reparte por camisa en `items[].abono`.
 - **📋 Pedidos:** tabla con Abono Cliente, Saldo Cliente, Pagado a Proveedor, Falta Pagar. Columna Entrega muestra `📍 lugar · 🚚 quien entrega`. Cambio de estado directo por dropdown (aplica a todas las camisas) + badge de estado por camisa. Botones: Editar, + Abono (cliente), 🧾 Recibo (imprimir), Finalizar, Borrar.
 - **🛍️ Abonos Yesenia:** lista de abonos (compras). Botón "+ Nuevo abono". Cada fila agrupa por contacto (tel/@) — 1 fila por cliente con `cliente(s) · pedido(s)`, muestra Camisas/Abono/Saldo agregados. Botón "Ver / Abonar" abre el modal con desglose editable equitativo por camisa.
+- **💳 Cuentas:** saldo total por cliente sumando sus pedidos activos, agrupado por `claveCliente` (tel/@). KPIs (total por cobrar, clientes con deuda, deuda promedio) + botón **🧾 Factura** que abre un modal para elegir pedidos y camisas concretas y generar un comprobante imprimible con el mismo formato del recibo.
 - **💰 Liquidaciones:** pagos entre socios (50% de la ganancia por pedido). Selecciona pedido con saldo pendiente.
-- **📊 Resúmenes / 📈 Reportes:** estadísticas, ventas, por vendedor, por cliente, compras, KPIs. Exportaciones Excel.
+- **📊 Resúmenes / 📈 Reportes:** estadísticas, ventas, por vendedor, por cliente, compras, KPIs. Exportaciones Excel: `exportarCompraExcel` (SheetJS, lista de compra) y `exportarExcelCompleto` (ExcelJS, 2 hojas con estilos, colores por estado/vendedor, zebra por pedido, `autoFilter` y header fijo; **solo admin**).
 - **⚙️ Configuración (solo admin):** CRUD de filas en `usuarios`.
-- **📚 Historial:** pedidos finalizados (restaurar / 🧾 recibo / borrar).
+- **📚 Historial:** pedidos finalizados (restaurar / 🧾 recibo / borrar; `✏️ Editar` solo admin).
 
 ### Flujo de un "Abono a Yesenia" (modal)
 1. `+ Nuevo abono` → se eligen clientes agrupados por contacto (`claveCliente` tel/@) — 1 checkbox por cliente sumando camisas/costo. Se escribe **"Abono total que paga a Yesenia"** por cliente; si el cliente tiene varios pedidos se muestra desglose editable por pedido (sugerido equitativo por camisa: `total ÷ camisas`).
@@ -181,6 +182,13 @@ Reglas en el código:
 - **Admin:** ve y edita todo.
 - **Vendedor comprador** del abono (`comprador === vendedor`): puede editar el abono.
 - **Vendedor que solo participa** (tiene pedidos en el abono): modal en modo "solo ver" + sección "Abonar más a Yesenia" para sus propios pedidos.
+
+> ⚠️ En 2026-09-25 se eliminó el código de la sección "Abonar más a Yesenia"
+> (`registrarAbonoAdicional`, `renderAbonoAdicional`, `pedidosMiosEnCompra`,
+> `saldoPedidoCompra`, `actualizarTotalAbonoAdicional`): el div `#cp-abono-adicional`
+> ya no existe en el HTML, así que eran ~110 líneas muertas que además escribían
+> en `ventas` y `compra_aportes` sin haberse probado en meses. Para abonar más se
+> edita el abono en el desglose del picker.
 
 ---
 
@@ -225,10 +233,16 @@ Reglas en el código:
 37. **Precio, costo, abono y estado POR CAMISA:** `items_camisa[]` ahora guarda `precio`, `costo`, `abono` y `estado` por camisa (misma fila de venta, sin migración: es jsonb). Helpers únicos de dinero en `app.v2.js:349`: `precioDeItem`/`costoDeItem`, `precioTotalVenta`/`costoTotalVenta`/`abonoClienteTotal` (suma por camisa con respaldo a la fórmula vieja `precio_unitario*cantidad` para pedidos anteriores), `estadosItemsVenta`/`estadoGeneralVenta` (`Mixto` cuando difieren, no se persiste: al guardar se rollupea al estado más atrasado según `ORDEN_ESTADOS`), `todosItemsListosEntrega` (todas Entregado/Liquidado) y `estadosTodosLiquidado` (finalizables). Tabla Pedidos/Historial: badge de estado por camisa + dropdown global que aplica el estado a TODAS las camisas (`updateEstado` reescribe `items_camisa[].estado`); la columna Estado muestra el estado más atrasado y, si mezcla, una filita con la cuenta por estado (`estadosCuentasHtml`, ej. "Bordando ×4 · Listo para entrega ×2"), badge "✅ Listo para liquidar" exige todas entregadas, `Finalizar` solo si todas Liquidado. Filtro por estado incluye el pedido si ALGUNA camisa coincide. Formulario: en modo individual cada fila tiene Precio venta, Costo Yesenia, Abono y Estado (`camisa-item-money`); en modo simple las camisas heredan `f-precio`/`f-costo`/`f-estado`. Abonos Yesenia: `abonosProveedorPorVentaId` prefiere la suma de `items[].abono_yesenia`, reparto equitativo proporcional al costo de cada camisa. Excel: `exportarExcelCompleto` con precio/costo/estado por camisa; `exportarCompraExcel` solo lista las camisas en estado `Pedido` (y totales) cuando el filtro es "por comprar". Sin cambios en Supabase.
 38. **Costo a proveedor sugerido por talla y versión:** `costoProveedorSugerido()` (`app.v2.js`, `EXTRA_TALLAS_COSTO`) calcula el costo Yesenia: v1 base $30.000 (S..XL), 2XL +$2.000 (32.000), 3XL +$4.000 (34.000), 4XL +$6.000 (36.000); **versión 2 = +$1.000** (31.000, 33.000, 35.000, 37.000). Se autocompleta el campo Costo al elegir talla/versión en modo simple (`cs-talla`/`cs-modelo`) y en cada fila del modo individual (`ci-talla`/`ci-modelo`); si el usuario edita el costo a mano, ya no se pisa. Al editar una venta existente el costo registrado manda. Hint en el formulario. Sin cambios en Supabase.
 39. **Operaciones diarias (4 ítems):** **(a) Alertas de tiempo muerto** — `calcularAlertas()` avisa camisas atascadas en `Pedido` (≥3 d), `Comprado` (≥5 d) o `Bordando` (≥7 d) contando por estado (`UMBRAL_DIAS_ESTADO` + `diasTranscurridos()`), con nota si en Pedido ya tiene `compra_id`; también avisa pedidos "Listo para entrega" sin fecha o sin entregarse ≥2 d desde su fecha (`alertasTiempoMuerto`/`alertasListosSinEntrega`). **(b) "🗓️ Recordar mañana" — ~~botón + recordatorios en localStorage~~ ELIMINADO (2026-09-13).** **(c) Arqueo de caja** — ~~nueva sección `💵 Caja`~~ **ELIMINADA** por decisión de Samir (2026-09-13); si se quiere recuperar, está en el historial de git (commit `09cd13b`). **(d) Recibo imprimible v2** — botón `🧾 Recibo` en Pedidos e Historial (`imprimirRecibo(id)`): ventana autocontenida con **plantilla nueva (2026-09-13, refinada 4690df0)** — header CAMISAS IUB + RECIBO #ID, 2 tarjetas (Cliente / Entrega), tabla Descripción (color · talla · género · modelo) + Cant/Precio/Abono, bloque totales (Total/Abono/Saldo), notas y footer (sin ubicación Ibagué ni firmas, a pedido de Samir). Botones Imprimir/Cerrar, auto-print.
-40. **Despliegue en GitHub Pages + limpieza de deployments:** el sitio se publica en <https://SamirPxrreo.github.io/CAMISASIUB/> con cada `git push` a `main` (Pages `build_type=legacy`). Se eliminaron los deployments históricos (GitHub conserva todos y no deja borrar los "active" salvo marcar su estado `inactive` vía API primero: `POST /deployments/{id}/statuses` con `{"state":"inactive"}` y luego `DELETE`). Quedaron solo **2 deployments**: el actual y el `07d914b` de respaldo. Documentado en secciones 2 y 12.
+40. **Despliegue en GitHub Pages + limpieza de deployments:** el sitio se publica en <https://SamirPxrreo.github.io/CAMISASIUB/> con cada `git push` a `main` (Pages `build_type=legacy`). Se eliminan los deployments históricos (GitHub conserva todos y no deja borrar los "active" salvo marcar su estado `inactive` vía API primero: `POST /deployments/{id}/statuses` con `{"state":"inactive"}` y luego `DELETE`). La política de conservación **cambió el 2026-09-25**: ahora son 3 (último + penúltimo + ancla), ver #48 y sección 12.
 41. **Abonos Yesenia — filtro por persona (admin):** en "Nuevo abono a Yesenia" el admin elige "Persona que realiza el abono" (Samir/Valentina); ahora el picker filtra y solo muestra los pedidos de esa persona (antes mostraba todos mezclados). Texto cambiado de "Persona que realizó la compra" → "Persona que realiza el abono" (`index.html:643`, `app.v2.js:3488` + `renderPedidosPicker` + `onchange` en `openCompraModal`).
 42. **Inicio — "Pedidos que debo entregar" agrupa por cliente:** `ordenarPorEntrega()` ahora ordena `fecha_entrega` → `entrega_por` → `cliente_nombre` → `fecha` → `id`, así los 2 pedidos de "Aleja Sandoval" para el mismo lunes quedan pegados (antes quedaban separados por fecha de creación).
 43. **WhatsApp copiar sin estado:** `renderOrderCard()` → `detalleWhatsApp` ya no incluye " — Listo para entrega" (solo "Mujer · Negro · L · LICENCIATURA"). En la tarjeta del inicio el estado sigue visible para el vendedor, pero al copiar para el cliente no sale.
+44. **💳 Cuentas por cliente + factura personalizada (2026-09-18, commit `923ca26`):** nueva sección en el menú. `getCuentasAgrupadas()` agrupa las ventas no finalizadas por `claveCliente` (tel/@) y calcula `vendido`/`abono`/`saldo` sumando por pedido; KPIs de total por cobrar, clientes con deuda y deuda promedio. Botón **🧾 Factura** → `openFacturaModal(clave)` permite marcar pedidos y camisas concretas y `generarFacturaPersonalizada()` imprime con la misma plantilla del recibo. Botón **👁️ Pedidos** → `verPedidosCliente`.
+45. **Excel con diseño real (2026-09-18, commit `6b86c41`):** `exportarExcelCompleto()` con **ExcelJS** en lugar de un CSV pelado: 2 hojas (`Reporte` 27 col + `Cuentas` 18 col) con fórmulas de Excel (Venta=`Q*S`, Saldo=`T-V`, Ganancia=`T-U`, "Me queda"=`W-Z/2`), zebra por pedido, colores por estado y por vendedor, `autoFilter` y header congelado. Solo admin. `exportarCompraExcel` sigue con SheetJS.
+46. **Fixes varios (2026-09-18, commits `e16306c`…`abaef9a`):** alertas de "Listo para entrega" agrupadas por cliente (no 5 avisos del mismo pedido); Excel con columna Color 16 y BOM UTF-8; `abonosProveedorPorVentaId` solo reparte proporcional si **no** hay `abono_yesenia` definido (no cuando es `0` explícito), para que "Abono $240k / Saldo $60k" cuadre; hora de pedido en la tabla; la caja de deuda sin duplicados; botón `🔄 Actualizar`; una sola `×` en los buscadores.
+47. **Camisas por fila con `+`/`−` y papelera (2026-09-25, commit `d18a596`):** se eliminaron el campo **Cantidad** y la casilla **"Llenar cada camisa por separado"** — el detalle por camisa es ahora el único modo. En su lugar hay un contador `− [n] +` (`camisa-mas`/`camisa-menos`/`camisa-total`): `+` agrega una fila **copiando la última camisa** y enfocando el primer campo vacío, `−` quita la última, y cada fila tiene 🗑️ (`eliminarFilaCamisa(index)`) para quitar esa camisa concreta con confirmación. Mínimo 1, máximo `MAX_CAMISAS_PEDIDO = 30`. Las filas se renumeran solas. **Fix de paso:** `numOrBlank()` evita que un campo de dinero vacío se redibuje como `value="NaN"`, y al editar un pedido antiguo sin precio por camisa las filas heredan `precio_unitario`/`costo_unitario` (antes había que digitarlos uno por uno). La sección "Pago y Costos" queda oculta en el HTML (sus campos `f-precio`/`f-costo`/`f-estado` se usan como default y respaldo).
+48. **Política de 3 deployments (2026-09-25, commit `c3adc07`):** `clean-deployments.ps1` ya no deja los 2 más nuevos sino **3**: el último (vivo), el penúltimo (rollback) y **el más viejo (ancla, nunca se borra)**. Como el ancla no se borra, la política se estabiliza sola tras cada push. Ancla actual: `019625c`. Ver sección 12.
+49. **Limpieza de código muerto y escapado de HTML (2026-09-25):** se borraron ~191 líneas sin uso: el cluster "Abonar más a Yesenia" (`registrarAbonoAdicional`, `renderAbonoAdicional`, `pedidosMiosEnCompra`, `saldoPedidoCompra`, `actualizarTotalAbonoAdicional`), `formatearDetalleCamisa`, `itemsCamisaVenta`, `distribuirAbonoPersona` (duplicada de `distribuirAbonoEquitativo`), el binding inefectivo de `.editar-button` en `DOMContentLoaded` (corría antes de `checkSession()`), los campos `pagadoSamirAVal`/`pagadoValASamir` (siempre 0), la variable `estadoTxt` y la clave `camisasIUB_refresh` de localStorage. Además, **todo dato que viene de la base y se inyecta en HTML ahora pasa por `escSimple`/`escAttr`/`argOnClick`**: se corrigieron las inyecciones en las tarjetas del inicio, la tabla de Pedidos y Historial, Compras, Liquidaciones, Usuarios, Cuentas, los alerts y el detalle de camisas (incluido el campo Bordado). `argOnClick` protege los `onclick="funcion('...')"` (Cuentas → Factura/Pedidos, copiar @ y el mensaje de WhatsApp).
 
 ---
 
@@ -333,10 +347,14 @@ UPDATE ventas SET estado='Liquidado' WHERE estado='Pagado';
 4. **Eliminar el botón "🗓️ Recordar mañana"** del inicio (`renderOrderCard`, junto a "📋 Copiar"): NO le parece útil como está. → **✅ HECHO (2026-09-13):** se eliminó el botón, todo el sistema de recordatorios (localStorage) y la regla CSS `.btn-copy-ok`.
 5. **Calendario → ❌ CERRADO (2026-09-13).** Se implementó el botón "📅 Calendario" con exportación a `.ics` y hoja de compartir en móvil, pero **no funcionó en el teléfono de Samir** y pidió eliminarlo. → **Eliminado por completo** (tarjeta del inicio + función `exportarCalendarioICS`). Si en el futuro quiere retomar recordatorios, recordar: descarga `.ics` por `a.click()` está bloqueada en iOS/Android; el share con archivos no fue fiable. Queda anotado el botón "🗓️ Recordar mañana" también se eliminó (ver punto 4). **Pendiente de Samir queda: nada de calendario por ahora.**
 
-### ✅ Estado al cierre — 2026-09-15 noche (para retomar en otro PC)
+### 🕗 Estado al cierre — 2026-09-15 noche (HISTÓRICO, ya no vigente)
 
-- **HEAD actual:** `60ee18d` (fix deuda 12k vs abono 60k) + `b5e6d67` revert + `a94f579` X en búsquedas + `e4e8b8c` fix Azul turquesa en compra + `72979d7` fix abonos + `66d72a1` X en búsquedas + `0cb7ccd` fix Excel + `ce571dc` chore deployments + `60ee18d`. Ver `git log --oneline -15`.
-- **Deployments (2):** `60ee18d` (actual) + `72979d7` (anterior). Limpieza con `clean-deployments.ps1` + `token.txt` local (no se sube, en `.gitignore`). Cada `git push` crea uno nuevo, se limpia a 2 con `.\clean-deployments.ps1`.
+> ⚠️ **Superado por el bloque de 2026-09-25 de más abajo.** Se conserva solo como
+> referencia de lo que se hizo ese día; los SHAs y la política de deployments que
+> menciona aquí ya no aplican.
+
+- **HEAD en ese momento:** `60ee18d` (fix deuda 12k vs abono 60k) + `b5e6d67` revert + `a94f579` X en búsquedas + `e4e8b8c` fix Azul turquesa en compra + `72979d7` fix abonos + `66d72a1` X en búsquedas + `0cb7ccd` fix Excel + `ce571dc` chore deployments + `60ee18d`. Ver `git log --oneline -15`.
+- **Deployments en ese momento (2):** política antigua, reemplazada el 2026-09-25 por la de 3 (ver sección 12).
 - **Cambios 2026-09-15:**
   1. **Hora en Pedidos/Historial** `app.v2.js:491` — `horaDeVenta()` (`updated_at || created_at` en `America/Bogota`) bajo `Fecha Pedido` + orden por `fecha+hora`.
   2. **Hora se actualiza al editar** — `saveVenta`/`updateEstado`/`addAbono`/`saveCompra` setean `updated_at`; migración en `migracion.sql:15` (`updated_at timestamptz` + trigger).
@@ -347,4 +365,27 @@ UPDATE ventas SET estado='Liquidado' WHERE estado='Pagado';
   7. **Botón Copiar** `app.v2.js:1398` `styles.v2.css:2120` — movido al pie de la tarjeta (`order-card-footer`).
   8. **Deuda vs Abonos Yesenia** `app.v2.js:3061` — `abonosProveedorPorVentaId` solo hace reparto proporcional si no hay `abono_yesenia` definido, no cuando es `0` explícito → `Samir $60k` concuerda con `Abono $240k Saldo $60k` (Kiara Polo 10c).
   9. **Deployments** — `clean-deployments.ps1` + `.gitignore` (`token.txt` local, no se sube).
-- **Pendiente:** nada bloqueante. Próximo: pulir recibo (logo/contacto) o lo que salga en el otro PC. Todo commiteado y deployado en `https://SamirPxrreo.github.io/CAMISASIUB/`.
+
+### ✅ Estado al cierre — 2026-09-25 (para retomar en otro PC)
+
+> Este bloque **reemplaza** el de 2026-09-15 (que quedó 25 commits atrás ycitaba un HEAD inexistente).
+
+- **HEAD:** `bd4f8d1` — `fix(deployments)` sobre `c3adc07` (política de 3), `d18a596` (camisas `+/−` y papelera), `abaef9a` (Cuentas: columna Vendedor). Ver `git log --oneline -10`.
+- **Deployments (3):** último = el vivo, penúltimo = rollback, y el **más viejo = ancla fija** (`019625c`). Limpieza con `.\clean-deployments.ps1` + token en `$env:GH_TOKEN` o `token.txt` (ambos en `.gitignore`).
+- **Entorno de trabajo:** hay copia en `C:\Users\Usuario\Documents\CAMISASIUB` (clon real con `origin` configurado, así que se edita y se sube desde ahí). Git instalado; identidad de commit `SamirPxrreo <samir@example.com>`.
+- **Velocidad de publicación medida:** `git push` ≈ **1,3 s**; GitHub Pages publica ≈ **35 s** después. Total ~35 s. *No* se puede acelerar con una key SSH: el build es de GitHub. La espera se debe a comprobaciones demasiado frecuentes, no a la red.
+- **Cambios 2026-09-25:**
+  1. **Camisas por fila** (`d18a596`) — fuera el campo Cantidad y la casilla "por separado"; ahora contador `− [n] +` y 🗑️ por fila. Ver #47.
+  2. **Política de 3 deployments** (`c3adc07`) — ancla + penúltimo + último. Ver #48 y sección 12.
+  3. **Limpieza y escapado** — ~191 líneas muertas fuera y todo dato de la base escapado en HTML. Ver #49.
+- **Pendiente / abierto:**
+  1. 🔴 **RLS de Postgres en Supabase — sin verificar.** Toda la separación admin/vendedor se decide hoy en el navegador. Si `ventas`, `usuarios` o `liquidaciones` no tienen políticas restrictivas, cualquiera con la anon key (pública, está en el HTML) puede escribir en la base. Se revisa en el panel de Supabase, no desde el código.
+  2. 🟠 **Bugs de dinero pendientes de revisar con Samir uno por uno** (cambian números que él ve):
+     - `mitadGananciaPedido` usa `Math.max(ganancia/2, 0)` pero las tarjetas de Liquidaciones calculan sin ese tope → las cifras de las tarjetas y las del balance pueden no cuadrar.
+     - `abonoClienteTotal` cae a `v.abono` cuando la suma de abonos por camisa da 0 (un abono explícitamente $0 se interpreta como "usa el del pedido").
+     - `addAbono` reparte el abono entre camisas **sin redondear** → decimales que no cuadran con el total del pedido.
+     - `updateEstado` sobrescribe el estado de **todas** las camisas del pedido (pérdida de estados individuales, documentado pero real).
+     - `saveCompra` hace N `UPDATE` secuenciales sin transacción: si falla el tercero, quedan pedidos con `compra_id` a medias.
+  3. 🟡 `Shift+rueda` no desplaza las tablas de Resúmenes: los listeners se atan a las `.table-wrap` existentes al cargar y esas se crean después.
+  4. 🟡 `xlsx@0.18.5` (CDN) tiene CVEs públicos sin parche; se puede migrar a la versión de SheetJS mantenida o quitar esa librería.
+- **Todo commiteado y deployado en** <https://SamirPxrreo.github.io/CAMISASIUB/>.

@@ -275,7 +275,6 @@
   }
   function hardRefresh() {
     try { if ('caches' in window) caches.keys().then(ns => ns.forEach(n => caches.delete(n))); } catch(e){}
-    try { localStorage.setItem('camisasIUB_refresh', String(Date.now())); } catch(e){}
     window.location.reload();
     setTimeout(() => { window.location.href = window.location.href.split('?')[0] + '?v=' + Date.now(); }, 400);
   }
@@ -720,7 +719,7 @@
     sel.innerHTML = '<option value="" selected disabled>Selecciona el pedido</option>' +
       pedidos.map(v => {
         const saldo = Math.round(saldoSocioPendientePedido(v));
-        return `<option value="${v.id}" data-saldo="${saldo}">${v.cliente_nombre || 'Cliente'} — ${v.fecha || '?'} — pendiente ${fmt(saldo)}</option>`;
+        return `<option value="${v.id}" data-saldo="${saldo}">${escSimple(v.cliente_nombre || 'Cliente')} - ${escSimple(v.fecha || '?')} - pendiente ${fmt(saldo)}</option>`;
       }).join('');
   }
 
@@ -779,7 +778,6 @@
           ? `<span style="color:var(--muted); font-weight:400; font-size:12px;"> · ${escSimple(telRaw)}</span>`
           : '';
         const estadosUnicos = [...new Set(g.ventas.map(v => estadoGeneralVenta(v)).filter(Boolean))];
-        const estadoTxt = estadosUnicos.length === 0 ? '' : estadosUnicos.length === 1 ? estadosUnicos[0] : estadosUnicos.join(' · ');
         const fechasTxt = g.ventas.length === 1
           ? (g.ventas[0].fecha ? formatearFechaHumana(g.ventas[0].fecha).replace(/^📅\s*/,'') : '?')
           : g.ventas.map(v => v.fecha || '?').join(' · ');
@@ -831,36 +829,6 @@
       <style>@media(max-width:720px){#compras-deuda-box > div[style*="grid-template-columns"]{grid-template-columns:1fr !important;}}</style>
     `;
   }
-
-   function formatearDetalleCamisa(v, opts = {}) {
-     const { html, paraWhatsApp, maxLength } = opts;
-     let items = null;
-     if (v.items_camisa) {
-       try { items = JSON.parse(v.items_camisa); } catch (e) { items = null; }
-     }
-     if (!items || !Array.isArray(items) || items.length === 0) {
-       const texto = `${v.genero || '?'}, ${capitalizarColor(v.color)}, talla ${v.talla || '?'}`;
-       return html ? `<b>${v.genero || '?'}</b>, ${capitalizarColor(v.color)}, talla <b>${v.talla || '?'}</b>` : texto;
-     }
-     if (html) {
-       // Remove Abono from HTML display
-return items.map((it, idx) => `
-          <div style="${idx > 0 ? 'margin-top:4px; padding-top:4px; border-top:1px dashed var(--line);' : ''}">
-            <b>${it.genero || '?'}</b>, ${capitalizarColor(it.color)}, talla <b>${it.talla || '?'}</b>
-          </div>
-        `).join('') + (items.some(it => it.programa) ? `<div style="margin-top:4px; color:var(--thread); font-size:12px; font-weight:600;">🧵 Bordado: ${items.map(it => it.programa).filter(Boolean).join(', ')}</div>` : '');
-     }
-     if (paraWhatsApp) {
-       return items.map(it => {
-         const base = `${it.genero || '?'}, ${capitalizarColor(it.color)}, talla ${it.talla || '?'}`;
-         return it.programa ? `${base} — ${it.programa} (bordado)` : base;
-       }).join('\n     ');
-     }
-     let texto = items.map(it => `${it.genero || '?'}, ${capitalizarColor(it.color)}, talla ${it.talla || '?'}`).join('; ');
-     if (maxLength && texto.length > maxLength) texto = texto.substring(0, maxLength) + '…';
-     return texto;
-   }
-
 
   /* =====================================================
      SISTEMA DE TEMA CLARO / OSCURO / SISTEMA
@@ -960,15 +928,6 @@ return items.map((it, idx) => `
          document.getElementById('lq-monto').value = opt.dataset.saldo;
        }
      });
-
-      // Attach all action buttons
-      document.querySelectorAll('.editar-button').forEach(button => {
-        button.addEventListener('click', (e) => {
-          e.preventDefault();
-          const venta = ventasCache.find(v => v.id === button.dataset.id);
-          if (venta) openForm(venta);
-        });
-      });
 
       initSearchClears();
 
@@ -1340,11 +1299,11 @@ return items.map((it, idx) => `
       try { items = JSON.parse(v.items_camisa); } catch (e) { items = null; }
     }
     if (!items || !Array.isArray(items) || items.length === 0) {
-      return [`• ${v.genero || '?'} · ${capitalizarColor(v.color)} · ${v.talla || '?'}`];
+      return [`• ${escSimple(v.genero || '?')} · ${escSimple(capitalizarColor(v.color))} · ${escSimple(v.talla || '?')}`];
     }
     return items.map(it => {
-      const base = `${it.genero || '?'} · ${capitalizarColor(it.color)} · ${it.talla || '?'}`;
-      let linea = it.programa ? `• ${base} · ${it.programa}` : `• ${base}`;
+      const base = `${escSimple(it.genero || '?')} · ${escSimple(capitalizarColor(it.color))} · ${escSimple(it.talla || '?')}`;
+      let linea = it.programa ? `• ${base} · ${escSimple(it.programa)}` : `• ${base}`;
       const e = it.estado ? normalizarEstado(it.estado) : null;
       if (e && e !== 'Pedido') linea += ` — ${e}`;
       return linea;
@@ -1423,7 +1382,7 @@ return items.map((it, idx) => `
     const telefonoCrudo = String(v.cliente_telefono || '').trim();
     const telefonoLimpio = telefonoCrudo.replace(/\D/g, '');
     const waLink = telefonoLimpio ? `https://wa.me/57${telefonoLimpio}` : '';
-    const waUsuario = (!telefonoLimpio && esUsuarioWhatsApp(telefonoCrudo)) ? telefonoCrudo.replace(/'/g, "\\'") : '';
+    const waUsuario = (!telefonoLimpio && esUsuarioWhatsApp(telefonoCrudo)) ? argOnClick(telefonoCrudo) : '';
     const detalleWhatsApp = items.map(it => it.replace(/^• /, '').replace(/\s—\s.+$/, '').trim()).join('\n     ');
     const msgWhatsApp = encodeURIComponent(
       `📌 *Recordatorio Camisas IUB* 🧵\n\n👤 *Cliente:* ${v.cliente_nombre}\n📞 *Teléfono:* ${v.cliente_telefono}\n👕 *Detalle:* \n     ${detalleWhatsApp}\n🔢 *Cantidad:* ${cant}\n💰 *Saldo Pendiente:* ${fmt(saldo)}\n*Fecha Entrega:* ${textoFechaEntrega(v)}\n📍 *Lugar:* ${v.lugar_entrega || 'Sin definir'}`
@@ -1435,11 +1394,11 @@ return items.map((it, idx) => `
         <div class="order-card-row order-card-meta">
           <span class="order-card-date">${fechaEntregaDisplay}</span>
           <span class="order-card-entrega">📍 Entrega: ${v.lugar_entrega ? escSimple(v.lugar_entrega) : 'Por definir'}, ${v.entrega_por ? escSimple(v.entrega_por) : 'Sin asignar'}</span>
-          <span class="order-card-vendedor">Vendedor: ${v.vendedor || ''}</span>
+          <span class="order-card-vendedor">Vendedor: ${escSimple(v.vendedor || '')}</span>
         </div>
         <div class="order-card-row">
-          <span class="order-card-client">👤 ${v.cliente_nombre || '—'}</span>
-          <span class="order-card-phone">📞 ${v.cliente_telefono || '—'}${waLink ? ` · <a href="${waLink}" target="_blank" style="color:var(--ok);font-weight:600;text-decoration:none;">WhatsApp</a>` : (waUsuario ? ` · <a href="#" onclick="copiarUsuarioWhatsApp('${waUsuario}');return false;" style="color:var(--ok);font-weight:600;text-decoration:none;">Copiar @</a>` : '')}</span>
+          <span class="order-card-client">👤 ${escSimple(v.cliente_nombre || '—')}</span>
+          <span class="order-card-phone">📞 ${escSimple(v.cliente_telefono || '—')}${waLink ? ` · <a href="${waLink}" target="_blank" style="color:var(--ok);font-weight:600;text-decoration:none;">WhatsApp</a>` : (waUsuario ? ` · <a href="#" onclick="copiarUsuarioWhatsApp('${waUsuario}');return false;" style="color:var(--ok);font-weight:600;text-decoration:none;">Copiar @</a>` : '')}</span>
           <span class="order-card-saldo" style="color:${saldo > 0 ? 'var(--warn)' : 'var(--ok)'}">💰 ${fmt(saldo)}</span>
         </div>
         <div class="order-card-row">
@@ -1451,7 +1410,7 @@ return items.map((it, idx) => `
           ${items.map(it => `<div class="order-card-item">${it}</div>`).join('')}
         </div>
         <div class="order-card-footer">
-          <button class="btn-copy-card" onclick="copiarWhatsApp('${msgWhatsApp}')" type="button">📋 Copiar para WhatsApp</button>
+          <button class="btn-copy-card" onclick="copiarWhatsApp('${argOnClick(msgWhatsApp)}')" type="button">📋 Copiar para WhatsApp</button>
         </div>
       </div>
     `;
@@ -1684,7 +1643,7 @@ return items.map((it, idx) => `
           ? (v.compra_id ? ' (ya comprado, falta actualizar estado)' : ' — aún no se compra al proveedor')
           : '';
         const camisa = n > 1 ? `${n} camisas` : `1 camisa`;
-        listas.push(`• <b>${v.cliente_nombre}</b> (${v.vendedor}) — ${dias} días con ${camisa} en <b>${e}</b>${extra}`);
+        listas.push(`• <b>${escSimple(v.cliente_nombre)}</b> (${escSimple(v.vendedor)}) - ${dias} días con ${camisa} en <b>${escSimple(e)}</b>${extra}`);
       });
     });
     return listas;
@@ -1731,7 +1690,7 @@ return items.map((it, idx) => `
     misVentas.forEach(v => {
       if (!v.fecha_entrega || todosItemsListosEntrega(v)) return;
       if (v.fecha_entrega < hoy) {
-        alertas.push({ tipo: 'critical', msg: `⏰ Pedido vencido: <b>${v.cliente_nombre}</b> (${v.vendedor}) — debía entregarse el ${formatearFechaHumana(v.fecha_entrega)}` });
+        alertas.push({ tipo: 'critical', msg: `⏰ Pedido vencido: <b>${escSimple(v.cliente_nombre)}</b> (${escSimple(v.vendedor)}) — debía entregarse el ${formatearFechaHumana(v.fecha_entrega)}` });
       }
     });
 
@@ -1768,6 +1727,21 @@ return items.map((it, idx) => `
   function escSimple(s) {
     return String(s == null ? '' : s)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  // Para texto dentro de atributos: como escSimple pero también escapa la
+  // comilla simple, que es la que rompe los onclick="funcion('...')".
+  function escAttr(s) {
+    return escSimple(s).replace(/'/g, '&#39;');
+  }
+
+  // Para incrustar un valor dentro de un onclick="funcion('...')" (comillas
+  // dobles por fuera): escapa la barra invertida, la comilla simple y la doble.
+  function argOnClick(s) {
+    return String(s == null ? '' : s)
+      .replace(/\\/g, '\\\\')
+      .replace(/'/g, "\\'")
+      .replace(/"/g, '&quot;');
   }
 
   function resPeriodoLabel() {
@@ -1814,17 +1788,6 @@ return items.map((it, idx) => `
     if (periodo === 'mes') return f.slice(0, 7) === hoy.slice(0, 7);
     if (periodo === 'anio') return f.slice(0, 4) === hoy.slice(0, 4);
     return true;
-  }
-
-  function itemsCamisaVenta(v) {
-    let items = null;
-    if (v.items_camisa) {
-      try { items = JSON.parse(v.items_camisa); } catch (e) { items = null; }
-    }
-    if (!items || !Array.isArray(items) || items.length === 0) {
-      return [{ color: v.color, talla: v.talla, genero: v.genero }];
-    }
-    return items;
   }
 
   // Rango de fechas del período seleccionado (YYYY-MM-DD).
@@ -2408,10 +2371,10 @@ return items.map((it, idx) => `
       return `
         <tr>
           <td>${v.fecha ? formatearFechaHumana(v.fecha) : ''}<span class="sub-tag">🕐 ${horaDeVenta(v) || ''}</span></td>
-          <td><b>${v.vendedor || ''}</b></td>
+          <td><b>${escSimple(v.vendedor || '')}</b></td>
           <td>
-            <b>${v.cliente_nombre || ''}</b>
-            <span class="sub-tag">📞 ${v.cliente_telefono || ''}${(() => { const t = String(v.cliente_telefono || '').trim(); const d = t.replace(/\D/g, ''); if (d) return ` · <a href="https://wa.me/57${d}" target="_blank" style="color:var(--ok);font-weight:600;text-decoration:none;">WhatsApp</a>`; if (esUsuarioWhatsApp(t)) return ` · <a href="#" onclick="copiarUsuarioWhatsApp('${t.replace(/'/g, "\\'")}');return false;" style="color:var(--ok);font-weight:600;text-decoration:none;">Copiar @</a>`; return ''; })()}</span>
+            <b>${escSimple(v.cliente_nombre || '')}</b>
+            <span class="sub-tag">📞 ${escSimple(v.cliente_telefono || '')}${(() => { const t = String(v.cliente_telefono || '').trim(); const d = t.replace(/\D/g, ''); if (d) return ` · <a href="https://wa.me/57${d}" target="_blank" style="color:var(--ok);font-weight:600;text-decoration:none;">WhatsApp</a>`; if (esUsuarioWhatsApp(t)) return ` · <a href="#" onclick="copiarUsuarioWhatsApp('${argOnClick(t)}');return false;" style="color:var(--ok);font-weight:600;text-decoration:none;">Copiar @</a>`; return ''; })()}</span>
           </td>
           <td>
             <div style="margin-bottom:6px;">${badgeModeloVenta(v)}</div>
@@ -3295,8 +3258,8 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
       return `
         <tr>
           <td>${formatearFechaHumana(c.fecha)}<span class="sub-tag">🕐 ${c.hora || ''}</span></td>
-          <td><b>${c.proveedor || ''}</b></td>
-          <td>${c.comprador || ''}</td>
+          <td><b>${escSimple(c.proveedor || '')}</b></td>
+          <td>${escSimple(c.comprador || '')}</td>
           <td>${quienesAbonanHtml}</td>
           <td>
             <div style="font-weight:700; margin-bottom:4px;">${cantidad} camisa(s)</div>
@@ -3361,29 +3324,6 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
     const personas = personasSeleccionadasActuales();
     if (personas.length === 0) return [];
     return pedidosDisponiblesPickers.filter(v => personas.includes(claveCliente(v)));
-  }
-
-  // Reparte el abono total de una persona entre sus pedidos (proporcional al costo de cada pedido).
-  function distribuirAbonoPersona(abonoTotal, pedidos) {
-    const r = {};
-    if (!pedidos || pedidos.length === 0) return r;
-    if (!(abonoTotal > 0)) {
-      pedidos.forEach(v => { r[v.id] = 0; });
-      return r;
-    }
-    const costos = pedidos.map(v => costoTotalVenta(v));
-    const costoTotal = costos.reduce((a, b) => a + b, 0);
-    let asignado = 0;
-    pedidos.forEach((v, idx) => {
-      if (idx === pedidos.length - 1) {
-        r[v.id] = abonoTotal - asignado;
-      } else {
-        const parte = costoTotal > 0 ? Math.floor(abonoTotal * costos[idx] / costoTotal) : 0;
-        asignado += parte;
-        r[v.id] = parte;
-      }
-    });
-    return r;
   }
 
 // Reparto proporcional al costo de cada pedido (híbrido): sugiere dividir el
@@ -3695,8 +3635,6 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
         }
       };
     }
-
-    renderAbonoAdicional();
     document.getElementById('compra-modal').classList.remove('hidden');
     bloquearScrollFondo();
   }
@@ -3923,118 +3861,6 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
      }
    }
 
-   /* ---------- ABONO ADICIONAL A YESENIA (pagar el saldo restante) ---------- */
-   // Pedidos del usuario actual dentro de un abono (para admin: todos los del abono).
-   function pedidosMiosEnCompra(compraId) {
-     const miNombre = currentRole.vendedor;
-     return ventasCache.filter(v =>
-       v.compra_id === compraId && (!miNombre || v.vendedor === miNombre)
-     );
-   }
-
-   // Saldo pendiente de un pedido con Yesenia (costo − abonado a Yesenia).
-   function saldoPedidoCompra(v) {
-     return Math.max(costoTotalVenta(v) - (Number(v.abono_yesenia) || 0), 0);
-   }
-
-    // "Abonar más a Yesenia" removido por solicitud: el flujo ahora es
-    // editar el abono via el desglose equitativo del picker (app.v2.js:2588).
-    function renderAbonoAdicional() {
-      const section = document.getElementById('cp-abono-adicional');
-      if (section) section.classList.add('hidden');
-      return;
-    }
-
-   // Actualiza el total de la sección "Abonar más" según los montos por pedido.
-   function actualizarTotalAbonoAdicional() {
-     const totalEl = document.getElementById('cp-abono-adicional-total');
-     if (!totalEl) return;
-     let total = 0;
-     document.querySelectorAll('#cp-abono-adicional .caa-monto').forEach(inp => {
-       total += parseFloat(inp.value) || 0;
-     });
-     totalEl.textContent = fmt(total);
-     const errEl = document.getElementById('cp-abono-adicional-error');
-     if (errEl) errEl.classList.add('hidden');
-   }
-
-   async function registrarAbonoAdicional() {
-     const errEl = document.getElementById('cp-abono-adicional-error');
-     errEl.classList.add('hidden');
-     if (!editingCompraId) return;
-
-     const conSaldo = pedidosMiosEnCompra(editingCompraId).filter(v => saldoPedidoCompra(v) > 0);
-     if (conSaldo.length === 0) {
-       errEl.textContent = 'No hay saldo pendiente para abonar.';
-       errEl.classList.remove('hidden');
-       return;
-     }
-
-     const extras = {};
-     let total = 0;
-     document.querySelectorAll('#cp-abono-adicional .caa-monto').forEach(inp => {
-       const val = parseFloat(inp.value) || 0;
-       extras[inp.dataset.id] = val;
-       total += val;
-     });
-
-     if (total <= 0) {
-       errEl.textContent = 'Ingresa un monto mayor que cero en al menos un pedido.';
-       errEl.classList.remove('hidden');
-       return;
-     }
-
-     for (const v of conSaldo) {
-       const extra = extras[v.id] || 0;
-       if (extra < 0) {
-         errEl.textContent = 'Los montos no pueden ser negativos.';
-         errEl.classList.remove('hidden');
-         return;
-       }
-       if (extra > saldoPedidoCompra(v)) {
-         errEl.textContent = `El abono de "${escSimple(v.cliente_nombre || 'este pedido')}" supera su saldo (${fmt(saldoPedidoCompra(v))}).`;
-         errEl.classList.remove('hidden');
-         return;
-       }
-     }
-
-     try {
-       for (const v of conSaldo) {
-         const extra = extras[v.id] || 0;
-         if (extra <= 0) continue;
-         const nuevoAbono = (Number(v.abono_yesenia) || 0) + extra;
-         const upd = { abono_yesenia: nuevoAbono };
-         const items = itemsDeVentaParaAbono(v);
-         const cantItems = items.length || 1;
-         const base = Math.floor(extra / cantItems);
-         const resto = extra - base * cantItems;
-         items.forEach((it, idx) => { it.abono_yesenia = (Number(it.abono_yesenia) || 0) + base + (idx < resto ? 1 : 0); });
-         upd.items_camisa = JSON.stringify(items);
-         await supabaseClient.from('ventas').update(upd).eq('id', v.id);
-       }
-
-       const persona = document.getElementById('cp-abono-adicional-persona')
-         ? document.getElementById('cp-abono-adicional-persona').value
-         : '';
-       if (persona) {
-         await supabaseClient.from('compra_aportes').insert({
-           compra_id: editingCompraId, persona, monto: total, fecha: hoyColombia(), observacion: 'Abono adicional'
-         });
-       }
-
-        await loadVentas();
-        await loadCompras();
-        await loadCompraAportes();
-        openCompraModal(editingCompraId);
-        mostrarToast('✅ Pagos adicionales a Yesenia registrados.');
-        await sugerirLiquidadoParaVarios(conSaldo.map(v=>v.id));
-     } catch (err) {
-       logError('registrarAbonoAdicional', err);
-       errEl.textContent = 'Error inesperado al registrar los pagos.';
-       errEl.classList.remove('hidden');
-     }
-   }
-
    /* =====================================================
      3. GANANCIAS Y LIQUIDACIONES (SAMIR & VALENTINA)
      ===================================================== */
@@ -4080,8 +3906,6 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
       gananciaPendienteVal: Math.round(gananciaPendienteVal),
       deudaSamirAVal: Math.round(deudaSamirAVal),
       deudaValASamir: Math.round(deudaValASamir),
-      pagadoSamirAVal: 0,
-      pagadoValASamir: 0,
       saldoPendienteSamir: Math.round(deudaSamirAVal),
       saldoPendienteVal: Math.round(deudaValASamir)
     };
@@ -4175,7 +3999,7 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
       body.innerHTML = pageRows.map(l => {
         const venta = ventasCache.find(v => v.id === l.venta_id);
         const pedidoLabel = venta
-          ? `<b>${venta.cliente_nombre || 'Cliente'}</b><span class="sub-tag">${venta.fecha || ''}</span>`
+          ? `<b>${escSimple(venta.cliente_nombre || 'Cliente')}</b><span class="sub-tag">${escSimple(venta.fecha || '')}</span>`
           : (l.venta_id ? 'Pedido eliminado' : '—');
         const puedeBorrar = currentRole.role === 'admin' || currentRole.vendedor === l.pagador;
         const acciones = puedeBorrar
@@ -4185,10 +4009,10 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
         <tr>
           <td>${formatearFechaHumana(l.fecha)}<span class="sub-tag">🕐 ${l.hora || ''}</span></td>
           <td>${pedidoLabel}</td>
-          <td><b>${l.pagador}</b></td>
-          <td><b>${l.receptor}</b></td>
+          <td><b>${escSimple(l.pagador)}</b></td>
+          <td><b>${escSimple(l.receptor)}</b></td>
           <td class="money" style="color:var(--ok);">${fmt(l.monto)}</td>
-          <td>${l.nota || '—'}</td>
+          <td>${escSimple(l.nota || '—')}</td>
           <td>
             <div class="action-group" style="flex-direction:row;">
               ${acciones}
@@ -4362,8 +4186,8 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
     const usuariosOrdenados = ordenarFilas(usuariosFiltrados, 'usuarios', REGISTRO_ORDEN.usuarios.campos);
     body.innerHTML = usuariosOrdenados.map(u => `
       <tr>
-        <td><b>${u.nombre || 'Sin nombre'}</b></td>
-        <td>${u.correo}</td>
+        <td><b>${escSimple(u.nombre || 'Sin nombre')}</b></td>
+        <td>${escSimple(u.correo)}</td>
         <td>
           <span class="badge-estado ${u.rol === 'admin' ? 'estado-Liquidado' : 'estado-Comprado'}">
             ${u.rol === 'admin' ? 'ADMINISTRADOR' : 'VENDEDOR'}
@@ -5043,10 +4867,10 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
       return `
         <tr>
           <td>${v.fecha ? formatearFechaHumana(v.fecha) : ''}<span class="sub-tag">🕐 ${horaDeVenta(v) || ''}</span></td>
-          <td><b>${v.vendedor || ''}</b></td>
+          <td><b>${escSimple(v.vendedor || '')}</b></td>
           <td>
-            <b>${v.cliente_nombre || ''}</b>
-            <span class="sub-tag">📞 ${v.cliente_telefono || ''}</span>
+            <b>${escSimple(v.cliente_nombre || '')}</b>
+            <span class="sub-tag">📞 ${escSimple(v.cliente_telefono || '')}</span>
           </td>
           <td>
             <div style="margin-bottom:6px;">${badgeModeloVenta(v)}</div>
@@ -5176,8 +5000,8 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
           <td class="money" style="color:${r.saldo>0?'var(--warn)':'var(--ok)'}"><b>${fmt(r.saldo)}</b></td>
           <td>
             <div class="action-group">
-              <button class="btn-small" onclick="openFacturaModal('${r.clave.replace(/'/g, "\\'")}')" type="button">🧾 Factura</button>
-              <button class="btn-small" onclick="verPedidosCliente('${r.clave.replace(/'/g, "\\'")}')" type="button">👁️ Pedidos</button>
+              <button class="btn-small" onclick="openFacturaModal('${argOnClick(r.clave)}')" type="button">🧾 Factura</button>
+              <button class="btn-small" onclick="verPedidosCliente('${argOnClick(r.clave)}')" type="button">👁️ Pedidos</button>
             </div>
           </td>
         </tr>
