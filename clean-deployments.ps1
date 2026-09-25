@@ -79,7 +79,8 @@ foreach ($d in $toDelete) {
 
 # Verificacion final
 try {
-  $final = @((Invoke-RestMethod -Uri "https://api.github.com/repos/$repo/deployments?per_page=100" -Headers $headers))
+  $final = Invoke-RestMethod -Uri "https://api.github.com/repos/$repo/deployments?per_page=100" -Headers $headers
+  $final = @($final)
   Write-Host ""
   Write-Host "Quedaron $($final.Count):" -ForegroundColor Cyan
   $final | Sort-Object { [datetime]$_.created_at } | ForEach-Object {
