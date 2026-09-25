@@ -916,36 +916,12 @@ return items.map((it, idx) => `
        lugarSelect.appendChild(opt);
      });
 
-     const csColorSelect = document.getElementById('cs-color');
-     csColorSelect.innerHTML = coloresOptionsHtml('');
-     const csTallaSelect = document.getElementById('cs-talla');
-     csTallaSelect.innerHTML = '<option value="">Selecciona una talla</option>' +
-       TALLAS_DISPONIBLES.map(t => `<option value="${t}">${t}</option>`).join('');
-
-      document.getElementById('f-detalle-individual').addEventListener('change', onModoDetalleChange);
       document.getElementById('f-fecha-entrega-pendiente').addEventListener('change', onFechaEntregaPendienteChange);
       document.getElementById('f-lugar-entrega').addEventListener('change', actualizarLugarOtro);
-      document.getElementById('cs-abono-total').addEventListener('input', (e) => {
-        e.target.dataset.userEdited = 'true';
-        actualizarTotalAbono();
-      });
 
-      // Costo Yesenia sugerido por talla + versión (modo simple: "todas las camisas iguales").
-      const fCostoEl = document.getElementById('f-costo');
-      if (fCostoEl) {
-        fCostoEl.addEventListener('input', () => { fCostoEl.dataset.user = fCostoEl.value === '' ? '0' : '1'; });
-      }
-      const csTallaEl = document.getElementById('cs-talla');
-      const csModeloEl = document.getElementById('cs-modelo');
-      const aplicarCostoSugeridoSimple = () => {
-        if (!fCostoEl || !csTallaEl) return;
-        if (fCostoEl.dataset.user === '1') return;
-        const t = csTallaEl.value;
-        if (!t) return;
-        fCostoEl.value = costoProveedorSugerido(csModeloEl ? csModeloEl.value : 'Viejo', t);
-      };
-      if (csTallaEl) csTallaEl.addEventListener('change', aplicarCostoSugeridoSimple);
-      if (csModeloEl) csModeloEl.addEventListener('change', aplicarCostoSugeridoSimple);
+      // Contador de camisas del pedido: + agrega una fila, − quita la última.
+      document.getElementById('camisa-mas').addEventListener('click', agregarCamisa);
+      document.getElementById('camisa-menos').addEventListener('click', restarCamisa);
 
       // Listeners
       document.getElementById('login-button').addEventListener('click', handleLogin);
@@ -958,8 +934,6 @@ return items.map((it, idx) => `
         });
       });
       document.getElementById('save-sale-button').addEventListener('click', saveVenta);
-     document.getElementById('f-cantidad').addEventListener('input', onCantidadChange);
-     document.getElementById('f-cantidad').addEventListener('change', onCantidadChange);
       document.getElementById('filter-vendedor').addEventListener('change', renderTable);
       document.getElementById('filter-estado').addEventListener('change', renderTable);
        document.getElementById('filter-search').addEventListener('input', debounce(() => { paginationState.orders = 0; renderTable(); }, 300));
@@ -2520,10 +2494,21 @@ return items.map((it, idx) => `
   function irPaginaOrdenes(p) { paginationState.orders = p; renderTable(); }
 
   /* =====================================================
-     ITEMS DINÁMICOS DE CAMISA (uno por unidad, según Cantidad)
+     ITEMS DINÁMICOS DE CAMISA (uno por unidad)
+     Las camisas se agregan con el botón + y se quitan con
+     − o con la papelera 🗑️ de cada fila. Cada fila se llena
+     por separado (versión, género, color, talla, bordado,
+     precio, costo, abono y estado propios).
      ===================================================== */
   const TALLAS_DISPONIBLES = ['S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'];
   const COLORES_DISPONIBLES = ['Negro', 'Blanco', 'Gris', 'Turquí', 'Azul turquesa', 'Camel', 'Vinotinto', 'Palo de Rosa'];
+  const MAX_CAMISAS_PEDIDO = 30;
+
+  // Al redibujar filas, un campo vacío o un NaN (input en blanco) debe quedar vacío.
+  function numOrBlank(v) {
+    if (v === undefined || v === null || v === '') return '';
+    return isNaN(Number(v)) ? '' : v;
+  }
 
   function coloresOptionsHtml(valorSeleccionado) {
     const valorActual = valorSeleccionado || '';
@@ -2538,7 +2523,10 @@ return items.map((it, idx) => `
       const estadoItem = item.estado ? normalizarEstado(item.estado) : 'Pedido';
       return `
       <div class="camisa-item-row" data-index="${i}">
-        <span class="camisa-item-number">Camisa #${i + 1}</span>
+        <div class="camisa-item-head">
+          <span class="camisa-item-number">Camisa #${i + 1}</span>
+          <button type="button" class="camisa-item-del" data-index="${i}" title="Quitar esta camisa del pedido" aria-label="Quitar la camisa ${i + 1}">🗑️</button>
+        </div>
         <div class="camisa-item-fields">
           <div>
             <label>Versión</label>
@@ -2568,21 +2556,21 @@ return items.map((it, idx) => `
           </div>
           <div>
             <label>Bordado</label>
-            <input type="text" class="ci-programa" value="${item.programa || ''}" placeholder="Ej. Ingeniería">
+            <input type="text" class="ci-programa" value="${escSimple(item.programa)}" placeholder="Ej. Ingeniería">
           </div>
         </div>
         <div class="camisa-item-money">
           <div>
             <label class="label-required">Precio venta ($)</label>
-            <input type="number" class="ci-precio" min="0" value="${item.precio !== undefined && item.precio !== null && item.precio !== '' ? item.precio : ''}" placeholder="${(document.getElementById('f-precio') || {}).value || 39000}">
+            <input type="number" class="ci-precio" min="0" value="${numOrBlank(item.precio)}" placeholder="${(document.getElementById('f-precio') || {}).value || 39000}">
           </div>
           <div>
             <label class="label-required">Costo Yesenia ($)</label>
-            <input type="number" class="ci-costo" min="0" value="${item.costo != null && item.costo !== '' ? item.costo : ''}" placeholder="${(document.getElementById('f-costo') || {}).value || 30000}">
+            <input type="number" class="ci-costo" min="0" value="${numOrBlank(item.costo)}" placeholder="${(document.getElementById('f-costo') || {}).value || 30000}">
           </div>
           <div>
             <label class="label-required">Abono recibido ($)</label>
-            <input type="number" class="ci-abono" min="0" value="${item.abono !== undefined && item.abono !== null && item.abono !== '' ? item.abono : ''}" placeholder="0">
+            <input type="number" class="ci-abono" min="0" value="${numOrBlank(item.abono)}" placeholder="0">
           </div>
           <div>
             <label class="label-required">Estado</label>
@@ -2597,6 +2585,11 @@ return items.map((it, idx) => `
 
     container.querySelectorAll('.ci-abono').forEach(input => {
       input.addEventListener('input', actualizarTotalAbono);
+    });
+
+    // Papelera 🗑️ de cada fila: quita esa camisa del pedido.
+    container.querySelectorAll('.camisa-item-del').forEach(btn => {
+      btn.addEventListener('click', () => eliminarFilaCamisa(Number(btn.dataset.index)));
     });
 
     container.querySelectorAll('.camisa-item-row').forEach(row => {
@@ -2616,55 +2609,29 @@ return items.map((it, idx) => `
       row.querySelector('.ci-modelo').addEventListener('change', aplicaCosto);
     });
 
+    actualizarContadorCamisas();
     actualizarTotalAbono();
   }
 
-  function esModoIndividual() {
-    return document.getElementById('f-detalle-individual').checked;
-  }
-
+  // Lee las filas de camisa del formulario, en el orden en que aparecen.
   function collectCamisaItems() {
-    if (esModoIndividual()) {
-      const rows = document.querySelectorAll('#camisa-items-container .camisa-item-row');
-      const items = [];
-      rows.forEach(row => {
-        items.push({
-          modelo: row.querySelector('.ci-modelo').value || 'Viejo',
-          genero: row.querySelector('.ci-genero').value,
-          color: row.querySelector('.ci-color').value.trim(),
-          talla: row.querySelector('.ci-talla').value,
-          programa: row.querySelector('.ci-programa').value.trim(),
-          precio: parseFloat(row.querySelector('.ci-precio').value),
-          costo: parseFloat(row.querySelector('.ci-costo').value),
-          abono: parseFloat(row.querySelector('.ci-abono').value),
-          estado: row.querySelector('.ci-estado').value
-        });
-      });
-      return items;
-    }
-
-    let cantidad = parseInt(document.getElementById('f-cantidad').value, 10);
-    if (isNaN(cantidad) || cantidad < 1) cantidad = 1;
-    const genero = document.getElementById('cs-genero').value;
-    const color = document.getElementById('cs-color').value;
-    const talla = document.getElementById('cs-talla').value;
-    const abonoTotal = parseFloat(document.getElementById('cs-abono-total').value);
-    const precioSimple = parseFloat(document.getElementById('f-precio').value);
-    const costoSimple = parseFloat(document.getElementById('f-costo').value);
-    const estadoSimple = document.getElementById('f-estado').value;
-
+    const rows = document.querySelectorAll('#camisa-items-container .camisa-item-row');
     const items = [];
-    for (let i = 0; i < cantidad; i++) {
-      const programa = document.getElementById('cs-programa').value.trim();
-      const modelo = document.getElementById('cs-modelo').value || 'Viejo';
+    rows.forEach(row => {
+      const val = sel => { const el = row.querySelector(sel); return el ? el.value : ''; };
+      const num = sel => parseFloat(val(sel));
       items.push({
-        genero, color, talla, programa, modelo,
-        precio: isNaN(precioSimple) ? '' : precioSimple,
-        costo: isNaN(costoSimple) ? '' : costoSimple,
-        abono: i === 0 ? (isNaN(abonoTotal) ? 0 : abonoTotal) : 0,
-        estado: estadoSimple || 'Pedido'
+        modelo: val('.ci-modelo') || 'Viejo',
+        genero: val('.ci-genero'),
+        color: val('.ci-color').trim(),
+        talla: val('.ci-talla'),
+        programa: val('.ci-programa').trim(),
+        precio: num('.ci-precio'),
+        costo: num('.ci-costo'),
+        abono: num('.ci-abono'),
+        estado: val('.ci-estado') || 'Pedido'
       });
-    }
+    });
     return items;
   }
 
@@ -2672,65 +2639,6 @@ return items.map((it, idx) => `
     const items = collectCamisaItems();
     const total = items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0);
     document.getElementById('f-abono').value = total;
-  }
-
-  function onModoDetalleChange() {
-    const simpleBlock = document.getElementById('camisa-simple-block');
-    const itemsContainer = document.getElementById('camisa-items-container');
-
-    if (esModoIndividual()) {
-      simpleBlock.classList.add('hidden');
-      itemsContainer.classList.remove('hidden');
-      // Si venía de modo simple con datos llenos, preservar la primera camisa
-      const filasExistentes = document.querySelectorAll('#camisa-items-container .camisa-item-row');
-      if (filasExistentes.length === 0) {
-        const cantidad = parseInt(document.getElementById('f-cantidad').value, 10) || 1;
-        const genero = document.getElementById('cs-genero').value;
-        const color = document.getElementById('cs-color').value.trim();
-        const talla = document.getElementById('cs-talla').value;
-        const programa = document.getElementById('cs-programa').value.trim();
-        const modelo = document.getElementById('cs-modelo').value || 'Viejo';
-        const precioVal = document.getElementById('f-precio').value;
-        const costoVal = document.getElementById('f-costo').value;
-        const abonoVal = document.getElementById('cs-abono-total').value;
-        const estadoVal = document.getElementById('f-estado').value;
-        const hasData = genero || color || talla || programa || precioVal || costoVal || abonoVal;
-        if (hasData) {
-          const seed = {
-            genero: genero || 'Hombre',
-            color, talla, programa, modelo,
-            precio: precioVal !== '' ? parseFloat(precioVal) : '',
-            costo: costoVal !== '' ? parseFloat(costoVal) : '',
-            abono: abonoVal !== '' ? parseFloat(abonoVal) : '',
-            estado: estadoVal || 'Pedido'
-          };
-          const items = [];
-          for (let i = 0; i < cantidad; i++) {
-            if (i === 0) items.push(seed);
-            else items.push({ genero: '', color: '', talla: '', programa: '', modelo: 'Viejo', precio: '', costo: '', abono: '', estado: estadoVal || 'Pedido' });
-          }
-          renderCamisaItemsFromData(items);
-          actualizarSeccionPagos();
-          return;
-        }
-      }
-      onCantidadChange();
-    } else {
-      simpleBlock.classList.remove('hidden');
-      itemsContainer.innerHTML = '';
-      itemsContainer.classList.add('hidden');
-      actualizarTotalAbono();
-    }
-    actualizarSeccionPagos();
-  }
-
-  // La sección "Pago y Costos" solo tiene sentido en el modo simple
-  // ("todas las camisas iguales"): en modo individual cada fila ya trae
-  // su precio, costo, abono y estado, así que se oculta.
-  function actualizarSeccionPagos() {
-    const sec = document.getElementById('form-section-pagos');
-    if (!sec) return;
-    sec.classList.toggle('hidden', esModoIndividual());
   }
 
   function actualizarLugarOtro() {
@@ -2756,37 +2664,67 @@ return items.map((it, idx) => `
     actualizarLugarOtro();
   }
 
-  function onCantidadChange() {
-    const el = document.getElementById('f-cantidad');
-    const raw = el.value.trim();
-    // En teléfono, permitir borrar el "1" y dejar vacío mientras se escribe
-    if (raw === '' && document.activeElement === el) return;
-    let cantidad = parseInt(raw, 10);
-    if (isNaN(cantidad) || cantidad < 1) cantidad = 1;
-    if (cantidad > 30) cantidad = 30;
-    if (String(cantidad) !== raw) el.value = cantidad;
+  // ── Contador de camisas: + agrega, − quita, papelera quita una fila ──
 
-    const sugerido = cantidad * 20000;
-    const abonoInput = document.getElementById('cs-abono-total');
-    if (abonoInput && !abonoInput.dataset.userEdited) {
-      abonoInput.value = sugerido;
-    }
+  function actualizarContadorCamisas() {
+    const total = document.querySelectorAll('#camisa-items-container .camisa-item-row').length;
+    const out = document.getElementById('camisa-total');
+    if (out) out.textContent = total;
+    const menos = document.getElementById('camisa-menos');
+    if (menos) menos.disabled = total <= 1;
+    const mas = document.getElementById('camisa-mas');
+    if (mas) mas.disabled = total >= MAX_CAMISAS_PEDIDO;
+  }
 
-    if (!esModoIndividual()) {
-      actualizarTotalAbono();
+  // Botón +: agrega una fila. Se copia la última camisa para no tener que
+  // llenarla de nuevo cuando son iguales; si está vacía, se agrega en blanco.
+  function agregarCamisa() {
+    const existentes = collectCamisaItems();
+    if (existentes.length >= MAX_CAMISAS_PEDIDO) {
+      mostrarToast(`Máximo ${MAX_CAMISAS_PEDIDO} camisas por pedido.`, 'error');
       return;
     }
+    const ultima = existentes[existentes.length - 1];
+    const nueva = ultima ? { ...ultima } : {
+      modelo: 'Viejo', genero: '', color: '', talla: '',
+      programa: '', precio: NaN, costo: NaN, abono: NaN, estado: 'Pedido'
+    };
+    renderCamisaItemsFromData([...existentes, nueva]);
 
-    const existentes = collectCamisaItems();
-    const items = [];
-    for (let i = 0; i < cantidad; i++) {
-      if (existentes[i]) {
-        items.push(existentes[i]);
-      } else {
-        items.push({ genero: '', color: '', talla: '', abono: '', modelo: 'Viejo' });
+    // Enfocar el primer campo que siga vacío de la fila nueva.
+    const filas = document.querySelectorAll('#camisa-items-container .camisa-item-row');
+    const ultimaFila = filas[filas.length - 1];
+    if (ultimaFila) {
+      const campos = ultimaFila.querySelectorAll('.ci-modelo, .ci-genero, .ci-color, .ci-talla, .ci-programa, .ci-precio, .ci-costo, .ci-abono');
+      for (const campo of campos) {
+        if (!String(campo.value).trim()) { campo.focus(); break; }
       }
+      ultimaFila.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
-    renderCamisaItemsFromData(items);
+  }
+
+  // Botón −: quita la última camisa del pedido.
+  function restarCamisa() {
+    const existentes = collectCamisaItems();
+    if (existentes.length <= 1) {
+      mostrarToast('El pedido necesita al menos una camisa.', 'error');
+      return;
+    }
+    renderCamisaItemsFromData(existentes.slice(0, -1));
+  }
+
+  // Papelera 🗑️ de una fila: quita esa camisa concreta.
+  function eliminarFilaCamisa(index) {
+    const existentes = collectCamisaItems();
+    if (!existentes[index]) return;
+    if (existentes.length <= 1) {
+      mostrarToast('El pedido necesita al menos una camisa.', 'error');
+      return;
+    }
+    const it = existentes[index];
+    const desc = [it.color, it.talla, it.genero].filter(Boolean).join(' · ') || 'sin datos';
+    if (!confirmar(`¿Quitar la camisa #${index + 1} (${desc}) del pedido?\n\nEsto solo la quita del formulario. Para borrar el pedido completo, usa "Borrar" en Pedidos.`)) return;
+    renderCamisaItemsFromData(existentes.filter((_, i) => i !== index));
   }
 
   function actualizarDatalistClientes() {
@@ -2880,7 +2818,6 @@ return items.map((it, idx) => `
     if (venta) {
       document.getElementById('f-cliente').value = venta.cliente_nombre || '';
       document.getElementById('f-telefono').value = venta.cliente_telefono || '';
-      document.getElementById('cs-programa').value = venta.cliente_programa || '';
 
       let items = null;
       if (venta.items_camisa) {
@@ -2898,52 +2835,27 @@ return items.map((it, idx) => `
           abono: abonoPorUnidad
         }));
       }
-      document.getElementById('f-cantidad').value = items.length;
 
-      const abonosTmp = items.map(it => Number(it.abono) || 0);
-      const totalAbonoTmp = abonosTmp.reduce((s, v) => s + v, 0);
-      const abonosUniformTmp = abonosTmp.every(v => v === abonosTmp[0]);
-      const abonosSimplePatTmp = abonosTmp[0] === totalAbonoTmp && abonosTmp.slice(1).every(v => v === 0);
-      const abonoUniformeTmp = abonosUniformTmp || abonosSimplePatTmp;
-      const uniforme = items.every(it =>
-        it.genero === items[0].genero &&
-        it.color === items[0].color &&
-        it.talla === items[0].talla &&
-        (it.programa || '') === (items[0].programa || '') &&
-        normalizarModelo(it.modelo) === normalizarModelo(items[0].modelo) &&
-        (it.precio != null ? it.precio === items[0].precio : items[0].precio == null) &&
-        (it.costo != null ? it.costo === items[0].costo : items[0].costo == null) &&
-        (it.estado != null ? it.estado === items[0].estado : items[0].estado == null) &&
-        abonoUniformeTmp
-      );
-      const toggle = document.getElementById('f-detalle-individual');
-
-      if (uniforme) {
-        toggle.checked = false;
-        document.getElementById('cs-modelo').value = items[0].modelo || normalizarModelo(venta.modelo) || 'Viejo';
-        document.getElementById('cs-genero').value = items[0].genero || 'Hombre';
-        document.getElementById('cs-color').value = items[0].color || '';
-        document.getElementById('cs-talla').value = items[0].talla || '';
-        const totalAbono = items.reduce((sum, it) => sum + (Number(it.abono) || 0), 0);
-        document.getElementById('cs-abono-total').value = totalAbono;
-        document.getElementById('cs-programa').value = items[0].programa || '';
-        document.getElementById('camisa-simple-block').classList.remove('hidden');
-        document.getElementById('camisa-items-container').classList.add('hidden');
-        document.getElementById('camisa-items-container').innerHTML = '';
-        actualizarTotalAbono();
-      } else {
-        toggle.checked = true;
-        document.getElementById('camisa-simple-block').classList.add('hidden');
-        document.getElementById('camisa-items-container').classList.remove('hidden');
-        renderCamisaItemsFromData(items);
-      }
-
+      // Defaults de respaldo ANTES de dibujar: las filas los usan como placeholder.
       const pDef = items[0] && items[0].precio != null && items[0].precio !== '' ? items[0].precio : (venta.precio_unitario || 39000);
       const cDef = items[0] && items[0].costo != null && items[0].costo !== '' ? items[0].costo : (venta.costo_unitario || 30000);
       document.getElementById('f-precio').value = pDef;
       document.getElementById('f-costo').value = cDef;
       // Al editar, el costo registrado manda: no se re-autocompleta al cambiar talla/versión.
       document.getElementById('f-costo').dataset.user = '1';
+
+      // Pedidos antiguos pueden no guardar precio/costo por camisa: se heredan del
+      // pedido (precio_unitario / costo_unitario) para que las filas queden válidas.
+      const sinPrecio = it => it.precio == null || it.precio === '' || isNaN(Number(it.precio));
+      const sinCosto = it => it.costo == null || it.costo === '' || isNaN(Number(it.costo));
+      items = items.map(it => Object.assign({}, it, {
+        precio: sinPrecio(it) ? pDef : it.precio,
+        costo: sinCosto(it) ? cDef : it.costo
+      }));
+
+      // Siempre se dibujan las filas: ya no existe el modo "todas iguales".
+      renderCamisaItemsFromData(items);
+
       const eiItems = items.map(it => (it.estado ? normalizarEstado(it.estado) : null)).filter(Boolean);
       const rollupEst = eiItems.length
         ? eiItems.slice().sort((a, b) => ORDEN_ESTADOS.indexOf(a) - ORDEN_ESTADOS.indexOf(b))[0]
@@ -2970,24 +2882,16 @@ return items.map((it, idx) => `
     } else {
       document.getElementById('f-cliente').value = '';
       document.getElementById('f-telefono').value = '';
-      document.getElementById('f-cantidad').value = 1;
-      document.getElementById('f-detalle-individual').checked = false;
-      document.getElementById('cs-modelo').value = 'Viejo';
-      document.getElementById('cs-genero').value = '';
-      document.getElementById('cs-color').value = '';
-      document.getElementById('cs-talla').value = '';
-      document.getElementById('cs-abono-total').value = 20000;
-       document.getElementById('cs-programa').value = '';
-      document.getElementById('cs-color').value = '';
-      document.getElementById('cs-talla').value = '';
-      document.getElementById('camisa-simple-block').classList.remove('hidden');
-      document.getElementById('camisa-items-container').classList.add('hidden');
-      document.getElementById('camisa-items-container').innerHTML = '';
-      actualizarTotalAbono();
+      // Defaults primero: las filas los usan como placeholder de precio/costo.
       document.getElementById('f-precio').value = 39000;
       document.getElementById('f-costo').value = 30000;
       document.getElementById('f-costo').dataset.user = '0';
       document.getElementById('f-estado').value = '';
+      // Pedido nuevo: una sola camisa vacía. Se agregan las demás con el botón +.
+      renderCamisaItemsFromData([{
+        modelo: 'Viejo', genero: '', color: '', talla: '',
+        programa: '', precio: NaN, costo: NaN, abono: NaN, estado: 'Pedido'
+      }]);
       document.getElementById('f-fecha').value = hoyColombia();
       document.getElementById('f-fecha-entrega').value = '';
       document.getElementById('f-fecha-entrega-pendiente').checked = true;
@@ -3009,8 +2913,6 @@ return items.map((it, idx) => `
       vendedorSelect.disabled = true;
       vendedorSelect.innerHTML = opcionesVendedoresHtml(currentRole.vendedor || miNombre);
     }
-
-    actualizarSeccionPagos();
 
     const compradoBox = document.getElementById('form-comprado-actions');
     const compradoInfo = document.getElementById('form-comprado-info');
@@ -3126,25 +3028,17 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
      const faltantes = [];
      if (!payload.cliente_nombre) faltantes.push("Nombre del cliente");
      if (!payload.cliente_telefono) faltantes.push("Teléfono");
-     if (items.length === 0) faltantes.push("Al menos una camisa (revisa la Cantidad)");
-     if (!esModoIndividual()) {
-       if (!items[0] || !items[0].genero) faltantes.push("Género (todas las camisas)");
-       if (!items[0] || !items[0].color) faltantes.push("Color (todas las camisas)");
-       if (!items[0] || !items[0].talla) faltantes.push("Talla (todas las camisas)");
-       const abonoTotal = items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0);
-       if (isNaN(abonoTotal) || abonoTotal < 0) faltantes.push("Abono total válido");
-     } else {
-       items.forEach((it, idx) => {
-         if (!it.genero) faltantes.push(`Género de la camisa #${idx + 1}`);
-         if (!it.color) faltantes.push(`Color de la camisa #${idx + 1}`);
-         if (!it.talla) faltantes.push(`Talla de la camisa #${idx + 1}`);
-         if (isNaN(it.abono) || it.abono < 0) faltantes.push(`Abono válido de la camisa #${idx + 1}`);
-         const pI = Number(it.precio);
-         const cI = Number(it.costo);
-         if (isNaN(pI) || pI <= 0) faltantes.push(`Precio de venta de la camisa #${idx + 1}`);
-         if (isNaN(cI) || cI < 0) faltantes.push(`Costo (Yesenia) de la camisa #${idx + 1}`);
-       });
-     }
+     if (items.length === 0) faltantes.push("Al menos una camisa (usa + para agregar)");
+     items.forEach((it, idx) => {
+       if (!it.genero) faltantes.push(`Género de la camisa #${idx + 1}`);
+       if (!it.color) faltantes.push(`Color de la camisa #${idx + 1}`);
+       if (!it.talla) faltantes.push(`Talla de la camisa #${idx + 1}`);
+       if (isNaN(it.abono) || it.abono < 0) faltantes.push(`Abono válido de la camisa #${idx + 1}`);
+       const pI = Number(it.precio);
+       const cI = Number(it.costo);
+       if (isNaN(pI) || pI <= 0) faltantes.push(`Precio de venta de la camisa #${idx + 1}`);
+       if (isNaN(cI) || cI < 0) faltantes.push(`Costo (Yesenia) de la camisa #${idx + 1}`);
+     });
      if (payload.estado === 'Liquidado' || items.some(it => it.estado === 'Liquidado')) {
        const listas = items.every(it => ['Entregado', 'Liquidado'].includes(it.estado ? normalizarEstado(it.estado) : (payload.estado || 'Pedido') || 'Pedido'));
        if (!listas) faltantes.push("Para liquidar un pedido, TODAS sus camisas deben estar Entregado o Liquidado");
