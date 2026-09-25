@@ -1068,6 +1068,15 @@
     try { renderResumenes(); } catch (e) { logError('sync:renderResumenes', e); }
   }
 
+  // ¿Este pedido le concierne al usuario conectado?
+  // El admin lo ve todo. Un vendedor solo lo que vendió o lo que le toca
+  // entregar. Es el mismo criterio que usa la tabla de Pedidos.
+  function pedidoEsMio(v) {
+    if (!v) return false;
+    if (currentRole.role === 'admin' || !currentRole.vendedor) return true;
+    return v.vendedor === currentRole.vendedor || v.entrega_por === currentRole.vendedor;
+  }
+
   // Llega un cambio por Realtime.
   function marcarCambioPendiente() {
     if (!currentUser) return;
@@ -1077,6 +1086,8 @@
   }
 
   // Firma barata del estado: solo id + updated_at. Si cambia, hay algo nuevo.
+  // Se miran SOLO los pedidos que le importan a este usuario, igual que en
+  // Realtime: si no, un vendedor se refresca por los pedidos del otro.
   // OJO: hay que aplicar el MISMO filtro que loadVentas (quitar eliminados).
   // Sin eso, la fila de la papelera estaba en la firma pero no en el cache y
   // la app detectaba "cambios" eternamente, recargando sin parar.
@@ -1084,14 +1095,15 @@
     if (!currentUser || syncEnVuelo) return;
     try {
       const { data, error } = await supabaseClient
-        .from('ventas').select('id, updated_at, created_at, finalizado, abono, abono_yesenia, eliminado_at');
+        .from('ventas').select('id, updated_at, created_at, finalizado, abono, abono_yesenia, eliminado_at, vendedor, entrega_por');
       if (error) return;
       const firmaDe = lista => (lista || [])
         .filter(v => !v.eliminado_at)
+        .filter(pedidoEsMio)
         .map(r => `${r.id}.${r.updated_at || r.created_at || ''}.${r.finalizado ? 1 : 0}.${r.abono || 0}.${r.abono_yesenia || 0}`)
         .sort().join('|');
       if (firmaDe(data) !== firmaDe(ventasCache)) {
-        console.info('[sync] el SONDEO detecto un cambio (realtime no llego)');
+        console.info('[sync] el SONDEO detecto un cambio');
         marcarCambioPendiente();
       }
     } catch (e) { /* silencioso: el sondeo es opcional */ }
@@ -1099,7 +1111,17 @@
 
   function iniciarSync() {
     detenerSync();
+    // Un vendedor no se refresca por pedidos que no son suyos: se evitan
+    // recargas que no cambian nada en su pantalla. El admin si lo ve todo.
     const alRecibir = (tabla) => (carga) => {
+      if (tabla === 'ventas' && currentRole.role !== 'admin') {
+        const nuevo = carga.new || {};
+        const viejo = carga.old || {};
+        if (!pedidoEsMio(nuevo) && !pedidoEsMio(viejo)) {
+          console.info(`[sync] evento de ${carga.eventType} en ventas, pero NO es mio: se ignora`);
+          return;
+        }
+      }
       console.info(`[sync] EVENTO realtime en ${tabla}: ${carga.eventType}`);
       marcarCambioPendiente();
     };
