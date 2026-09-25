@@ -964,7 +964,12 @@
      abierto, NO se le refresca nada — solo se le avisa.
      ===================================================== */
   const TABLAS_SINCRONIZADAS = ['ventas', 'compras_proveedor', 'compra_aportes', 'liquidaciones'];
-  const INTERVALO_SONDEO_MS = 30000;
+  // El sondeo es la RED DE SEGURIDAD, no la vía principal: Realtime llega
+  // instantáneo, pero si la tabla no está en la publicación supabase_realtime
+  // los eventos nunca llegan (el canal igual reporta SUBSCRIBED, por eso es
+  // engañoso). Con 12 s el app sigue siendo usable aunque Realtime no
+  // funcione, y no cuesta nada extra cuando sí funciona.
+  const INTERVALO_SONDEO_MS = 12000;
   let canalSync = null;
   let temporizadorSync = null;
   let pendientesSync = false;
