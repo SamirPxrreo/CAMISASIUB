@@ -1227,6 +1227,58 @@ header.top .who {
   margin-right: 3px;
 }
 
+/* Sugerencias de cliente al escribir el nombre */
+.cliente-sugerencias {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.cliente-sugerencias.hidden {
+  display: none;
+}
+
+.cliente-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  font-size: 12.5px;
+  padding: 8px 11px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease-out),
+              background var(--dur-fast) var(--ease-out);
+}
+
+.cliente-chip:hover {
+  border-color: var(--thread);
+  background: var(--accent-bg);
+}
+
+.cliente-chip b {
+  font-weight: 700;
+}
+
+.cliente-chip span {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.cliente-chip em {
+  margin-left: auto;
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--thread);
+}
+
 /* Franja "pendientes de hoy" del inicio */
 .pendientes-franja {
   display: grid;
