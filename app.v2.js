@@ -3102,35 +3102,100 @@
     }).join('');
   }
 
+  // Suggestions de cliente con nombre y telefono: al tocar una se rellenan
+  // los tres campos (nombre, telefono y vendedor habitual) de una vez.
+  function pintarSugerenciasCliente(lista) {
+    const cont = document.getElementById('f-cliente-sugerencias');
+    if (!cont) return;
+    if (!lista.length) { cont.innerHTML = ''; cont.classList.add('hidden'); return; }
+    cont.classList.remove('hidden');
+    cont.innerHTML = lista.map((s, i) => `
+      <button type="button" class="cliente-chip" data-i="${i}">
+        <b>${escSimple(s.nombre)}</b>
+        <span>${escSimple(s.telefono || 'sin teléfono')}</span>
+        ${s.ventas > 1 ? `<em>${s.ventas} pedidos</em>` : ''}
+      </button>`).join('');
+    cont.querySelectorAll('.cliente-chip').forEach(b => {
+      b.addEventListener('click', () => {
+        const s = lista[Number(b.dataset.i)];
+        if (!s) return;
+        document.getElementById('f-cliente').value = s.nombre;
+        const tel = document.getElementById('f-telefono');
+        if (s.telefono) { tel.value = s.telefono; validarTelefonoInput(); }
+        const selV = document.getElementById('f-vendedor');
+        if (selV && s.vendedor && !editingId && !selV.disabled) selV.value = s.vendedor;
+        pintarSugerenciasCliente([]);
+        onClienteInput();
+        mostrarToast(`Cliente listo: ${s.nombre}${s.telefono ? ' · ' + s.telefono : ''}`, 'info');
+      });
+    });
+  }
+
+  // Agrupa por nombre para sugerir de mas a menos, con conteo de pedidos.
+  function sugerenciasCliente(texto, limite) {
+    const q = texto.trim().toLowerCase();
+    if (q.length < 2) return [];
+    const mapa = new Map();
+    ventasCache.forEach(v => {
+      const nombre = String(v.cliente_nombre || '').trim();
+      if (!nombre) return;
+      const bajo = nombre.toLowerCase();
+      if (!bajo.includes(q) && !q.includes(bajo)) return;
+      const tel = String(v.cliente_telefono || '').trim();
+      const k = nombre + '|' + tel;
+      if (!mapa.has(k)) {
+        mapa.set(k, { nombre, telefono: tel, vendedor: v.vendedor || '', ventas: 0, ultima: v.fecha || '' });
+      }
+      const e = mapa.get(k);
+      e.ventas++;
+      if (String(v.fecha || '') > String(e.ultima)) e.ultima = v.fecha;
+    });
+    return [...mapa.values()]
+      .sort((a, b) => (b.ventas - a.ventas) || String(b.ultima).localeCompare(String(a.ultima)))
+      .slice(0, limite);
+  }
+
   function onClienteInput() {
     const inp = document.getElementById('f-cliente');
     const hint = document.getElementById('f-cliente-hint');
     const telInput = document.getElementById('f-telefono');
     if (!inp || !hint) return;
     const nombre = inp.value.trim().toLowerCase();
-    if (!nombre) { hint.style.display='none'; return; }
+    if (!nombre) {
+      hint.style.display = 'none';
+      pintarSugerenciasCliente([]);
+      return;
+    }
     const exactos = ventasCache.filter(v=> String(v.cliente_nombre||'').trim().toLowerCase()===nombre);
     if (exactos.length>0) {
       const ultimo = exactos.slice().sort((a,b)=> String(b.fecha||'').localeCompare(String(a.fecha||'')))[0];
-      if (telInput && !telInput.value.trim() && ultimo.cliente_telefono) {
+      const telActual = telInput ? telInput.value.trim() : '';
+      if (telInput && !telActual && ultimo.cliente_telefono) {
         telInput.value = ultimo.cliente_telefono;
         validarTelefonoInput();
       }
       const tel = ultimo.cliente_telefono ? ' · ' + ultimo.cliente_telefono : '';
       const vend = ultimo.vendedor ? ' · vendedor habitual: ' + ultimo.vendedor : '';
-      hint.textContent = 'Cliente existente' + tel + vend + ' · ' + exactos.length + ' pedido(s) previo(s) — teléfono autocompletado si estaba vacío';
-      hint.style.display='block';
-      hint.style.color='var(--muted)';
+      // Si el teléfono ya era otro, avisar: son dos personas distintas.
+      const choca = telActual && ultimo.cliente_telefono && telActual !== ultimo.cliente_telefono;
+      hint.textContent = choca
+        ? `⚠️ Este cliente figura con el teléfono ${ultimo.cliente_telefono}, pero escribiste ${telActual}. Si es otra persona, deja el que pusiste.`
+        : 'Cliente existente' + tel + vend + ' · ' + exactos.length + ' pedido(s) previo(s) — teléfono autocompletado si estaba vacío';
+      hint.style.display = 'block';
+      hint.style.color = choca ? 'var(--warn)' : 'var(--muted)';
       const selV = document.getElementById('f-vendedor');
       if (selV && ultimo.vendedor && !editingId) selV.value = ultimo.vendedor;
+      pintarSugerenciasCliente(sugerenciasCliente(nombre, 3));
     } else {
-      const similares = ventasCache.filter(v=> String(v.cliente_nombre||'').toLowerCase().includes(nombre) && nombre.length>=3);
-      if (similares.length>0 && similares.length<=3) {
-        const nombres = [...new Set(similares.slice(0,3).map(s=> s.cliente_nombre))].join(', ');
-        hint.textContent = '¿Quisiste decir: ' + nombres + '?';
-        hint.style.display='block';
-        hint.style.color='var(--muted)';
-      } else { hint.style.display='none'; }
+      const sim = sugerenciasCliente(nombre, 3);
+      if (sim.length) {
+        hint.textContent = 'Toca el cliente para completar los datos:';
+        hint.style.display = 'block';
+        hint.style.color = 'var(--muted)';
+      } else {
+        hint.style.display = 'none';
+      }
+      pintarSugerenciasCliente(sim);
     }
   }
 
@@ -3239,6 +3304,9 @@
     } else {
       document.getElementById('f-cliente').value = '';
       document.getElementById('f-telefono').value = '';
+      const cd = document.getElementById('f-cliente-hint');
+      if (cd) cd.style.display = 'none';
+      pintarSugerenciasCliente([]);
       // Defaults primero: las filas los usan como placeholder de precio/costo.
       document.getElementById('f-precio').value = 39000;
       document.getElementById('f-costo').value = 30000;
