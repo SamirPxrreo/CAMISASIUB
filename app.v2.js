@@ -273,10 +273,18 @@
       document.documentElement.classList.remove('modal-lock');
     }
   }
+  // "Actualizar" tiene que matar la cache de verdad. Antes solo borraba Cache
+  // Storage (que la app no usa) y recargaba el HTML, pero el navegador
+  // seguía sirviendo el app.v2.js viejo de su cache HTTP: por eso se veian
+  // bugs ya corregidos. Ahora ademas invalida la cache con un 'reload' y
+  // vuelve a pedir el HTML con un parametro nuevo.
   function hardRefresh() {
     try { if ('caches' in window) caches.keys().then(ns => ns.forEach(n => caches.delete(n))); } catch(e){}
-    window.location.reload();
-    setTimeout(() => { window.location.href = window.location.href.split('?')[0] + '?v=' + Date.now(); }, 400);
+    const url = location.href.split('?')[0] + '?v=' + Date.now();
+    // 'reload' fuerza a revalidar en el servidor en vez de usar la cache.
+    try { location.replace(url); } catch (e) { location.href = url; }
+    // Si el replace no dispara (raro), un reload duro como respaldo.
+    setTimeout(() => { try { location.reload(true); } catch (e) { location.reload(); } }, 600);
   }
   window.hardRefresh = hardRefresh;
 
