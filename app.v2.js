@@ -894,6 +894,7 @@
 
       // Modal de abono del cliente
       document.getElementById('abono-guardar').addEventListener('click', () => addAbono());
+      document.getElementById('buscador-input').addEventListener('input', buscarEnBuscador);
       document.getElementById('abono-monto').addEventListener('keydown', (e) => {
         if (e.key === 'Enter') { e.preventDefault(); addAbono(); }
       });
@@ -1094,6 +1095,157 @@
   });
   // Marca "está escribiendo" para que la sincronización no lo interrumpa.
   document.addEventListener('input', () => { ultimaEntradaUsuario = Date.now(); }, true);
+
+  /* =====================================================
+     BUSCADOR GLOBAL (Ctrl+K / Cmd+K)
+     Escribe 2 letras y encuentra clientes, pedidos y secciones,
+     desde cualquier pantalla. No reemplaza los buscadores propios
+     de cada tabla: es un atajo para llegar rápido.
+     ===================================================== */
+  const SECCIONES_BUSCADOR = [
+    { id: 'dashboard', ico: '🏠', txt: 'Inicio' },
+    { id: 'new-sale',  ico: '➕', txt: 'Nueva venta' },
+    { id: 'orders',    ico: '📋', txt: 'Pedidos' },
+    { id: 'cuentas',   ico: '💳', txt: 'Cuentas por cliente' },
+    { id: 'history',   ico: '📚', txt: 'Historial' },
+    { id: 'purchases', ico: '🧵', txt: 'Abonos Yesenia' },
+    { id: 'settlements', ico: '💰', txt: 'Liquidaciones' },
+    { id: 'summaries', ico: '📊', txt: 'Resúmenes' },
+    { id: 'reports',   ico: '📈', txt: 'Reportes' },
+    { id: 'settings',  ico: '⚙️', txt: 'Configuración', soloAdmin: true }
+  ];
+
+  let busItems = [];
+  let busActivo = 0;
+
+  function normalizarBus(t) {
+    return String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  }
+
+  function resultadosBuscador(q) {
+    const nq = normalizarBus(q);
+    const salida = [];
+
+    // Pedidos (solo los que le tocan al usuario)
+    if (nq.length >= 2) {
+      ventasCache
+        .filter(v => (currentRole.role === 'admin' || !currentRole.vendedor) || v.vendedor === currentRole.vendedor)
+        .forEach(v => {
+          const campos = [v.cliente_nombre, v.cliente_telefono, v.cliente_programa, v.lugar_entrega]
+            .map(normalizarBus).join(' ');
+          if (!campos.includes(nq)) return;
+          const precio = precioTotalVenta(v);
+          const saldo = precio - abonoClienteTotal(v);
+          salida.push({
+            grupo: 'Pedidos',
+            ico: '📋',
+            titulo: v.cliente_nombre || 'Sin nombre',
+            sub: [v.cliente_telefono, formatearFechaHumana(v.fecha), estadoGeneralVenta(v)].filter(Boolean).join(' · '),
+            dato: saldo > 0 ? `debe ${fmt(saldo)}` : 'al día',
+            color: saldo > 0 ? 'var(--warn)' : 'var(--ok)',
+            accion: () => { cerrarBuscador(); irAPedido(v.id); }
+          });
+        });
+    }
+
+    // Secciones
+    SECCIONES_BUSCADOR
+      .filter(s => (!s.soloAdmin || currentRole.role === 'admin') &&
+                   (!nq || normalizarBus(s.txt).includes(nq)))
+      .forEach(s => salida.push({
+        grupo: 'Ir a', ico: s.ico, titulo: s.txt, sub: '', dato: '',
+        accion: () => { cerrarBuscador(); navigateTo(s.id); }
+      }));
+
+    return salida;
+  }
+
+  function pintarBuscador() {
+    const cont = document.getElementById('buscador-resultados');
+    if (!busItems.length) {
+      cont.innerHTML = `<div class="buscador-vacio">Sin resultados. Escribe el nombre o teléfono de un cliente.</div>`;
+      return;
+    }
+    let html = '';
+    let grupoActual = null;
+    busItems.forEach((it, i) => {
+      if (it.grupo !== grupoActual) { grupoActual = it.grupo; html += `<div class="buscador-grupo">${escSimple(it.grupo)}</div>`; }
+      html += `<button type="button" class="buscador-item${i === busActivo ? ' activo' : ''}" data-i="${i}">
+        <span class="buscador-item-ico">${it.ico}</span>
+        <span class="buscador-item-txt">
+          <span class="buscador-item-titulo">${escSimple(it.titulo)}</span>
+          ${it.sub ? `<span class="buscador-item-sub">${escSimple(it.sub)}</span>` : ''}
+        </span>
+        ${it.dato ? `<span class="buscador-item-dato" style="color:${it.color || 'var(--muted)'};">${escSimple(it.dato)}</span>` : ''}
+      </button>`;
+    });
+    cont.innerHTML = html;
+    cont.querySelectorAll('.buscador-item').forEach(b => {
+      b.addEventListener('click', () => { const it = busItems[Number(b.dataset.i)]; if (it) it.accion(); });
+      b.addEventListener('mouseenter', () => { busActivo = Number(b.dataset.i); pintarBuscador(); });
+    });
+  }
+
+  function buscarEnBuscador() {
+    const q = document.getElementById('buscador-input').value;
+    busItems = resultadosBuscador(q);
+    busActivo = 0;
+    pintarBuscador();
+  }
+
+  function abrirBuscador() {
+    if (!currentUser) return;
+    const inp = document.getElementById('buscador-input');
+    inp.value = '';
+    busItems = []; busActivo = 0;
+    document.getElementById('buscador-global').classList.remove('hidden');
+    bloquearScrollFondo();
+    buscarEnBuscador();
+    setTimeout(() => inp.focus(), 50);
+  }
+
+  function cerrarBuscador() {
+    document.getElementById('buscador-global').classList.add('hidden');
+    desbloquearScrollFondo();
+  }
+
+  // Abre el pedido en la sección correcta y lo deja resaltado un instante.
+  function irAPedido(id) {
+    navigateTo('orders');
+    setTimeout(() => {
+      const fila = document.querySelector(`#ventas-body tr[data-id="${id}"]`);
+      if (fila) {
+        fila.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        fila.classList.add('buscador-resaltada');
+        setTimeout(() => fila.classList.remove('buscador-resaltada'), 2200);
+      }
+    }, 120);
+  }
+
+  document.addEventListener('keydown', (e) => {
+    const abierto = !document.getElementById('buscador-global').classList.contains('hidden');
+
+    // Ctrl+K / Cmd+K abre y alterna
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
+      e.preventDefault();
+      abierto ? cerrarBuscador() : abrirBuscador();
+      return;
+    }
+    if (!abierto) return;
+
+    if (e.key === 'Escape') { e.preventDefault(); cerrarBuscador(); return; }
+    if (e.key === 'ArrowDown' && busItems.length) {
+      e.preventDefault(); busActivo = (busActivo + 1) % busItems.length; pintarBuscador(); return;
+    }
+    if (e.key === 'ArrowUp' && busItems.length) {
+      e.preventDefault(); busActivo = (busActivo - 1 + busItems.length) % busItems.length; pintarBuscador(); return;
+    }
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const it = busItems[busActivo];
+      if (it) it.accion();
+    }
+  });
 
   /* =====================================================
      CONTROL DE SESIÓN Y AUTENTICACIÓN
@@ -2539,7 +2691,7 @@
       const detalle = itemsDetalleHtml(v);
 
       return `
-        <tr>
+        <tr data-id="${v.id}">
           <td>${v.fecha ? formatearFechaHumana(v.fecha) : ''}<span class="sub-tag">🕐 ${horaDeVenta(v) || ''}</span></td>
           <td><b>${escSimple(v.vendedor || '')}</b></td>
           <td>
@@ -5116,7 +5268,7 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
       const esAdmin = currentRole.role === 'admin';
 
       return `
-        <tr>
+        <tr data-id="${v.id}">
           <td>${v.fecha ? formatearFechaHumana(v.fecha) : ''}<span class="sub-tag">🕐 ${horaDeVenta(v) || ''}</span></td>
           <td><b>${escSimple(v.vendedor || '')}</b></td>
           <td>
