@@ -3951,6 +3951,24 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
 
     if (!balCard) return;
 
+    // Regla de negocio (acordada por Samir, 2026-09-25): un pedido vendido por
+    // DEBAJO del costo no genera deuda entre socios — la pérdida se la come quien
+    // vendió. Como no se descuenta, el balance puede quedar más alto que la suma
+    // de las mitades de las ganancias. Se avisa abajo para que no parezca un error.
+    const perdidasSinDescontar = Math.round(
+      ventasCache.filter(v => v.vendedor === 'Samir' || v.vendedor === 'Valentina').reduce((s, v) => {
+        const g = precioTotalVenta(v) - costoTotalVenta(v);
+        return s + (g < 0 ? -g / 2 : 0);
+      }, 0)
+    );
+
+    const notaPerdidas = perdidasSinDescontar > 0 ? `
+      <div style="margin-top:8px; padding:9px 11px; border-radius:8px; border:1px dashed var(--line); font-size:12px; line-height:1.5; color:var(--muted);">
+        ⚠️ Este monto <b>no descuenta ${fmt(perdidasSinDescontar)}</b> por pedidos vendidos
+        por debajo del costo. Esa pérdida queda a cargo de quien vendió y no genera
+        deuda entre los dos.
+      </div>` : '';
+
     balCard.innerHTML = `
       <div class="eyebrow">💰 Balance entre socios</div>
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:13px; border:1px solid var(--line); border-radius:8px; padding:10px; margin-top:8px;">
@@ -3966,6 +3984,7 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
       <div style="margin-top:10px; padding:10px; border-radius:8px; background:${totalPendiente > 0 ? 'var(--warn)' : 'var(--ok)'}22;">
         <b>${totalPendiente > 0 ? `⚠️ Total pendiente por liquidar: ${fmt(totalPendiente)}` : '✅ Cuentas al día entre socios'}</b>
       </div>
+      ${notaPerdidas}
     `;
 
     const body = document.getElementById('liquidaciones-body');
