@@ -52,10 +52,10 @@ $keepIds[$sorted[$sorted.Count - 1].id] = $true        # el MAS VIEJO (ancla)
 $toKeep = @($sorted | Where-Object { $keepIds[$_.id] })
 $toDelete = @($sorted | Where-Object { -not $keepIds[$_.id] })
 
-Write-Host "Mantener ($($toKeep.Count)):" -ForegroundColor Green
-Write-Host "  $($sorted[0].created_at) $($sorted[0].sha.Substring(0,7))  <- ULTIMO (en vivo)" -ForegroundColor DarkGreen
-Write-Host "  $($sorted[1].created_at) $($sorted[1].sha.Substring(0,7))  <- PENULTIMO (rollback)" -ForegroundColor DarkGreen
-Write-Host "  $($sorted[$sorted.Count-1].created_at) $($sorted[$sorted.Count-1].sha.Substring(0,7))  <- MAS VIEJO (ancla)" -ForegroundColor DarkGreen
+Write-Host "Quedan 3, siempre:" -ForegroundColor Green
+Write-Host "  $($sorted[0].created_at) $($sorted[0].sha.Substring(0,7))  <- 1) el que ACABAS DE SUBIR (esta en vivo)" -ForegroundColor DarkGreen
+Write-Host "  $($sorted[1].created_at) $($sorted[1].sha.Substring(0,7))  <- 2) el que estaba ANTES de subir el nuevo" -ForegroundColor DarkGreen
+Write-Host "  $($sorted[$sorted.Count-1].created_at) $($sorted[$sorted.Count-1].sha.Substring(0,7))  <- 3) el MAS VIEJO (ancla, no se borra nunca)" -ForegroundColor DarkGreen
 
 Write-Host "Borrar $($toDelete.Count):" -ForegroundColor Yellow
 $fallos = 0
@@ -82,9 +82,12 @@ try {
   $final = Invoke-RestMethod -Uri "https://api.github.com/repos/$repo/deployments?per_page=100" -Headers $headers
   $final = @($final)
   Write-Host ""
-  Write-Host "Quedaron $($final.Count):" -ForegroundColor Cyan
-  $final | Sort-Object { [datetime]$_.created_at } | ForEach-Object {
-    Write-Host "  $($_.created_at) $($_.sha.Substring(0,7))"
+  Write-Host "Quedaron $($final.Count) (verificado contra la API):" -ForegroundColor Cyan
+  $ord = @($final | Sort-Object { [datetime]$_.created_at } -Descending)
+  $roles = @('1) el que acabas de subir (en vivo)', '2) el que estaba antes del push', '3) el mas viejo (ancla)')
+  for ($k = 0; $k -lt $ord.Count; $k++) {
+    $rol = if ($k -lt $roles.Count) { $roles[$k] } else { '' }
+    Write-Host "  $($ord[$k].created_at) $($ord[$k].sha.Substring(0,7))  $rol"
   }
 } catch { Write-Host "No se pudo verificar el resultado: $_" -ForegroundColor DarkYellow }
 
