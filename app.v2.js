@@ -1093,7 +1093,7 @@
     detenerSync();
     const alRecibir = (tabla) => (carga) => {
       console.info(`[sync] EVENTO realtime en ${tabla}: ${carga.eventType}`);
-      marcarCambioPendente();
+      marcarCambioPendiente();
     };
     try {
       canalSync = supabaseClient.channel('sync-camisas-iub')
