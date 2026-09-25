@@ -1213,6 +1213,11 @@
       renderDashboard();
     } else if (section === 'new-sale') {
       document.getElementById('form-card').classList.remove('hidden');
+      // Si se entra por el menú (no por openForm) el formulario arranca vacío:
+      // hay que dibujar la camisa para que el contador y las filas coincidan.
+      if (!document.querySelector('#camisa-items-container .camisa-item-row')) {
+        renderCamisaItemsFromData([camisaVacia()]);
+      }
     } else if (section === 'orders') {
       renderTable();
     } else if (section === 'history') {
@@ -2622,6 +2627,13 @@
     return isNaN(Number(v)) ? '' : v;
   }
 
+  // Una camisa en blanco para empezar un pedido. NaN = campo de dinero vacío
+  // (numOrBlank lo vuelve a cadena al pintar, no "NaN").
+  function camisaVacia() {
+    return { modelo: 'Viejo', genero: '', color: '', talla: '',
+             programa: '', precio: NaN, costo: NaN, abono: NaN, estado: 'Pedido' };
+  }
+
   function coloresOptionsHtml(valorSeleccionado) {
     const valorActual = valorSeleccionado || '';
     let html = `<option value="" ${valorActual === '' ? 'selected' : ''} disabled>Selecciona un color</option>`;
@@ -2790,6 +2802,8 @@
 
   // Botón +: agrega una fila. Se copia la última camisa para no tener que
   // llenarla de nuevo cuando son iguales; si está vacía, se agrega en blanco.
+  // NO se enfoca ningún campo: en el teléfono eso abriría de golpe el menú
+  // desplegable de género y taparía la pantalla. El usuario elige su campo.
   function agregarCamisa() {
     const existentes = collectCamisaItems();
     if (existentes.length >= MAX_CAMISAS_PEDIDO) {
@@ -2797,22 +2811,12 @@
       return;
     }
     const ultima = existentes[existentes.length - 1];
-    const nueva = ultima ? { ...ultima } : {
-      modelo: 'Viejo', genero: '', color: '', talla: '',
-      programa: '', precio: NaN, costo: NaN, abono: NaN, estado: 'Pedido'
-    };
-    renderCamisaItemsFromData([...existentes, nueva]);
+    renderCamisaItemsFromData([...existentes, ultima ? { ...ultima } : camisaVacia()]);
 
-    // Enfocar el primer campo que siga vacío de la fila nueva.
+    // Solo se acerca la fila nueva, sin robarle el foco al usuario.
     const filas = document.querySelectorAll('#camisa-items-container .camisa-item-row');
     const ultimaFila = filas[filas.length - 1];
-    if (ultimaFila) {
-      const campos = ultimaFila.querySelectorAll('.ci-modelo, .ci-genero, .ci-color, .ci-talla, .ci-programa, .ci-precio, .ci-costo, .ci-abono');
-      for (const campo of campos) {
-        if (!String(campo.value).trim()) { campo.focus(); break; }
-      }
-      ultimaFila.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
+    if (ultimaFila) ultimaFila.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
   // Botón −: quita la última camisa del pedido.
@@ -3000,10 +3004,7 @@
       document.getElementById('f-costo').dataset.user = '0';
       document.getElementById('f-estado').value = '';
       // Pedido nuevo: una sola camisa vacía. Se agregan las demás con el botón +.
-      renderCamisaItemsFromData([{
-        modelo: 'Viejo', genero: '', color: '', talla: '',
-        programa: '', precio: NaN, costo: NaN, abono: NaN, estado: 'Pedido'
-      }]);
+      renderCamisaItemsFromData([camisaVacia()]);
       document.getElementById('f-fecha').value = hoyColombia();
       document.getElementById('f-fecha-entrega').value = '';
       document.getElementById('f-fecha-entrega-pendiente').checked = true;
