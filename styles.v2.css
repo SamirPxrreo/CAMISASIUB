@@ -822,6 +822,42 @@ header.top .who {
   padding: 14px;
 }
 
+/* Aviso de cambios hechos en otro dispositivo */
+#sync-aviso {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 9000;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 11px 16px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--card);
+  border: 1px solid var(--thread);
+  border-radius: 999px;
+  box-shadow: var(--shadow-lg);
+  cursor: pointer;
+  animation: fadeIn var(--dur-med) var(--ease-out) both;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+#sync-aviso b {
+  color: var(--thread);
+  text-decoration: underline;
+}
+
+#sync-aviso:hover {
+  transform: translateY(-2px);
+}
+
+#sync-aviso.hidden {
+  display: none;
+}
+
 .camisa-item-head {
   flex: 0 0 100%;
   display: flex;

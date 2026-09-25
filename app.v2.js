@@ -324,6 +324,7 @@
   let pedidosDisponiblesPickers = [];
   let dashFiltroVentas = '';
   let dashFiltroEntregas = '';
+  let seccionActual = 'dashboard';
 
 
   /* =====================================================
@@ -936,6 +937,151 @@
 
 
   /* =====================================================
+     SINCRONIZACIÓN ENTRE DISPOSITIVOS
+     Valentina puede guardar desde el teléfono mientras Samir
+     mira el computador. Se resuelve en 3 capas:
+       1. Realtime de Supabase: aviso instantáneo.
+       2. Al volver a la pestaña: refresco (cubre cambiar de dispositivo).
+       3. Sondeo cada 60 s: red de seguridad si Realtime se cae.
+     Regla de oro: si el usuario está escribiendo o tiene un modal
+     abierto, NO se le refresca nada — solo se le avisa.
+     ===================================================== */
+  const TABLAS_SINCRONIZADAS = ['ventas', 'compras_proveedor', 'compra_aportes', 'liquidaciones'];
+  const INTERVALO_SONDEO_MS = 60000;
+  let canalSync = null;
+  let temporizadorSync = null;
+  let pendientesSync = false;
+  let syncEnVuelo = false;
+  let ultimaEntradaUsuario = 0;
+
+  // ¿Está el usuario a mitad de algo? Si sí, jamás se le refresca.
+  function usuarioOcupado() {
+    const form = document.getElementById('form-card');
+    if (form && !form.classList.contains('hidden')) {
+      if (editingId) return true;                      // editando un pedido existente
+      if ((document.getElementById('f-cliente')?.value || '').trim()) return true;  // pedido nuevo ya empezado
+    }
+    if (document.querySelector('.modal-backdrop:not(.hidden)')) return true;
+    if (document.querySelector('.sidebar-backdrop.show')) return true;
+    const a = document.activeElement;
+    if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT')) {
+      // cualquier campo con el foco cuenta como "escribiendo", con 4 s de gracia
+      if (Date.now() - ultimaEntradaUsuario < 4000) return true;
+    }
+    return false;
+  }
+
+  function mostrarAvisoSync() {
+    let aviso = document.getElementById('sync-aviso');
+    if (!aviso) {
+      aviso = document.createElement('button');
+      aviso.id = 'sync-aviso';
+      aviso.type = 'button';
+      aviso.addEventListener('click', () => aplicarCambiosExternos(true));
+      document.body.appendChild(aviso);
+    }
+    aviso.innerHTML = '🔔 Hay cambios de otro dispositivo <b>· Verlos</b>';
+    aviso.classList.remove('hidden');
+    clearTimeout(aviso._t);
+    // A los 10 s se oculta solo. Si el usuario ya está libre, se aplica.
+    aviso._t = setTimeout(() => {
+      if (usuarioOcupado()) aviso.classList.add('hidden');
+      else aplicarCambiosExternos(true);
+    }, 10000);
+  }
+
+  function ocultarAvisoSync() {
+    const aviso = document.getElementById('sync-aviso');
+    if (aviso) { clearTimeout(aviso._t); aviso.classList.add('hidden'); }
+  }
+
+  async function aplicarCambiosExternos(silencioso) {
+    if (syncEnVuelo || !currentUser) return;
+    syncEnVuelo = true;
+    pendientesSync = false;
+    ocultarAvisoSync();
+    try {
+      await loadVentas();          // ya re-renderiza dashboard, pedidos, historial y compras
+      await loadLiquidaciones();
+      await loadCuentasSilencioso();
+      renderResumenesSiVisible();
+      if (!silencioso) mostrarToast('🔔 Actualizado con cambios de otro dispositivo.', 'info');
+    } catch (e) {
+      logError('aplicarCambiosExternos', e);
+    } finally {
+      syncEnVuelo = false;
+    }
+  }
+
+  async function loadCuentasSilencioso() {
+    if (seccionActual === 'cuentas') {
+      try { renderCuentas(); } catch (e) { logError('sync:renderCuentas', e); }
+    }
+  }
+
+  function renderResumenesSiVisible() {
+    if (seccionActual !== 'summaries') return;
+    try { renderResumenes(); } catch (e) { logError('sync:renderResumenes', e); }
+  }
+
+  // Llega un cambio por Realtime.
+  function marcarCambioPendiente() {
+    if (!currentUser) return;
+    pendientesSync = true;
+    if (usuarioOcupado()) { mostrarAvisoSync(); return; }
+    aplicarCambiosExternos(true);
+  }
+
+  // Firma barata del estado: solo id + updated_at. Si cambia, hay algo nuevo.
+  async function detectarCambios() {
+    if (!currentUser || syncEnVuelo) return;
+    try {
+      const { data, error } = await supabaseClient
+        .from('ventas').select('id, updated_at, created_at, finalizado, abono, abono_yesenia');
+      if (error) return;
+      const firma = (data || [])
+        .map(r => `${r.id}.${r.updated_at || r.created_at || ''}.${r.finalizado ? 1 : 0}.${r.abono || 0}.${r.abono_yesenia || 0}`)
+        .sort().join('|');
+      const actual = ventasCache
+        .map(r => `${r.id}.${r.updated_at || r.created_at || ''}.${r.finalizado ? 1 : 0}.${r.abono || 0}.${r.abono_yesenia || 0}`)
+        .sort().join('|');
+      if (firma !== actual) marcarCambioPendiente();
+    } catch (e) { /* silencioso: el sondeo es opcional */ }
+  }
+
+  function iniciarSync() {
+    detenerSync();
+    try {
+      canalSync = supabaseClient.channel('sync-camisas-iub')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'ventas' }, marcarCambioPendiente)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'compras_proveedor' }, marcarCambioPendiente)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'compra_aportes' }, marcarCambioPendiente)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'liquidaciones' }, marcarCambioPendiente)
+        .subscribe();
+    } catch (e) { logError('iniciarSync', e); canalSync = null; }
+    temporizadorSync = setInterval(detectarCambios, INTERVALO_SONDEO_MS);
+  }
+
+  function detenerSync() {
+    if (canalSync) { try { supabaseClient.removeChannel(canalSync); } catch (e) {} canalSync = null; }
+    if (temporizadorSync) { clearInterval(temporizadorSync); temporizadorSync = null; }
+    pendientesSync = false;
+    ocultarAvisoSync();
+  }
+
+  // Capa 2: al volver a la pestaña o al cambiar de dispositivo.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && currentUser && !usuarioOcupado()) {
+      detectarCambios();
+    }
+  });
+  window.addEventListener('focus', () => {
+    if (currentUser && !usuarioOcupado()) detectarCambios();
+  });
+  // Marca "está escribiendo" para que la sincronización no lo interrumpa.
+  document.addEventListener('input', () => { ultimaEntradaUsuario = Date.now(); }, true);
+
+  /* =====================================================
      CONTROL DE SESIÓN Y AUTENTICACIÓN
      ===================================================== */
   async function checkSession() {
@@ -1007,6 +1153,7 @@
     await loadLiquidaciones();
     if (currentRole.role === 'admin') await loadUsuarios();
 
+    iniciarSync();
     navigateTo('dashboard');
   }
 
@@ -1039,6 +1186,7 @@
 
   async function handleLogout() {
     try { await supabaseClient.auth.signOut(); } catch(e){ logError('logout', e); }
+    detenerSync();
     currentUser = null;
     location.reload();
   }
@@ -1049,6 +1197,7 @@
      ===================================================== */
   function navigateTo(section) {
     const sections = ['dashboard', 'new-sale', 'orders', 'cuentas', 'purchases', 'settlements', 'summaries', 'reports', 'settings', 'history'];
+    seccionActual = section;
     sections.forEach(s => {
       document.getElementById(`section-${s}`).classList.add('hidden');
     });
