@@ -750,6 +750,49 @@
   </div>
 </div>
 
+<div id="abono-modal" class="modal-backdrop hidden">
+  <div class="modal-card modal-card-narrow">
+    <div class="modal-head">
+      <h3>Registrar abono del cliente</h3>
+      <button class="btn-ghost btn modal-x" onclick="cerrarModalAbono()" type="button" title="Cerrar">✕</button>
+    </div>
+
+    <p class="modal-intro" id="abono-cliente"></p>
+
+    <div class="cards cards-tight">
+      <div class="card">
+        <div class="eyebrow">Abono actual</div>
+        <div class="value" id="abono-actual">$0</div>
+      </div>
+      <div class="card">
+        <div class="eyebrow">Saldo pendiente</div>
+        <div class="value" id="abono-saldo">$0</div>
+      </div>
+    </div>
+
+    <label class="label-required">¿Cuánto abona ahora el cliente?</label>
+    <input type="number" id="abono-monto" min="1" step="500" placeholder="Ej. 20000" inputmode="numeric">
+
+    <p class="mini-label" style="margin-top:10px;">Montos rápidos</p>
+    <div class="chips" id="abono-rapidos">
+      <button type="button" class="chip" data-monto="10000">$10.000</button>
+      <button type="button" class="chip" data-monto="20000">$20.000</button>
+      <button type="button" class="chip" data-monto="30000">$30.000</button>
+      <button type="button" class="chip" data-monto="50000">$50.000</button>
+      <button type="button" class="chip chip-todo" data-monto="saldo">Todo el saldo</button>
+    </div>
+
+    <p class="hint" id="abono-nota" style="margin-top:10px;"></p>
+
+    <div class="error-msg hidden" id="abono-error"></div>
+
+    <div class="form-actions">
+      <button class="btn-ghost btn" onclick="cerrarModalAbono()" type="button">Cancelar</button>
+      <button class="btn btn-gold" id="abono-guardar" type="button">Registrar abono</button>
+    </div>
+  </div>
+</div>
+
 <div id="user-modal" class="modal-backdrop hidden">
   <div class="modal-card">
     <div class="modal-head">

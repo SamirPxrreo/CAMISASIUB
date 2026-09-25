@@ -892,6 +892,20 @@
       document.getElementById('camisa-mas').addEventListener('click', agregarCamisa);
       document.getElementById('camisa-menos').addEventListener('click', restarCamisa);
 
+      // Modal de abono del cliente
+      document.getElementById('abono-guardar').addEventListener('click', () => addAbono());
+      document.getElementById('abono-monto').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); addAbono(); }
+      });
+      document.getElementById('abono-rapidos').addEventListener('click', (e) => {
+        const chip = e.target.closest('.chip');
+        if (!chip) return;
+        const inp = document.getElementById('abono-monto');
+        const saldo = Number(inp.dataset.saldo) || 0;
+        inp.value = chip.dataset.monto === 'saldo' ? (saldo > 0 ? saldo : '') : chip.dataset.monto;
+        inp.focus();
+      });
+
       // Listeners
       document.getElementById('login-button').addEventListener('click', handleLogin);
       ['login-email', 'login-password'].forEach(id => {
@@ -1253,7 +1267,9 @@
       const lm = document.getElementById('liquidacion-modal');
       if (lm && !lm.classList.contains('hidden')) closeLiquidacionModal();
       const um = document.getElementById('user-modal');
-      if (um && !um.classList.contains('hidden')) closeUserModal();
+      if (um && !um.classList.contains('hidden')) { closeUserModal(); return; }
+      const am = document.getElementById('abono-modal');
+      if (am && !am.classList.contains('hidden')) { cerrarModalAbono(); return; }
     }
   });
 
@@ -2592,7 +2608,7 @@
     });
 
     document.querySelectorAll('.abono-button').forEach(button => {
-      button.addEventListener('click', () => addAbono(button.dataset.id));
+      button.addEventListener('click', () => abrirModalAbono(button.dataset.id));
     });
 
     document.querySelectorAll('.recibo-button').forEach(button => {
@@ -3076,6 +3092,8 @@
     }
   }
   window.clearCompradoAt = clearCompradoAt;
+  window.abrirModalAbono = abrirModalAbono;
+  window.cerrarModalAbono = cerrarModalAbono;
 
    async function saveVenta() {
      const errorContainer = document.getElementById('form-validation-error');
@@ -4918,15 +4936,71 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
     }
   }
 
-  async function addAbono(id) {
+  let abonoVentaId = null;
+
+  function abrirModalAbono(id) {
     const venta = ventasCache.find(v => v.id === id);
     if (!venta) return;
+    abonoVentaId = id;
 
-    const entrada = prompt(`Cliente: ${venta.cliente_nombre}\nAbono actual (total): ${fmt(venta.abono)}\n\n¿Cuánto abono adicional ingresará el cliente?\n\n(Si el pedido tiene varias camisas, usa "Editar" para repartir el abono entre cada una)`, '0');
-    if (entrada === null) return;
+    const abonoActual = abonoClienteTotal(venta);
+    const precio = precioTotalVenta(venta);
+    const saldo = Math.max(precio - abonoActual, 0);
 
-    const monto = parseFloat(entrada);
-    if (isNaN(monto) || monto <= 0) { mostrarToast('Ingresa un monto válido.', 'error'); return; }
+    document.getElementById('abono-cliente').textContent = venta.cliente_nombre || 'Cliente';
+    document.getElementById('abono-actual').textContent = fmt(abonoActual);
+    const elSaldo = document.getElementById('abono-saldo');
+    elSaldo.textContent = fmt(saldo);
+    elSaldo.style.color = saldo > 0 ? 'var(--warn)' : 'var(--ok)';
+
+    const inp = document.getElementById('abono-monto');
+    inp.value = '';
+    inp.dataset.saldo = saldo;
+    const err = document.getElementById('abono-error');
+    err.classList.add('hidden');
+    err.textContent = '';
+
+    const nota = document.getElementById('abono-nota');
+    const camisas = (itemsCrudosVenta(venta) || []).length;
+    nota.textContent = camisas > 1
+      ? `Se repartirá entre las ${camisas} camisas del pedido. Si necesitas repartirlo distinto, usa "Editar".`
+      : 'El abono se suma al que ya tiene el pedido.';
+
+    document.getElementById('abono-modal').classList.remove('hidden');
+    bloquearScrollFondo();
+    setTimeout(() => inp.focus(), 60);
+  }
+
+  function cerrarModalAbono() {
+    document.getElementById('abono-modal').classList.add('hidden');
+    desbloquearScrollFondo();
+    abonoVentaId = null;
+  }
+
+  async function addAbono(id) {
+    if (!id) id = abonoVentaId;
+    const venta = ventasCache.find(v => v.id === id);
+    if (!venta) { mostrarToast('No se encontró el pedido.', 'error'); cerrarModalAbono(); return; }
+
+    const errEl = document.getElementById('abono-error');
+    const inp = document.getElementById('abono-monto');
+    const monto = parseFloat(inp.value);
+
+    if (isNaN(monto) || monto <= 0) {
+      errEl.textContent = 'Escribe un monto mayor que cero.';
+      errEl.classList.remove('hidden');
+      inp.focus();
+      return;
+    }
+    const saldo = Math.max(precioTotalVenta(venta) - abonoClienteTotal(venta), 0);
+    if (saldo > 0 && monto > saldo + 1) {
+      const ok = confirmar(`El monto (${fmt(monto)}) es mayor que el saldo pendiente (${fmt(saldo)}).\n\n¿Registrarlo de todos modos?`);
+      if (!ok) {
+        errEl.textContent = `El saldo pendiente es ${fmt(saldo)}.`;
+        errEl.classList.remove('hidden');
+        return;
+      }
+    }
 
     const nuevoAbono = (Number(venta.abono) || 0) + monto;
     const payload = { abono: nuevoAbono, updated_at: new Date().toISOString() };
@@ -4957,6 +5031,7 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
         if (res.error) throw res.error;
       } else if (res.error) throw res.error;
       await loadVentas();
+      cerrarModalAbono();
       mostrarToast('Abono agregado correctamente');
     } catch (err) { logError('addAbono:update', err); mostrarToast('Error al agregar abono', 'error'); }
   }
