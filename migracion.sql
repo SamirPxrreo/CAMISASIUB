@@ -21,3 +21,13 @@ CREATE TRIGGER ventas_updated_at BEFORE UPDATE ON ventas FOR EACH ROW EXECUTE FU
 
 -- 4. Fecha/hora de compra (cuando el pedido pasa a Comprado).
 ALTER TABLE ventas ADD COLUMN IF NOT EXISTS comprado_at timestamptz;
+
+-- 5. PAPELERA: borrado logico de pedidos (2026-09-25).
+--    Con esta columna, "Eliminar" un pedido solo le pone la fecha de borrado
+--    y sale de Pedidos, pero se puede restaurar desde el boton "🗑️ Eliminados".
+--    Si NO aplicas esta migracion, la app lo detecta y hace borrado definitivo
+--    avisandote, asi que es seguro aplicarla o no.
+ALTER TABLE ventas ADD COLUMN IF NOT EXISTS eliminado_at timestamptz;
+
+-- Indice para que la papelela (where eliminado_at is not null) sea rapida.
+CREATE INDEX IF NOT EXISTS ventas_eliminado_at_idx ON ventas (eliminado_at);

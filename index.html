@@ -289,6 +289,7 @@
           <p class="page-sub">Consulta, filtra y administra todos los pedidos.</p>
         </div>
         <div class="actions-right">
+          <button class="btn-ghost btn" id="btn-eliminados" onclick="abrirEliminados()" type="button" title="Pedidos borrados que puedes recuperar">🗑️ Eliminados</button>
           <button class="btn btn-success" id="export-buy-btn" type="button">Exportar compra</button>
           <button class="btn btn-gold hidden" id="export-full-btn" type="button">Exportar Excel completo</button>
           <button class="btn" onclick="navigateTo('new-sale')" type="button">Nueva venta</button>
@@ -747,6 +748,35 @@
     <div class="form-actions">
       <button class="btn-ghost btn" onclick="closeLiquidacionModal()" type="button">Cancelar</button>
       <button class="btn btn-gold" onclick="saveLiquidacion()" type="button">Registrar Pago</button>
+    </div>
+  </div>
+</div>
+
+<div id="confirm-modal" class="modal-backdrop hidden">
+  <div class="modal-card modal-card-narrow">
+    <div class="modal-head">
+      <h3 id="confirm-titulo">Confirmar</h3>
+      <button class="btn-ghost btn modal-x" onclick="resolverConfirm(false)" type="button" title="Cerrar">✕</button>
+    </div>
+    <p id="confirm-texto" class="modal-intro"></p>
+    <div id="confirm-detalle" class="confirm-detalle hidden"></div>
+    <div class="form-actions">
+      <button class="btn-ghost btn" id="confirm-no" type="button">Cancelar</button>
+      <button class="btn btn-danger" id="confirm-si" type="button">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<div id="eliminados-modal" class="modal-backdrop hidden">
+  <div class="modal-card modal-card-wide">
+    <div class="modal-head">
+      <h3>🗑️ Pedidos eliminados</h3>
+      <button class="btn-ghost btn modal-x" onclick="cerrarEliminados()" type="button" title="Cerrar">✕</button>
+    </div>
+    <p class="modal-intro">Estos pedidos se borraron pero siguen guardados. Puedes devolverlos a "Pedidos" cuando quieras.</p>
+    <div id="eliminados-lista" class="eliminados-lista"></div>
+    <div class="form-actions">
+      <button class="btn-ghost btn" onclick="cerrarEliminados()" type="button">Cerrar</button>
     </div>
   </div>
 </div>
