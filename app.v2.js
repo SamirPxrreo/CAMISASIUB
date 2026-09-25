@@ -1599,22 +1599,6 @@
   }
 
   // DASHBOARD — pantalla principal: información rápida y accesos generales
-  // Las tarjetas de la franja de pendientes llevan a donde corresponde:
-  // filtrando el buscador de esa sección, no solo cambiando de pestaña.
-  function navegarInicio(destino) {
-    if (destino === 'cuentas') { navigateTo('cuentas'); return; }
-    if (destino === 'pedidos') { navigateTo('orders'); return; }
-    if (destino === 'entregas') {
-      navigateTo('dashboard');
-      const inp = document.getElementById('dash-search-entregas');
-      if (inp) {
-        inp.value = hoyColombia();
-        dashFiltroEntregas = hoyColombia();
-        renderDashboard();
-      }
-    }
-  }
-
   function renderDashboard() {
     const esAdmin = currentRole.role === 'admin';
     const miNombre = currentRole.vendedor;
@@ -1657,65 +1641,8 @@
       totalPorCobrar += Math.max(precioTotalVenta(v) - abonoClienteTotal(v), 0);
     });
 
-    // ── Franja "pendientes de hoy": lo que hay que hacer, en 3 números ──
-    const hoy = hoyColombia();
-    const esMio = v => currentRole.role === 'admin' || !currentRole.vendedor || v.vendedor === currentRole.vendedor;
-    const activos = ventasCache.filter(v => !v.finalizado);
-
-    const entregasHoy = activos.filter(v =>
-      v.fecha_entrega === hoy && !estadosTodosLiquidado(v) &&
-      (!currentRole.vendedor || !v.entrega_por || v.entrega_por === currentRole.vendedor)
-    );
-
-    const deudores = (() => {
-      const porCliente = new Map();
-      activos.forEach(v => {
-        if (!esMio(v)) return;
-        const saldo = Math.max(precioTotalVenta(v) - abonoClienteTotal(v), 0);
-        if (saldo <= 0) return;
-        const k = claveCliente(v);
-        porCliente.set(k, (porCliente.get(k) || 0) + saldo);
-      });
-      return { clientes: porCliente.size, total: [...porCliente.values()].reduce((s, x) => s + x, 0) };
-    })();
-
-    let camisasSinBordar = 0;
-    activos.forEach(v => {
-      if (!esMio(v)) return;
-      (itemsCrudosVenta(v) || []).forEach(it => {
-        const e = normalizarEstado(it.estado || v.estado);
-        if (e === 'Pedido' || e === 'Comprado' || e === 'Bordando') camisasSinBordar++;
-      });
-    });
-
-    const franjaPendientes = (entregasHoy.length || deudores.clientes || camisasSinBordar) ? `
-      <div class="pendientes-franja">
-        <button type="button" class="pendiente-item${entregasHoy.length ? ' p-activo' : ''}" onclick="${entregasHoy.length ? "document.getElementById('dash-search-entregas').value=hoyColombia();navegarInicio('entregas')" : ''}">
-          <span class="pendiente-ico">📅</span>
-          <span class="pendiente-txt">
-            <b>${entregasHoy.length}</b> por entregar hoy
-            <small>${entregasHoy.length ? escSimple(entregasHoy.map(v => v.cliente_nombre || 'Cliente').slice(0, 3).join(', ')) : 'Nada para hoy'}</small>
-          </span>
-        </button>
-        <button type="button" class="pendiente-item${deudores.clientes ? ' p-deuda' : ''}" onclick="navegarInicio('cuentas')">
-          <span class="pendiente-ico">💳</span>
-          <span class="pendiente-txt">
-            <b>${deudores.clientes}</b> ${deudores.clientes === 1 ? 'cliente' : 'clientes'} me ${deudores.clientes === 1 ? 'debe' : 'deben'}
-            <small>${deudores.total > 0 ? fmt(deudores.total) + ' en total' : 'Nada pendiente'}</small>
-          </span>
-        </button>
-        <button type="button" class="pendiente-item${camisasSinBordar ? ' p-bordado' : ''}" onclick="${camisasSinBordar ? "document.getElementById('filter-estado').value='';navegarInicio('pedidos')" : ''}">
-          <span class="pendiente-ico">🧵</span>
-          <span class="pendiente-txt">
-            <b>${camisasSinBordar}</b> camisas sin bordar
-            <small>${camisasSinBordar ? 'Pedido, Comprado o Bordando' : 'Todo bordado'}</small>
-          </span>
-        </button>
-      </div>` : '';
-
     document.getElementById('dashboard-contenido').innerHTML = `
       <div id="dashboard-alertas"></div>
-      ${franjaPendientes}
       <div class="dash-section" style="margin-bottom:24px;">
         <h2 style="font-size:17px;font-weight:600;margin:0 0 10px;">⚡ Accesos rápidos</h2>
         <div class="kpi-grid">
@@ -3486,12 +3413,15 @@
     document.getElementById('form-card').scrollIntoView({ behavior: 'smooth' });
   }
 
+  // Cancelar en Nueva Venta: limpia el formulario y se vuelve al Inicio
+  // (tanto si se estaba creando uno nuevo como editando uno existente).
   function closeForm() {
     editingId = null;
     document.getElementById('form-card').classList.add('hidden');
     document.getElementById('form-validation-error').classList.add('hidden');
     const cb = document.getElementById('form-comprado-actions');
     if (cb) cb.classList.add('hidden');
+    navigateTo('dashboard');
   }
 
   async function clearCompradoAt() {
@@ -3664,8 +3594,10 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
          if (error) { mostrarToast('Error al guardar: ' + error.message, 'error'); return; }
         const eraEdicion = !!editingId;
         await loadVentas();
+        // Limpia el formulario y lleva SIEMPRE a Pedidos, tanto al crear uno
+        // nuevo como al editar: es donde se ve de inmediato lo que se guardó.
         openForm(null);
-        if (eraEdicion) navigateTo('orders');
+        navigateTo('orders');
         mostrarToast(eraEdicion ? '✅ Venta actualizada correctamente.' : '✅ Venta registrada correctamente.');
      } catch (err) {
        mostrarToast('Error inesperado al guardar la venta.', 'error');
