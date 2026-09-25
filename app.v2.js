@@ -4785,8 +4785,15 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
       try {
         const items = JSON.parse(venta.items_camisa);
         if (Array.isArray(items) && items.length > 0) {
-          const abonoPorItem = monto / items.length;
-          items.forEach((it, i) => { items[i].abono = (Number(items[i].abono) || 0) + abonoPorItem; });
+          // Reparto exacto: base entera + el resto de pesos a las primeras camisas.
+          // Antes se dividia tal cual (monto / items.length) y quedaban decimales:
+          // 10.000 en 3 camisas daba 3333.333... y la suma era 9999.999... ≠ 10.000.
+          const n = items.length;
+          const base = Math.floor(monto / n);
+          const resto = Math.round(monto - base * n);
+          items.forEach((it, i) => {
+            items[i].abono = (Number(items[i].abono) || 0) + base + (i < resto ? 1 : 0);
+          });
           payload.items_camisa = JSON.stringify(items);
         }
       } catch (e) { logError('addAbono:parseItems', e); }
