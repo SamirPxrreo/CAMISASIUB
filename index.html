@@ -165,67 +165,30 @@
         <div class="form-section">
           <div class="form-section-header">
             <span class="form-section-badge">2</span>
-            <h4 class="form-section-title">Camisa</h4>
-          </div>
-          <div class="form-grid form-grid-narrow">
-            <div>
-              <label class="label-required">Cantidad</label>
-              <input type="number" id="f-cantidad" value="1" min="1" max="30">
-            </div>
+            <h4 class="form-section-title">Camisas del pedido</h4>
           </div>
 
-          <div class="toggle-row">
-            <input type="checkbox" id="f-detalle-individual">
-            <label for="f-detalle-individual">Llenar cada camisa por separado (colores, tallas o abonos distintos)</label>
-          </div>
-
-          <div class="form-grid" id="camisa-simple-block">
-            <div>
-              <label>Versión de la camisa</label>
-              <select id="cs-modelo">
-                <option value="Viejo" selected>Versión 1</option>
-                <option value="Nuevo">Versión 2</option>
-              </select>
-            </div>
-            <div>
-              <label class="label-required">Género (todas las camisas)</label>
-              <select id="cs-genero">
-                <option value="" selected disabled>Selecciona un género</option>
-                <option value="Hombre">Hombre</option>
-                <option value="Mujer">Mujer</option>
-              </select>
-            </div>
-            <div>
-              <label class="label-required">Color (todas las camisas)</label>
-              <select id="cs-color">
-                <option value="" selected disabled>Selecciona un color</option>
-              </select>
-            </div>
-            <div>
-              <label class="label-required">Talla (todas las camisas)</label>
-              <select id="cs-talla">
-                <option value="">Selecciona una talla</option>
-              </select>
-            </div>
-            <div>
-              <label>Bordado (todas las camisas)</label>
-              <input type="text" id="cs-programa" placeholder="Ej. Ingeniería de Sistemas">
-            </div>
-            <div>
-              <label>Abono total recibido del cliente ($)</label>
-              <input type="number" id="cs-abono-total" min="0" value="20000">
+          <div class="camisa-contador">
+            <span class="camisa-contador-label">Camisas en este pedido</span>
+            <div class="stepper">
+              <button type="button" class="stepper-btn" id="camisa-menos" title="Quitar la última camisa" aria-label="Quitar una camisa">&minus;</button>
+              <output class="stepper-value" id="camisa-total">1</output>
+              <button type="button" class="stepper-btn stepper-btn-add" id="camisa-mas" title="Agregar una camisa" aria-label="Agregar una camisa">+</button>
             </div>
           </div>
 
           <div id="camisa-items-container"></div>
 
-          <p class="hint">Activa la casilla de arriba solo si las camisas de este pedido tienen colores, tallas, abonos o estados distintos entre sí. Si todas son iguales pero quieres estados/precios/costos distintos por camisa, actívala igual: cada fila tiene su propio precio de venta, costo (Yesenia), abono y estado.</p>
+          <p class="hint">Agrega camisas con <b>+</b> y quítalas con <b>&minus;</b> o con la papelera 🗑️ de cada cuadrito. Cada camisa se llena por separado, así que en un mismo pedido puedes tener tallas, colores, precios, abonos y estados distintos.</p>
         </div>
 
-        <div class="form-section" id="form-section-pagos">
+        <!-- Sección "Pago y Costos": cada camisa lleva su propio precio, costo,
+             abono y estado, así que queda oculta. Sus campos (f-precio, f-costo,
+             f-estado) siguen sirviendo como valor por defecto y de respaldo. -->
+        <div class="form-section hidden" id="form-section-pagos">
           <div class="form-section-header">
-            <span class="form-section-badge">3</span>
-            <h4 class="form-section-title">Pago y Costos</h4>
+            <span class="form-section-badge">–</span>
+            <h4 class="form-section-title">Pago y Costos (oculta)</h4>
           </div>
           <div class="form-grid">
             <div>
@@ -258,7 +221,7 @@
 
         <div class="form-section">
           <div class="form-section-header">
-            <span class="form-section-badge">4</span>
+            <span class="form-section-badge">3</span>
             <h4 class="form-section-title">Entrega</h4>
           </div>
           <div class="form-grid">
@@ -297,7 +260,7 @@
 
         <div class="form-section">
           <div class="form-section-header">
-            <span class="form-section-badge">5</span>
+            <span class="form-section-badge">4</span>
             <h4 class="form-section-title">Observaciones</h4>
           </div>
           <div>
