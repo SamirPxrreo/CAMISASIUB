@@ -1227,6 +1227,69 @@ header.top .who {
   margin-right: 3px;
 }
 
+/* Detalle que muestra el modal de confirmación */
+.confirm-detalle {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 11px 13px;
+  margin-bottom: 14px;
+  background: var(--accent-bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.confirm-detalle.hidden {
+  display: none;
+}
+
+.confirm-detalle b {
+  font-size: 14px;
+  color: var(--ink);
+}
+
+/* Papelera de pedidos eliminados */
+.eliminados-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 55vh;
+  overflow-y: auto;
+  margin-bottom: 4px;
+}
+
+.eliminado-fila {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 13px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+}
+
+.eliminado-txt {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.eliminado-txt b {
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.eliminado-txt small {
+  font-size: 11px;
+  color: var(--muted);
+}
+
 /* Sugerencias de cliente al escribir el nombre */
 .cliente-sugerencias {
   display: flex;

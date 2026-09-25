@@ -895,6 +895,8 @@
       // Modal de abono del cliente
       document.getElementById('abono-guardar').addEventListener('click', () => addAbono());
       document.getElementById('buscador-input').addEventListener('input', buscarEnBuscador);
+      document.getElementById('confirm-si').addEventListener('click', () => resolverConfirm(true));
+      document.getElementById('confirm-no').addEventListener('click', () => resolverConfirm(false));
       document.getElementById('abono-monto').addEventListener('keydown', (e) => {
         if (e.key === 'Enter') { e.preventDefault(); addAbono(); }
       });
@@ -1248,6 +1250,134 @@
   });
 
   /* =====================================================
+     CONFIRMACIÓN Y PAPELERA (borrado lógico)
+     Un window.confirm() se pasa con Enter sin querer. Este modal
+     muestra QUÉ se va a borrar y por defecto el foco está en
+     "Cancelar". Además los pedidos no se borran de verdad: se
+     marcan con eliminado_at y hay una papelera para recuperarlos.
+     Si la columna eliminado_at no existe en Supabase, la app cae
+     sola al borrado de siempre (y avisa una vez).
+     ===================================================== */
+  let confirmaResolver = null;
+  let papeleraActiva = true;      // false = la columna no existe, borrado duro
+
+  function confirmarFuerte(opts) {
+    return new Promise(resolve => {
+      document.getElementById('confirm-titulo').textContent = opts.titulo || 'Confirmar';
+      document.getElementById('confirm-texto').textContent = opts.texto || '';
+      const det = document.getElementById('confirm-detalle');
+      if (opts.detalle) { det.innerHTML = opts.detalle; det.classList.remove('hidden'); }
+      else det.classList.add('hidden');
+      const btnSi = document.getElementById('confirm-si');
+      btnSi.textContent = opts.botonSi || 'Eliminar';
+      btnSi.className = 'btn ' + (opts.peligro === false ? 'btn-gold' : 'btn-danger');
+      confirmaResolver = resolve;
+      document.getElementById('confirm-modal').classList.remove('hidden');
+      bloquearScrollFondo();
+      setTimeout(() => document.getElementById('confirm-no').focus(), 60);
+    });
+  }
+
+  function resolverConfirm(ok) {
+    document.getElementById('confirm-modal').classList.add('hidden');
+    desbloquearScrollFondo();
+    const r = confirmaResolver;
+    confirmaResolver = null;
+    if (r) r(!!ok);
+  }
+
+  // ── Papelera ──
+  async function loadEliminados() {
+    if (!papeleraActiva) return [];
+    const { data, error } = await supabaseClient
+      .from('ventas').select('*')
+      .not('eliminado_at', 'is', null)
+      .order('eliminado_at', { ascending: false });
+    if (error) { papeleraActiva = false; return []; }
+    return data || [];
+  }
+
+  async function abrirEliminados() {
+    const cont = document.getElementById('eliminados-lista');
+    cont.innerHTML = '<div class="buscador-vacio">Cargando...</div>';
+    document.getElementById('eliminados-modal').classList.remove('hidden');
+    bloquearScrollFondo();
+    const lista = await loadEliminados();
+    if (!lista.length) {
+      cont.innerHTML = papeleraActiva
+        ? '<div class="buscador-vacio">No hay pedidos eliminados.</div>'
+        : '<div class="buscador-vacio">La papelela no está activa todavía: falta aplicar la migración <code>eliminado_at</code> en Supabase. Mientras tanto los borrados son definitivos.</div>';
+      return;
+    }
+    cont.innerHTML = lista.map(v => `
+      <div class="eliminado-fila" data-id="${v.id}">
+        <div class="eliminado-txt">
+          <b>${escSimple(v.cliente_nombre || 'Sin nombre')}</b>
+          <span>${escSimple(v.cliente_telefono || '')} · ${v.fecha ? formatearFechaHumana(v.fecha) : ''} · ${escSimple(v.vendedor || '')}</span>
+          <small>Borrado ${v.eliminado_at ? formatearFechaHumana(String(v.eliminado_at).slice(0, 10)) : ''}</small>
+        </div>
+        <button type="button" class="btn-ghost btn" data-restaurar="${v.id}">↩️ Restaurar</button>
+      </div>`).join('');
+    cont.querySelectorAll('[data-restaurar]').forEach(b => {
+      b.addEventListener('click', () => restaurarVenta(b.dataset.restaurar));
+    });
+  }
+
+  function cerrarEliminados() {
+    document.getElementById('eliminados-modal').classList.add('hidden');
+    desbloquearScrollFondo();
+  }
+
+  async function restaurarVenta(id) {
+    const { error } = await supabaseClient.from('ventas').update({ eliminado_at: null }).eq('id', id);
+    if (error) { mostrarToast('No se pudo restaurar: ' + error.message, 'error'); return; }
+    mostrarToast('✅ Pedido restaurado.');
+    await loadVentas();
+    await abrirEliminados();
+  }
+
+  async function deleteVenta(id) {
+    const v = ventasCache.find(x => x.id === id);
+    if (v && v.finalizado && currentRole.role !== 'admin') {
+      mostrarToast('Solo el administrador puede borrar pedidos del historial.', 'error');
+      return;
+    }
+    const camisas = (itemsCrudosVenta(v) || []).length || Number(v?.cantidad) || 0;
+    const ok = await confirmarFuerte({
+      titulo: 'Eliminar pedido',
+      texto: papeleraActiva
+        ? 'El pedido sale de Pedidos, pero queda guardado en 🗑️ Eliminados y lo puedes recuperar.'
+        : '⚠️ Esto borra el pedido definitivamente, sin opción de recuperarlo.',
+      detalle: v ? `<b>${escSimple(v.cliente_nombre || 'Sin nombre')}</b>
+        <span>${escSimple(v.cliente_telefono || '')} · ${v.fecha ? formatearFechaHumana(v.fecha) : 'sin fecha'} · ${camisas} camisa(s)</span>` : '',
+      botonSi: 'Eliminar pedido'
+    });
+    if (!ok) return;
+
+    try {
+      if (papeleraActiva) {
+        const res = await supabaseClient.from('ventas')
+          .update({ eliminado_at: new Date().toISOString() }).eq('id', id);
+        if (res.error) {
+          if (/eliminado_at|column/i.test(String(res.error.message))) {
+            // La columna no existe: el proyecto no tiene la migración aplicada.
+            papeleraActiva = false;
+            mostrarToast('La papelera no está activa: el borrado será definitivo.', 'warning');
+            await supabaseClient.from('ventas').delete().eq('id', id);
+          } else throw res.error;
+        }
+      } else {
+        await supabaseClient.from('ventas').delete().eq('id', id);
+      }
+      await loadVentas();
+      mostrarToast('Pedido eliminado.');
+    } catch (err) {
+      logError('deleteVenta', err);
+      mostrarToast('No se pudo eliminar el pedido.', 'error');
+    }
+  }
+
+  /* =====================================================
      CONTROL DE SESIÓN Y AUTENTICACIÓN
      ===================================================== */
   async function checkSession() {
@@ -1422,6 +1552,12 @@
       if (um && !um.classList.contains('hidden')) { closeUserModal(); return; }
       const am = document.getElementById('abono-modal');
       if (am && !am.classList.contains('hidden')) { cerrarModalAbono(); return; }
+      const cmod = document.getElementById('confirm-modal');
+      if (cmod && !cmod.classList.contains('hidden')) { resolverConfirm(false); return; }
+      const el = document.getElementById('eliminados-modal');
+      if (el && !el.classList.contains('hidden')) { cerrarEliminados(); return; }
+      const bg = document.getElementById('buscador-global');
+      if (bg && !bg.classList.contains('hidden')) { cerrarBuscador(); return; }
     }
   });
 
@@ -1437,7 +1573,8 @@
         .order('fecha', { ascending: false });
 
       if (error) logError('loadVentas', error);
-      ventasCache = data || [];
+      // Los borrados lógicos no deben aparecer en ninguna pantalla.
+      ventasCache = (data || []).filter(v => !v.eliminado_at);
 
       renderVendorFilter();
       renderDashboard();
@@ -4236,7 +4373,12 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
       mostrarToast('No puedes eliminar una compra que no es tuya.', 'error');
       return;
     }
-    if (!confirmar('¿Eliminar esta compra? Los pedidos asociados quedarán disponibles nuevamente; no se eliminarán.')) return;
+    const ok = await confirmarFuerte({
+      titulo: 'Eliminar abono a Yesenia',
+      texto: 'Los pedidos que cubría este abono vuelven a quedar disponibles. No se eliminan.',
+      botonSi: 'Eliminar abono'
+    });
+    if (!ok) return;
     try {
       await supabaseClient.from('compra_aportes').delete().eq('compra_id', id);
       await supabaseClient.from('ventas').update({ compra_id: null, estado: 'Pedido' }).eq('compra_id', id);
@@ -4611,7 +4753,14 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
       mostrarToast('No puedes eliminar una liquidación que no es tuya.', 'error');
       return;
     }
-    if (!confirmar('¿Eliminar este registro de pago?')) return;
+    const lq = liquidacionesCache.find(x => x.id === id);
+    const ok = await confirmarFuerte({
+      titulo: 'Eliminar pago entre socios',
+      texto: 'El pedido volverá a mostrar saldo pendiente de liquidar.',
+      detalle: lq ? `<b>${escSimple(lq.pagador)} → ${escSimple(lq.receptor)}</b><span>${fmt(lq.monto)} · ${lq.fecha ? formatearFechaHumana(lq.fecha) : ''}</span>` : '',
+      botonSi: 'Eliminar pago'
+    });
+    if (!ok) return;
     try {
       await supabaseClient.from('liquidaciones').delete().eq('id', id);
       await loadLiquidaciones();
@@ -4802,7 +4951,14 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
   }
 
   async function deleteUser(id) {
-    if (!confirmar('¿Eliminar este usuario?')) return;
+    const usr = usuariosCache.find(x => x.id === id);
+    const ok = await confirmarFuerte({
+      titulo: 'Eliminar usuario',
+      texto: 'Dejará de aparecer en la configuración. Sus pedidos no se tocan.',
+      detalle: usr ? `<b>${escSimple(usr.nombre || '')}</b><span>${escSimple(usr.correo || '')} · ${usr.rol === 'admin' ? 'Administrador' : 'Vendedor'}</span>` : '',
+      botonSi: 'Eliminar usuario'
+    });
+    if (!ok) return;
     try {
       await supabaseClient.from('usuarios').delete().eq('id', id);
       await loadUsuarios();
@@ -5329,18 +5485,7 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
     } catch (err) { logError('addAbono:update', err); mostrarToast('Error al agregar abono', 'error'); }
   }
 
-  async function deleteVenta(id) {
-    const ventaDel = ventasCache.find(v => v.id === id);
-    if (ventaDel && ventaDel.finalizado && currentRole.role !== 'admin') {
-      mostrarToast('Solo el administrador puede borrar pedidos del historial.', 'error');
-      return;
-    }
-    if (!confirmar('¿Deseas borrar permanentemente este pedido?')) return;
-    try {
-      await supabaseClient.from('ventas').delete().eq('id', id);
-      await loadVentas();
-    } catch (err) {}
-  }
+  // NOTA: deleteVenta vive arriba, en la sección de confirmación y papelera.
 
 
   /* =====================================================
