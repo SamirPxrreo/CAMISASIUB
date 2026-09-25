@@ -41,7 +41,7 @@ git push origin main
 ```
 
 - Luego la URL pública queda actualizada (el build de Pages tarda ~1–2 min; a veces el primer intento falla y hay que re-dispararlo vía API `POST /pages/builds`).
-- **⚠️ Política de deployments:** GitHub conserva *todos* los deployments de Pages. Para no acumularlos, se borran los antiguos dejando siempre **2**: el más reciente (estado actual) y el `07d914b` (último de respaldo). El borrado requiere primero marcarlos "inactivos" vía API (los "active" dan error 422 si no son los únicos).
+- **⚠️ Política de deployments:** GitHub conserva *todos* los deployments de Pages. Para no acumularlos, `clean-deployments.ps1` deja siempre **3**: el **más viejo** (ancla, nunca se borra), el **penúltimo** (rollback de un paso) y el **último** (el que está en vivo). Los del medio se eliminan. El borrado requiere primero marcarlos "inactivos" vía API (los "active" dan error 422 si no son los únicos).
 - El acceso a la API de despliegue usa un **token personal (`repo`)**. No compartir ni subir este token al repo.
 
 > No requiere servidor para la app; solo el `git push` para publicar.
@@ -294,7 +294,16 @@ UPDATE ventas SET estado='Liquidado' WHERE estado='Pagado';
 
 - **Cómo funciona:** cada `git push` a `main` dispara el build de Pages (`build_type=legacy`) y publica <https://SamirPxrreo.github.io/CAMISASIUB/>. No hay acciones de GitHub (Actions): es Pages clásico sobre la rama.
 - **Deployments:** GitHub crea un deployment por cada build exitoso y los conserva a todos. La URL canónica siempre apunta al más reciente, pero los obsoletos se acumulan en `<repo>/deployments`.
-- **Política "2 deployments":** se borran los antiguos dejando el reciente + uno de respaldo (`07d914b`). Comandos con la API REST (GitHub no permite borrar un deployment "active" salvo que sea el único de su environment, devuelve **422**):
+- **Política "3 deployments" (vigente desde 2026-09-25):** `clean-deployments.ps1` deja siempre **3**, ordenados de más nuevo a más viejo:
+
+  | # | Cuál | Rol | ¿Se borra? |
+  |---|---|---|---|
+  | 1 | el **último** | el que está en vivo | nunca |
+  | 2 | el **penúltimo** | rollback de un paso atrás | nunca |
+  | 3 | el **más viejo** | ancla / línea base | **nunca** (queda fijo para siempre) |
+
+  Los del medio se eliminan. Como el más viejo nunca se borra, la política se estabiliza sola: tras cada `git push` quedan 3 y el ancla no se mueve. Uso: `.\clean-deployments.ps1` (o `-Total 4` si algún día se quieren más). El ancla actual es `019625c` (2026-09-19) — los deployments anteriores a ese ya no existen, se borraron en limpiezas pasadas.
+- **Comandos equivalents con la API REST** (GitHub no permite borrar un deployment "active" salvo que sea el único de su environment, devuelve **422**):
   ```bash
   # 1) marcar inactivo
   curl -X POST -H "Authorization: Bearer $TOKEN" \
