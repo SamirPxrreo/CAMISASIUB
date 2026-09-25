@@ -380,12 +380,12 @@ UPDATE ventas SET estado='Liquidado' WHERE estado='Pagado';
   3. **Limpieza y escapado** — ~191 líneas muertas fuera y todo dato de la base escapado en HTML. Ver #49.
 - **Pendiente / abierto:**
   1. 🔴 **RLS de Postgres en Supabase — sin verificar.** Toda la separación admin/vendedor se decide hoy en el navegador. Si `ventas`, `usuarios` o `liquidaciones` no tienen políticas restrictivas, cualquiera con la anon key (pública, está en el HTML) puede escribir en la base. Se revisa en el panel de Supabase, no desde el código.
-  2. 🟠 **Bugs de dinero pendientes de revisar con Samir uno por uno** (cambian números que él ve):
-     - `mitadGananciaPedido` usa `Math.max(ganancia/2, 0)` pero las tarjetas de Liquidaciones calculan sin ese tope → las cifras de las tarjetas y las del balance pueden no cuadrar.
-     - `abonoClienteTotal` cae a `v.abono` cuando la suma de abonos por camisa da 0 (un abono explícitamente $0 se interpreta como "usa el del pedido").
-     - `addAbono` reparte el abono entre camisas **sin redondear** → decimales que no cuadran con el total del pedido.
-     - `updateEstado` sobrescribe el estado de **todas** las camisas del pedido (pérdida de estados individuales, documentado pero real).
-     - `saveCompra` hace N `UPDATE` secuenciales sin transacción: si falla el tercero, quedan pedidos con `compra_id` a medias.
+  2. 🟠 **Los 5 bugs de dinero — uno resuelto, cuatro en pausa** (Samir los revisa uno por uno porque cambian números que él ve). El primero quedó cerrado:
+     - ✅ **Pérdidas entre socios — resuelto por decisión de Samir (2026-09-25).** Cuando un pedido se vende por **debajo del costo**, la pérdida **no genera deuda** entre socios: se la come quien vendió. Consecuencia asumida: el balance queda **más alto** que la suma de las mitades de las ganancias. Ejemplo: Samir gana $9.000 en un pedido y pierde $2.000 en otro → ganancia real $7.000 → la mitad real es $3.500, pero el balance pide $4.500 (ignora la pérdida). Como esto es deliberado y no un error, `renderLiquidaciones` ahora muestra una nota al pie de la tarjeta: *"Este monto no descuenta $X por pedidos vendidos por debajo del costo"*. Solo aparece si hay pérdidas reales; no se tocó la matemática.
+     - ⏸️ **`abonoClienteTotal` cae a `v.abono`** cuando la suma de abonos por camisa da 0. **Decidido: no tocar** — el fallback es a propósito para que los pedidos antiguos (anteriores al abono por camisa) muestren bien su abono; cambiarlo rompería pedidos viejos.
+     - ⏸️ **`addAbono` reparte sin redondear** (`monto / items.length`, línea ~4769). Ej.: abono de $10.000 en 3 camisas deja `3333.3333…` en cada una; la suma queda en `9999.9999…` en vez de $10.000. No se ve (el `fmt()` redondea al pintar) pero el dato guardado es impreciso y el error se acumula. Fix propuesto: el mismo patrón `Math.floor` + residuo que ya usa `distribuirAbonoEquitativo`. **Bajo riesgo, esperando visto bueno.**
+     - ⏸️ **`updateEstado` sobrescribe el estado de TODAS las camisas** del pedido. Si un pedido tiene 4 Bordando y 2 Listo para entrega y eliges "Bordando" en el dropdown, las 2 se pierden. Es el comportamiento documentado en #37, pero es pérdida de datos real.
+     - ⏸️ **`saveCompra` no es atómico**: N `UPDATE` secuenciales sin transacción. Si falla el tercero, quedan pedidos con `compra_id` y `abono_yesenia` inconsistentes.
   3. 🟡 `Shift+rueda` no desplaza las tablas de Resúmenes: los listeners se atan a las `.table-wrap` existentes al cargar y esas se crean después.
   4. 🟡 `xlsx@0.18.5` (CDN) tiene CVEs públicos sin parche; se puede migrar a la versión de SheetJS mantenida o quitar esa librería.
 - **Todo commiteado y deployado en** <https://SamirPxrreo.github.io/CAMISASIUB/>.
