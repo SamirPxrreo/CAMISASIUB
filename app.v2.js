@@ -1030,6 +1030,46 @@
     if (aviso) { clearTimeout(aviso._t); aviso.classList.add('hidden'); }
   }
 
+  /* ---------- DETECTAR VERSIÓN NUEVA DESPLEGADA ----------
+     El ?v= de los <script> hay que cambiarlo en cada despliegue, y se
+     olvidó una vez: el navegador siguió con el JS viejo y Samir vio un
+     bug "ya corregido". Ahora la app se autocontrola: cada minuto pide
+     el index.html SIN caché y compara el ?v= con el suyo. Si hay uno
+     nuevo, ofrece recargar. Así no depende de que nadie se acuerde. */
+  function versionDeEsteScript() {
+    try {
+      const scripts = Array.from(document.querySelectorAll('script[src*="app.v2.js"]'));
+      const src = scripts.length ? scripts[0].getAttribute('src') : '';
+      const m = src.match(/[?&]v=([^&]+)/);
+      return m ? m[1] : '';
+    } catch (e) { return ''; }
+  }
+
+  function avisarVersionNueva(versionNueva) {
+    let aviso = document.getElementById('version-aviso');
+    if (!aviso) {
+      aviso = document.createElement('button');
+      aviso.id = 'version-aviso';
+      aviso.type = 'button';
+      aviso.addEventListener('click', () => { location.href = 'index.html?v=' + Date.now(); });
+      document.body.appendChild(aviso);
+    }
+    aviso.innerHTML = '⬆️ Hay una versión nueva — <b>Tocar para actualizar</b>';
+    aviso.classList.remove('hidden');
+    aviso.title = 'Versión desplegada: ' + versionNueva;
+  }
+
+  async function revisarVersionNueva() {
+    const mia = versionDeEsteScript();
+    if (!mia) return;
+    try {
+      const r = await fetch('index.html?v=' + Date.now(), { cache: 'no-store' });
+      const t = await r.text();
+      const m = t.match(/app\.v2\.js\?v=([^"'\s&]+)/);
+      if (m && m[1] && m[1] !== mia) avisarVersionNueva(m[1]);
+    } catch (e) { /* sin internet o sin permiso: no molesta */ }
+  }
+
   async function aplicarCambiosExternos(silencioso) {
     if (!currentUser) return;
     // Si ya hay una sincronización en marcha, no se pierde este cambio:
@@ -1137,6 +1177,10 @@
     } catch (e) { logError('iniciarSync', e); canalSync = null; }
     console.info(`[sync] sondeo cada ${INTERVALO_SONDEO_MS / 1000} s`);
     temporizadorSync = setInterval(detectarCambios, INTERVALO_SONDEO_MS);
+
+    // Autocontrol de versión: revisa al arrancar y luego cada minuto.
+    setTimeout(revisarVersionNueva, 4000);
+    setInterval(revisarVersionNueva, 60000);
   }
 
   function detenerSync() {

@@ -858,6 +858,38 @@ header.top .who {
   display: none;
 }
 
+/* Aviso de que hay una version nueva desplegada */
+#version-aviso {
+  position: fixed;
+  left: 50%;
+  top: 18px;
+  transform: translateX(-50%);
+  z-index: 9500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 11px 18px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--card);
+  border: 1px solid var(--ok);
+  border-radius: 999px;
+  box-shadow: var(--shadow-lg);
+  cursor: pointer;
+  animation: fadeIn var(--dur-med) var(--ease-out) both;
+}
+
+#version-aviso b {
+  color: var(--ok-ink);
+  text-decoration: underline;
+}
+
+#version-aviso.hidden {
+  display: none;
+}
+
 .camisa-item-head {
   flex: 0 0 100%;
   display: flex;
