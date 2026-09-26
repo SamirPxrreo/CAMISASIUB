@@ -31,3 +31,10 @@ ALTER TABLE ventas ADD COLUMN IF NOT EXISTS eliminado_at timestamptz;
 
 -- Indice para que la papelela (where eliminado_at is not null) sea rapida.
 CREATE INDEX IF NOT EXISTS ventas_eliminado_at_idx ON ventas (eliminado_at);
+
+-- (NO hay paso 6.) Al quitar la sincronizacion entre dispositivos (2026-09-26)
+-- las 4 tablas siguen en la publicacion supabase_realtime, pero eso ya no
+-- cuesta nada: sin clientes suscritos no se envia ningun mensaje. Se decidio
+-- NO tocar Supabase. Si algun dia se cambia de idea, esta la alternativa en
+-- PROYECTO.md, entrada 53.
+
