@@ -2860,12 +2860,44 @@
   // Una camisa en blanco. Solo vienen puestos los datos automáticos:
   // versión 1, estado "Pedido" y el costo sugerido a Yesenia (30.000 en v1).
   // Género, color, talla, bordado, precio y abono los elige el usuario.
+  // `cantidad` es cuántas camisas IGUALES representa esta fila (1 = una sola).
   // NaN = campo de dinero vacío (numOrBlank lo vuelve a cadena al pintar,
   // no "NaN").
   function camisaVacia() {
-    return { modelo: 'Viejo', genero: '', color: '', talla: '',
+    return { cantidad: 1, modelo: 'Viejo', genero: '', color: '', talla: '',
              programa: '', precio: NaN, costo: costoProveedorSugerido('Viejo', ''),
              abono: NaN, estado: 'Pedido' };
+  }
+
+  // Agrupa camisas idénticas en filas con cantidad. Al abrir un pedido guardado
+  // que tiene 5 camusas iguales, se ven como UNA fila "×5 iguales" en vez de
+  // cinco filas repetidas. La clave incluye TODOS los campos (incluido el
+  // estado), porque dos camisas con la misma talla pero distinto estado no
+  // pueden mezclarse.
+  // Acepta las dos formas de entrada: la lista plana que viene de la base (sin
+  // `cantidad`, y aquí se cuentan las repetidas) y las filas del formulario
+  // (que ya traen su `cantidad` y se respeta tal cual).
+  function agruparCamisas(items) {
+    const normalizar = (it) => [
+      it.modelo || 'Viejo', it.genero || '', it.color || '', it.talla || '',
+      it.programa || '',
+      isNaN(it.precio) ? '' : Number(it.precio),
+      isNaN(it.costo) ? '' : Number(it.costo),
+      isNaN(it.abono) ? '' : Number(it.abono),
+      normalizarEstado(it.estado || 'Pedido')
+    ].join('|');
+    const filas = [];
+    const porClave = new Map();
+    (items || []).forEach(it => {
+      const n = Math.max(1, parseInt(it.cantidad, 10) || 1);
+      const clave = normalizar(it);
+      const hallada = porClave.get(clave);
+      if (hallada) { hallada.cantidad += n; return; }
+      const fila = { ...it, cantidad: n };
+      porClave.set(clave, fila);
+      filas.push(fila);
+    });
+    return filas;
   }
 
   function coloresOptionsHtml(valorSeleccionado) {
@@ -2875,15 +2907,29 @@
     return html;
   }
 
-  function renderCamisaItemsFromData(items) {
+  // Dibuja las filas TAL COMO VIENEN, sin agrupar nada. La usan los botones
+  // +/−/⧉/🗑️, donde las filas ya son definitivas. Esto importa: si ⧉ copiaba
+  // una fila y al redibujar se agrupara con su original, la copia se
+  // fusionaría con ella y sería imposible cambiarle un solo dato.
+  function pintarCamisas(filas) {
     const container = document.getElementById('camisa-items-container');
-    container.innerHTML = items.map((item, i) => {
+    container.innerHTML = filas.map((item, i) => {
       const estadoItem = item.estado ? normalizarEstado(item.estado) : 'Pedido';
+      const n = Math.max(1, parseInt(item.cantidad, 10) || 1);
       return `
       <div class="camisa-item-row" data-index="${i}">
         <div class="camisa-item-head">
           <span class="camisa-item-number">Camisa #${i + 1}</span>
-          <button type="button" class="camisa-item-del" data-index="${i}" title="Quitar esta camisa del pedido" aria-label="Quitar la camisa ${i + 1}">🗑️</button>
+          <div class="camisa-item-acciones">
+            ${n > 1 ? `<span class="camisa-item-lote">&times;${n} iguales</span>` : ''}
+            <div class="stepper stepper-mini" title="Cuántas camisas iguales son estas">
+              <button type="button" class="stepper-btn" data-accion="menos-fila" data-index="${i}" aria-label="Quitar una camisa de esta fila">&minus;</button>
+              <output class="stepper-value">${n}</output>
+              <button type="button" class="stepper-btn stepper-btn-add" data-accion="mas-fila" data-index="${i}" aria-label="Agregar otra camisa igual a esta">+</button>
+            </div>
+            <button type="button" class="camisa-item-del" data-accion="duplicar" data-index="${i}" title="Duplicar esta fila para cambiarle algo" aria-label="Duplicar la fila ${i + 1}">&#10697;</button>
+            <button type="button" class="camisa-item-del" data-accion="borrar" data-index="${i}" title="Quitar esta fila del pedido" aria-label="Quitar la fila ${i + 1}">&#128465;</button>
+          </div>
         </div>
         <div class="camisa-item-fields">
           <div>
@@ -2945,9 +2991,16 @@
       input.addEventListener('input', actualizarTotalAbono);
     });
 
-    // Papelera 🗑️ de cada fila: quita esa camisa del pedido.
-    container.querySelectorAll('.camisa-item-del').forEach(btn => {
-      btn.addEventListener('click', () => eliminarFilaCamisa(Number(btn.dataset.index)));
+    // Botones de la cabecera de cada fila: multiplicador (−/+), duplicar (⧉)
+    // y papelera (🗑️). Los tres leen y re-dibujan las filas, así que la
+    // cantidad de una fila nunca se confunde con el número de filas.
+    container.querySelectorAll('.camisa-item-acciones [data-accion]').forEach(btn => {
+      const accion = btn.dataset.accion;
+      const i = Number(btn.dataset.index);
+      if (accion === 'menos-fila') btn.addEventListener('click', () => cambiarCantidadFila(i, -1));
+      else if (accion === 'mas-fila') btn.addEventListener('click', () => cambiarCantidadFila(i, +1));
+      else if (accion === 'duplicar') btn.addEventListener('click', () => duplicarFilaCamisa(i));
+      else if (accion === 'borrar') btn.addEventListener('click', () => eliminarFilaCamisa(i));
     });
 
     container.querySelectorAll('.camisa-item-row').forEach(row => {
@@ -2981,14 +3034,23 @@
     actualizarTotalAbono();
   }
 
-  // Lee las filas de camisa del formulario, en el orden en que aparecen.
-  function collectCamisaItems() {
+  // Dibuja una lista de camisas AGRUPANDO las iguales. Se usa solo al cargar
+  // datos (abrir un pedido, arrancar el formulario), nunca tras una edición.
+  function renderCamisaItemsFromData(items) {
+    pintarCamisas(agruparCamisas(items));
+  }
+
+  // Lee las FILAS del formulario tal como se ven, cada una con su cantidad.
+  // La usan los botones +/−/⧉/🗑️ y la validación, que hablan en "filas".
+  function collectCamisaRows() {
     const rows = document.querySelectorAll('#camisa-items-container .camisa-item-row');
-    const items = [];
+    const filas = [];
     rows.forEach(row => {
       const val = sel => { const el = row.querySelector(sel); return el ? el.value : ''; };
       const num = sel => parseFloat(val(sel));
-      items.push({
+      const n = parseInt((row.querySelector('.stepper-value') || {}).textContent, 10);
+      filas.push({
+        cantidad: Math.max(1, isNaN(n) ? 1 : n),
         modelo: val('.ci-modelo') || 'Viejo',
         genero: val('.ci-genero'),
         color: val('.ci-color').trim(),
@@ -2999,6 +3061,18 @@
         abono: num('.ci-abono'),
         estado: val('.ci-estado') || 'Pedido'
       });
+    });
+    return filas;
+  }
+
+  // Lee las camisas UNA POR UNA, que es como se guardan en la base
+  // (items_camisa): una fila de "×5 iguales" se despliega en 5 objetos. Sin
+  // este campo, el formato guardado es idéntico al de siempre.
+  function collectCamisaItems() {
+    const items = [];
+    collectCamisaRows().forEach(fila => {
+      const { cantidad, ...camisa } = fila;
+      for (let i = 0; i < cantidad; i++) items.push({ ...camisa });
     });
     return items;
   }
@@ -3032,61 +3106,98 @@
     actualizarLugarOtro();
   }
 
-  // ── Contador de camisas: + agrega, − quita, papelera quita una fila ──
+  // ── Filas de camisa ──────────────────────────────────────────────────
+  // Hay dos conceptos y conviene no mezclarlos:
+  //   FILAS   = los cuadritos que se ven. Cada una tiene una cantidad (×N).
+  //   CAMISAS = el total de unidades (suma de las cantidades). Es lo que
+  //             muestra el contador de arriba y lo que se guarda en la base.
+  // Los botones +/− de arriba agregan y quitan FILAS; los −/+ de cada fila
+  // cambian su CANTIDAD. El 🗑️ quita la fila entera y el ⧉ la copia.
 
+  // Refresca el contador de arriba con el total de CAMISAS (no de filas).
   function actualizarContadorCamisas() {
-    const total = document.querySelectorAll('#camisa-items-container .camisa-item-row').length;
+    const total = collectCamisaItems().length;
     const out = document.getElementById('camisa-total');
     if (out) out.textContent = total;
     const menos = document.getElementById('camisa-menos');
-    if (menos) menos.disabled = total <= 1;
+    if (menos) menos.disabled = document.querySelectorAll('#camisa-items-container .camisa-item-row').length <= 1;
     const mas = document.getElementById('camisa-mas');
     if (mas) mas.disabled = total >= MAX_CAMISAS_PEDIDO;
   }
 
-  // Botón +: agrega una camisa EN BLANCO. No copia la anterior a propósito:
-  // si el usuario va a llenar una camisa nueva, quiere empezar de cero, no
-  // terminar corrigiendo datos heredados. Lo único que viene puesto es lo
-  // automático (versión 1, estado Pedido y el costo a Yesenia).
-  // NO se enfoca ningún campo: en el teléfono eso abriría de golpe el menú
-  // desplegable de género y taparía la pantalla. El usuario elige su campo.
+  // Botón + de arriba: agrega una FILA en blanco. No copia la anterior a
+  // propósito: si vas a llenar una camisa nueva, quieres empezar de cero.
+  // Deliberadamente NO hace scroll ni enfoca nada: a veces se presiona + varias
+  // veces y después se llenan todas, y antes la página saltaba a la fila nueva
+  // en cada pulsación, lo que hacía ese trámite imposible.
   function agregarCamisa() {
-    const existentes = collectCamisaItems();
-    if (existentes.length >= MAX_CAMISAS_PEDIDO) {
+    const filas = collectCamisaRows();
+    if (collectCamisaItems().length >= MAX_CAMISAS_PEDIDO) {
       mostrarToast(`Máximo ${MAX_CAMISAS_PEDIDO} camisas por pedido.`, 'error');
       return;
     }
-    renderCamisaItemsFromData([...existentes, camisaVacia()]);
-
-    // Solo se acerca la fila nueva, sin robarle el foco al usuario.
-    const filas = document.querySelectorAll('#camisa-items-container .camisa-item-row');
-    const ultimaFila = filas[filas.length - 1];
-    if (ultimaFila) ultimaFila.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    pintarCamisas([...filas, camisaVacia()]);
   }
 
-  // Botón −: quita la última camisa del pedido.
+  // Botón − de arriba: quita la ÚLTIMA fila.
   function restarCamisa() {
-    const existentes = collectCamisaItems();
-    if (existentes.length <= 1) {
+    const filas = collectCamisaRows();
+    if (filas.length <= 1) {
       mostrarToast('El pedido necesita al menos una camisa.', 'error');
       return;
     }
-    renderCamisaItemsFromData(existentes.slice(0, -1));
+    pintarCamisas(filas.slice(0, -1));
   }
 
-  // Papelera 🗑️ de una fila: quita esa camisa concreta.
+  // −/+ de una fila: cuántas camisas iguales son esas. No puede bajar de 1
+  // (para eso está la papelera) ni pasar del máximo del pedido.
+  function cambiarCantidadFila(index, delta) {
+    const filas = collectCamisaRows();
+    if (!filas[index]) return;
+    const totalActual = collectCamisaItems().length;
+    if (delta > 0 && totalActual >= MAX_CAMISAS_PEDIDO) {
+      mostrarToast(`Máximo ${MAX_CAMISAS_PEDIDO} camisas por pedido.`, 'error');
+      return;
+    }
+    const nueva = filas[index].cantidad + delta;
+    if (nueva < 1) {
+      mostrarToast('La última de esa fila se quita con la papelera 🗑️.', 'info');
+      return;
+    }
+    filas[index].cantidad = nueva;
+    pintarCamisas(filas);
+  }
+
+  // ⧉ Duplicar: copia la fila JUSTO DEBAJO con cantidad 1. Sirve para el caso
+  // "5 iguales salvo el bordado": pones ×5, duplicas, y en la copia cambias
+  // lo que quieras dejando las otras 5 intactas.
+  function duplicarFilaCamisa(index) {
+    const filas = collectCamisaRows();
+    if (!filas[index]) return;
+    if (collectCamisaItems().length >= MAX_CAMISAS_PEDIDO) {
+      mostrarToast(`Máximo ${MAX_CAMISAS_PEDIDO} camisas por pedido.`, 'error');
+      return;
+    }
+    const copia = { ...filas[index], cantidad: 1 };
+    filas.splice(index + 1, 0, copia);
+    pintarCamisas(filas);
+  }
+
+  // 🗑️ Papelera: quita la fila entera. Si era ×N, se van las N camisas.
   function eliminarFilaCamisa(index) {
-    const existentes = collectCamisaItems();
-    if (!existentes[index]) return;
-    if (existentes.length <= 1) {
+    const filas = collectCamisaRows();
+    if (!filas[index]) return;
+    if (filas.length <= 1) {
       mostrarToast('El pedido necesita al menos una camisa.', 'error');
       return;
     }
-    const it = existentes[index];
-    const desc = [it.color, it.talla, it.genero].filter(Boolean).join(' · ') || 'sin datos';
-    if (!confirmar(`¿Quitar la camisa #${index + 1} (${desc}) del pedido?\n\nEsto solo la quita del formulario. Para borrar el pedido completo, usa "Borrar" en Pedidos.`)) return;
-    renderCamisaItemsFromData(existentes.filter((_, i) => i !== index));
+    const f = filas[index];
+    const desc = [f.color, f.talla, f.genero].filter(Boolean).join(' · ') || 'sin datos';
+    const cuantas = f.cantidad > 1 ? ` ${f.cantidad} camisas` : '';
+    if (!confirmar(`¿Quitar${cuantas} de la fila #${index + 1} (${desc}) del pedido?\n\nEsto solo las quita del formulario. Para borrar el pedido completo, usa "Borrar" en Pedidos.`)) return;
+    pintarCamisas(filas.filter((_, i) => i !== index));
   }
+
 
   function actualizarDatalistClientes() {
     const dl = document.getElementById('clientes-sugeridos');
@@ -3460,15 +3571,20 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
      if (!payload.cliente_nombre) faltantes.push("Nombre del cliente");
      if (!payload.cliente_telefono) faltantes.push("Teléfono");
      if (items.length === 0) faltantes.push("Al menos una camisa (usa + para agregar)");
-     items.forEach((it, idx) => {
-       if (!it.genero) faltantes.push(`Género de la camisa #${idx + 1}`);
-       if (!it.color) faltantes.push(`Color de la camisa #${idx + 1}`);
-       if (!it.talla) faltantes.push(`Talla de la camisa #${idx + 1}`);
-       if (isNaN(it.abono) || it.abono < 0) faltantes.push(`Abono válido de la camisa #${idx + 1}`);
-       const pI = Number(it.precio);
-       const cI = Number(it.costo);
-       if (isNaN(pI) || pI <= 0) faltantes.push(`Precio de venta de la camisa #${idx + 1}`);
-       if (isNaN(cI) || cI < 0) faltantes.push(`Costo (Yesenia) de la camisa #${idx + 1}`);
+     // Se valida por FILA, no por camisa: si falta el género de una fila de
+     // ×5, tiene que decir "la fila #1 (×5 camisas)" y no repetir 5 veces lo
+     // mismo. Todas las camisas de una fila comparten los mismos datos.
+     collectCamisaRows().forEach((f, idx) => {
+       const n = f.cantidad;
+       const donde = n > 1 ? `la fila #${idx + 1} (×${n} camisas)` : `la camisa #${idx + 1}`;
+       if (!f.genero) faltantes.push(`Género de ${donde}`);
+       if (!f.color) faltantes.push(`Color de ${donde}`);
+       if (!f.talla) faltantes.push(`Talla de ${donde}`);
+       if (isNaN(f.abono) || f.abono < 0) faltantes.push(`Abono válido de ${donde}`);
+       const pI = Number(f.precio);
+       const cI = Number(f.costo);
+       if (isNaN(pI) || pI <= 0) faltantes.push(`Precio de venta de ${donde}`);
+       if (isNaN(cI) || cI < 0) faltantes.push(`Costo (Yesenia) de ${donde}`);
      });
      if (payload.estado === 'Liquidado' || items.some(it => it.estado === 'Liquidado')) {
        const listas = items.every(it => ['Entregado', 'Liquidado'].includes(it.estado ? normalizarEstado(it.estado) : (payload.estado || 'Pedido') || 'Pedido'));
