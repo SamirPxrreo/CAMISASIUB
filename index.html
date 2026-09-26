@@ -26,7 +26,7 @@
 <!-- ExcelJS para Reporte con diseño (2 hojas con estilos) -->
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 
-<link rel="stylesheet" href="styles.v2.css?v=20260926-p1">
+<link rel="stylesheet" href="styles.v2.css?v=20260926-p4">
 </head>
 
 <body>
@@ -178,15 +178,20 @@
           <div class="camisa-contador">
             <span class="camisa-contador-label">Camisas en este pedido</span>
             <div class="stepper">
-              <button type="button" class="stepper-btn" id="camisa-menos" title="Quitar la última camisa" aria-label="Quitar una camisa">&minus;</button>
+              <button type="button" class="stepper-btn" id="camisa-menos" title="Quitar la última fila" aria-label="Quitar la última fila">&minus;</button>
               <output class="stepper-value" id="camisa-total">1</output>
-              <button type="button" class="stepper-btn stepper-btn-add" id="camisa-mas" title="Agregar una camisa" aria-label="Agregar una camisa">+</button>
+              <button type="button" class="stepper-btn stepper-btn-add" id="camisa-mas" title="Agregar una fila de camisa" aria-label="Agregar una fila de camisa">+</button>
             </div>
           </div>
 
           <div id="camisa-items-container"></div>
 
-          <p class="hint">Agrega camisas con <b>+</b> y quítalas con <b>&minus;</b> o con la papelera 🗑️ de cada cuadrito. Cada camisa se llena por separado, así que en un mismo pedido puedes tener tallas, colores, precios, abonos y estados distintos.</p>
+          <p class="hint">
+            <b>+</b> agrega una fila en blanco (no te mueve la pantalla, así que puedes agregar varias de una).
+            En cada fila, el <b>&minus; n +</b> dice <b>cuántas camisas iguales</b> son: si Sara pide 5 negras talla S de mujer,
+            llenas la fila una vez, pones <b>5</b> y ya está. Usa <b>⧉</b> para copiar una fila y cambiarle algo,
+            y <b>🗑️</b> para quitarla. El contador de arriba suma todas las camisas.
+          </p>
         </div>
 
         <!-- Sección "Pago y Costos": cada camisa lleva su propio precio, costo,
@@ -920,7 +925,7 @@
      ===================================================== -->
 
 
-<script src="app.v2.js?v=20260926-p1"></script>
-<script src="enhance.v2.js?v=20260926-p1"></script>
+<script src="app.v2.js?v=20260926-p4"></script>
+<script src="enhance.v2.js?v=20260926-p4"></script>
 </body>
 </html>

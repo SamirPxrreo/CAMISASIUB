@@ -859,6 +859,7 @@ header.top .who {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
@@ -868,6 +869,47 @@ header.top .who {
   color: var(--thread);
   text-transform: uppercase;
   letter-spacing: 0.07em;
+}
+
+/* Acciones de la cabecera: multiplicador ×N, duplicar (⧉) y papelera (🗑️) */
+.camisa-item-acciones {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Etiqueta "×5 iguales": solo aparece cuando la fila vale por más de una. */
+.camisa-item-lote {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--thread);
+  background: var(--accent-bg);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 2px 9px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Mismo stepper del contador de arriba, pero compacto para la fila. */
+.stepper-mini {
+  padding: 2px;
+  gap: 2px;
+}
+
+.stepper-mini .stepper-btn {
+  width: 26px;
+  height: 26px;
+  font-size: 17px;
+}
+
+.stepper-mini .stepper-btn-add {
+  font-size: 18px;
+}
+
+.stepper-mini .stepper-value {
+  min-width: 26px;
+  font-size: 14px;
 }
 
 .camisa-item-del {
@@ -998,6 +1040,19 @@ header.top .who {
 @media (max-width: 720px) {
   .camisa-item-abono {
     flex: 1 1 100%;
+  }
+  /* En el teléfono la cabecera se apila para que el multiplicador y los
+     iconos no se compriman ni se salgan de la pantalla. */
+  .camisa-item-head {
+    align-items: flex-start;
+  }
+  .camisa-item-acciones {
+    width: 100%;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+  .camisa-item-lote {
+    margin-right: auto;
   }
 }
 

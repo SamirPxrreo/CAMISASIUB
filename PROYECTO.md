@@ -264,6 +264,14 @@ Reglas en el código:
     - **El botón `+` ya no copia la camisa anterior**: cada fila nueva sale en blanco (`camisaVacia()`), solo con lo automático puesto (versión 1, estado Pedido y costo a Yesenia). Para telas iguales hay que llenar de nuevo, a propósito.
     - **El costo a Yesenia se recalcula bien con el valor puesto**: como la camisa en blanco ya trae 30.000, el criterio `dataset.user` se cambió de "el campo está vacío" a "el valor **sigue siendo el sugerido** para la versión/talla actuales" (`marcar()` en `renderCamisaItemsFromData`). Así una camisa en blanco sube a 32.000/34.000/36.000 al cambiar a 2XL/3XL/4XL y a 31.000 en versión 2, pero si el usuario escribe otro número a mano ya no se le pisa.
     - `migracion.sql` **no** se toca: las 4 tablas siguen en la publicación `supabase_realtime` de Supabase. Se decidió **no tocar Supabase** porque sin clientes suscritos no se manda ningún mensaje y el ahorro sería imperceptible. Si algún día se cambia de idea, son cuatro `ALTER PUBLICATION supabase_realtime DROP TABLE public.<tabla>;` (solo en el SQL Editor de Supabase, no afecta al sitio).
+54. **Multiplicador ×N de camisas y fin del salto automático (2026-09-26):** Sara pidió "5 camisas talla S de mujer negras y 1 talla M de hombre blanca, todas con bordado" y había que llenar 6 filas repetidas a mano. Ahora cada fila tiene su propia cantidad:
+    - **`cantidad` en la fila, no en la base.** Al leer, `agruparCamisas()` junta las camisas idénticas (misma clave: modelo, género, color, talla, bordado, precio, costo, abono y **estado**) en una fila con `×N`. Al guardar, `collectCamisaItems()` **despliega** la fila en N objetos y **`cantidad` no se guarda**: el formato de `items_camisa` sigue siendo una camisa por objeto, exactamente igual que antes. Un pedido guardado con 5 camisas iguales se abre como una fila "×5 iguales".
+    - **El caso de Sara = 2 filas.** Llenar una vez y poner 5, luego `+` para la otra. Antes 6 filas.
+    - **⧉ Duplicar** copia la fila de abajo con cantidad 1, para cuando son iguales salvo un dato (misma talla, bordados distintos). Se cambia en la copia y las originales quedan intactas.
+    - **🗑️ quita la fila entera** (y sus N camisas). **El `+` de arriba ya no hace scroll**: se puede apretar varias veces seguidas y después llenar, sin que la página salte. Ese era el otro pedido de Samir.
+    - **Dos renders a propósito:** `renderCamisaItemsFromData()` agrupa (solo al cargar datos) y `pintarCamisas()` no agrupa (tras `+`, `−`, `⧉`, `🗑️`). Si ⧉ agrupara, la copia se fusionaría con su original y sería imposible cambiarle un solo dato.
+    - **Contador de arriba = camisas, no filas.** Los `− n +` de cada fila no pueden bajar de 1 (para eso está 🗑️) ni pasar de `MAX_CAMISAS_PEDIDO` (30) sumando todo.
+    - **La validación habla en filas:** "Género de la fila #2 (×3 camisas)" en vez de repetir 3 veces "Género de la camisa #4".
 
 ---
 
