@@ -912,25 +912,44 @@ header.top .who {
   font-size: 14px;
 }
 
+/* Botones de icono de la cabecera (⧉ duplicar y 🗑️ papelera).
+   OJO: <button> NO hereda `color` — el navegador le pone `color: buttontext`
+   (negro) desde su hoja de estilos. Sin declararlo aquí, los iconos salían
+   negros también en el tema oscuro y sobre el fondo azul marino apenas se veían
+   (contraste 1.31:1). Hay que fijar el color a mano. */
 .camisa-item-del {
   flex: 0 0 auto;
   background: transparent;
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 3px 8px;
+  font-family: inherit;
   font-size: 14px;
   line-height: 1.2;
+  color: var(--muted);
   cursor: pointer;
-  opacity: 0.6;
-  transition: opacity var(--dur-fast) var(--ease-out),
+  transition: color var(--dur-fast) var(--ease-out),
               border-color var(--dur-fast) var(--ease-out),
               background var(--dur-fast) var(--ease-out);
 }
 
 .camisa-item-del:hover {
-  opacity: 1;
+  color: var(--thread);
+  border-color: var(--thread);
+  background: var(--accent-bg);
+}
+
+/* La papelera es la acción destructiva: en rojo al pasar por encima. */
+.camisa-item-del--borrar:hover {
+  color: var(--warn);
   border-color: var(--warn);
-  background: var(--table-hover);
+  background: transparent;
+}
+
+[data-theme="dark"] .camisa-item-del {
+  /* --muted ya tiene 6.4:1 sobre --card en oscuro, pero el borde gana un
+     poco más de peso para que la cajita se recorte contra el fondo. */
+  border-color: var(--muted);
 }
 
 /* Contador de camisas: − [n] + */

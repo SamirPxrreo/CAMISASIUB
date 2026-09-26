@@ -272,6 +272,10 @@ Reglas en el código:
     - **Dos renders a propósito:** `renderCamisaItemsFromData()` agrupa (solo al cargar datos) y `pintarCamisas()` no agrupa (tras `+`, `−`, `⧉`, `🗑️`). Si ⧉ agrupara, la copia se fusionaría con su original y sería imposible cambiarle un solo dato.
     - **Contador de arriba = camisas, no filas.** Los `− n +` de cada fila no pueden bajar de 1 (para eso está 🗑️) ni pasar de `MAX_CAMISAS_PEDIDO` (30) sumando todo.
     - **La validación habla en filas:** "Género de la fila #2 (×3 camisas)" en vez de repetir 3 veces "Género de la camisa #4".
+55. **Iconos de la cabecera de camisa invisibles en tema oscuro (2026-09-26):**Samir avisó que los iconos no se veían en oscuro. La causa no era el emoji: `<button>` **no hereda `color`**, el navegador le aplica `color: buttontext` (negro) desde su hoja de estilos, así que 🗑️ y ⧉ salían **negros sobre el azul marino** (`--card` `#1a1f3d`): contraste **1.31:1**, prácticamente invisible. En claro no se notaba (negro sobre blanco = 21:1). El bug venía de antes (la papelera anterior ya lo tenía); lo heredó el botón de duplicar.
+    - **Regla para el futuro:** si se crea un `<button>` con un ícono, hay que **declarar `color` explícitamente**. No confiar en la herencia.
+    - Arreglo: `color: var(--muted)` (5.6:1 en claro, 6.4:1 en oscuro), se quitó el `opacity: 0.6` que lo apagaba más, y ahora ⧉ se pone azul al pasar el mouse y 🗑️ se pone rojo (`.camisa-item-del--borrar`), porque no es la misma acción.
+    - **Pendiente de decidir:** los botones primarios de la app también fallan en oscuro y son preexistentes. `white` sobre `--thread` `#8b93f8` da **2.75:1**, y al hover peor (2.05, porque en oscuro `--thread-dark` es MÁS claro: `#a5b0ff`). Igual `.sidebar-item.active` (2.75) y `.btn-success` (2.54). Ver la sección 10.
 
 ---
 

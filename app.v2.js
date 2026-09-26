@@ -2928,7 +2928,7 @@
               <button type="button" class="stepper-btn stepper-btn-add" data-accion="mas-fila" data-index="${i}" aria-label="Agregar otra camisa igual a esta">+</button>
             </div>
             <button type="button" class="camisa-item-del" data-accion="duplicar" data-index="${i}" title="Duplicar esta fila para cambiarle algo" aria-label="Duplicar la fila ${i + 1}">&#10697;</button>
-            <button type="button" class="camisa-item-del" data-accion="borrar" data-index="${i}" title="Quitar esta fila del pedido" aria-label="Quitar la fila ${i + 1}">&#128465;</button>
+            <button type="button" class="camisa-item-del camisa-item-del--borrar" data-accion="borrar" data-index="${i}" title="Quitar esta fila del pedido" aria-label="Quitar la fila ${i + 1}">&#128465;</button>
           </div>
         </div>
         <div class="camisa-item-fields">
