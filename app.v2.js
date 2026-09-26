@@ -961,74 +961,15 @@
    });
 
 
+  let temporizadorVersion = null;
+  let temporizadorVersionPeriodico = null;
+
   /* =====================================================
-     SINCRONIZACIÓN ENTRE DISPOSITIVOS
-     Valentina puede guardar desde el teléfono mientras Samir
-     mira el computador. Se resuelve en 3 capas:
-       1. Realtime de Supabase: aviso instantáneo.
-       2. Al volver a la pestaña: refresco (cubre cambiar de dispositivo).
-       3. Sondeo cada 60 s: red de seguridad si Realtime se cae.
-     Regla de oro: si el usuario está escribiendo o tiene un modal
-     abierto, NO se le refresca nada — solo se le avisa.
+     AUTOCONTROL DE VERSIÓN DESPLEGADA
+     Esto NO es sincronización entre dispositivos: la app ya no se
+     refresca sola. Solo avisa cuando se publicó una versión nueva del
+     JS, para que el navegador no se quede con el código viejo.
      ===================================================== */
-  const TABLAS_SINCRONIZADAS = ['ventas', 'compras_proveedor', 'compra_aportes', 'liquidaciones'];
-  // El sondeo es la RED DE SEGURIDAD, no la vía principal: Realtime llega
-  // instantáneo, pero si la tabla no está en la publicación supabase_realtime
-  // los eventos nunca llegan (el canal igual reporta SUBSCRIBED, por eso es
-  // engañoso). Con 12 s el app sigue siendo usable aunque Realtime no
-  // funcione, y no cuesta nada extra cuando sí funciona.
-  const INTERVALO_SONDEO_MS = 12000;
-  let canalSync = null;
-  let temporizadorSync = null;
-  let pendientesSync = false;
-  let syncEnVuelo = false;
-  let ultimaEntradaUsuario = 0;
-
-  // ¿Está el usuario a mitad de algo? Si sí, jamás se le refresca.
-  // OJO: hay que mirar la SECCIÓN, no #form-card. #form-card nunca lleva la
-  // clase hidden en el HTML (solo se la pone closeForm), así que consultarla
-  // daba true siempre y, con un cliente ya escrito en el campo, bloqueaba la
-  // sincronización para siempre. La visibilidad real la controla la sección.
-  function usuarioOcupado() {
-    const seccion = document.getElementById('section-new-sale');
-    const enFormulario = seccion && !seccion.classList.contains('hidden');
-    if (enFormulario) {
-      if (editingId) return true;                      // editando un pedido existente
-      if ((document.getElementById('f-cliente')?.value || '').trim()) return true;  // pedido nuevo ya empezado
-    }
-    if (document.querySelector('.modal-backdrop:not(.hidden)')) return true;
-    if (document.querySelector('.sidebar-backdrop.show')) return true;
-    const a = document.activeElement;
-    if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT')) {
-      // cualquier campo con el foco cuenta como "escribiendo", con 4 s de gracia
-      if (Date.now() - ultimaEntradaUsuario < 4000) return true;
-    }
-    return false;
-  }
-
-  function mostrarAvisoSync() {
-    let aviso = document.getElementById('sync-aviso');
-    if (!aviso) {
-      aviso = document.createElement('button');
-      aviso.id = 'sync-aviso';
-      aviso.type = 'button';
-      aviso.addEventListener('click', () => aplicarCambiosExternos(true));
-      document.body.appendChild(aviso);
-    }
-    aviso.innerHTML = '🔔 Hay cambios de otro dispositivo <b>· Verlos</b>';
-    aviso.classList.remove('hidden');
-    clearTimeout(aviso._t);
-    // A los 10 s se oculta solo. Si el usuario ya está libre, se aplica.
-    aviso._t = setTimeout(() => {
-      if (usuarioOcupado()) aviso.classList.add('hidden');
-      else aplicarCambiosExternos(true);
-    }, 10000);
-  }
-
-  function ocultarAvisoSync() {
-    const aviso = document.getElementById('sync-aviso');
-    if (aviso) { clearTimeout(aviso._t); aviso.classList.add('hidden'); }
-  }
 
   /* ---------- DETECTAR VERSIÓN NUEVA DESPLEGADA ----------
      El ?v= de los <script> hay que cambiarlo en cada despliegue, y se
@@ -1070,137 +1011,17 @@
     } catch (e) { /* sin internet o sin permiso: no molesta */ }
   }
 
-  async function aplicarCambiosExternos(silencioso) {
-    if (!currentUser) return;
-    // Si ya hay una sincronización en marcha, no se pierde este cambio:
-    // se marca para repetir al terminar.
-    if (syncEnVuelo) { pendientesSync = true; return; }
-    syncEnVuelo = true;
-    pendientesSync = false;
-    ocultarAvisoSync();
-    try {
-      await loadVentas();          // ya re-renderiza dashboard, pedidos, historial y compras
-      await loadLiquidaciones();
-      await loadCuentasSilencioso();
-      renderResumenesSiVisible();
-      console.info('[sync] datos actualizados' + (silencioso ? ' (silencioso)' : ''));
-      if (!silencioso) mostrarToast('🔔 Actualizado con cambios de otro dispositivo.', 'info');
-    } catch (e) {
-      logError('aplicarCambiosExternos', e);
-    } finally {
-      syncEnVuelo = false;
-      // Llegó otro cambio mientras corría esta: se aplica ahora.
-      if (pendientesSync && !usuarioOcupado()) {
-        pendientesSync = false;
-        setTimeout(() => aplicarCambiosExternos(true), 400);
-      }
-    }
+  // Arranca el autocontrol: primera revisión a los 4 s y luego cada minuto.
+  function iniciarControlVersion() {
+    detenerControlVersion();
+    temporizadorVersion = setTimeout(revisarVersionNueva, 4000);
+    temporizadorVersionPeriodico = setInterval(revisarVersionNueva, 60000);
   }
 
-  async function loadCuentasSilencioso() {
-    if (seccionActual === 'cuentas') {
-      try { renderCuentas(); } catch (e) { logError('sync:renderCuentas', e); }
-    }
+  function detenerControlVersion() {
+    if (temporizadorVersion) { clearTimeout(temporizadorVersion); temporizadorVersion = null; }
+    if (temporizadorVersionPeriodico) { clearInterval(temporizadorVersionPeriodico); temporizadorVersionPeriodico = null; }
   }
-
-  function renderResumenesSiVisible() {
-    if (seccionActual !== 'summaries') return;
-    try { renderResumenes(); } catch (e) { logError('sync:renderResumenes', e); }
-  }
-
-  // ¿Este pedido le concierne al usuario conectado?
-  // El admin lo ve todo. Un vendedor solo lo que vendió o lo que le toca
-  // entregar. Es el mismo criterio que usa la tabla de Pedidos.
-  function pedidoEsMio(v) {
-    if (!v) return false;
-    if (currentRole.role === 'admin' || !currentRole.vendedor) return true;
-    return v.vendedor === currentRole.vendedor || v.entrega_por === currentRole.vendedor;
-  }
-
-  // Llega un cambio por Realtime.
-  function marcarCambioPendiente() {
-    if (!currentUser) return;
-    pendientesSync = true;
-    if (usuarioOcupado()) { mostrarAvisoSync(); return; }
-    aplicarCambiosExternos(true);
-  }
-
-  // Firma barata del estado: solo id + updated_at. Si cambia, hay algo nuevo.
-  // Se miran SOLO los pedidos que le importan a este usuario, igual que en
-  // Realtime: si no, un vendedor se refresca por los pedidos del otro.
-  // OJO: hay que aplicar el MISMO filtro que loadVentas (quitar eliminados).
-  // Sin eso, la fila de la papelera estaba en la firma pero no en el cache y
-  // la app detectaba "cambios" eternamente, recargando sin parar.
-  async function detectarCambios() {
-    if (!currentUser || syncEnVuelo) return;
-    try {
-      const { data, error } = await supabaseClient
-        .from('ventas').select('id, updated_at, created_at, finalizado, abono, abono_yesenia, eliminado_at, vendedor, entrega_por');
-      if (error) return;
-      const firmaDe = lista => (lista || [])
-        .filter(v => !v.eliminado_at)
-        .filter(pedidoEsMio)
-        .map(r => `${r.id}.${r.updated_at || r.created_at || ''}.${r.finalizado ? 1 : 0}.${r.abono || 0}.${r.abono_yesenia || 0}`)
-        .sort().join('|');
-      if (firmaDe(data) !== firmaDe(ventasCache)) {
-        console.info('[sync] el SONDEO detecto un cambio');
-        marcarCambioPendiente();
-      }
-    } catch (e) { /* silencioso: el sondeo es opcional */ }
-  }
-
-  function iniciarSync() {
-    detenerSync();
-    // Un vendedor no se refresca por pedidos que no son suyos: se evitan
-    // recargas que no cambian nada en su pantalla. El admin si lo ve todo.
-    const alRecibir = (tabla) => (carga) => {
-      if (tabla === 'ventas' && currentRole.role !== 'admin') {
-        const nuevo = carga.new || {};
-        const viejo = carga.old || {};
-        if (!pedidoEsMio(nuevo) && !pedidoEsMio(viejo)) {
-          console.info(`[sync] evento de ${carga.eventType} en ventas, pero NO es mio: se ignora`);
-          return;
-        }
-      }
-      console.info(`[sync] EVENTO realtime en ${tabla}: ${carga.eventType}`);
-      marcarCambioPendiente();
-    };
-    try {
-      canalSync = supabaseClient.channel('sync-camisas-iub')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'ventas' }, alRecibir('ventas'))
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'compras_proveedor' }, alRecibir('compras_proveedor'))
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'compra_aportes' }, alRecibir('compra_aportes'))
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'liquidaciones' }, alRecibir('liquidaciones'))
-        .subscribe((estado, err) => {
-          console.info(`[sync] canal realtime: ${estado}` + (err ? ' | ' + (err.message || err) : ''));
-        });
-    } catch (e) { logError('iniciarSync', e); canalSync = null; }
-    console.info(`[sync] sondeo cada ${INTERVALO_SONDEO_MS / 1000} s`);
-    temporizadorSync = setInterval(detectarCambios, INTERVALO_SONDEO_MS);
-
-    // Autocontrol de versión: revisa al arrancar y luego cada minuto.
-    setTimeout(revisarVersionNueva, 4000);
-    setInterval(revisarVersionNueva, 60000);
-  }
-
-  function detenerSync() {
-    if (canalSync) { try { supabaseClient.removeChannel(canalSync); } catch (e) {} canalSync = null; }
-    if (temporizadorSync) { clearInterval(temporizadorSync); temporizadorSync = null; }
-    pendientesSync = false;
-    ocultarAvisoSync();
-  }
-
-  // Capa 2: al volver a la pestaña o al cambiar de dispositivo.
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible' && currentUser && !usuarioOcupado()) {
-      detectarCambios();
-    }
-  });
-  window.addEventListener('focus', () => {
-    if (currentUser && !usuarioOcupado()) detectarCambios();
-  });
-  // Marca "está escribiendo" para que la sincronización no lo interrumpa.
-  document.addEventListener('input', () => { ultimaEntradaUsuario = Date.now(); }, true);
 
   /* =====================================================
      BUSCADOR GLOBAL (Ctrl+K / Cmd+K)
@@ -1553,7 +1374,7 @@
     await loadLiquidaciones();
     if (currentRole.role === 'admin') await loadUsuarios();
 
-    iniciarSync();
+    iniciarControlVersion();
     navigateTo('dashboard');
   }
 
@@ -1586,7 +1407,7 @@
 
   async function handleLogout() {
     try { await supabaseClient.auth.signOut(); } catch(e){ logError('logout', e); }
-    detenerSync();
+    detenerControlVersion();
     currentUser = null;
     location.reload();
   }
@@ -3036,11 +2857,15 @@
     return isNaN(Number(v)) ? '' : v;
   }
 
-  // Una camisa en blanco para empezar un pedido. NaN = campo de dinero vacío
-  // (numOrBlank lo vuelve a cadena al pintar, no "NaN").
+  // Una camisa en blanco. Solo vienen puestos los datos automáticos:
+  // versión 1, estado "Pedido" y el costo sugerido a Yesenia (30.000 en v1).
+  // Género, color, talla, bordado, precio y abono los elige el usuario.
+  // NaN = campo de dinero vacío (numOrBlank lo vuelve a cadena al pintar,
+  // no "NaN").
   function camisaVacia() {
     return { modelo: 'Viejo', genero: '', color: '', talla: '',
-             programa: '', precio: NaN, costo: NaN, abono: NaN, estado: 'Pedido' };
+             programa: '', precio: NaN, costo: costoProveedorSugerido('Viejo', ''),
+             abono: NaN, estado: 'Pedido' };
   }
 
   function coloresOptionsHtml(valorSeleccionado) {
@@ -3128,18 +2953,28 @@
     container.querySelectorAll('.camisa-item-row').forEach(row => {
       const costoInp = row.querySelector('.ci-costo');
       if (!costoInp) return;
-      costoInp.dataset.user = costoInp.value === '' ? '0' : '1';
-      costoInp.addEventListener('input', () => {
-        costoInp.dataset.user = costoInp.value === '' ? '0' : '1';
-      });
+      const selModelo = row.querySelector('.ci-modelo');
+      const selTalla = row.querySelector('.ci-talla');
+      // dataset.user = '1' significa "el usuario lo escribió a mano": ese valor
+      // se respeta. Mientras el campo siga valiendo lo que se sugiere para la
+      // versión/talla actuales, sigue en automático ('0') y se recalcula solo.
+      // Por eso una camisa en blanco (costo 30.000) sí sube a 32.000 al
+      // cambiar a 2XL, pero si el usuario lo cambió a mano, no se le pisa.
+      const marcar = () => {
+        const sugerido = costoProveedorSugerido(selModelo.value, selTalla.value);
+        const esSugerido = costoInp.value === '' || Number(costoInp.value) === sugerido;
+        costoInp.dataset.user = esSugerido ? '0' : '1';
+      };
+      marcar();
+      costoInp.addEventListener('input', marcar);
       const aplicaCosto = () => {
         if (costoInp.dataset.user === '1') return;
-        const talla = row.querySelector('.ci-talla').value;
+        const talla = selTalla.value;
         if (!talla) return;
-        costoInp.value = costoProveedorSugerido(row.querySelector('.ci-modelo').value, talla);
+        costoInp.value = costoProveedorSugerido(selModelo.value, talla);
       };
-      row.querySelector('.ci-talla').addEventListener('change', aplicaCosto);
-      row.querySelector('.ci-modelo').addEventListener('change', aplicaCosto);
+      selTalla.addEventListener('change', aplicaCosto);
+      selModelo.addEventListener('change', aplicaCosto);
     });
 
     actualizarContadorCamisas();
@@ -3209,8 +3044,10 @@
     if (mas) mas.disabled = total >= MAX_CAMISAS_PEDIDO;
   }
 
-  // Botón +: agrega una fila. Se copia la última camisa para no tener que
-  // llenarla de nuevo cuando son iguales; si está vacía, se agrega en blanco.
+  // Botón +: agrega una camisa EN BLANCO. No copia la anterior a propósito:
+  // si el usuario va a llenar una camisa nueva, quiere empezar de cero, no
+  // terminar corrigiendo datos heredados. Lo único que viene puesto es lo
+  // automático (versión 1, estado Pedido y el costo a Yesenia).
   // NO se enfoca ningún campo: en el teléfono eso abriría de golpe el menú
   // desplegable de género y taparía la pantalla. El usuario elige su campo.
   function agregarCamisa() {
@@ -3219,8 +3056,7 @@
       mostrarToast(`Máximo ${MAX_CAMISAS_PEDIDO} camisas por pedido.`, 'error');
       return;
     }
-    const ultima = existentes[existentes.length - 1];
-    renderCamisaItemsFromData([...existentes, ultima ? { ...ultima } : camisaVacia()]);
+    renderCamisaItemsFromData([...existentes, camisaVacia()]);
 
     // Solo se acerca la fila nueva, sin robarle el foco al usuario.
     const filas = document.querySelectorAll('#camisa-items-container .camisa-item-row');
