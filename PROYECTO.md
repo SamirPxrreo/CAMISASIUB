@@ -315,6 +315,10 @@ Reglas en el código:
     - **Al tocar el aviso** se recarga (ventas, compras, liquidaciones, usuarios, y cuentas/resúmenes si están a la vista). Si no se toca, se oculta solo a los 12 s. Varios cambios seguidos **se acumulan** ("Valentina y 2 cambios más") en vez de pisarse.
     - Avisa de: pedido nuevo, pedido modificado, abono, compra a Yesenia y liquidación. **NO avisa de borrar/vaciar la papelera** (lo pidió Samir así).
     - Si Realtime no está disponible, `iniciarAvisos` captura el error y la app sigue normal: solo deja de avisar.
+59. **Colores de los estados del pedido, los dos temas (2026-09-26):** "Listo para entrega" era **ilegible en oscuro**: 1.89:1 en la insignia y 1.88:1 en el selector. La causa era que su color `#3f6212` (un verde oscuro) estaba **escrito a mano** y no tenía versión para el tema oscuro, mientras que los demás estados sí la tenían (o usaban variables que cambian solas). Verde oscuro sobre fondo oscuro = no se ve.
+    - **La solución de fondo son tokens `--estado-*`:** uno por estado, con su valor para claro y para oscuro. Así es imposible que a un estado nuevo se le olvide la versión del otro tema. Se agregaron a `:root` y a `[data-theme="dark"]`, y todas las reglas de `.estado-*` y `select.estado-select.estado-*` ahora usan `var(--estado-…)`. **Ya no queda ningún hex escrito a mano en las reglas de estado**, y se pudieron borrar los `[data-theme="dark"] .estado-Bordando` que existían solo para tapar ese hueco.
+    - **Los valores se calcularon, no se eligieron a ojo.** Se compuso el fondo translúcido de cada estado sobre la superficie real de cada tema y se buscó la luminosidad, conservando el tono, que llegara a 4.6:1 con el **cambio mínimo** (el color sigue reconociéndose). Cambios: Bordando `#8b3fd9`→`#802dd6` (3.95→4.61), Entregado `#1d5fd6`→`#1c5dd1` (4.45→4.63), Liquidado `#1e7a4c`→`#1b7045` (4.04→4.65) y **Listo en oscuro `#3f6212`→`#6ca81f` (1.89→4.62)**. Los otros cinco no se movieron porque ya pasaban.
+    - Resultado medido: **16 elementos (8 estados × insignia y selector) en verde en los dos temas**, mínimo 4.55:1. Antes había cuatro por debajo de 4.5 y uno en 1.89:1.
 
 ---
 

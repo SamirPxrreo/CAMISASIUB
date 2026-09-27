@@ -5,9 +5,20 @@
   --gold: #c8932a;
   --gold-soft: #f6e8c8;
   --gold-ink: #7d5a0e;
-  --ok-ink: #1e7a4c;
+  --ok-ink: #1b7045;
   --teal-ink: #0b6e63;
-  --info-ink: #1d5fd6;
+  --info-ink: #1c5dd1;
+  /* Colores de los estados del pedido. Cada uno tiene su valor para claro y
+     para oscuro, así que un estado nuevo nunca puede quedarse con el color
+     del otro tema (que es como "Listo para entrega" quedaba ilegible en
+     oscuro: usaba #3f6212, un verde oscuro, sobre un fondo oscuro → 1.89:1).
+     Todos pasan 4.6:1 contra su fondo tintado. */
+  --estado-pedido: var(--gold-ink);
+  --estado-comprado: var(--teal-ink);
+  --estado-bordando: #802dd6;
+  --estado-listo: #3f6212;
+  --estado-entregado: var(--info-ink);
+  --estado-liquidado: var(--ok-ink);
   --paper: #faf7f0;
   --card: #ffffff;
   --line: #e9e1d1;
@@ -46,6 +57,16 @@
   --ok-ink: #34d399;
   --teal-ink: #2dd4bf;
   --info-ink: #7aa5fa;
+  /* Estados del pedido en oscuro. "Listo para entrega" es el que cambia de
+     verdad: en claro va con un verde oscuro (#3f6212, 5.87:1) y en oscuro
+     necesita uno claro (#6ca81f, 4.62:1) porque el fondo también es oscuro.
+     Ese era el estado que se veía ilegible. */
+  --estado-pedido: var(--gold-ink);
+  --estado-comprado: var(--teal-ink);
+  --estado-bordando: #c084fc;
+  --estado-listo: #6ca81f;
+  --estado-entregado: var(--info-ink);
+  --estado-liquidado: var(--ok-ink);
   --paper: #0f1226;
   --card: #1a1f3d;
   --line: #2c3260;
@@ -2105,17 +2126,18 @@ select.estado-select {
   transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
 }
 select.estado-select:hover { border-color: var(--thread); }
-select.estado-select.estado-Pedido { background: rgba(200, 147, 42, 0.20); color: var(--gold-ink); border: 1px solid rgba(200, 147, 42, 0.45); }
-select.estado-select.estado-Comprado { background: rgba(13, 148, 136, 0.16); color: var(--teal-ink); border: 1px solid rgba(13, 148, 136, 0.45); }
-select.estado-select.estado-Bordando { background: rgba(147, 51, 234, 0.16); color: #8b3fd9; border: 1px solid rgba(147, 51, 234, 0.45); }
-select.estado-select.estado-Listo-para-entrega { background: rgba(132, 204, 22, 0.18); color: #3f6212; border: 1px solid rgba(132, 204, 22, 0.45); }
-select.estado-select.estado-Entregado { background: rgba(29, 95, 214, 0.14); color: var(--info-ink); border: 1px solid rgba(29, 95, 214, 0.45); }
-select.estado-select.estado-Liquidado { background: rgba(30, 122, 76, 0.16); color: var(--ok-ink); border: 1px solid rgba(30, 122, 76, 0.45); }
+/* Los colores salen de los tokens --estado-* (arriba), que ya cambian solos
+   según el tema. Por eso aquí no hay ningún hex escrito a mano: antes
+   "Listo para entrega" traía #3f6212 fijo y en oscuro quedaba en 1.89:1. */
+select.estado-select.estado-Pedido { background: rgba(200, 147, 42, 0.20); color: var(--estado-pedido); border: 1px solid rgba(200, 147, 42, 0.45); }
+select.estado-select.estado-Comprado { background: rgba(13, 148, 136, 0.16); color: var(--estado-comprado); border: 1px solid rgba(13, 148, 136, 0.45); }
+select.estado-select.estado-Bordando { background: rgba(147, 51, 234, 0.16); color: var(--estado-bordando); border: 1px solid rgba(147, 51, 234, 0.45); }
+select.estado-select.estado-Listo-para-entrega { background: rgba(132, 204, 22, 0.18); color: var(--estado-listo); border: 1px solid rgba(132, 204, 22, 0.45); }
+select.estado-select.estado-Entregado { background: rgba(29, 95, 214, 0.14); color: var(--estado-entregado); border: 1px solid rgba(29, 95, 214, 0.45); }
+select.estado-select.estado-Liquidado { background: rgba(30, 122, 76, 0.16); color: var(--estado-liquidado); border: 1px solid rgba(30, 122, 76, 0.45); }
 /* compat viejos */
-select.estado-select.estado-Bordado { background: rgba(147, 51, 234, 0.16); color: #8b3fd9; border: 1px solid rgba(147, 51, 234, 0.45); }
-select.estado-select.estado-Pagado { background: rgba(30, 122, 76, 0.16); color: var(--ok-ink); border: 1px solid rgba(30, 122, 76, 0.45); }
-[data-theme="dark"] select.estado-select.estado-Bordando { color: #c084fc; }
-[data-theme="dark"] select.estado-select.estado-Bordado { color: #c084fc; }
+select.estado-select.estado-Bordado { background: rgba(147, 51, 234, 0.16); color: var(--estado-bordando); border: 1px solid rgba(147, 51, 234, 0.45); }
+select.estado-select.estado-Pagado { background: rgba(30, 122, 76, 0.16); color: var(--estado-liquidado); border: 1px solid rgba(30, 122, 76, 0.45); }
 
 .badge-estado {
   display: inline-flex;
@@ -2137,17 +2159,15 @@ select.estado-select.estado-Pagado { background: rgba(30, 122, 76, 0.16); color:
   background: currentColor;
   flex-shrink: 0;
 }
-.estado-Pedido { background: rgba(200, 147, 42, 0.15); color: var(--gold-ink); }
-.estado-Comprado { background: rgba(13, 148, 136, 0.13); color: var(--teal-ink); }
-.estado-Bordando { background: rgba(147, 51, 234, 0.13); color: #8b3fd9; }
-.estado-Listo-para-entrega { background: rgba(132, 204, 22, 0.15); color: #3f6212; }
-.estado-Entregado { background: rgba(29, 95, 214, 0.11); color: var(--info-ink); }
-.estado-Liquidado { background: rgba(30, 122, 76, 0.13); color: var(--ok-ink); }
+.estado-Pedido { background: rgba(200, 147, 42, 0.15); color: var(--estado-pedido); }
+.estado-Comprado { background: rgba(13, 148, 136, 0.13); color: var(--estado-comprado); }
+.estado-Bordando { background: rgba(147, 51, 234, 0.13); color: var(--estado-bordando); }
+.estado-Listo-para-entrega { background: rgba(132, 204, 22, 0.15); color: var(--estado-listo); }
+.estado-Entregado { background: rgba(29, 95, 214, 0.11); color: var(--estado-entregado); }
+.estado-Liquidado { background: rgba(30, 122, 76, 0.13); color: var(--estado-liquidado); }
 /* compat viejos */
-.estado-Bordado { background: rgba(147, 51, 234, 0.13); color: #8b3fd9; }
-.estado-Pagado { background: rgba(30, 122, 76, 0.13); color: var(--ok-ink); }
-[data-theme="dark"] .estado-Bordando { color: #c084fc; }
-[data-theme="dark"] .estado-Bordado { color: #c084fc; }
+.estado-Bordado { background: rgba(147, 51, 234, 0.13); color: var(--estado-bordando); }
+.estado-Pagado { background: rgba(30, 122, 76, 0.13); color: var(--estado-liquidado); }
 
 .badge-modelo {
   display: inline-flex;
