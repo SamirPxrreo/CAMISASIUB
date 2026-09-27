@@ -309,6 +309,12 @@ Reglas en el código:
     Además se subió `.stepper-btn:disabled` de `opacity: 0.32` a `0.5`: con 0.32 el `−` deshabilitado quedaba en 2.67:1 en oscuro (no se veía que estaba apagado), y el `opacity` mezcla con el fondo, así que el resultado dependía del tema. Con 0.5 da 4.58:1 en los dos.
 
     **Auditoría final:** 49 elementos interactivos medidos en cada tema, **0 con problema**. El único que sale mal (`.search-clear`, 1.0) es por diseño: tiene `opacity: 0` hasta que escribes en el buscador.
+58. **Avisos de cambios de los demás (2026-09-26):** Samir pidió un aviso como el de "hay versión nueva", pero que saliera cuando **la otra persona** guarda algo. Importante: **esto no es la sincronización que se quitó** (ver #50). Aquí no se recarga nada solo, no hay sondeo, no hay lógica de "no te interrumpo" y no hay botón en la esquina. Solo se escucha y sale un aviso abajo que dice qué hizo la otra persona.
+    - **Usa `broadcast` de Realtime, no `postgres_changes`.** Cada acción que cambia datos (guardar venta, abono, compra, liquidación) manda un mensaje con QUÉ hizo y QUIÉN lo hizo. Ventajas frente a escuchar la tabla: se sabe el autor (una fila de `ventas` solo trae `vendedor`, que es quién VENDIÓ, no quién la editó), el mensaje puede ser legible ("Valentina registró un abono en el pedido de Kiara"), y **no hay que tocar Supabase** porque el broadcast no usa la publicación `supabase_realtime`.
+    - **Nadie se avisa a sí mismo**, por dos barreras: el canal va con `config: { broadcast: { self: false } }` (el emisor no recibe su propio mensaje, ni desde otra pestaña del mismo navegador) y además se compara `payload.autor` y `payload.autorEmail` contra `currentUser`.
+    - **Al tocar el aviso** se recarga (ventas, compras, liquidaciones, usuarios, y cuentas/resúmenes si están a la vista). Si no se toca, se oculta solo a los 12 s. Varios cambios seguidos **se acumulan** ("Valentina y 2 cambios más") en vez de pisarse.
+    - Avisa de: pedido nuevo, pedido modificado, abono, compra a Yesenia y liquidación. **NO avisa de borrar/vaciar la papelera** (lo pidió Samir así).
+    - Si Realtime no está disponible, `iniciarAvisos` captura el error y la app sigue normal: solo deja de avisar.
 
 ---
 
