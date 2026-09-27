@@ -26,7 +26,7 @@
 <!-- ExcelJS para Reporte con diseño (2 hojas con estilos) -->
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 
-<link rel="stylesheet" href="styles.v2.css?v=20260926-p9">
+<link rel="stylesheet" href="styles.v2.css?v=20260926-p11">
 </head>
 
 <body>
@@ -785,6 +785,10 @@
       <button class="btn-ghost btn modal-x" onclick="cerrarEliminados()" type="button" title="Cerrar">✕</button>
     </div>
     <p class="modal-intro">Estos pedidos se borraron pero siguen guardados. Puedes devolverlos a "Pedidos" cuando quieras.</p>
+    <div id="eliminados-barra" class="eliminados-barra hidden">
+      <span id="eliminados-cuenta" class="eliminados-cuenta"></span>
+      <button class="btn btn-danger btn-small" id="btn-vaciar-papelera" type="button" title="Borrar definitivamente todo lo que hay en la papelera">Vaciar papelera</button>
+    </div>
     <div id="eliminados-lista" class="eliminados-lista"></div>
     <div class="form-actions">
       <button class="btn-ghost btn" onclick="cerrarEliminados()" type="button">Cerrar</button>
@@ -925,7 +929,7 @@
      ===================================================== -->
 
 
-<script src="app.v2.js?v=20260926-p9"></script>
-<script src="enhance.v2.js?v=20260926-p9"></script>
+<script src="app.v2.js?v=20260926-p11"></script>
+<script src="enhance.v2.js?v=20260926-p11"></script>
 </body>
 </html>

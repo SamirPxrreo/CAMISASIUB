@@ -1224,7 +1224,9 @@
 
   async function abrirEliminados() {
     const cont = document.getElementById('eliminados-lista');
+    const barra = document.getElementById('eliminados-barra');
     cont.innerHTML = '<div class="buscador-vacio">Cargando...</div>';
+    if (barra) barra.classList.add('hidden');
     document.getElementById('eliminados-modal').classList.remove('hidden');
     bloquearScrollFondo();
     const lista = await loadEliminados();
@@ -1234,17 +1236,46 @@
         : '<div class="buscador-vacio">La papelela no está activa todavía: falta aplicar la migración <code>eliminado_at</code> en Supabase. Mientras tanto los borrados son definitivos.</div>';
       return;
     }
+
+    // Vaciar la papelera es irreversible para todos: lo que hay adentro puede
+    // ser de cualquiera de los dos. Se deja solo para el administrador.
+    const esAdmin = currentRole.role === 'admin';
+
+    // Cabecera con el total y el botón de vaciar (solo si hay algo y es admin).
+    if (barra) {
+      const cuenta = document.getElementById('eliminados-cuenta');
+      const n = lista.length;
+      if (cuenta) {
+        cuenta.textContent = n === 1
+          ? '1 pedido eliminado'
+          : `${n} pedidos eliminados`;
+      }
+      const btnVaciar = document.getElementById('btn-vaciar-papelera');
+      if (btnVaciar) {
+        btnVaciar.classList.toggle('hidden', !esAdmin);
+        btnVaciar.onclick = vaciarPapelera;
+      }
+      barra.classList.toggle('hidden', !esAdmin);
+    }
+
     cont.innerHTML = lista.map(v => `
-      <div class="eliminado-fila" data-id="${v.id}">
+      <div class="eliminado-fila" data-id="${escAttr(v.id)}">
         <div class="eliminado-txt">
           <b>${escSimple(v.cliente_nombre || 'Sin nombre')}</b>
           <span>${escSimple(v.cliente_telefono || '')} · ${v.fecha ? formatearFechaHumana(v.fecha) : ''} · ${escSimple(v.vendedor || '')}</span>
           <small>Borrado ${v.eliminado_at ? formatearFechaHumana(String(v.eliminado_at).slice(0, 10)) : ''}</small>
         </div>
-        <button type="button" class="btn-ghost btn" data-restaurar="${v.id}">↩️ Restaurar</button>
+        <div class="eliminado-acciones">
+          <button type="button" class="btn-ghost btn" data-restaurar="${escAttr(v.id)}">↩️ Restaurar</button>
+          ${esAdmin ? `<button type="button" class="btn-ghost btn eliminado-borrar" data-borrar-def="${escAttr(v.id)}" title="Borrar este pedido para siempre">🗑️ Borrar</button>` : ''}
+        </div>
       </div>`).join('');
+
     cont.querySelectorAll('[data-restaurar]').forEach(b => {
       b.addEventListener('click', () => restaurarVenta(b.dataset.restaurar));
+    });
+    cont.querySelectorAll('[data-borrar-def]').forEach(b => {
+      b.addEventListener('click', () => borrarDefinitivo(b.dataset.borrarDef));
     });
   }
 
@@ -1257,6 +1288,111 @@
     const { error } = await supabaseClient.from('ventas').update({ eliminado_at: null }).eq('id', id);
     if (error) { mostrarToast('No se pudo restaurar: ' + error.message, 'error'); return; }
     mostrarToast('✅ Pedido restaurado.');
+    await loadVentas();
+    await abrirEliminados();
+  }
+
+  /* ── Borrado DEFINITIVO desde la papelera ──────────────────────────
+     A diferencia de restaurar, esto borra la fila de la tabla `ventas` de
+     verdad: no hay red, ni "deshacer", ni copia. Por eso:
+
+       · Solo el administrador puede hacerlo. Lo que hay en la papelera puede
+         ser de cualquiera de los dos, y un vendedor no debería poder destruir
+         los pedidos que otro borró por error.
+       · Pide confirmación con el detalle de QUÉ se va a borrar, y avisa si el
+         pedido tiene liquidaciones registradas: al borrarlo, esas liquidaciones
+         se quedan apuntando a un pedido que ya no existe. La app no se rompe
+         (muestra "Pedido eliminado"), pero el dato se pierde para siempre. */
+
+  // Liquidaciones que apuntan a este pedido (se pierden con él).
+  function liquidacionesDe(ventaId) {
+    return liquidacionesCache.filter(l => l && l.venta_id === ventaId);
+  }
+
+  function avisoLiquidaciones(ventaId) {
+    const n = liquidacionesDe(ventaId).length;
+    if (!n) return '';
+    const t = n === 1
+      ? '⚠️ Este pedido tiene <b>1 liquidación</b> registrada. Al borrarlo, esa liquidación queda apuntando a un pedido inexistente y se pierde el historial de ese pago.'
+      : `⚠️ Este pedido tiene <b>${n} liquidaciones</b> registradas. Al borrarlo, quedan apuntando a un pedido inexistente y se pierde el historial de esos pagos.`;
+    return `<br><br>${t}`;
+  }
+
+  // ¿Este pedido ya está comprado a Yesenia? Importa: borrarlo no deshace la
+  // compra, solo quita el pedido.
+  function avisoCompra(venta) {
+    if (!venta || !venta.compra_id) return '';
+    return `<br><br>⚠️ Este pedido ya estaba comprado al proveedor. La compra y sus aportes <b>no se borran</b>; solo desaparece el pedido.`;
+  }
+
+  async function borrarDefinitivo(id) {
+    if (currentRole.role !== 'admin') {
+      mostrarToast('Solo el administrador puede borrar un pedido para siempre.', 'error');
+      return;
+    }
+    if (!papeleraActiva) {
+      mostrarToast('La papelera no está activa: no hay nada que vaciar.', 'error');
+      return;
+    }
+    const { data: fila, error: errGet } = await supabaseClient
+      .from('ventas').select('*').eq('id', id).maybeSingle();
+    if (errGet) { mostrarToast('No se pudo leer el pedido: ' + errGet.message, 'error'); return; }
+    if (!fila) { mostrarToast('Ese pedido ya no está en la papelera.', 'error'); return; }
+
+    const camisas = (itemsCrudosVenta(fila) || []).length || Number(fila.cantidad) || 0;
+    const ok = await confirmarFuerte({
+      titulo: 'Borrar para siempre',
+      // OJO: `texto` se pinta con textContent, así que aquí no van etiquetas
+      // HTML; las tripas van en `detalle`, que sí usa innerHTML.
+      texto: 'Esto no se puede deshacer. El pedido desaparece de la base de datos y ya no se puede recuperar.',
+      detalle: `<b>${escSimple(fila.cliente_nombre || 'Sin nombre')}</b>
+        <span>${escSimple(fila.cliente_telefono || '')} · ${fila.fecha ? formatearFechaHumana(fila.fecha) : 'sin fecha'} · ${camisas} camisa(s) · ${escSimple(fila.vendedor || '')}</span>`
+        + avisoLiquidaciones(id) + avisoCompra(fila),
+      botonSi: 'Borrar para siempre'
+    });
+    if (!ok) return;
+
+    const { error } = await supabaseClient.from('ventas').delete().eq('id', id);
+    if (error) { mostrarToast('No se pudo borrar: ' + error.message, 'error'); return; }
+    mostrarToast('🗑️ Pedido borrado para siempre.');
+    await loadVentas();
+    await abrirEliminados();
+  }
+
+  async function vaciarPapelera() {
+    if (currentRole.role !== 'admin') {
+      mostrarToast('Solo el administrador puede vaciar la papelera.', 'error');
+      return;
+    }
+    const { data: lista, error } = await supabaseClient
+      .from('ventas').select('*').not('eliminado_at', 'is', null);
+    if (error) { mostrarToast('No se pudo leer la papelera: ' + error.message, 'error'); return; }
+    const total = (lista || []).length;
+    if (!total) { mostrarToast('La papelera ya está vacía.', 'info'); return; }
+
+    // Si algún pedido tiene liquidaciones, hay que decirlo antes de borrar 10
+    // filas de golpe: después ya no se puede saber cuáles eran.
+    const conLiq = (lista || []).filter(v => liquidacionesDe(v.id).length);
+    const camisasTotales = (lista || []).reduce((s, v) => s + ((itemsCrudosVenta(v) || []).length || Number(v.cantidad) || 0), 0);
+    const nombres = (lista || []).slice(0, 8)
+      .map(v => escSimple(v.cliente_nombre || 'Sin nombre')).join(' · ');
+    const mas = total > 8 ? ` y ${total - 8} más` : '';
+
+    const ok = await confirmarFuerte({
+      titulo: 'Vaciar la papelera',
+      texto: `Esto no se puede deshacer. Se borran ${total} ${total === 1 ? 'pedido' : 'pedidos'} (${camisasTotales} ${camisasTotales === 1 ? 'camisa' : 'camisas'}) de la base de datos para siempre.`,
+      detalle: `<b>${nombres}${mas}</b>`
+        + (conLiq.length
+          ? `<br><br>⚠️ ${conLiq.length === 1 ? '1 de esos pedidos tiene' : `${conLiq.length} de esos pedidos tienen`} liquidaciones registradas, que quedarán apuntando a pedidos inexistentes.`
+          : ''),
+      botonSi: `Vaciar ${total === 1 ? 'el pedido' : `los ${total} pedidos`}`
+    });
+    if (!ok) return;
+
+    const { error: errDel } = await supabaseClient
+      .from('ventas').delete().not('eliminado_at', 'is', null);
+    if (errDel) { mostrarToast('No se pudo vaciar: ' + errDel.message, 'error'); return; }
+    mostrarToast(`🗑️ Papelera vaciada: ${total} ${total === 1 ? 'pedido borrado' : 'pedidos borrados'}.`);
     await loadVentas();
     await abrirEliminados();
   }
