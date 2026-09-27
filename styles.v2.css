@@ -257,6 +257,15 @@ button {
 .btn:hover { background: var(--thread-dark); box-shadow: var(--shadow-sm); transform: none; }
 .btn:active { transform: translateY(0) scale(0.97); box-shadow: none; }
 
+/* En el tema oscuro el azul del botón (#8b93f8) y el verde (#10b981) son
+   claros, así que la letra blanca encima se perdía: 2.75:1 y 2.54:1. Se pone
+   tinta oscura encima, igual que ya hacía .btn-gold más abajo. Quedan 5.7:1 y
+   6.2:1. El fondo NO se toca, así que el botón se ve igual de vivo. */
+[data-theme="dark"] .btn,
+[data-theme="dark"] .btn:not(.btn-gold):not(.btn-danger):not(.btn-ghost) {
+  color: #1a1e4e;
+}
+
 .btn-gold { background: var(--gold); color: #fff; }
 .btn-gold:hover { filter: brightness(0.94); box-shadow: var(--shadow-sm); transform: none; }
 .btn-gold:active { transform: translateY(0) scale(0.97); }
@@ -265,6 +274,8 @@ button {
 .btn-success { background: var(--ok); color: #fff; }
 .btn-success:hover { filter: brightness(0.92); box-shadow: var(--shadow-sm); transform: none; }
 .btn-success:active { transform: translateY(0) scale(0.97); }
+/* Verde #10b981 + blanco daba 2.54:1. Tinta verde muy oscura: 6.2:1. */
+[data-theme="dark"] .btn-success { color: #06281a; }
 
 .btn-ghost {
   background: transparent;
@@ -2375,6 +2386,9 @@ html.modal-lock {
 .sidebar-item:hover { background: var(--accent-bg); color: var(--thread); }
 .sidebar-item:active { transform: scale(0.98); }
 .sidebar-item.active { background: var(--thread); color: #fff; font-weight: 600; box-shadow: none; }
+/* Igual que los .btn: en oscuro el azul es claro y la letra blanca se perdía
+   (2.75:1). Tinta oscura encima: 5.7:1. */
+[data-theme="dark"] .sidebar-item.active { color: #1a1e4e; }
 .sidebar-item .badge {
   margin-left: auto;
   background: var(--warn);
