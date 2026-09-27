@@ -298,11 +298,29 @@ button {
   color: #1a1e4e;
 }
 
-/* "Guardar venta" es el botón que más se usa. En claro el dorado #c8932a es
-   claro y la letra blanca daba solo 2.74:1; con tinta azul queda 5.72:1, y el
-   botón se ve igual en los dos temas. OJO: usar el token --gold-ink (#7d5a0e)
-   EMPEORA (2.29:1), porque es un dorado oscuro sobre un dorado claro. */
-.btn-gold { background: var(--gold); color: #1a1e4e; }
+/* BOTONES DORADOS — el texto va en NEGRO CÁLIDO, no en azul marino.
+   "Guardar venta" es el botón que más se usa, y hay 13 dorados en la app
+   (Guardar venta, Exportar Excel, Nuevo abono, Registrar pago, Crear usuario,
+   Generar PDF…). El detalle se nota mucho porque son los botones de acción
+   principales.
+
+   Antes el texto era #1a1e4e, el mismo azul marino de los hilos de la app.
+   Sobre el dorado se veía forzado: azul y ámbar son colores complementarios y
+   el botones parecía de otro producto. Se cambió a un casi negro **cálido**
+   (#241a0a), que acompaña al dorado en vez de competir con él, y de paso
+   subió el contraste:
+
+     texto        claro normal/hover   oscuro normal/hover
+     #1a1e4e      5.72 / 5.09          7.38 / 6.53    (el anterior)
+     #241a0a      6.24 / 5.55          8.05 / 7.12    (este)
+     #000000      7.66 / 6.81          9.88 / 8.74    (negro puro: se ve
+                                                           plano al lado del
+                                                           dorado, se eligió el
+                                                           cálido)
+
+   OJO: usar el token --gold-ink (#7d5a0e) EMPEORA mucho (2.29:1), porque es
+   un dorado oscuro sobre un dorado claro. No volver a intentarlo. */
+.btn-gold { background: var(--gold); color: #241a0a; }
 .btn-gold:hover { filter: brightness(0.94); box-shadow: var(--shadow-sm); transform: none; }
 .btn-gold:active { transform: translateY(0) scale(0.97); }
 
@@ -361,12 +379,18 @@ button {
 }
 
 /* Al final, y a propósito: .btn-small está DEFINIDO después de .btn-danger y
-   ambos ponen `color`. Como tienen la misma especificidad (0,1,0), el que gana
-   es el último, así que `class="btn btn-danger btn-small"` salía azul en vez de
-   rojo. Estas reglas devuelven el color a su variante cuando se combinan. */
+   ambos ponen `color` y `background`. Como tienen la misma especificidad
+   (0,1,0), el que gana es el último, así que `class="btn btn-danger btn-small"`
+   salía azul y sin fondo en vez de rojo. Estas reglas devuelven los dos
+   valores a su variante.
+
+   OJO: solo se arregla .btn-danger porque es la ÚNICA variante que se combina
+   con .btn-small en la app (el botón "Vaciar papelera"). No hay ningún
+   `btn btn-gold btn-small`, así que no se inventa una regla para él: si algún
+   día se usa, hay que acordarse de devolver ALSO el background, no solo el
+   color. */
 .btn-danger.btn-small { color: var(--warn); }
 .btn-danger.btn-small:hover { border-color: var(--warn); }
-.btn-gold.btn-small { color: #1a1e4e; }
 
 .modal-x {
   padding: 4px 12px;
