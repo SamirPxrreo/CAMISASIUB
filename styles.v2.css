@@ -2250,6 +2250,22 @@ html.modal-lock {
   overscroll-behavior: contain;
 }
 
+/* Capas de los diálogos que se ABREN ENCIMA de otro modal.
+   El orden en el HTML no sirve para esto: todos comparten z-index 40, y con
+   valores iguales gana el ÚLTIMO del DOM. Como #confirm-modal está antes que
+   #eliminados-modal en el HTML, la papelera tapaba la confirmación: se veía
+   la "¿Borrar para siempre?" detrás y el clic caía en una fila de la papelera
+   en vez de en el botón. Por eso cada diálogo apilado tiene su propia capa. */
+#confirm-modal {
+  z-index: 60;
+}
+
+/* El buscador (Ctrl+K) se puede abrir desde cualquier pantalla, incluso con
+   otro modal abierto, así que va por encima de todos. */
+#buscador-global {
+  z-index: 70;
+}
+
 .modal-card {
   background: var(--card);
   border: 1px solid var(--line);
