@@ -257,25 +257,36 @@ button {
 .btn:hover { background: var(--thread-dark); box-shadow: var(--shadow-sm); transform: none; }
 .btn:active { transform: translateY(0) scale(0.97); box-shadow: none; }
 
-/* En el tema oscuro el azul del botón (#8b93f8) y el verde (#10b981) son
-   claros, así que la letra blanca encima se perdía: 2.75:1 y 2.54:1. Se pone
-   tinta oscura encima, igual que ya hacía .btn-gold más abajo. Quedan 5.7:1 y
-   6.2:1. El fondo NO se toca, así que el botón se ve igual de vivo. */
+/* ═══ Contraste de los botones (medido con la fórmula WCAG) ═══
+   El tema claro es el que NO lleva atributo (applyTheme hace removeAttribute);
+   el oscuro es [data-theme="dark"]. Por eso lo específico de cada tema va en
+   un bloque aparte y la regla base es el tema claro. */
+
+/* Tema oscuro: --thread (#8b93f8) y --ok (#10b981) son claros, así que la letra
+   blanca encima se perdía (2.75:1 y 2.54:1). Se pone tinta oscura, igual que
+   ya hacía .btn-gold. El FONDO no se toca, así que el botón sigue igual de vivo.
+   El :not() es para que .btn-danger, .btn-ghost y .btn-gold no se pisen: esas
+   tres ya pasaban y tienen su propio color. */
 [data-theme="dark"] .btn,
 [data-theme="dark"] .btn:not(.btn-gold):not(.btn-danger):not(.btn-ghost) {
   color: #1a1e4e;
 }
 
-.btn-gold { background: var(--gold); color: #fff; }
+/* "Guardar venta" es el botón que más se usa. En claro el dorado #c8932a es
+   claro y la letra blanca daba solo 2.74:1; con tinta azul queda 5.72:1, y el
+   botón se ve igual en los dos temas. OJO: usar el token --gold-ink (#7d5a0e)
+   EMPEORA (2.29:1), porque es un dorado oscuro sobre un dorado claro. */
+.btn-gold { background: var(--gold); color: #1a1e4e; }
 .btn-gold:hover { filter: brightness(0.94); box-shadow: var(--shadow-sm); transform: none; }
 .btn-gold:active { transform: translateY(0) scale(0.97); }
-[data-theme="dark"] .btn-gold { color: #1a1e4e; }
 
-.btn-success { background: var(--ok); color: #fff; }
+/* En claro el verde con blanco daba 4.04:1 (justo, no llega a 4.5), así que
+   aquí sí conviene oscurecer el fondo y dejar la letra blanca: 6.47:1. */
+.btn-success { background: #1e6b45; color: #fff; }
 .btn-success:hover { filter: brightness(0.92); box-shadow: var(--shadow-sm); transform: none; }
 .btn-success:active { transform: translateY(0) scale(0.97); }
-/* Verde #10b981 + blanco daba 2.54:1. Tinta verde muy oscura: 6.2:1. */
-[data-theme="dark"] .btn-success { color: #06281a; }
+/* En oscuro el verde es más claro, así que ahí sí va tinta oscura: 6.24:1. */
+[data-theme="dark"] .btn-success { background: var(--ok); color: #06281a; }
 
 .btn-ghost {
   background: transparent;

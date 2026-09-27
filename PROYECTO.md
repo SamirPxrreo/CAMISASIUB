@@ -276,6 +276,25 @@ Reglas en el código:
     - **Regla para el futuro:** si se crea un `<button>` con un ícono, hay que **declarar `color` explícitamente**. No confiar en la herencia.
     - Arreglo: `color: var(--muted)` (5.6:1 en claro, 6.4:1 en oscuro), se quitó el `opacity: 0.6` que lo apagaba más, y ahora ⧉ se pone azul al pasar el mouse y 🗑️ se pone rojo (`.camisa-item-del--borrar`), porque no es la misma acción.
     - **Pendiente de decidir:** los botones primarios de la app también fallan en oscuro y son preexistentes. `white` sobre `--thread` `#8b93f8` da **2.75:1**, y al hover peor (2.05, porque en oscuro `--thread-dark` es MÁS claro: `#a5b0ff`). Igual `.sidebar-item.active` (2.75) y `.btn-success` (2.54). Ver la sección 10.
+56. **Contraste de toda la app, los dos temas (2026-09-26):** se auditó **cada botón de la página** con la fórmula de contraste WCAG (la del enunciado: 0.2126R + 0.7152G + 0.0722B sobre la luminancia relativa, y `(L1+0.05)/(L2+0.05)`), midiendo el color que el navegador ya había resuelto. Resultado: **26 de 26 elementos en verde, ninguno por debajo de 4.5:1**, en claro y en oscuro.
+
+    | Elemento | Claro antes | Claro ahora | Oscuro antes | Oscuro ahora |
+    |---|---|---|---|---|
+    | `.btn` | 9.42 | 9.42 | **2.75** | **5.69** |
+    | `.btn` al hover | — | — | **2.05** | **7.65** |
+    | `.btn-gold` ("Guardar venta") | **2.74** | **5.72** | 7.38 | 7.38 |
+    | `.btn-success` | **4.04** | **6.47** | **2.54** | **6.24** |
+    | `.btn-danger` | 4.99 | 4.99 | 6.69 | 6.69 |
+    | `.btn-ghost` | 14.93 | 14.93 | 16.25 | 16.25 |
+    | `.sidebar-item.active` | 9.42 | 9.42 | **2.75** | **5.69** |
+    | 🗑️ / ⧉ de camisa | 5.58 | 5.58 | **1.31** | **6.45** |
+
+    **El patrón que se aplicó:** texto claro sobre fondo claro es un problema en ambos temas, porque en oscuro `--thread` y `--ok` son colores claros. La solución fue **tinta oscura encima** (`#1a1e4e` azul, `#06281a` verde), sin tocar el fondo, para que los botones sigan viéndose igual de vivos. Es el truco que el proyecto ya usaba en `.btn-gold` para el tema oscuro; ahora se aplica a los dos temas y a los demás botones.
+
+    **Dos details que quedaron escritos en el CSS para que no se pierdan:**
+    - El tema **claro es el que NO lleva atributo** (`applyTheme` hace `removeAttribute`), el oscuro es `[data-theme="dark"]`. Por eso lo específico de cada tema va en bloque aparte y la regla base es el tema claro.
+    - Para `.btn` en oscuro se usa `:not(.btn-gold):not(.btn-danger):not(.btn-ghost)`, porque esas tres variantes tienen su propio color y ya pasaban.
+    - **Probar `--gold-ink` (#7d5a0e) NO sirve** para texto sobre `--gold`: da 2.29:1, peor que el blanco. Es un dorado oscuro sobre un dorado claro.
 
 ---
 
