@@ -1701,7 +1701,9 @@
 
     iniciarControlVersion();
     iniciarAvisos();
-    navigateTo('dashboard');
+    // sinRender: los loaders de arriba ya dejaron el Inicio pintado. Sin esto
+    // se dibujaba una segunda vez y se veía la animación repetida.
+    navigateTo('dashboard', { sinRender: true });
   }
 
   async function handleLogin() {
@@ -1742,8 +1744,20 @@
 
   /* =====================================================
      NAVEGACIÓN POR SIDEBAR
+
+     `opciones.sinRender` existe para un caso concreto: al arrancar la app.
+     `loadVentas()` YA dibuja el Inicio (llama a renderDashboard por dentro), así
+     que si al final navigateTo vuelve a dibujarlo, el Inicio se pinta dos
+     veces: se ve toda la animación de las tarjetas subir, y medio segundo
+     después sube otra vez. Eso es lo que se sentía como "carga doble".
+
+     Con `sinRender` navigateTo solo muestra la sección y marca el ítem del
+     menú, sin repintar. Solo se usa en el arranque, donde los datos ya están
+     pintados. Todos los demás navigateTo (clics en el menú, después de
+     guardar, etc.) siguen redibujando normal, porque ahí sí hace falta.
      ===================================================== */
-  function navigateTo(section) {
+  function navigateTo(section, opciones) {
+    const sinRender = !!(opciones && opciones.sinRender);
     const sections = ['dashboard', 'new-sale', 'orders', 'cuentas', 'purchases', 'settlements', 'summaries', 'reports', 'settings', 'history'];
     seccionActual = section;
     sections.forEach(s => {
@@ -1756,6 +1770,12 @@
 
     const sidebarItem = document.querySelector(`.sidebar-item[data-section="${section}"]`);
     if (sidebarItem) sidebarItem.classList.add('active');
+
+    if (sinRender) {
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('sidebar-backdrop').classList.remove('show');
+      return;
+    }
 
     if (section === 'dashboard') {
       renderDashboard();
