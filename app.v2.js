@@ -1024,6 +1024,137 @@
   }
 
   /* =====================================================
+     AVISOS DE CAMBIOS DE LOS DEMÁS
+     Esto NO es la sincronización que se quitó el 2026-09-26. Aquí no se
+     recarga nada solo: la app no cambia sola, no hay sondeo cada 12 s, no hay
+     lógica de "no te interrumpo" y no hay que tocar nada. Solo se ESCUCHA y,
+     cuando la otra persona guarda algo, sale un aviso abajo que dice qué hizo.
+     Si quieres verlos, tocas el aviso. Si no, se va solo a los 12 s.
+
+     Cómo funciona: cada acción que la app ejecuta (guardar venta, abono,
+     compra, liquidación) manda un mensaje por el canal de Realtime con QUÉ
+     hizo y QUIÉN lo hizo. Los demás lo reciben. Por eso:
+
+       · Se sabe de quién es el cambio, así que **nadie se avisa a sí mismo**
+         (además el canal va con `self: false`, que evita que el emisor reciba
+         su propio mensaje ni desde otra pestaña del mismo navegador).
+       · El mensaje puede ser legible: "Valentina registró un pedido de Sara".
+       · No hace falta tocar Supabase: el broadcast no usa la publicación
+         `supabase_realtime`, es un canal de Realtime puro.
+
+     Lo que NO avisa (pidió Samir): borrar o vaciar la papelera.
+     ===================================================== */
+  let canalAvisos = null;
+  let avisosRecibidos = [];
+  let avisoTimer = null;
+
+  const ICONO_AVISO = {
+    venta: '📋', abono: '💵', compra: '🧵', liquidacion: '💰'
+  };
+
+  function iniciarAvisos() {
+    detenerAvisos();
+    try {
+      canalAvisos = supabaseClient.channel('avisos-camisas-iub', {
+        // self:false = el que envía no recibe su propio aviso. Es la primera
+        // barrera; la segunda es comparar el autor con el usuario actual.
+        config: { broadcast: { self: false } }
+      })
+        .on('broadcast', { event: 'cambio' }, (msg) => {
+          const p = msg && msg.payload;
+          if (!p) return;
+          // Barrera 2: por si el canal se suscribe con self:true.
+          if (p.autor && currentUser && p.autor === currentUser.id) return;
+          if (p.autorEmail && currentUser && p.autorEmail === currentUser.email) return;
+          agregarAviso(p);
+        })
+        .subscribe();
+    } catch (e) {
+      // Si Realtime no está disponible, la app sigue igual: solo no avisa.
+      logError('iniciarAvisos', e);
+      canalAvisos = null;
+    }
+  }
+
+  function detenerAvisos() {
+    if (canalAvisos) { try { supabaseClient.removeChannel(canalAvisos); } catch (e) {} canalAvisos = null; }
+    ocultarAvisoDatos();
+    avisosRecibidos = [];
+  }
+
+  // La app llama esto después de cada acción que cambia los datos.
+  function avisarCambio(tipo, texto) {
+    if (!canalAvisos) return;
+    try {
+      canalAvisos.send({
+        type: 'broadcast',
+        event: 'cambio',
+        payload: {
+          tipo,
+          texto,
+          autor: (currentUser && currentUser.id) || null,
+          autorEmail: (currentUser && currentUser.email) || '',
+          autorNombre: (currentRole && (currentRole.nombre || currentRole.vendedor)) || '',
+          cuando: Date.now()
+        }
+      });
+    } catch (e) { /* sin Realtime no pasa nada */ }
+  }
+
+  function agregarAviso(p) {
+    // Si llegan varios seguidos se acumulan en vez de pisarse.
+    const repetido = avisosRecibidos.some(a => a.tipo === p.tipo && a.texto === p.texto);
+    if (!repetido) avisosRecibidos.push(p);
+    pintarAvisoDatos();
+    clearTimeout(avisoTimer);
+    avisoTimer = setTimeout(ocultarAvisoDatos, 12000);
+  }
+
+  function pintarAvisoDatos() {
+    let aviso = document.getElementById('datos-aviso');
+    if (!aviso) {
+      aviso = document.createElement('button');
+      aviso.id = 'datos-aviso';
+      aviso.type = 'button';
+      aviso.addEventListener('click', aplicarAvisos);
+      document.body.appendChild(aviso);
+    }
+    const n = avisosRecibidos.length;
+    const quien = avisosRecibidos[0].autorNombre || 'La otra persona';
+    const ico = ICONO_AVISO[avisosRecibidos[0].tipo] || '🔔';
+    const texto = n === 1
+      ? `<b>${escSimple(quien)}</b> ${escSimple(avisosRecibidos[0].texto)}`
+      : `<b>${escSimple(quien)}</b> y ${n - 1} ${n === 2 ? 'cambio más' : 'cambios más'}`;
+    aviso.innerHTML = `${ico} ${texto} <b>· Ver</b>`;
+    aviso.classList.remove('hidden');
+  }
+
+  function ocultarAvisoDatos() {
+    const aviso = document.getElementById('datos-aviso');
+    if (aviso) aviso.classList.add('hidden');
+    clearTimeout(avisoTimer);
+    avisoTimer = null;
+    avisosRecibidos = [];
+  }
+
+  // Al tocar el aviso: aquí SÍ se recarga, y solo porque el usuario lo pidió.
+  async function aplicarAvisos() {
+    ocultarAvisoDatos();
+    try {
+      await loadVentas();
+      await loadCompras();
+      await loadLiquidaciones();
+      if (currentRole && currentRole.role === 'admin') await loadUsuarios();
+      if (seccionActual === 'cuentas') { try { renderCuentas(); } catch (e) {} }
+      if (seccionActual === 'summaries') { try { renderResumenes(); } catch (e) {} }
+      mostrarToast('✅ Listo, ya estás al día.', 'success');
+    } catch (e) {
+      logError('aplicarAvisos', e);
+      mostrarToast('No se pudo actualizar. Toca recargar la página.', 'error');
+    }
+  }
+
+  /* =====================================================
      BUSCADOR GLOBAL (Ctrl+K / Cmd+K)
      Escribe 2 letras y encuentra clientes, pedidos y secciones,
      desde cualquier pantalla. No reemplaza los buscadores propios
@@ -1511,6 +1642,7 @@
     if (currentRole.role === 'admin') await loadUsuarios();
 
     iniciarControlVersion();
+    iniciarAvisos();
     navigateTo('dashboard');
   }
 
@@ -1544,6 +1676,7 @@
   async function handleLogout() {
     try { await supabaseClient.auth.signOut(); } catch(e){ logError('logout', e); }
     detenerControlVersion();
+    detenerAvisos();
     currentUser = null;
     location.reload();
   }
@@ -3786,6 +3919,12 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
          if (error) { mostrarToast('Error al guardar: ' + error.message, 'error'); return; }
         const eraEdicion = !!editingId;
         await loadVentas();
+        // Avisa a los demás de lo que se acaba de hacer (no se actualiza nada
+        // solo: ellos decide si tocan el aviso).
+        const deQuien = payload.cliente_nombre ? ` de ${payload.cliente_nombre}` : '';
+        avisarCambio('venta', eraEdicion
+          ? `modificó un pedido${deQuien}.`
+          : `registró un pedido nuevo${deQuien}.`);
         // Limpia el formulario y lleva SIEMPRE a Pedidos, tanto al crear uno
         // nuevo como al editar: es donde se ve de inmediato lo que se guardó.
         openForm(null);
@@ -4482,6 +4621,9 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
         await loadCompras();
         await loadCompraAportes();
 
+        const nPedidos = (pedidosSeleccionados || []).length;
+        avisarCambio('compra', `registró una compra a Yesenia${nPedidos > 1 ? ` con ${nPedidos} pedidos` : ''}.`);
+
         openCompraModal(compraIdGuardada);
         // Sugerir marcar como Liquidado si quedó al día y estaba en Entregado
         await sugerirLiquidadoParaVarios(pedidosSeleccionados);
@@ -4865,6 +5007,8 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
      try { renderLiquidaciones(); } catch (e) { logError('renderLiquidaciones', e); }
      try { renderTable(); } catch (e) { logError('renderTable', e); }
      closeLiquidacionModal();
+
+     avisarCambio('liquidacion', `registró un pago de ${pagador} a ${receptor} de ${fmt(monto)}.`);
 
       await loadLiquidaciones();
       await loadVentas();
@@ -5604,6 +5748,7 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
         if (res.error) throw res.error;
       } else if (res.error) throw res.error;
       await loadVentas();
+      avisarCambio('abono', `registró un abono${venta && venta.cliente_nombre ? ` en el pedido de ${venta.cliente_nombre}` : ''}.`);
       cerrarModalAbono();
       mostrarToast('Abono agregado correctamente');
     } catch (err) { logError('addAbono:update', err); mostrarToast('Error al agregar abono', 'error'); }

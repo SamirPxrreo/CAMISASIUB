@@ -889,6 +889,47 @@ header.top .who {
   display: none;
 }
 
+/* Aviso de que la OTRA persona guardó algo. Mismo aspecto que el de versión
+   nueva, pero abajo en el centro para no chocar con él (que está arriba) ni
+   con los toasts (que van a 80px del borde inferior). */
+#datos-aviso {
+  position: fixed;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%);
+  z-index: 9400;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: min(92vw, 520px);
+  padding: 11px 18px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  color: var(--ink);
+  background: var(--card);
+  border: 1px solid var(--thread);
+  border-radius: 999px;
+  box-shadow: var(--shadow-lg);
+  cursor: pointer;
+  animation: fadeIn var(--dur-med) var(--ease-out) both;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+#datos-aviso b {
+  color: var(--thread);
+  text-decoration: underline;
+}
+
+#datos-aviso:hover {
+  transform: translateX(-50%) translateY(-2px);
+}
+
+#datos-aviso.hidden {
+  display: none;
+}
+
 .camisa-item-head {
   flex: 0 0 100%;
   display: flex;
