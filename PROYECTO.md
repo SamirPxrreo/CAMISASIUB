@@ -295,6 +295,20 @@ Reglas en el código:
     - El tema **claro es el que NO lleva atributo** (`applyTheme` hace `removeAttribute`), el oscuro es `[data-theme="dark"]`. Por eso lo específico de cada tema va en bloque aparte y la regla base es el tema claro.
     - Para `.btn` en oscuro se usa `:not(.btn-gold):not(.btn-danger):not(.btn-ghost)`, porque esas tres variantes tienen su propio color y ya pasaban.
     - **Probar `--gold-ink` (#7d5a0e) NO sirve** para texto sobre `--gold`: da 2.29:1, peor que el blanco. Es un dorado oscuro sobre un dorado claro.
+57. **Botones "fantasma" invisibles en oscuro (2026-09-26, regresión propia):** el arreglo de #56 dejó **22 botones invisibles**. El selector era:
+
+    ```css
+    [data-theme="dark"] .btn,                              /* <- este sobraba */
+    [data-theme="dark"] .btn:not(.btn-gold):not(.btn-danger):not(.btn-ghost) { color: #1a1e4e }
+    ```
+
+    El `:not()` solo protegía al **segundo** selector. En el HTML los botones de variante llevan **las dos clases** (`class="btn-ghost btn modal-x"`), así que el primer selector, el pelado, también los alcanzaba y les plantaba `#1a1e4e` (azul casi negro) encima de su fondo **transparente**: contraste **1.02:1**, literalmente invisible. Afectaba al botón del tema (🌙 Sistema), Salir, Actualizar, 🗑️ Eliminados, todos los "Cancelar" y "Cerrar" de los modales y todas las ✕ de cerrar.
+    - **Arreglo:** quitar el selector pelado y dejar solo el del `:not()`.
+    - **Por qué no se detectó antes:** la comprobación anterior creó un `<button class="btn-ghost">` **de prueba**, sin la clase `btn`. Ese elemento no existía en la página y por eso no lo alcanzaba el selector, así que dio un contraste falso de 16:1. **Lección: las pruebas de contraste tienen que usar los elementos reales del HTML, no unos de laboratorio.** Desde entonces la auditoría recorre el DOM real.
+
+    Además se subió `.stepper-btn:disabled` de `opacity: 0.32` a `0.5`: con 0.32 el `−` deshabilitado quedaba en 2.67:1 en oscuro (no se veía que estaba apagado), y el `opacity` mezcla con el fondo, así que el resultado dependía del tema. Con 0.5 da 4.58:1 en los dos.
+
+    **Auditoría final:** 49 elementos interactivos medidos en cada tema, **0 con problema**. El único que sale mal (`.search-clear`, 1.0) es por diseño: tiene `opacity: 0` hasta que escribes en el buscador.
 
 ---
 

@@ -267,7 +267,12 @@ button {
    ya hacía .btn-gold. El FONDO no se toca, así que el botón sigue igual de vivo.
    El :not() es para que .btn-danger, .btn-ghost y .btn-gold no se pisen: esas
    tres ya pasaban y tienen su propio color. */
-[data-theme="dark"] .btn,
+/* OJO: aquí NO se puede escribir un selector pelado `[data-theme="dark"] .btn`,
+   porque en el HTML los botones de variante llevan las dos clases
+   (`class="btn-ghost btn"`), así que ese selector pelado también los alcanza y
+   les planta tinta oscura encima de su fondo transparente: el botón del tema y
+   la X de los modales se volvían invisibles (1.02:1). El :not() de abajo es lo
+   que los excluye, y tiene que ser el único selector. */
 [data-theme="dark"] .btn:not(.btn-gold):not(.btn-danger):not(.btn-ghost) {
   color: #1a1e4e;
 }
@@ -1034,7 +1039,10 @@ header.top .who {
 }
 
 .stepper-btn:disabled {
-  opacity: 0.32;
+  /* 0.32 lo dejaba en 2.67:1 sobre el fondo oscuro, o sea que no se veía que
+     estaba deshabilitado. Con 0.32 el color se mezcla con el fondo y el
+     resultado depende de qué tema haya; 0.5 da 4.58:1 en los dos. */
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
