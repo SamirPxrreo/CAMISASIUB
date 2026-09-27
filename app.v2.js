@@ -957,6 +957,8 @@
 
       initSearchClears();
 
+      vigilarConexion();
+
       await checkSession();
    });
 
@@ -1024,7 +1026,63 @@
   }
 
   /* =====================================================
-     AVISOS DE CAMBIOS DE LOS DEMÁS
+     CONEXIÓN Y ERRORES DE GUARDADO
+     Que se caiga la señal NO pierde lo que el usuario estaba escribiendo: los
+     guardados hacen `return` ANTES de limpiar el formulario, así que todo sigue
+     ahí para reintentar. Lo que faltaba era explicar qué pasó, porque salía el
+     texto crudo de Supabase (en inglés) y en un `catch` incluso se perdía el
+     error sin dejar rastro.
+
+     Acá se clasifica el fallo y se avisa con palabras de gente, siempre
+     recordando que el trabajo sigue intacto.
+     ===================================================== */
+
+  // Un fallo por red se ve distinto a un "el saldo no alcanza" o a un dato mal.
+  function esFalloDeRed(err) {
+    if (!err) return false;
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) return true;
+    const msg = String(err.message || err || '');
+    return /failed to fetch|networkerror|network request failed|load failed|err_internet_disconnected|err_network|timeout|aborted/i.test(msg);
+  }
+
+  // Texto para mostrar DENTRO del modal de guardado (compra, liquidación,
+  // usuario). El modal se queda abierto con lo escrito, así que el mensaje
+  // solo tiene que decir si falta señal o qué está mal.
+  function errorDeGuardado(err) {
+    if (esFalloDeRed(err)) {
+      return 'Se cayó la conexión, así que no se guardó. Todo lo que llenaste sigue aquí: '
+        + 'vuelve a presionar Guardar cuando tengas señal.';
+    }
+    return (err && err.message) || 'No se pudo guardar. Revisa los datos e intenta de nuevo.';
+  }
+
+  // Mensaje para el usuario. `guardado` es qué se estaba haciendo.
+  function mensajeFalloGuardado(err, guardado) {
+    if (esFalloDeRed(err)) {
+      return `No se guardó ${guardado}: se cayó la conexión. `
+        + 'Lo que escribiste sigue aquí, solo vuelve a presionar guardar cuando tengas señal.';
+    }
+    return `No se pudo guardar ${guardado}. Revisa los datos e intenta de nuevo.`;
+  }
+
+  // Franja de arriba. Se llama al cargar y cada vez que cambia la señal.
+  function pintarSinConexion() {
+    const franja = document.getElementById('sin-conexion');
+    if (!franja) return;
+    const sinSenal = typeof navigator !== 'undefined' && navigator.onLine === false;
+    franja.classList.toggle('hidden', !sinSenal);
+  }
+
+  function vigilarConexion() {
+    pintarSinConexion();
+    window.addEventListener('online', () => {
+      pintarSinConexion();
+      mostrarToast('✅ Volvió la conexión. Ya puedes guardar.', 'success');
+    });
+    window.addEventListener('offline', pintarSinConexion);
+  }
+
+  /* ---------- AVISOS DE CAMBIOS DE LOS DEMÁS ----------
      Esto NO es la sincronización que se quitó el 2026-09-26. Aquí no se
      recarga nada solo: la app no cambia sola, no hay sondeo cada 12 s, no hay
      lógica de "no te interrumpo" y no hay que tocar nada. Solo se ESCUCHA y,
@@ -3916,7 +3974,7 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
           error = res.error;
         }
 
-         if (error) { mostrarToast('Error al guardar: ' + error.message, 'error'); return; }
+         if (error) { mostrarToast(mensajeFalloGuardado(error, 'el pedido'), 'error'); return; }
         const eraEdicion = !!editingId;
         await loadVentas();
         // Avisa a los demás de lo que se acaba de hacer (no se actualiza nada
@@ -3931,7 +3989,10 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
         navigateTo('orders');
         mostrarToast(eraEdicion ? '✅ Venta actualizada correctamente.' : '✅ Venta registrada correctamente.');
      } catch (err) {
-       mostrarToast('Error inesperado al guardar la venta.', 'error');
+       // Antes esto se comía el error sin dejar rastro: si algo fallaba no
+       // había forma de saber qué pasó salvo la consola.
+       logError('saveVenta', err);
+       mostrarToast(mensajeFalloGuardado(err, 'el pedido'), 'error');
      }
    }
 
@@ -4544,7 +4605,7 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
          if (!error && data) compraIdGuardada = data.id;
        }
 
-       if (error) { errEl.textContent = error.message; errEl.classList.remove('hidden'); return; }
+       if (error) { errEl.textContent = errorDeGuardado(error); errEl.classList.remove('hidden'); return; }
 
         // Desvincular pedidos que ya no están seleccionados (edición)
         if (editingCompraId) {
@@ -4628,7 +4689,8 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
         // Sugerir marcar como Liquidado si quedó al día y estaba en Entregado
         await sugerirLiquidadoParaVarios(pedidosSeleccionados);
      } catch (err) {
-        errEl.textContent = 'Error inesperado al guardar la compra.';
+        logError('saveCompra', err);
+        errEl.textContent = errorDeGuardado(err);
         errEl.classList.remove('hidden');
       }
     }
@@ -4999,7 +5061,7 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
        venta_id: ventaId, fecha, pagador, receptor, monto, nota, hora: horaColombia()
      });
 
-     if (error) { errEl.textContent = error.message; errEl.classList.remove('hidden'); return; }
+     if (error) { errEl.textContent = errorDeGuardado(error); errEl.classList.remove('hidden'); return; }
 
      const entradaTemp = { id: 'new_' + Date.now(), venta_id: ventaId, fecha, pagador, receptor, monto: Number(monto), nota };
      liquidacionesCache = [entradaTemp, ...liquidacionesCache];
@@ -5159,11 +5221,12 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
       // Editar un usuario existente: solo se puede cambiar nombre y rol (correo y contraseña quedan fijos).
       try {
         const { error } = await supabaseClient.from('usuarios').update({ nombre, rol }).eq('id', editingUserId);
-        if (error) { errEl.textContent = error.message; errEl.classList.remove('hidden'); return; }
+        if (error) { errEl.textContent = errorDeGuardado(error); errEl.classList.remove('hidden'); return; }
         closeUserModal();
         await loadUsuarios();
       } catch (err) {
-        errEl.textContent = 'Error al guardar el usuario.';
+        logError('saveUser', err);
+        errEl.textContent = errorDeGuardado(err);
         errEl.classList.remove('hidden');
       }
       return;
@@ -5200,13 +5263,14 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
       }
 
       const { error: insertError } = await supabaseClient.from('usuarios').insert({ nombre, correo, rol });
-      if (insertError) { errEl.textContent = insertError.message; errEl.classList.remove('hidden'); return; }
+      if (insertError) { errEl.textContent = errorDeGuardado(insertError); errEl.classList.remove('hidden'); return; }
 
       closeUserModal();
       await loadUsuarios();
       mostrarToast(`✅ Usuario creado. Ahora ${nombre} puede iniciar sesión con ${correo} y la contraseña que ingresaste.`);
     } catch (err) {
-      errEl.textContent = 'Error inesperado al crear el usuario.';
+      logError('crearUsuario', err);
+      errEl.textContent = errorDeGuardado(err);
       errEl.classList.remove('hidden');
     } finally {
       if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Guardar Usuario'; }
