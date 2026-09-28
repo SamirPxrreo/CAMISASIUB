@@ -450,16 +450,30 @@ UPDATE ventas SET estado='Liquidado' WHERE estado='Pagado';
   8. **Deuda vs Abonos Yesenia** `app.v2.js:3061` — `abonosProveedorPorVentaId` solo hace reparto proporcional si no hay `abono_yesenia` definido, no cuando es `0` explícito → `Samir $60k` concuerda con `Abono $240k Saldo $60k` (Kiara Polo 10c).
   9. **Deployments** — `clean-deployments.ps1` + `.gitignore` (`token.txt` local, no se sube).
 
-### ✅ Estado al cierre — 2026-09-25 (para retomar en otro PC)
+### ✅ Estado al cierre — 2026-09-28 (para retomar en otro PC)
 
-> Este bloque **reemplaza** el de 2026-09-15 (que quedó 25 commits atrás ycitaba un HEAD inexistente).
+> Este bloque **reemplaza** al de 2026-09-25 (más abajo, marcado como histórico).
 
-- **HEAD:** `7a4632c` — navegación del formulario + se quitó la franja de pendientes. Antes: `089d642` (rotulos de deployments), `c475e30` (modal de confirmación + papelera), `d949977` (sugerencias de cliente), `2ec5140` (franja de pendientes, ya eliminada), `ce67356` (buscador Ctrl+K), `1b8511d` (modal de abono), `b222070` (contador de camisas), `9662bff` (sincronización entre dispositivos). Ver `git log --oneline -15`.
+- **HEAD:** `447fb6e` — botones dorados con negro cálido. **Commits totales: 97.**
 - **Deployments (3):** 1) el que acabas de subir (vivo) · 2) el que estaba antes del push · 3) el más viejo (ancla fija `019625c`). Limpieza con `.\clean-deployments.ps1` + token en `$env:GH_TOKEN` o `token.txt` (ambos en `.gitignore`).
 - **Entorno de trabajo:** hay copia en `C:\Users\Usuario\Documents\CAMISASIUB` (clon real con `origin` configurado, así que se edita y se sube desde ahí). Git instalado; identidad de commit `SamirPxrreo <samir@example.com>`.
-- **Velocidad de publicación medida:** `git push` ≈ **1,3 s**; GitHub Pages publica ≈ **35 s** después. Total ~35 s. *No* se puede acelerar con una key SSH: el build es de GitHub. La espera se debe a comprobaciones demasiado frecuentes, no a la red.
-- **Pendiente que requiere una acción manual:**
-  - 🔴 **Migración de la papelera en Supabase.** Para que borrar pedidos sea reversible hay que correr en el SQL Editor: `ALTER TABLE ventas ADD COLUMN IF NOT EXISTS eliminado_at timestamptz;` (está en `migracion.sql`, sección 5). **Si no se aplica, la app funciona igual con borrado definitivo y avisa una vez** — es seguro aplicarla o no.
+- **Velocidad de publicación medida:** `git push` ≈ **1,3 s**; GitHub Pages publica ≈ **35 s** después. Total ~35 s. *No* se puede acelerar con una key SSH: el build es de GitHub.
+- **Migraciones en Supabase:** pasos **1 a 5 aplicados**, incluida la columna `eliminado_at` y su índice (la papelera quedó activa: los borrados son reversibles). El paso 6 quedó **anulado a propósito**: no se toca `supabase_realtime` porque, sin clientes suscritos, no cuesta nada. La alternativa está anotada en `migracion.sql` y en la entrada 53.
+- **Herramientas en la raíz del repo (nuevas el 2026-09-26):**
+  | Archivo | Para qué |
+  |---|---|
+  | `README.md` | Documentación del proyecto. |
+  | `verificar-seguridad.js` | `node verificar-seguridad.js` comprueba el RLS desde afuera **sin tocar datos** (las sondas de escritura usan un UUID inexistente y cuerpo vacío). |
+  | `preparar-despliegue.js` | Pasos del despliegue. |
+- **⚠️ Al desplegar, cambiar el `?v=` de los `<script>` en `index.html`.** Es lo único manual que queda: si no se cambia, el navegador sirve el JS viejo y se ven bugs ya corregidos (pasó el 2026-09-25 y costó tres intentos). `preparar-despliegue.js` lo hace, y `versionDeEsteScript()` en `app.v2.js` detecta la versión vieja y avisa arriba: *"⬆️ Hay una versión nueva"*. Como respaldo, **Ctrl+Shift+R** en el navegador.
+
+### 🕗 Estado al cierre — 2026-09-25 (histórico, superado por el de arriba)
+
+- **HEAD en ese momento:** `7a4632c` — navegación del formulario + se quitó la franja de pendientes. Antes: `089d642` (rótulos de deployments), `c475e30` (modal de confirmación + papelera), `d949977` (sugerencias de cliente), `2ec5140` (franja de pendientes, ya eliminada), `ce67356` (buscador Ctrl+K), `1b8511d` (modal de abono), `b222070` (contador de camisas), `9662bff` (sincronización entre dispositivos, **retirada el 2026-09-26**, ver entrada 53).
+- **Deployments (3):** 1) el que acabas de subir (vivo) · 2) el que estaba antes del push · 3) el más viejo (ancla fija `019625c`).
+- **Velocidad de publicación medida:** `git push` ≈ **1,3 s**; GitHub Pages publica ≈ **35 s** después.
+- **Migración de la papelera:** aplicada ese día. `ALTER TABLE ventas ADD COLUMN IF NOT EXISTS eliminado_at timestamptz;` (migracion.sql, sección 5). **Si algún día se pierde, la app avisa una vez y hace borrado definitivo** — es seguro aplicarla o no.
+
 - **Cambios 2026-09-25:**
   1. **Camisas por fila** (`d18a596`) — fuera el campo Cantidad y la casilla "por separado"; ahora contador `− [n] +` y 🗑️ por fila. Ver #47.
   2. **Política de 3 deployments** (`c3adc07`) — ancla + penúltimo + último. Ver #48 y sección 12.
@@ -499,3 +513,31 @@ UPDATE ventas SET estado='Liquidado' WHERE estado='Pagado';
   3. 🟡 `Shift+rueda` no desplaza las tablas de Resúmenes: los listeners se atan a las `.table-wrap` existentes al cargar y esas se crean después.
   4. 🟡 `xlsx@0.18.5` (CDN) tiene CVEs públicos sin parche; se puede migrar a la versión de SheetJS mantenida o quitar esa librería.
 - **Todo commiteado y deployado en** <https://SamirPxrreo.github.io/CAMISASIUB/>.
+
+---
+
+## 14. Resumen ejecutivo — qué queda pendiente (2026-09-28)
+
+Si solo vas a leer una cosa de este documento, lee esto. Ordenado por lo que más duele.
+
+| # | Prioridad | Qué | Estado |
+|---|---|---|---|
+| 1 | 🔴 | **`updateEstado` borra estados de camisas.** Un pedido con 4 Bordando y 2 Listo para entrega: al elegir "Bordando" en el dropdown, **las 2 "Listo" se pierden sin avisar**. Es pérdida de datos real y la más grave que queda. | Pendiente, requiere decisión de Samir |
+| 2 | 🟠 | **`saveCompra` no es atómico.** N `UPDATE` secuenciales sin transacción: si falla el tercero, quedan pedidos con `compra_id` a medias. Difícil de arreglar bien (necesita una función de Postgres). | Pendiente |
+| 3 | 🟡 | **`Shift+rueda`** no desplaza las 4 tablas de Resúmenes. | Pendiente, bajo riesgo |
+| 4 | 🟡 | **`xlsx@0.18.5`** con CVEs públicos sin parche (CDN). | Pendiente, se puede quitar la librería |
+| 5 | ⚪ | **Tabla sobrante** `liquidaciones_ganancias` en Supabase: no la usa la app (0 referencias en el código). Se puede borrar con `DROP TABLE liquidaciones_ganancias;`. | Opcional |
+| 6 | ⚪ | **Key SSH:** no acelera nada (el build es de GitHub). Solo evita el prompt del token al hacer push. | Opcional |
+
+**Ya resueltos y no volver a tocar:**
+- ✅ RLS de Postgres: la anon key no lee, escribe ni borra nada. Verificado con `verificar-seguridad.js`.
+- ✅ Papelera: borrado lógico con `eliminado_at`, restaurable.
+- ✅ Caché: `?v=` versionado + aviso automático de versión nueva.
+- ✅ Pérdidas entre socios: regla definida por Samir y explicada en pantalla.
+- ✅ Código muerto y XSS: barridos.
+- ✅ Aviso de "el otro dispositivo guardó algo": sin recargar nada (ver entrada 58).
+
+**Lo que se decidió NO hacer:**
+- La sincronización en tiempo real se retiró (entrada 53): a Samir no le gustó cómo se comportaba dentro de la página.
+- No se tocó `supabase_realtime` (migración paso 6, anulada): sin clientes suscritos no cuesta nada.
+- No se filtró filas por usuario a nivel de RLS: con dos personas que se conocen, el filtro en la app es suficiente y la alternativa añade complejidad y riesgo.
