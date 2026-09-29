@@ -4194,9 +4194,8 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
       });
     }
     if (ordenTablas.compras) rows = ordenarFilas(rows, 'compras', REGISTRO_ORDEN.compras.campos);
-    const body = document.getElementById('compras-lista');
+    const body = document.getElementById('compras-body');
     document.getElementById('compras-empty-state').classList.toggle('hidden', rows.length > 0);
-    if (!body) { renderComprasDeudaBox(); return; }
 
     const page = paginationState.compras;
     const start = page * PAGE_SIZE;
@@ -4204,103 +4203,92 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
 
     body.innerHTML = pageRows.map(c => {
       const pedidos = ventasCache.filter(v => v.compra_id === c.id);
-      const aportesCompra = compraAportesCache.filter(a => a.compra_id === c.id);
-      const personasAbono = [...new Set(aportesCompra.map(a => a.persona).filter(Boolean))];
-      const puedeGestionar = currentRole.role === 'admin' || c.comprador === currentRole.vendedor;
-
-      // Un cliente por fila de la tarjeta. Se agrupa por contacto, como en el
-      // picker, para que alguien con 2 pedidos aparezca una sola vez.
-      const grupos = new Map();
-      pedidos.forEach(p => {
-        const clave = claveCliente(p);
-        if (!grupos.has(clave)) grupos.set(clave, { clave, pedidos: [] });
-        grupos.get(clave).pedidos.push(p);
-      });
-
-      const filas = [...grupos.values()].map(g => {
-        const cant = g.pedidos.reduce((s, pp) => s + (Number(pp.cantidad) || 1), 0);
-        const costo = g.pedidos.reduce((s, pp) => s + costoTotalVenta(pp), 0);
-        const abonado = g.pedidos.reduce((s, pp) => s + abonosProveedorPorVentaId(pp.id).abonado, 0);
-        const pendiente = g.pedidos.reduce((s, pp) => s + abonosProveedorPorVentaId(pp.id).pendiente, 0);
-        const tel = (g.pedidos.find(pp => String(pp.cliente_telefono || '').trim()) || {}).cliente_telefono || '';
-        const listo = pendiente <= 1;
-        return `
-          <div class="abono-cliente-fila">
-            <div class="abono-cliente-info">
-              <b>${escSimple(etiquetaClienteGrupo(g.pedidos))}</b>
-              <span class="sub-tag" style="display:inline-block;margin:0;">×${cant} camisa${cant === 1 ? '' : 's'}</span>
-              ${tel ? `<span class="sub-tag" style="display:inline-block;margin:0;">📞 ${escSimple(tel)}</span>` : ''}
-            </div>
-            <div class="abono-cliente-dinero">
-              <div class="abono-cifra" style="color:var(--ok);">${fmt(abonado)}</div>
-              <div class="abono-cifra-label">abonado</div>
-            </div>
-            ${listo
-              ? `<div class="abono-cliente-dinero">
-                   <div class="abono-cifra" style="color:var(--ok);">✓</div>
-                   <div class="abono-cifra-label">completo</div>
-                 </div>`
-              : `<div class="abono-cliente-dinero">
-                   <div class="abono-cifra" style="color:var(--warn);">${fmt(pendiente)}</div>
-                   <div class="abono-cifra-label">falta</div>
-                 </div>
-                 ${puedeGestionar ? `<button class="btn-small" onclick="abrirCompletar('${argOnClick(g.clave)}', '${c.id}')" type="button" title="Abrir este abono con lo que falta">Completar</button>` : ''}`}
-          </div>`;
-      }).join('');
-
+      const cantidad = pedidos.reduce((s, v) => s + (Number(v.cantidad) || 1), 0);
       const costoTotal = pedidos.reduce((s, v) => s + costoTotalVenta(v), 0);
-      const aportado = Math.max(
-        aportesCompra.reduce((s, a) => s + (Number(a.monto) || 0), 0),
-        pedidos.reduce((s, v) => s + (Number(v.abono_yesenia) || 0), 0)
-      );
+      const aportesCompra = compraAportesCache.filter(a => a.compra_id === c.id);
+      const aportadoAportes = aportesCompra.reduce((s, a) => s + (Number(a.monto) || 0), 0);
+      const abonoPedidos = pedidos.reduce((s, v) => s + (Number(v.abono_yesenia) || 0), 0);
+      const aportado = Math.max(aportadoAportes, abonoPedidos);
       const saldo = costoTotal - aportado;
-      const quienHtml = personasAbono.length === 0
-        ? '<span style="color:var(--muted);">—</span>'
-        : personasAbono.map(p => p === currentRole.vendedor
-            ? `<b style="color:var(--thread);">${escSimple(p)}</b>`
-            : escSimple(p)).join(', ');
-
+      const puedeGestionar = currentRole.role === 'admin' || c.comprador === currentRole.vendedor;
       const acciones = puedeGestionar
         ? `<button class="btn-small" onclick="openCompraModal('${c.id}')" type="button">Editar</button>
            <button class="btn-danger" onclick="deleteCompra('${c.id}')" type="button">Eliminar</button>`
         : `<button class="btn-small" onclick="openCompraModal('${c.id}')" type="button">Ver / Abonar</button>`;
 
+      const personasAbono = [...new Set(aportesCompra.map(a => a.persona).filter(Boolean))];
+      const quienesAbonanHtml = personasAbono.length === 0
+        ? '<span style="color:var(--muted);">—</span>'
+        : personasAbono.map(p =>
+            p === currentRole.vendedor
+              ? `<b style="color:var(--thread);">${escSimple(p)}</b>`
+              : escSimple(p)
+          ).join(', ');
+
+      const grupos = new Map();
+      pedidos.forEach(p => {
+        const clave = claveCliente(p);
+        if (!grupos.has(clave)) grupos.set(clave, { pedidos: [], telefono: '' });
+        grupos.get(clave).pedidos.push(p);
+      });
+      grupos.forEach(g => {
+        g.nombre = etiquetaClienteGrupo(g.pedidos);
+        const telMuestra = g.pedidos.find(pp => String(pp.cliente_telefono || '').trim());
+        g.telefono = telMuestra ? String(telMuestra.cliente_telefono).trim() : '';
+        g.cantidad = g.pedidos.reduce((s, pp) => s + (Number(pp.cantidad) || 1), 0);
+        g.abono = g.pedidos.reduce((s, pp) => s + (Number(pp.abono_yesenia) || 0), 0);
+        g.costo = g.pedidos.reduce((s, pp) => s + costoTotalVenta(pp), 0);
+      });
+      const detallePedidos = pedidos.length === 0
+        ? '<span style="color:var(--muted);">—</span>'
+        : [...grupos.values()].map(g => {
+            const resto = g.costo - g.abono;
+            const telTag = g.telefono ? ` <span style="color:var(--muted); font-weight:400;">(${escSimple(g.telefono)})</span>` : '';
+            const pedidosTag = g.pedidos.length > 1 ? `<span class="sub-tag" style="display:inline-block; margin:0;">· ${g.pedidos.length} pedidos</span>` : '';
+            return `
+              <div style="line-height:1.7; border-bottom:1px dashed var(--line); padding:3px 0;">
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                  <b>${escSimple(g.nombre)}</b>${telTag}
+                  <span class="sub-tag" style="display:inline-block; margin:0;">×${g.cantidad} camisa(s)</span>${pedidosTag}
+                  <span class="sub-tag" style="display:inline-block; margin:0; color:var(--ok); font-weight:700;">Abono ${fmt(g.abono)}</span>
+                  <span class="sub-tag" style="display:inline-block; margin:0; color:${resto > 0 ? 'var(--warn)' : 'var(--ok)'};">${resto > 0 ? 'Saldo ' + fmt(resto) : 'Liquidado'}</span>
+                </div>
+              </div>`;
+          }).join('');
+
       return `
-        <article class="abono-card">
-          <header class="abono-card-head">
-            <div class="abono-card-fecha">
-              <b>${c.fecha ? formatearFechaHumana(c.fecha).replace(/^📅\s*/, '') : 'Sin fecha'}</b>
-              <span class="sub-tag" style="display:inline-block;margin:0;">🕐 ${escSimple(c.hora || '')}</span>
-            </div>
-            <div class="abono-card-total">
-              <div class="abono-cifra grande" style="color:${saldo > 1 ? 'var(--warn)' : 'var(--ok)'};">${fmt(aportado)}</div>
-              <div class="abono-cifra-label">${saldo > 1 ? 'de ' + fmt(costoTotal) + ' · faltan ' + fmt(saldo) : 'pagado'}</div>
-            </div>
-          </header>
-          <div class="abono-card-meta">
-            <span>🧵 Yesenia</span>
-            <span>👤 Abona: ${quienHtml}</span>
-            <span>👕 ${pedidos.reduce((s, v) => s + (Number(v.cantidad) || 1), 0)} camisas · ${grupos.size} cliente${grupos.size === 1 ? '' : 's'}</span>
-          </div>
-          ${c.observaciones ? `<p class="abono-card-obs">📝 ${escSimple(c.observaciones)}</p>` : ''}
-          <div class="abono-card-clientes">${filas || '<div class="abono-card-vacio">Sin pedidos asociados a este abono.</div>'}</div>
-          <footer class="abono-card-foot">
+        <tr>
+          <td>${formatearFechaHumana(c.fecha)}<span class="sub-tag">🕐 ${c.hora || ''}</span></td>
+          <td><b>${escSimple(c.proveedor || '')}</b></td>
+          <td>${escSimple(c.comprador || '')}</td>
+          <td>${quienesAbonanHtml}</td>
+          <td>
+            <div style="font-weight:700; margin-bottom:4px;">${cantidad} camisa(s)</div>
+            <div class="sub-tag" style="margin-bottom:2px;">${grupos.size} cliente(s) · ${pedidos.length} pedido(s) incluido(s)</div>
+            <div>${detallePedidos}</div>
+          </td>
+          <td class="money">${fmt(costoTotal)}</td>
+          <td class="money" style="color:var(--ok);">${fmt(aportado)}</td>
+          <td class="money" style="color:${saldo > 0 ? 'var(--warn)' : 'var(--ok)'};">${saldo > 0 ? fmt(saldo) + ' pendiente' : 'Liquidado'}</td>
+          <td>
             <div class="action-group">
               ${acciones}
             </div>
-          </footer>
-        </article>`;
+          </td>
+        </tr>
+      `;
     }).join('');
 
     let pagContainer = document.getElementById('compras-pagination');
     if (!pagContainer) {
       pagContainer = document.createElement('div');
       pagContainer.id = 'compras-pagination';
-      body.parentElement.parentElement.appendChild(pagContainer);
+      body.parentElement.appendChild(pagContainer);
     }
     pagContainer.innerHTML = renderPagination(rows.length, page, 'compras', 'irPaginaCompras');
 
     marcarOrdenTabla('compras');
+
     renderComprasDeudaBox();
   }
   function irPaginaCompras(p) { paginationState.compras = p; renderCompras(); }
@@ -4636,7 +4624,6 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
    function openCompraModal(compraId = null) {
     editingCompraId = compraId;
     const title = document.getElementById('compra-modal-title');
-    const aportesSection = document.getElementById('cp-aportes-section');
 
      document.getElementById('cp-error').classList.add('hidden');
 
@@ -4653,9 +4640,7 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
        });
        document.getElementById('cp-save-btn').classList.toggle('hidden', compraSoloAportes);
        renderPedidosPicker(c);
-       aportesSection.classList.remove('hidden');
-       renderPedidosDetalleCompra();
-     } else {
+        } else {
       compraSoloAportes = false;
       title.textContent = 'Nuevo abono a Yesenia';
       document.getElementById('cp-fecha').value = hoyColombia();
@@ -4666,7 +4651,6 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
       });
       document.getElementById('cp-save-btn').classList.remove('hidden');
       renderPedidosPicker(null);
-      aportesSection.classList.add('hidden');
     }
 
     // Admin: al cambiar persona que realiza el abono, filtrar los pedidos que se muestran.
@@ -4681,43 +4665,6 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
     }
     document.getElementById('compra-modal').classList.remove('hidden');
     bloquearScrollFondo();
-  }
-
-  // Abre el modal de un abono existente con SOLO el cliente indicado marcado y
-  // el input ya puesto con lo que falta. Se usa desde la tarjeta de la lista de
-  // abonos ("Completar"), para no tener que buscar el pedido y abrir el Editar.
-  function abrirCompletar(clave, compraId) {
-    openCompraModal(compraId);
-    if (compraSoloAportes) return;   // no puede guardar, no tiene sentido abrirlo
-
-    // Cuánto falta de este cliente dentro de ESTA compra.
-    let falta = 0;
-    ventasCache.filter(v => v.compra_id === compraId && claveCliente(v) === clave)
-      .forEach(v => { falta += abonosProveedorPorVentaId(v.id).pendiente; });
-
-    const blocks = Array.from(document.querySelectorAll('#cp-pedidos-picker .persona-block'));
-    if (blocks.length === 0) return;
-
-    blocks.forEach(b => {
-      const esEste = b.dataset.persona === clave;
-      const cb = b.querySelector('.cp-persona-check');
-      const det = b.querySelector('.pedido-detalle');
-      if (cb) { cb.checked = esEste; cb.disabled = false; }
-      if (det) det.classList.toggle('hidden', !esEste);
-    });
-
-    const bloque = blocks.find(b => b.dataset.persona === clave);
-    if (bloque) {
-      const inp = bloque.querySelector('.cp-persona-abono');
-      if (inp) {
-        inp.value = falta > 0 ? String(falta) : '';
-        inp.dispatchEvent(new Event('input', { bubbles: true }));
-        inp.focus();
-        inp.select();
-      }
-    }
-    actualizarResumenCompraModal();
-    actualizarRestantesAbono();
   }
 
   function closeCompraModal() {
@@ -4876,9 +4823,9 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
         avisarCambio('compra', `registró una compra a Yesenia${nPedidos > 1 ? ` con ${nPedidos} pedidos` : ''}.`);
 
         // Antes de guardar esto re-abría el modal en modo "ver detalle"
-        // (Pedido(s) que cubre este abono). Se quitó: apenas se guarda, la
-        // ventana se cierra y uno se queda en la lista de Abonos Yesenia,
-        // que es donde acaba de aparecer la fila nueva.
+        // (Pedido(s) que cubre este abono). A pedido de Samir se quitó:
+        // apenas se guarda, la ventana se cierra y uno se queda en la
+        // lista de Abonos Yesenia, que es donde aparece la fila nueva.
         editingCompraId = null;
         compraSoloAportes = false;
         closeCompraModal();
@@ -4924,40 +4871,6 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
        if (block) total += parseFloat(block.querySelector('.cp-persona-abono').value) || 0;
      });
      return total;
-   }
-
-   // Muestra el detalle de los pedidos incluidos en el abono actual del modal.
-   function renderPedidosDetalleCompra() {
-     const cont = document.getElementById('cp-pedidos-detalle');
-     if (!cont) return;
-     if (!editingCompraId) { cont.innerHTML = ''; return; }
-     const pedidos = ventasCache.filter(v => v.compra_id === editingCompraId);
-     if (pedidos.length === 0) { cont.innerHTML = ''; return; }
-     cont.innerHTML = `
-       <h4 style="margin:0 0 8px; color:var(--thread-dark);">Pedido(s) que cubre este abono</h4>
-        ${pedidos.map(p => {
-          const cant = Number(p.cantidad) || 1;
-          const ab = Number(p.abono_yesenia) || 0;
-          const costo = costoTotalVenta(p);
-          const resto = costo - ab;
-         return `
-           <div class="camisa-detalle-row">
-             <span class="camisa-detalle-info">
-               <b>${escSimple(p.cliente_nombre || 'Sin cliente')}</b>
-               <span style="color:var(--muted);"> · ${escSimple(p.vendedor || '')}</span>
-               <span class="sub-tag">×${cant} camisa(s) · ${badgeModeloVenta(p)} · Costo ${fmt(costo)}</span>
-             </span>
-             <span class="camisa-abono-campo" style="flex:0 0 150px;">
-               <div style="font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); font-weight:700;">Abono a Yesenia</div>
-               <div class="money" style="color:var(--ok); text-align:left; margin-top:2px;">${fmt(ab)}</div>
-             </span>
-             <span class="camisa-abono-campo" style="flex:0 0 130px;">
-               <div style="font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); font-weight:700;">Restante</div>
-               <div class="money" style="color:${resto > 0 ? 'var(--warn)' : 'var(--ok)'}; text-align:left; margin-top:2px;">${resto > 0 ? fmt(resto) : 'Liquidado'}</div>
-             </span>
-           </div>`;
-       }).join('')}
-     `;
    }
 
    // Registra automáticamente el aporte a Yesenia:
