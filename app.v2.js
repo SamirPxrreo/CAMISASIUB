@@ -3195,7 +3195,7 @@
      precio, costo, abono y estado propios).
      ===================================================== */
   const TALLAS_DISPONIBLES = ['S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'];
-  const COLORES_DISPONIBLES = ['Negro', 'Blanco', 'Gris', 'Turquí', 'Azul turquesa', 'Camel', 'Vinotinto', 'Palo de Rosa'];
+  const COLORES_DISPONIBLES = ['Negro', 'Blanco', 'Gris', 'Turquí', 'Azul turquesa', 'Camel', 'Vinotinto', 'Palo de Rosa', 'Mostaza'];
   const MAX_CAMISAS_PEDIDO = 30;
 
   // Al redibujar filas, un campo vacío o un NaN (input en blanco) debe quedar vacío.
