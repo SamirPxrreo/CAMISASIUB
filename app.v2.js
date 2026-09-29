@@ -188,8 +188,6 @@
     historial: { render: renderHistorial,     campos: camposVenta },
     compras:   { render: renderCompras,       campos: {
       fecha:    { val: c => c.fecha || '', tipo: 'fecha' },
-      proveedor: { val: c => (c.proveedor || '').toLowerCase(), tipo: 'text' },
-      comprador: { val: c => (c.comprador || '').toLowerCase(), tipo: 'text' },
       quien:    { val: c => compraAportesCache.filter(a => a.compra_id === c.id).map(a => (a.persona || '').toLowerCase()).filter(Boolean).join(' '), tipo: 'text' },
       camisas:  { val: c => pedidosDeVisita(c.id).reduce((s, v) => s + (Number(v.cantidad) || 1), 0), tipo: 'num' },
       costo:    { val: c => pedidosDeVisita(c.id).reduce((s, v) => s + costoTotalVenta(v), 0), tipo: 'num' },
@@ -4326,8 +4324,6 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
       return `
         <tr>
           <td>${formatearFechaHumana(c.fecha)}<span class="sub-tag">🕐 ${c.hora || ''}</span></td>
-          <td><b>${escSimple(c.proveedor || '')}</b></td>
-          <td>${escSimple(c.comprador || '')}</td>
           <td>${quienesAbonanHtml}</td>
           <td>
             <div style="font-weight:700; margin-bottom:4px;">${cantidad} camisa(s)</div>
