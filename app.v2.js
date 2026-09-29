@@ -4155,9 +4155,17 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
     const esAdmin = currentRole.role === 'admin';
     const miNombre = currentRole.vendedor;
     return ventasCache.filter(v => {
-      if (v.compra_id && v.compra_id !== excludeCompraId) return false;
       if (v.finalizado) return false;
       if (!esAdmin && v.vendedor !== miNombre) return false;
+      // Un pedido que YA tiene abono de otra visita igual aparece, siempre que
+      // todavía le falte plata: así el saldo se completa desde "Nuevo abono"
+      // sin tener que editar el pedido a mano. Solo se esconde si ya está
+      // saldado, o si pertenece a la compra que se está editando ahora
+      // (ese se maneja aparte, por `yaAsignados`).
+      if (v.compra_id && v.compra_id !== excludeCompraId) {
+        const pagos = abonosProveedorPorVentaId(v.id);
+        if (pagos.pendiente <= 1) return false;
+      }
       return true;
     });
   }
@@ -4374,6 +4382,12 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
       g.displayNombre = etiquetaClienteGrupo(g.pedidos);
       const telMuestra = g.pedidos.find(p => String(p.cliente_telefono || '').trim());
       g.displayTelefono = telMuestra ? String(telMuestra.cliente_telefono).trim() : '';
+      // Estado de pago de cada pedido del grupo, para poder avisar cuando
+      // alguno yaivinó dinero en una visita anterior.
+      g.pendientes = g.pedidos.map(p => {
+        const pagos = abonosProveedorPorVentaId(p.id);
+        return { id: p.id, pendiente: pagos.pendiente, yaAbonado: pagos.abonado, costo: pagos.costoTotal };
+      });
     });
 
     if (porPersona.size === 0) {
@@ -4385,10 +4399,16 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
     const bloques = [];
     porPersona.forEach((grupo, clave) => {
       const pedidos = grupo.pedidos;
+      const pendientes = grupo.pendientes;
       const nombre = grupo.displayNombre;
       const telefono = grupo.displayTelefono;
       const cant = pedidos.reduce((s, v) => s + (Number(v.cantidad) || 1), 0);
-      const costo = pedidos.reduce((s, v) => s + costoTotalVenta(v), 0);
+      // Lo que falta por pagar de este grupo. Para un pedido sin abono previo
+      // el pendiente ES el costo, así que no cambia nada en el caso normal;
+      // para uno ya abonado a medias muestra lo que realmente falta, que es
+      // lo que la persona tiene que escribir en el input.
+      const pendienteGrupo = pedidos.reduce((s, v) => s + abonosProveedorPorVentaId(v.id).pendiente, 0);
+      const costo = pendienteGrupo;
       const estaEnCompra = pedidos.some(v => yaAsignados.has(v.id));
       const checked = estaEnCompra ? 'checked' : '';
       const abonoPrev = pedidos
@@ -4397,6 +4417,10 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
       const vendedores = [...new Set(pedidos.map(v => v.vendedor).filter(Boolean))].join(', ');
       const telLabel = telefono ? ` · ${escSimple(telefono)}` : '';
       const pedidosLabel = pedidos.length > 1 ? ` · ${pedidos.length} pedidos` : '';
+
+      // Aviso cuando el grupo trae pedidos que yaabinaron dinero en otra visita:
+      // sin esto se vería como si se debiera todo y se pagaría de más.
+      const tieneAbonoPrevio = pendientes.some(p => p.yaAbonado > 0);
 
       const tieneVarios = pedidos.length > 1;
       let sublistaHtml = '';
@@ -4433,6 +4457,17 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
             </div>`;
       }
 
+      // Si algún pedido del grupo ya tiene dinero abonado en otra visita, se
+      // dice explícitamente. Sin este aviso el input parece pedir el costo
+      // COMPLETO y la persona termina pagando de más.
+      const avisoPrevio = tieneAbonoPrevio ? `
+            <div class="camisa-detalle-row" style="background:var(--accent-bg); border-color:var(--gold);">
+              <span class="camisa-detalle-info" style="color:var(--gold-ink);">
+                ℹ️ <b>Ya habías abonado</b> ${fmt(pendientes.reduce((s,p)=>s+p.yaAbonado,0))} de ${fmt(pendientes.reduce((s,p)=>s+p.costo,0))} en una visita anterior.
+                Abona <b>solo lo que falta</b>: ${fmt(pendienteGrupo)}.
+              </span>
+            </div>` : '';
+
       bloques.push(`
         <div class="pedido-block persona-block" data-persona="${escSimple(clave)}">
           <label class="pedido-check-row">
@@ -4441,14 +4476,15 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
             <span class="pedido-costo-tag">${fmt(costo)}</span>
           </label>
           <div class="pedido-detalle ${checked ? '' : 'hidden'}">
+            ${avisoPrevio}
             <div class="camisa-detalle-row">
-              <span class="camisa-detalle-info">💵 Abono total que paga a Yesenia</span>
+              <span class="camisa-detalle-info">💵 Abono total que paga a Yesenia${tieneAbonoPrevio ? ' <b>(solo lo que falta)</b>' : ''}</span>
               <span class="camisa-abono-campo">
                 <input type="number" class="cp-persona-abono" data-persona="${escSimple(clave)}" data-costo="${costo}" min="0" step="1000" placeholder="$ Abono" value="${abonoPrev || ''}" ${soloAportes ? 'disabled' : ''}>
               </span>
             </div>
             <div class="camisa-detalle-row">
-              <span class="camisa-detalle-info">Restante (costo − abono)</span>
+              <span class="camisa-detalle-info">Restante (faltante − abono)</span>
               <span class="cp-persona-restante" data-persona="${escSimple(clave)}"></span>
             </div>
             ${sublistaHtml}
@@ -4498,7 +4534,10 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
      let cantidad = 0, costo = 0;
      pedidos.forEach(v => {
        cantidad += Number(v.cantidad) || 1;
-       costo += costoTotalVenta(v);
+       // Se suma lo que FALTA, no el costo completo: en un pedido ya abonado a
+       // medias, lo que la persona tiene que escribir es el saldo pendiente.
+       // Cuando nada se ha abonado antes, pendiente === costo y no cambia nada.
+       costo += abonosProveedorPorVentaId(v.id).pendiente;
      });
 
      const personas = personasSeleccionadasActuales();
@@ -4717,18 +4756,49 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
           pedidosPersona.forEach(v => {
             const items = itemsDeVentaParaAbono(v);
             const totalPedido = porPedido[v.id] || 0;
+            // Un pedido que ya tenía abono en OTRA visita se está COMPLETANDO:
+            // lo que ya se pagó se conserva y el monto nuevo se SUMA encima.
+            // Si el pedido es de esta misma compra (o es nuevo), el input es el
+            // total de lo que cubre esta compra y se reemplaza, no se suma:
+            // si no, al reeditar un abono se contaría dos veces.
+            const esDeEstaCompra = editingCompraId && v.compra_id === editingCompraId;
+            const vaSumando = !esDeEstaCompra && !!v.compra_id;
+            const basePorItem = items.map(it => (vaSumando ? (Number(it.abono_yesenia) || 0) : 0));
+            let basePedido = basePorItem.reduce((a, b) => a + b, 0);
+
+            // OJO: el dinero ya pagado puede estar SOLO en la columna
+            // `venta.abono_yesenia` y no estar repartido en las camisas (pasa
+            // con pedidos viejos). Si se(sumara solo lo de los items, ese
+            // total se perdería al guardar. Por eso lo que sobra se ubica en
+            // las camisas que siguen sin abono antes de repartir lo nuevo.
+            if (vaSumando) {
+              const pagosPrevios = abonosProveedorPorVentaId(v.id).abonado;
+              let sinUbicar = pagosPrevios - basePedido;
+              if (sinUbicar > 0) {
+                for (let i = 0; i < items.length && sinUbicar > 0; i++) {
+                  if (basePorItem[i] === 0) {
+                    const hueco = Math.min(sinUbicar, costoDeItem(items[i], v));
+                    basePorItem[i] = hueco;
+                    sinUbicar -= hueco;
+                  }
+                }
+                basePedido = pagosPrevios;
+              }
+            }
+
             const costos = items.map(it => Number(it.costo) || Number(v.costo_unitario) || 0);
             const sumC = costos.reduce((a, b) => a + b, 0);
             let asignado = 0;
             items.forEach((it, idx) => {
-              if (idx === items.length - 1) it.abono_yesenia = totalPedido - asignado;
+              let parte;
+              if (idx === items.length - 1) parte = totalPedido - asignado;
               else {
-                const parte = sumC > 0 ? Math.floor(totalPedido * costos[idx] / sumC) : Math.floor(totalPedido / items.length);
+                parte = sumC > 0 ? Math.floor(totalPedido * costos[idx] / sumC) : Math.floor(totalPedido / items.length);
                 asignado += parte;
-                it.abono_yesenia = parte;
               }
+              it.abono_yesenia = basePorItem[idx] + parte;
             });
-            abonoPorPedido[v.id] = { items, abono: totalPedido };
+            abonoPorPedido[v.id] = { items, abono: basePedido + totalPedido };
           });
         });
 
