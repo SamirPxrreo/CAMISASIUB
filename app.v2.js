@@ -3702,6 +3702,9 @@
         const card = document.getElementById('form-card');
         const errBox = document.getElementById('form-validation-error');
         if (cuerpo && card) {
+          // Se recuerda de dónde se vino: al cerrar con la X o Cancelar se
+          // vuelve a esa misma sección en vez de saltar al Inicio.
+          seccionAntesDeEditar = seccionActual || 'dashboard';
           cuerpo.innerHTML = '';
           if (errBox) cuerpo.appendChild(errBox);
           cuerpo.appendChild(card);
@@ -3849,8 +3852,14 @@
     }
   }
 
+  // Desde qué sección se abrió el modal de edición, para volver a ella al
+  // cerrar. Sin esto, la X y Cancelar mandaban a Inicio y se perdía el
+  // contexto (si abriste Editar desde Pedidos, querías volver a Pedidos).
+  let seccionAntesDeEditar = 'dashboard';
+
   // `irA` permite cerrar sin navegar (lo usa navigateTo, para no recursar).
-  function closeForm(irA = 'dashboard') {
+  function closeForm(irA) {
+    const destino = irA === undefined ? seccionAntesDeEditar : irA;
     sacarFormDelModal();
     editingId = null;
     document.getElementById('form-card').classList.add('hidden');
@@ -3858,7 +3867,7 @@
     const cb = document.getElementById('form-comprado-actions');
     if (cb) cb.classList.add('hidden');
     desbloquearScrollFondo();
-    if (irA) navigateTo(irA);
+    if (destino) navigateTo(destino);
   }
 
   async function clearCompradoAt() {
