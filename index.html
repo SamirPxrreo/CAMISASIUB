@@ -26,7 +26,7 @@
 <!-- ExcelJS para Reporte con diseño (2 hojas con estilos) -->
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 
-<link rel="stylesheet" href="styles.v2.css?v=20260929-1006">
+<link rel="stylesheet" href="styles.v2.css?v=20260929-1147">
 </head>
 
 <body>
@@ -932,12 +932,47 @@
   </div>
 </div>
 
+<div id="estados-camisa-modal" class="modal-backdrop hidden">
+  <div class="modal-card modal-card-wide">
+    <div class="modal-head">
+      <h3>Estados por camisa</h3>
+      <button class="btn-ghost btn modal-x" onclick="cerrarModalEstadosCamisa()" type="button" title="Cerrar">✕</button>
+    </div>
+    <p class="page-sub modal-intro" id="estados-camisa-cliente"></p>
+    <div id="estados-camisa-lista" class="pedidos-picker" style="max-height:420px; overflow-y:auto;"></div>
+    <div class="cards cards-tight" style="margin-top:14px;">
+      <div class="card">
+        <div class="eyebrow">Camisas</div>
+        <div class="value" id="estados-camisa-total">0</div>
+      </div>
+    </div>
+    <div class="error-msg hidden" id="estados-camisa-error"></div>
+    <div class="form-actions">
+      <button class="btn-ghost btn" onclick="cerrarModalEstadosCamisa()" type="button">Cancelar</button>
+      <button class="btn btn-gold" onclick="guardarEstadosCamisa()" type="button">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de EDICIÓN. No lleva el formulario dentro: el JavaScript mueve aquí
+     el MISMO #form-card de la sección "Nueva Venta" mientras se edita, y lo
+     devuelve al cerrarlo. Por eso no hay IDs duplicados (f-cliente, etc.). -->
+<div id="editar-modal" class="modal-backdrop hidden">
+  <div class="modal-card modal-card-huge">
+    <div class="modal-head">
+      <h3 id="editar-modal-title">Editar venta</h3>
+      <button class="btn-ghost btn modal-x" onclick="closeForm()" type="button" title="Cerrar">✕</button>
+    </div>
+    <div id="editar-modal-body"></div>
+  </div>
+</div>
+
 <!-- =====================================================
      LÓGICA JAVASCRIPT
      ===================================================== -->
 
 
-<script src="app.v2.js?v=20260929-1006"></script>
-<script src="enhance.v2.js?v=20260929-1006"></script>
+<script src="app.v2.js?v=20260929-1147"></script>
+<script src="enhance.v2.js?v=20260929-1147"></script>
 </body>
 </html>

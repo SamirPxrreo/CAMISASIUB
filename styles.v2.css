@@ -1283,6 +1283,78 @@ header.top .who {
   max-width: 780px;
 }
 
+/* Modal de edición de venta: necesita el ancho completo del formulario
+   (las filas de camisa tienen muchos campos en grid).
+
+   OJO: el selector lleva DOS clases a propósito. El `.modal-card` base está
+   DEFINIDO DESPUÉS en este archivo y trae `max-width: 520px`; como tiene la
+   misma especificidad (0,1,0), el que gana es el último, y el modal se
+   quedaba en 520px en el computador (el formulario iba en 1 sola columna y
+   se veía apretado). Con `.modal-card.modal-card-huge` (0,2,0) gana este.
+
+   En el teléfono no cambia nada: `width: 100%` + el padding del backdrop
+   siguen mandando, así que el modal ocupa lo que puede, como antes. */
+.modal-card.modal-card-huge {
+  max-width: 1180px;
+  width: 100%;
+}
+
+#editar-modal-body {
+  max-height: 74vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  margin: 0 -4px;
+  padding: 0 4px;
+}
+
+/* Dentro del modal el formulario no necesita su margen inferior propio. */
+#editar-modal-body .form-card {
+  margin-bottom: 0;
+}
+
+/* El modal ya tiene su propio título ("Editar venta" en el #modal-head).
+   El <h3> del form-card sayendo lo mismo queda como subtítulo, no como
+   dos títulos iguales apilados. */
+#editar-modal-body #form-title {
+  display: none;
+}
+
+/* En pantallas chicas el formulario se hace muy largo si cada campo ocupa
+   una fila completa. Estos minmax mas chicos dejan que quepan 2 columnas
+   en el teléfono sin que los campos queden ilegibles: 120px es el ancho
+   de un <select> corto ("S", "M", "Negro") y de una fecha. */
+@media (max-width: 720px) {
+  .form-grid {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px 12px;
+  }
+  .camisa-item-fields {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px 12px;
+  }
+  .camisa-item-money {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px 12px;
+  }
+  .form-section {
+    padding: 14px 14px;
+  }
+  .form-section-title {
+    font-size: 12.5px;
+  }
+  /* La caja del formulario tiene menos padding en el teléfono, para que
+     quepan dos columnas de 120px + hueco. */
+  #editar-modal-body .form-card {
+    padding: 14px 12px;
+  }
+  #editar-modal .modal-card {
+    padding: 18px 14px;
+  }
+  #editar-modal .modal-head {
+    margin-bottom: 12px;
+  }
+}
+
 .modal-card-narrow {
   max-width: 440px;
 }

@@ -520,9 +520,9 @@
     const dist = [];
     ORDEN_ESTADOS.forEach(e => {
       const n = es.filter(x => x === e).length;
-      if (n > 0) dist.push(`${badgeEstadoItem(e)} <b style="color:var(--text);">×${n}</b>`);
+      if (n > 0) dist.push(`<span style="display:block;">${badgeEstadoItem(e)} <b style="color:var(--text);">×${n}</b></span>`);
     });
-    return `<span style="display:block;font-size:10px;color:var(--thread);margin-top:4px;line-height:1.7;">${dist.join(' ')}</span>`;
+    return `<span style="display:block;font-size:10px;color:var(--thread);margin-top:4px;line-height:1.7;">${dist.join('')}</span>`;
   }
 
   // Costo sugerido a proveedor (Yesenia) según versión y talla.
@@ -1760,6 +1760,9 @@
     const sinRender = !!(opciones && opciones.sinRender);
     const sections = ['dashboard', 'new-sale', 'orders', 'cuentas', 'purchases', 'settlements', 'summaries', 'reports', 'settings', 'history'];
     seccionActual = section;
+    // Si se navega a otra sección con el modal de edición abierto, se cierra
+    // (y el formulario vuelve a su lugar) para no dejarlo flotando.
+    if (section !== 'new-sale' && editingId) closeForm(null);
     sections.forEach(s => {
       document.getElementById(`section-${s}`).classList.add('hidden');
     });
@@ -1830,6 +1833,10 @@
       if (el && !el.classList.contains('hidden')) { cerrarEliminados(); return; }
       const bg = document.getElementById('buscador-global');
       if (bg && !bg.classList.contains('hidden')) { cerrarBuscador(); return; }
+      const em = document.getElementById('estados-camisa-modal');
+      if (em && !em.classList.contains('hidden')) { cerrarModalEstadosCamisa(); return; }
+      const edm = document.getElementById('editar-modal');
+      if (edm && !edm.classList.contains('hidden')) { closeForm(); return; }
     }
   });
 
@@ -3122,11 +3129,9 @@
             <span class="sub-tag">📍 ${escSimple(v.lugar_entrega || 'Sin definir')} · 🚚 ${escSimple(v.entrega_por || 'Sin asignar')}</span>
           </td>
           <td>
-            <select class="estado-select ${claseEstado(eg)}" data-id="${v.id}" data-prev="${v.estado}">
-              ${ESTADOS
-                .map(e => `<option value="${e}" ${eg === e ? 'selected' : ''}>${e}</option>`)
-                .join('')}
-            </select>
+            <button class="btn-small estado-camisa-btn ${claseEstado(eg)}" data-id="${v.id}" type="button" title="Editar estado de cada camisa">
+              ${esMixto ? 'Mixto ⚠️' : escSimple(eg)} <span style="font-size:10px;opacity:0.7;">▾</span>
+            </button>
             ${v.comprado_at ? `<span class="sub-tag" style="color:var(--teal-ink);">🛒 ${formatearCompradoAt(v)}</span>` : ''}
             ${esMixto ? estadosCuentasHtml(v) : ''}
             ${(() => { const listo = puedeMarcarPagado(v).ok && todosItemsListosEntrega(v); const pend = !pedidoSocioLiquidado(v) || !costoProveedorPagado(v); if (listo) return '<span class="sub-tag" style="color:var(--ok);font-weight:700;">✅ Listo para liquidar</span>'; if (pend) return '<span class="sub-tag" style="color:var(--warn);">Socio/proveedor pendiente</span>'; return ''; })()}
@@ -3156,8 +3161,8 @@
 
     marcarOrdenTabla('ordenes');
 
-    document.querySelectorAll('.estado-select').forEach(select => {
-      select.addEventListener('change', () => updateEstado(select.dataset.id, select.value, select));
+    document.querySelectorAll('.estado-camisa-btn').forEach(btn => {
+      btn.addEventListener('click', () => abrirModalEstadosCamisa(btn.dataset.id));
     });
 
     document.querySelectorAll('.editar-button').forEach(button => {
@@ -3690,7 +3695,23 @@
      editingId = venta ? venta.id : null;
      document.getElementById('form-validation-error').classList.add('hidden');
 
-     navigateTo('new-sale');
+     if (venta) {
+        // Editar desde Pedidos: se mueve el MISMO #form-card dentro del modal
+        // (no se copia, así que no hay IDs duplicados como f-cliente).
+        const cuerpo = document.getElementById('editar-modal-body');
+        const card = document.getElementById('form-card');
+        const errBox = document.getElementById('form-validation-error');
+        if (cuerpo && card) {
+          cuerpo.innerHTML = '';
+          if (errBox) cuerpo.appendChild(errBox);
+          cuerpo.appendChild(card);
+          document.getElementById('editar-modal-title').textContent = 'Editar venta';
+          document.getElementById('editar-modal').classList.remove('hidden');
+          bloquearScrollFondo();
+        }
+      } else {
+        navigateTo('new-sale');
+      }
 
      document.getElementById('form-title').textContent = editingId ? 'Editar venta' : 'Registrar nueva venta';
      document.getElementById('save-sale-button').textContent = editingId ? 'Actualizar venta' : 'Guardar venta';
@@ -3813,13 +3834,31 @@
 
   // Cancelar en Nueva Venta: limpia el formulario y se vuelve al Inicio
   // (tanto si se estaba creando uno nuevo como editando uno existente).
-  function closeForm() {
+  // Saca el #form-card del modal de edición y lo devuelve a la sección
+  // "Nueva Venta". No resetea los campos ni navega: solo mueve el nodo.
+  function sacarFormDelModal() {
+    const modal = document.getElementById('editar-modal');
+    const card = document.getElementById('form-card');
+    const errBox = document.getElementById('form-validation-error');
+    const destino = document.getElementById('section-new-sale');
+    if (modal && card && destino && modal.contains(card)) {
+      modal.classList.add('hidden');
+      destino.appendChild(errBox);
+      destino.appendChild(card);
+      desbloquearScrollFondo();
+    }
+  }
+
+  // `irA` permite cerrar sin navegar (lo usa navigateTo, para no recursar).
+  function closeForm(irA = 'dashboard') {
+    sacarFormDelModal();
     editingId = null;
     document.getElementById('form-card').classList.add('hidden');
     document.getElementById('form-validation-error').classList.add('hidden');
     const cb = document.getElementById('form-comprado-actions');
     if (cb) cb.classList.add('hidden');
-    navigateTo('dashboard');
+    desbloquearScrollFondo();
+    if (irA) navigateTo(irA);
   }
 
   async function clearCompradoAt() {
@@ -4005,6 +4044,9 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
           : `registró un pedido nuevo${deQuien}.`);
         // Limpia el formulario y lleva SIEMPRE a Pedidos, tanto al crear uno
         // nuevo como al editar: es donde se ve de inmediato lo que se guardó.
+        // Si se editó desde el modal, primero se saca el formulario de ahí
+        // (si no, al resetearlo quedaría escondido dentro del modal).
+        sacarFormDelModal();
         openForm(null);
         navigateTo('orders');
         mostrarToast(eraEdicion ? '✅ Venta actualizada correctamente.' : '✅ Venta registrada correctamente.');
@@ -5734,6 +5776,145 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
       }
     } catch (err) {
       if (selectEl && venta) selectEl.value = selectEl.dataset.prev || venta.estado;
+    }
+  }
+
+  /* =====================================================
+     MODAL DE ESTADOS POR CAMISA
+     Reemplaza al dropdown global: cada camisa tiene su propio
+     estado y se edita individualmente desde un modal.
+     ===================================================== */
+  let estadosCamisaVentaId = null;
+
+  function abrirModalEstadosCamisa(id) {
+    const venta = ventasCache.find(v => v.id === id);
+    if (!venta) return;
+    estadosCamisaVentaId = id;
+
+    const clienteEl = document.getElementById('estados-camisa-cliente');
+    if (clienteEl) {
+      clienteEl.innerHTML = `<b>${escSimple(venta.cliente_nombre || 'Cliente')}</b> · ${Number(venta.cantidad) || 1} camisa(s)`;
+    }
+
+    const crudos = itemsCrudosVenta(venta);
+    const lista = document.getElementById('estados-camisa-lista');
+    const totalEl = document.getElementById('estados-camisa-total');
+    const errEl = document.getElementById('estados-camisa-error');
+
+    if (errEl) errEl.classList.add('hidden');
+    if (totalEl) totalEl.textContent = (crudos || []).length || 1;
+
+    if (!crudos || crudos.length === 0) {
+      lista.innerHTML = '<p class="buscador-vacio">No hay detalle de camisas para este pedido.</p>';
+    } else {
+      lista.innerHTML = crudos.map((it, i) => {
+        const desc = [capitalizarColor(it.color), it.talla ? `Talla ${it.talla}` : '', it.genero || '', it.programa ? `· ${it.programa}` : ''].filter(Boolean).join(' · ') || 'Sin datos';
+        const estadoActual = normalizarEstado(it.estado || venta.estado) || 'Pedido';
+        return `
+          <div class="camisa-detalle-row" data-index="${i}">
+            <div class="camisa-detalle-info">
+              <b>Camisa ${i + 1}</b> — ${escSimple(desc)}
+            </div>
+            <select class="cp-pedido-abono estado-camisa-select" data-index="${i}" style="flex:0 0 180px; padding:6px 10px; font-size:13px;">
+              ${ESTADOS.map(e => `<option value="${e}" ${e === estadoActual ? 'selected' : ''}>${e}</option>`).join('')}
+            </select>
+          </div>
+        `;
+      }).join('');
+    }
+
+    const modal = document.getElementById('estados-camisa-modal');
+    if (modal) {
+      modal.classList.remove('hidden');
+      bloquearScrollFondo();
+    }
+  }
+
+  function cerrarModalEstadosCamisa() {
+    estadosCamisaVentaId = null;
+    const modal = document.getElementById('estados-camisa-modal');
+    if (modal) {
+      modal.classList.add('hidden');
+      desbloquearScrollFondo();
+    }
+  }
+
+  async function guardarEstadosCamisa() {
+    if (!estadosCamisaVentaId) return;
+    const venta = ventasCache.find(v => v.id === estadosCamisaVentaId);
+    if (!venta) { cerrarModalEstadosCamisa(); return; }
+
+    const errEl = document.getElementById('estados-camisa-error');
+    const selects = document.querySelectorAll('#estados-camisa-lista .estado-camisa-select');
+    const nuevosEstados = [];
+    selects.forEach(s => nuevosEstados.push(s.value));
+
+    // Validación: si alguna camisa queda en Liquidado, todas deben estarlo
+    const hayLiquidado = nuevosEstados.some(e => e === 'Liquidado');
+    if (hayLiquidado && !nuevosEstados.every(e => e === 'Liquidado')) {
+      if (errEl) {
+        errEl.textContent = 'Si una camisa está Liquidada, TODAS deben estar Liquidadas.';
+        errEl.classList.remove('hidden');
+      }
+      return;
+    }
+
+    // Validación: para Liquidado, todas deben estar Entregado o Liquidado
+    if (hayLiquidado) {
+      const todosListos = nuevosEstados.every(e => e === 'Entregado' || e === 'Liquidado');
+      if (!todosListos) {
+        if (errEl) {
+          errEl.textContent = 'Para liquidar, todas las camisas deben estar Entregado o Liquidado.';
+          errEl.classList.remove('hidden');
+        }
+        return;
+      }
+      const check = puedeMarcarPagado(venta);
+      if (!check.ok) {
+        if (errEl) {
+          errEl.textContent = 'No puedes marcar como Liquidado:\n\n• ' + check.faltas.join('\n• ');
+          errEl.classList.remove('hidden');
+        }
+        return;
+      }
+    }
+
+    try {
+      const crudos = itemsCrudosVenta(venta);
+      if (!crudos) { cerrarModalEstadosCamisa(); return; }
+
+      crudos.forEach((it, i) => { it.estado = nuevosEstados[i] || it.estado; });
+
+      // El estado general es el más atrasado
+      const ordenados = [...nuevosEstados].sort((a, b) => ORDEN_ESTADOS.indexOf(a) - ORDEN_ESTADOS.indexOf(b));
+      const estadoGeneral = ordenados[0] || 'Pedido';
+
+      const payload = {
+        estado: estadoGeneral,
+        items_camisa: JSON.stringify(crudos),
+        updated_at: new Date().toISOString()
+      };
+
+      let res = await supabaseClient.from('ventas').update(payload).eq('id', venta.id);
+      if (res.error && String(res.error.message).toLowerCase().includes('updated_at')) {
+        delete payload.updated_at;
+        res = await supabaseClient.from('ventas').update(payload).eq('id', venta.id);
+        if (res.error) throw res.error;
+      } else if (res.error) throw res.error;
+
+      await loadVentas();
+      cerrarModalEstadosCamisa();
+      mostrarToast('✅ Estados de camisas actualizados.');
+
+      if (estadoGeneral === 'Liquidado') {
+        await sugerirLiquidadoSiListo(venta.id);
+      }
+    } catch (err) {
+      logError('guardarEstadosCamisa', err);
+      if (errEl) {
+        errEl.textContent = errorDeGuardado(err);
+        errEl.classList.remove('hidden');
+      }
     }
   }
 
