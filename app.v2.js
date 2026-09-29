@@ -191,18 +191,16 @@
       proveedor: { val: c => (c.proveedor || '').toLowerCase(), tipo: 'text' },
       comprador: { val: c => (c.comprador || '').toLowerCase(), tipo: 'text' },
       quien:    { val: c => compraAportesCache.filter(a => a.compra_id === c.id).map(a => (a.persona || '').toLowerCase()).filter(Boolean).join(' '), tipo: 'text' },
-      camisas:  { val: c => ventasCache.filter(v => v.compra_id === c.id).reduce((s, v) => s + (Number(v.cantidad) || 1), 0), tipo: 'num' },
-      costo:    { val: c => ventasCache.filter(v => v.compra_id === c.id).reduce((s, v) => s + costoTotalVenta(v), 0), tipo: 'num' },
+      camisas:  { val: c => pedidosDeVisita(c.id).reduce((s, v) => s + (Number(v.cantidad) || 1), 0), tipo: 'num' },
+      costo:    { val: c => pedidosDeVisita(c.id).reduce((s, v) => s + costoTotalVenta(v), 0), tipo: 'num' },
       aportado: { val: c => {
         const ap = compraAportesCache.filter(a => a.compra_id === c.id).reduce((s, a) => s + (Number(a.monto) || 0), 0);
-        const ab = ventasCache.filter(v => v.compra_id === c.id).reduce((s, v) => s + (Number(v.abono_yesenia) || 0), 0);
-        return Math.max(ap, ab);
+        return Math.max(ap, pagadoEnVisita(c.id));
       }, tipo: 'num' },
       saldo:    { val: c => {
-        const costo = ventasCache.filter(v => v.compra_id === c.id).reduce((s, v) => s + costoTotalVenta(v), 0);
+        const costo = pedidosDeVisita(c.id).reduce((s, v) => s + costoTotalVenta(v), 0);
         const ap = compraAportesCache.filter(a => a.compra_id === c.id).reduce((s, a) => s + (Number(a.monto) || 0), 0);
-        const ab = ventasCache.filter(v => v.compra_id === c.id).reduce((s, v) => s + (Number(v.abono_yesenia) || 0), 0);
-        return costo - Math.max(ap, ab);
+        return costo - Math.max(ap, pagadoEnVisita(c.id));
       }, tipo: 'num' }
     } },
     liquidaciones: { render: renderLiquidaciones, campos: {
@@ -323,6 +321,10 @@
   let usuariosCache = [];
   let comprasCache = [];
   let compraAportesCache = [];
+  // Renglones de cada visita a Yesenia (compra_pedidos). Vacío si la tabla no
+  // está aplicada todavía: la app lo detecta y sigue funcionando igual.
+  let compraPedidosCache = [];
+  let avisoTablaFalta = false;
   let liquidacionesCache = [];
 
   let editingId = null;
@@ -2730,9 +2732,7 @@
       resPeriodoAplica(c.fecha) && (!fVendedor || c.comprador === fVendedor)
     );
     const comprasInvertido = comprasFiltradas.reduce((s, c) => {
-      const costo = ventasCache
-        .filter(v => v.compra_id === c.id)
-        .reduce((ss, v) => ss + costoTotalVenta(v), 0);
+      const costo = pedidosDeVisita(c.id).reduce((ss, v) => ss + costoTotalVenta(v), 0);
       return s + costo;
     }, 0);
 
@@ -4094,7 +4094,7 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
 
     // Respaldo solo si no hay abono definido (venta vieja sin campo), no cuando es 0 explícito
     if (!tieneAbonoDefinido) {
-      const pedidos = ventasCache.filter(v => v.compra_id === compraId);
+      const pedidos = pedidosDeVisita(compraId);
       const costoTotalCompra = pedidos.reduce((s, v) => s + costoTotalVenta(v), 0);
       const aportes = compraAportesCache.filter(a => a.compra_id === compraId);
       const totalAportado = aportes.reduce((s, a) => s + (Number(a.monto) || 0), 0);
@@ -4125,10 +4125,42 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
       if (error) logError('loadCompras', error);
       comprasCache = data || [];
 
-      await loadCompraAportes();
+      await Promise.all([loadCompraAportes(), loadCompraPedidos()]);
       renderCompras();
     } catch (e) { logError('loadCompras', e); }
     finally { showLoading(false); }
+  }
+
+  // Renglones de cada visita: qué pedido cubrió y cuánto se le pagó ESE día.
+  // Si la tabla no existe todavía (migración sin aplicar), no es un problema:
+  // se avisa una vez y la app sigue con el comportamiento de siempre.
+  async function loadCompraPedidos() {
+    try {
+      const { data, error } = await supabaseClient
+        .from('compra_pedidos')
+        .select('*');
+
+      if (error) {
+        if (!avisoTablaFalta) {
+          avisoTablaFalta = true;
+          console.warn('[compra_pedidos] No se pudo leer la tabla de detalle por visita. ' +
+            'Probablemente falta aplicar el paso 6 de migracion.sql. ' +
+            'La lista de abonos se sigue mostrando como siempre, pero los abonos ' +
+            'guardados desde ahora no podrán separarse por visita. Error: ' + error.message);
+        }
+        compraPedidosCache = [];
+        return;
+      }
+      compraPedidosCache = data || [];
+    } catch (e) {
+      compraPedidosCache = [];
+      logError('loadCompraPedidos', e);
+    }
+  }
+
+  // Renglones de una visita, agrupados por pedido.
+  function renglonesDeCompra(compraId) {
+    return compraPedidosCache.filter(r => r.compra_id === compraId);
   }
 
   async function loadCompraAportes() {
@@ -4143,12 +4175,38 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
     } catch (e) { logError('loadCompraAportes', e); }
   }
 
+  // Qué pedidos aparecen en una visita y cuánto se les pagó EN ELLA.
+  //
+  // Un pedido solo puede tener un `compra_id`, así que cuando un abono queda
+  // a medias y se completa días después, el pedido se mueve de una visita a la
+  // siguiente: la primera fila se queda sin él. Los renglones
+  // (compra_pedidos) son los que dejan saber qué se pagó en cada visita.
+  //
+  // Si la visita no tiene renglones (abono guardado antes de la migración), se
+  // cae al comportamiento de siempre: los pedidos que tiene asignados y su
+  // abono acumulado. Así los abonos viejos no cambian de aspecto.
+  function pedidosDeVisita(compraId) {
+    const renglones = renglonesDeCompra(compraId);
+    if (renglones.length === 0) return ventasCache.filter(v => v.compra_id === compraId);
+    return renglones.map(r => ventasCache.find(v => v.id === r.venta_id)).filter(Boolean);
+  }
+
+  function pagadoEnVisita(compraId) {
+    const renglones = renglonesDeCompra(compraId);
+    if (renglones.length > 0) return renglones.reduce((s, r) => s + (Number(r.monto) || 0), 0);
+    return ventasCache.filter(v => v.compra_id === compraId).reduce((s, v) => s + (Number(v.abono_yesenia) || 0), 0);
+  }
+
   function comprasVisibles() {
     if (currentRole.role === 'admin' || !currentRole.vendedor) return comprasCache;
-    const misVentasIds = new Set(
-      ventasCache.filter(v => v.vendedor === currentRole.vendedor && v.compra_id).map(v => v.compra_id)
+    // Una visita se ve si tiene alguno de MIS pedidos. Se miran los renglones
+    // además del compra_id: si un pedido se movió a una visita posterior por
+    // haberse completado, la visita vieja igual es suya y debe verse.
+    const misVentasIds = new Set(ventasCache.filter(v => v.vendedor === currentRole.vendedor).map(v => v.id));
+    return comprasCache.filter(c =>
+      ventasCache.some(v => v.vendedor === currentRole.vendedor && v.compra_id === c.id) ||
+      renglonesDeCompra(c.id).some(r => misVentasIds.has(r.venta_id))
     );
-    return comprasCache.filter(c => misVentasIds.has(c.id));
   }
 
   function pedidosDisponiblesParaCompra(excludeCompraId) {
@@ -4186,7 +4244,7 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
         if ((c.proveedor || '').toLowerCase().includes(qc)) return true;
         if ((c.fecha || '').includes(qc)) return true;
         if ((c.id || '').toLowerCase().includes(qc)) return true;
-        const pedidos = ventasCache.filter(v => v.compra_id === c.id);
+        const pedidos = pedidosDeVisita(c.id);
         return pedidos.some(p =>
           (p.cliente_nombre || '').toLowerCase().includes(qc) ||
           (p.cliente_telefono || '').toLowerCase().includes(qc)
@@ -4202,13 +4260,13 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
     const pageRows = rows.slice(start, start + PAGE_SIZE);
 
     body.innerHTML = pageRows.map(c => {
-      const pedidos = ventasCache.filter(v => v.compra_id === c.id);
+      const renglones = renglonesDeCompra(c.id);
+      const pedidos = pedidosDeVisita(c.id);
       const cantidad = pedidos.reduce((s, v) => s + (Number(v.cantidad) || 1), 0);
       const costoTotal = pedidos.reduce((s, v) => s + costoTotalVenta(v), 0);
       const aportesCompra = compraAportesCache.filter(a => a.compra_id === c.id);
       const aportadoAportes = aportesCompra.reduce((s, a) => s + (Number(a.monto) || 0), 0);
-      const abonoPedidos = pedidos.reduce((s, v) => s + (Number(v.abono_yesenia) || 0), 0);
-      const aportado = Math.max(aportadoAportes, abonoPedidos);
+      const aportado = Math.max(aportadoAportes, pagadoEnVisita(c.id));
       const saldo = costoTotal - aportado;
       const puedeGestionar = currentRole.role === 'admin' || c.comprador === currentRole.vendedor;
       const acciones = puedeGestionar
@@ -4236,13 +4294,22 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
         const telMuestra = g.pedidos.find(pp => String(pp.cliente_telefono || '').trim());
         g.telefono = telMuestra ? String(telMuestra.cliente_telefono).trim() : '';
         g.cantidad = g.pedidos.reduce((s, pp) => s + (Number(pp.cantidad) || 1), 0);
-        g.abono = g.pedidos.reduce((s, pp) => s + (Number(pp.abono_yesenia) || 0), 0);
+        // Con renglones se muestra lo pagado en ESTA visita; sin ellos (abono
+        // viejo) se muestra el acumulado del pedido, como siempre.
+        g.abono = g.pedidos.reduce((s, pp) => {
+          if (renglones.length === 0) return s + (Number(pp.abono_yesenia) || 0);
+          const r = renglones.find(x => x.venta_id === pp.id);
+          return s + (r ? (Number(r.monto) || 0) : 0);
+        }, 0);
         g.costo = g.pedidos.reduce((s, pp) => s + costoTotalVenta(pp), 0);
       });
       const detallePedidos = pedidos.length === 0
         ? '<span style="color:var(--muted);">—</span>'
         : [...grupos.values()].map(g => {
-            const resto = g.costo - g.abono;
+            // "Restante" es el saldo REAL del pedido (todo lo que se le ha
+            // pagado, en todas las visitas), no el de esta visita. Si un pedido
+            // se pagó a medias, aquí se ve cuánto le falta en total.
+            const resto = g.pedidos.reduce((s, pp) => s + abonosProveedorPorVentaId(pp.id).pendiente, 0);
             const telTag = g.telefono ? ` <span style="color:var(--muted); font-weight:400;">(${escSimple(g.telefono)})</span>` : '';
             const pedidosTag = g.pedidos.length > 1 ? `<span class="sub-tag" style="display:inline-block; margin:0;">· ${g.pedidos.length} pedidos</span>` : '';
             return `
@@ -4348,7 +4415,22 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
   }
 
   function renderPedidosPicker(compra) {
-    const yaAsignados = new Set(compra ? ventasCache.filter(v => v.compra_id === compra.id).map(v => v.id) : []);
+    // Al editar una visita, sus pedidos son los que aparecen en SUS renglones
+    // (o los que tiene asignados si es una visita vieja, sin renglones).
+    const yaAsignados = new Set(compra ? pedidosDeVisita(compra.id).map(v => v.id) : []);
+    // Cuánto se le pagó a cada pedido EN ESTA visita: es lo que va en el input.
+    // Si se usara el acumulado, al abrir un abono a medias se vería el total
+    // pagado y la persona lo volvería a escribir, pagando de más.
+    const montoEnVisita = {};
+    if (compra) {
+      const renglones = renglonesDeCompra(compra.id);
+      if (renglones.length > 0) {
+        renglones.forEach(r => { montoEnVisita[r.venta_id] = Number(r.monto) || 0; });
+      } else {
+        ventasCache.filter(v => v.compra_id === compra.id)
+          .forEach(v => { montoEnVisita[v.id] = Number(v.abono_yesenia) || 0; });
+      }
+    }
     let disponibles = pedidosDisponiblesParaCompra(compra ? compra.id : null);
     const picker = document.getElementById('cp-pedidos-picker');
     const soloAportes = compraSoloAportes;
@@ -4413,14 +4495,16 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
       const checked = estaEnCompra ? 'checked' : '';
       const abonoPrev = pedidos
         .filter(v => yaAsignados.has(v.id))
-        .reduce((s, v) => s + (Number(v.abono_yesenia) || 0), 0);
+        .reduce((s, v) => s + (montoEnVisita[v.id] || 0), 0);
       const vendedores = [...new Set(pedidos.map(v => v.vendedor).filter(Boolean))].join(', ');
       const telLabel = telefono ? ` · ${escSimple(telefono)}` : '';
       const pedidosLabel = pedidos.length > 1 ? ` · ${pedidos.length} pedidos` : '';
 
       // Aviso cuando el grupo trae pedidos que yaabinaron dinero en otra visita:
       // sin esto se vería como si se debiera todo y se pagaría de más.
-      const tieneAbonoPrevio = pendientes.some(p => p.yaAbonado > 0);
+      // Al editar una visita que YA tiene renglones no se avisa: ahí el input
+      // se prellena con lo pagado en esa visita, que es lo que se está editando.
+      const tieneAbonoPrevio = !compra && pendientes.some(p => p.yaAbonado > 0);
 
       const tieneVarios = pedidos.length > 1;
       let sublistaHtml = '';
@@ -4435,7 +4519,7 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
                 ${pedidos.map(p => {
                   const costoPedido = costoTotalVenta(p);
                   const cantPedido = Number(p.cantidad) || 1;
-                  const abPedido = yaAsignados.has(p.id) ? (Number(p.abono_yesenia) || 0) : 0;
+                  const abPedido = yaAsignados.has(p.id) ? (montoEnVisita[p.id] || 0) : 0;
                   const fechaTxt = p.fecha ? formatearFechaHumana(p.fecha).replace(/^📅\s*/,'') : '?';
                   const estadoBadge = badgeEstadoGeneral(p);
                   return `
@@ -4794,7 +4878,10 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
               }
               it.abono_yesenia = basePorItem[idx] + parte;
             });
-            abonoPorPedido[v.id] = { items, abono: basePedido + totalPedido };
+            // `montoVisita` es lo que se pagó EN ESTA visita (no el acumulado):
+            // es lo que va al renglón de compra_pedidos, para que las visitas
+            // queden separadas en la lista en vez de combinada en una.
+            abonoPorPedido[v.id] = { items, abono: basePedido + totalPedido, montoVisita: totalPedido };
           });
         });
 
@@ -4811,13 +4898,33 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
           }
         }
 
+        // Renglones de la visita: un registro por pedido con lo que se le pagó
+        // AQUÍ, no el acumulado. Es lo que permite que dos abonos del mismo
+        // pedido en días distintos se vean como dos abonos y no como uno.
+        // Si la tabla no está aplicada, se avisa por consola y se sigue: la
+        // app funciona igual, solo que esa visita no se podrá desglosar.
+        const renglones = pedidosSeleccionados
+          .filter(id => abonoPorPedido[id] && abonoPorPedido[id].montoVisita > 0)
+          .map(id => ({ compra_id: compraIdGuardada, venta_id: id, monto: abonoPorPedido[id].montoVisita }));
+
+        if (renglones.length > 0) {
+          const borrado = await supabaseClient.from('compra_pedidos').delete().eq('compra_id', compraIdGuardada);
+          if (borrado.error) {
+            console.warn('[compra_pedidos] No se pudieron limpiar los renglones de esta visita: ' + borrado.error.message);
+          }
+          const guardado = await supabaseClient.from('compra_pedidos').insert(renglones);
+          if (guardado.error) {
+            console.warn('[compra_pedidos] No se pudieron guardar los renglones de esta visita: ' + guardado.error.message +
+              ' · Probablemente falta aplicar el paso 6 de migracion.sql en Supabase.');
+          }
+        }
+
         // Registrar el aporte a Yesenia de forma automática: quien tiene la sesión
         // iniciada aporta la suma de los abonos ingresados por persona, con fecha de hoy.
         await registrarAporteAutomatico(compraIdGuardada, comprador);
 
         await loadVentas();
         await loadCompras();
-        await loadCompraAportes();
 
         const nPedidos = (pedidosSeleccionados || []).length;
         avisarCambio('compra', `registró una compra a Yesenia${nPedidos > 1 ? ` con ${nPedidos} pedidos` : ''}.`);
@@ -4853,7 +4960,14 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
     if (!ok) return;
     try {
       await supabaseClient.from('compra_aportes').delete().eq('compra_id', id);
-      await supabaseClient.from('ventas').update({ compra_id: null, estado: 'Pedido' }).eq('compra_id', id);
+      await supabaseClient.from('compra_pedidos').delete().eq('compra_id', id);
+      // Solo se desvinculan los pedidos que SIGUEN apuntando a esta visita. Un
+      // pedido que se completó en otra visita ya tiene otro compra_id, y
+      // ponerlo en null lo dejaría sin abono del todo.
+      const deEstaVisita = pedidosDeVisita(id).filter(v => v.compra_id === id);
+      for (const v of deEstaVisita) {
+        await supabaseClient.from('ventas').update({ compra_id: null, estado: 'Pedido' }).eq('id', v.id);
+      }
       await supabaseClient.from('compras_proveedor').delete().eq('id', id);
 
       if (editingCompraId === id) closeCompraModal();
