@@ -26,7 +26,7 @@
 <!-- ExcelJS para Reporte con diseño (2 hojas con estilos) -->
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 
-<link rel="stylesheet" href="styles.v2.css?v=20260929-1552">
+<link rel="stylesheet" href="styles.v2.css?v=20260929-1601">
 </head>
 
 <body>
@@ -427,29 +427,17 @@
         </div>
       </div>
       <div class="table-wrap">
-        <table data-orden-clave="compras">
-          <thead>
-            <tr>
-              <th data-orden="fecha">Fecha</th>
-              <th data-orden="proveedor">Proveedor</th>
-              <th data-orden="comprador">Comprador</th>
-              <th data-orden="quien">Quién abona</th>
-              <th data-orden="camisas">Camisas</th>
-              <th data-orden="costo">Costo total</th>
-              <th data-orden="aportado">Aportado</th>
-              <th data-orden="saldo">Saldo</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody id="compras-body"></tbody>
-        </table>
+        <!-- Antes esto era una tabla de 9 columnas; con el detalle de cada
+             cliente metido en una celda quedaba ilegible, sobre todo en el
+             teléfono. Ahora es una lista de tarjetas: una por visita a Yesenia. -->
+        <div id="compras-lista" class="compras-lista"></div>
         <div class="empty hidden" id="compras-empty-state">
           <b>Todavía no hay abonos a Yesenia registrados.</b><br>
           Usa "Nuevo abono" para registrar una visita a Yesenia.<br>
           <button class="btn btn-gold" onclick="openCompraModal()" type="button">Nuevo abono</button>
         </div>
       </div>
-      <p class="table-hint">💡 Mantén <kbd>Shift</kbd> + rueda para desplazar lateralmente</p>
+      <div id="compras-pagination"></div>
     </div>
 
     <div id="section-settlements" class="hidden">
@@ -972,7 +960,7 @@
      ===================================================== -->
 
 
-<script src="app.v2.js?v=20260929-1552"></script>
-<script src="enhance.v2.js?v=20260929-1552"></script>
+<script src="app.v2.js?v=20260929-1601"></script>
+<script src="enhance.v2.js?v=20260929-1601"></script>
 </body>
 </html>
