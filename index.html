@@ -26,7 +26,7 @@
 <!-- ExcelJS para Reporte con diseño (2 hojas con estilos) -->
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 
-<link rel="stylesheet" href="styles.v2.css?v=20260929-1645">
+<link rel="stylesheet" href="styles.v2.css?v=20260929-1652">
 </head>
 
 <body>
@@ -431,8 +431,10 @@
           <thead>
             <tr>
               <th data-orden="fecha">Fecha</th>
-              <th data-orden="proveedor">Proveedor</th>
-              <th data-orden="comprador">Comprador</th>
+              <!-- "Proveedor" siempre decía Yesenia y "Comprador" repetía lo
+                   mismo que "Quién abona". Se quitaron de la lista; el campo
+                   comprador sigue existiendo porque define permisos y el
+                   filtro del modal. -->
               <th data-orden="quien">Quién abona</th>
               <th data-orden="camisas">Camisas</th>
               <th data-orden="costo">Costo total</th>
@@ -965,7 +967,7 @@
      ===================================================== -->
 
 
-<script src="app.v2.js?v=20260929-1645"></script>
-<script src="enhance.v2.js?v=20260929-1645"></script>
+<script src="app.v2.js?v=20260929-1652"></script>
+<script src="enhance.v2.js?v=20260929-1652"></script>
 </body>
 </html>
