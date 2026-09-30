@@ -69,4 +69,17 @@ CREATE POLICY compra_pedidos_all_authenticated ON compra_pedidos
 --  suscritos no se manda ningun mensaje, asi que no cuesta nada. La alternativa
 --  esta anotada en PROYECTO.md, entrada 53.)
 
+-- 7. PASO 7 — guardar un abono a Yesenia en una transaccion (2026-09-29).
+--    Ver aplicar-paso-7-abono-atomico.sql: ahi esta la funcion completa con su
+--    comentario. No se copia aqui para no tener la misma funcion en dos
+--    archivos que se puedan desincronizar.
+--
+--    Sin esto, guardar un abono son N escrituras sueltas y, si se cae la señal
+--    en la tercera, quedan pedidos con compra_id y abono_yesenia a medias.
+--
+--    La app detecta sola si la funcion existe: si no esta, avisa por consola y
+--    usa el metodo viejo (guardarCompraSinTransaccion). No se rompe nada por no
+--    aplicarla.
+
+
 

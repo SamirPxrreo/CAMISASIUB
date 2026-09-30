@@ -4780,37 +4780,20 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
      const payload = { fecha, comprador, proveedor, observaciones, total: costoTotal, hora: horaColombia() };
 
      try {
-       let error;
-       let compraIdGuardada = editingCompraId;
+       // ==========================================================
+       // PASO 1: CALCULAR (no toca la base).
+       // Todo el reparto vive en JS; lo único que se le pide a Postgres
+       // es que lo ESCRIBA de forma atómica. Por eso el cálculo va primero.
+       // ==========================================================
 
-       if (editingCompraId) {
-         ({ error } = await supabaseClient.from('compras_proveedor').update(payload).eq('id', editingCompraId));
-       } else {
-         const { data, error: insertError } = await supabaseClient.from('compras_proveedor').insert(payload).select().single();
-         error = insertError;
-         if (!error && data) compraIdGuardada = data.id;
-       }
+       // Desvincular pedidos que ya no están seleccionados (edición)
+       const aDesvincular = editingCompraId
+         ? ventasCache.filter(v => v.compra_id === editingCompraId && !pedidosSeleccionados.includes(v.id)).map(v => v.id)
+         : [];
 
-       if (error) { errEl.textContent = errorDeGuardado(error); errEl.classList.remove('hidden'); return; }
-
-        // Desvincular pedidos que ya no están seleccionados (edición)
-        if (editingCompraId) {
-          const anteriores = ventasCache.filter(v => v.compra_id === editingCompraId);
-          for (const v of anteriores) {
-            if (!pedidosSeleccionados.includes(v.id)) {
-              const updDes = { compra_id: null, estado: 'Pedido', updated_at: new Date().toISOString() };
-              let rDes = await supabaseClient.from('ventas').update(updDes).eq('id', v.id);
-              if (rDes.error && String(rDes.error.message).toLowerCase().includes('updated_at')) {
-                delete updDes.updated_at;
-                await supabaseClient.from('ventas').update(updDes).eq('id', v.id);
-              }
-            }
-          }
-        }
-
-        // Vincular pedidos seleccionados: si la persona tiene desglose por pedido (varios pedidos),
-        // se respeta lo escrito en cada fila; si no, se reparte equitativo por camisa.
-        const abonoPorPedido = {};
+       // Vincular pedidos seleccionados: si la persona tiene desglose por pedido (varios pedidos),
+       // se respeta lo escrito en cada fila; si no, se reparte equitativo por camisa.
+       const abonoPorPedido = {};
          document.querySelectorAll('.cp-persona-check:checked').forEach(cb => {
            const block = cb.closest('.persona-block');
            const persona = cb.dataset.persona;
@@ -4844,7 +4827,7 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
 
             // OJO: el dinero ya pagado puede estar SOLO en la columna
             // `venta.abono_yesenia` y no estar repartido en las camisas (pasa
-            // con pedidos viejos). Si se(sumara solo lo de los items, ese
+            // con pedidos viejos). Si se sumara solo lo de los items, ese
             // total se perdería al guardar. Por eso lo que sobra se ubica en
             // las camisas que siguen sin abono antes de repartir lo nuevo.
             if (vaSumando) {
@@ -4881,66 +4864,148 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
           });
         });
 
-        for (const id of pedidosSeleccionados) {
-          const upd = { compra_id: compraIdGuardada, updated_at: new Date().toISOString() };
-          if (abonoPorPedido[id]) {
-            upd.items_camisa = JSON.stringify(abonoPorPedido[id].items);
-            upd.abono_yesenia = abonoPorPedido[id].abono;
-          }
-          let resUpd = await supabaseClient.from('ventas').update(upd).eq('id', id);
-          if (resUpd.error && String(resUpd.error.message).toLowerCase().includes('updated_at')) {
-            delete upd.updated_at;
-            await supabaseClient.from('ventas').update(upd).eq('id', id);
-          }
-        }
+               // ==========================================================
+       // PASO 2: ESCRIBIR, todo o nada.
+       //
+       // `guardar_abono_yesenia` es una funcion de Postgres (paso 7 de
+       // aplicar-paso-7-abono-atomico.sql) que envuelve compra + desvincular
+       // + cada pedido + renglones + aporte en UNA transaccion. Sin ella esto
+       // son N peticiones sueltas: si se caia la senal en la tercera,
+       // quedaban pedidos a medias y habia que repararlos a mano.
+       //
+       // OJO: el CALCULO del reparto sigue aqui en JS (reglas de negocio ya
+       // probadas). La funcion solo se encarga de que ESCRIBIR sea todo-o-nada.
+       //
+       // Si la funcion no existe (migracion sin aplicar), se avisa por consola
+       // y se cae al metodo viejo. No se rompe nada.
+       // ==========================================================
+       const datosPedidos = pedidosSeleccionados.map(id => {
+         const a = abonoPorPedido[id] || {};
+         return {
+           venta_id: id,
+           items_camisa: a.items ? JSON.stringify(a.items) : null,
+           abono_yesenia: a.abono || 0,
+           monto_renglon: a.montoVisita || 0
+         };
+       });
+       const aporte = {
+         persona: currentRole.vendedor || comprador || '',
+         monto: abonoClientesSeleccionados(),
+         fecha: hoyColombia()
+       };
+       const compraArg = Object.assign({}, payload, { id: editingCompraId || null });
 
-        // Renglones de la visita: un registro por pedido con lo que se le pagó
-        // AQUÍ, no el acumulado. Es lo que permite que dos abonos del mismo
-        // pedido en días distintos se vean como dos abonos y no como uno.
-        // Si la tabla no está aplicada, se avisa por consola y se sigue: la
-        // app funciona igual, solo que esa visita no se podrá desglosar.
-        const renglones = pedidosSeleccionados
-          .filter(id => abonoPorPedido[id] && abonoPorPedido[id].montoVisita > 0)
-          .map(id => ({ compra_id: compraIdGuardada, venta_id: id, monto: abonoPorPedido[id].montoVisita }));
+       const { data: compraIdGuardada, error: errorRpc } = await supabaseClient.rpc(
+         'guardar_abono_yesenia',
+         {
+           p_compra: compraArg,
+           p_desvincular: aDesvincular,
+           p_pedidos: datosPedidos,
+           p_aporte: aporte
+         }
+       );
 
-        if (renglones.length > 0) {
-          const borrado = await supabaseClient.from('compra_pedidos').delete().eq('compra_id', compraIdGuardada);
-          if (borrado.error) {
-            console.warn('[compra_pedidos] No se pudieron limpiar los renglones de esta visita: ' + borrado.error.message);
-          }
-          const guardado = await supabaseClient.from('compra_pedidos').insert(renglones);
-          if (guardado.error) {
-            console.warn('[compra_pedidos] No se pudieron guardar los renglones de esta visita: ' + guardado.error.message +
-              ' · Probablemente falta aplicar el paso 6 de migracion.sql en Supabase.');
-          }
-        }
+       if (errorRpc) {
+         // PostgREST dice la función que falta de varias formas según la versión.
+         // El mensaje real medido el 2026-09-30 con la función sin aplicar es:
+         //   "Could not find the function public.guardar_abono_yesenia(...) in the schema cache"
+         // La primera versión de este regex buscaba "not found" y NO casaba con
+         // "Could not find", así que la app mostraba error en vez de caer al
+         // respaldo. Por eso se prueba el patrón, no se supone.
+         const noExiste = /does not exist|schema cache|could not find the function|not found/i.test(
+           String(errorRpc.message || '')
+         );
+         if (noExiste) {
+           console.warn('[guardar_abono_yesenia] La funcion no existe: falta aplicar el paso 7 de migracion.sql. ' +
+             'Se usa el metodo viejo (N escrituras sueltas, sin transaccion).');
+           await guardarCompraSinTransaccion(compraArg, aDesvincular, datosPedidos, aporte);
+         } else {
+           errEl.textContent = errorDeGuardado(errorRpc);
+           errEl.classList.remove('hidden');
+           return;
+         }
+       }
 
-        // Registrar el aporte a Yesenia de forma automática: quien tiene la sesión
-        // iniciada aporta la suma de los abonos ingresados por persona, con fecha de hoy.
-        await registrarAporteAutomatico(compraIdGuardada, comprador);
+       await loadVentas();
+       await loadCompras();
 
-        await loadVentas();
-        await loadCompras();
+       const nPedidos = (pedidosSeleccionados || []).length;
+       avisarCambio('compra', `registró una compra a Yesenia${nPedidos > 1 ? ` con ${nPedidos} pedidos` : ''}.`);
 
-        const nPedidos = (pedidosSeleccionados || []).length;
-        avisarCambio('compra', `registró una compra a Yesenia${nPedidos > 1 ? ` con ${nPedidos} pedidos` : ''}.`);
-
-        // Antes de guardar esto re-abría el modal en modo "ver detalle"
-        // (Pedido(s) que cubre este abono). A pedido de Samir se quitó:
-        // apenas se guarda, la ventana se cierra y uno se queda en la
-        // lista de Abonos Yesenia, que es donde aparece la fila nueva.
-        editingCompraId = null;
-        compraSoloAportes = false;
-        closeCompraModal();
-        mostrarToast('✅ Abono a Yesenia guardado.');
-        // Sugerir marcar como Liquidado si quedó al día y estaba en Entregado
-        await sugerirLiquidadoParaVarios(pedidosSeleccionados);
+       // A pedido de Samir: antes de guardar esto re-abria el modal en modo
+       // "ver detalle" (Pedido(s) que cubre este abono). Quitado: apenas se
+       // guarda, la ventana se cierra y uno se queda en la lista.
+       editingCompraId = null;
+       compraSoloAportes = false;
+       closeCompraModal();
+       mostrarToast('✅ Abono a Yesenia guardado.');
+       // Sugerir marcar como Liquidado si quedo al dia y estaba en Entregado
+       await sugerirLiquidadoParaVarios(pedidosSeleccionados);
      } catch (err) {
         logError('saveCompra', err);
         errEl.textContent = errorDeGuardado(err);
         errEl.classList.remove('hidden');
       }
     }
+
+   // Metodo viejo, SIN transaccion. Solo se usa si la funcion de Postgres no
+   // esta aplicada. OJO: si se corta la conexion a la mitad, quedan pedidos
+   // con `compra_id` y `abono_yesenia` inconsistentes y hay que repararlos a
+   // mano. Es justo el bug que la funcion del paso 7 evita.
+   async function guardarCompraSinTransaccion(compraArg, aDesvincular, datosPedidos, aporte) {
+     let compraIdGuardada = compraArg.id;
+     if (compraIdGuardada) {
+       const { error } = await supabaseClient.from('compras_proveedor').update(compraArg).eq('id', compraIdGuardada);
+       if (error) throw error;
+     } else {
+       const { data, error } = await supabaseClient.from('compras_proveedor')
+         .insert(compraArg).select().single();
+       if (error) throw error;
+       compraIdGuardada = data.id;
+     }
+
+     for (const pid of (aDesvincular || [])) {
+       const r = await supabaseClient.from('ventas')
+         .update({ compra_id: null, estado: 'Pedido' }).eq('id', pid);
+       if (r.error && !/updated_at|comprado_at/i.test(String(r.error.message))) throw r.error;
+     }
+
+     for (const p of datosPedidos) {
+       const upd = { compra_id: compraIdGuardada, updated_at: new Date().toISOString(), abono_yesenia: p.abono_yesenia };
+       if (p.items_camisa) upd.items_camisa = p.items_camisa;
+       const r = await supabaseClient.from('ventas').update(upd).eq('id', p.venta_id);
+       if (r.error) {
+         if (!/updated_at|comprado_at/i.test(String(r.error.message))) throw r.error;
+         delete upd.updated_at;
+         const r2 = await supabaseClient.from('ventas').update(upd).eq('id', p.venta_id);
+         if (r2.error) throw r2.error;
+       }
+     }
+
+     await supabaseClient.from('compra_pedidos').delete().eq('compra_id', compraIdGuardada);
+     const renglones = datosPedidos
+       .filter(p => p.monto_renglon > 0)
+       .map(p => ({ compra_id: compraIdGuardada, venta_id: p.venta_id, monto: p.monto_renglon }));
+     if (renglones.length > 0) {
+       const r = await supabaseClient.from('compra_pedidos').insert(renglones);
+       if (r.error) {
+         console.warn('[compra_pedidos] No se pudieron guardar los renglones: ' + r.error.message +
+           ' · Probablemente falta aplicar el paso 6 de migracion.sql.');
+       }
+     }
+
+     if (aporte && aporte.persona && aporte.monto > 0) {
+       await supabaseClient.from('compra_aportes').delete()
+         .eq('compra_id', compraIdGuardada).eq('persona', aporte.persona).eq('observacion', '');
+       const r = await supabaseClient.from('compra_aportes').insert({
+         compra_id: compraIdGuardada, persona: aporte.persona,
+         monto: aporte.monto, fecha: aporte.fecha, observacion: ''
+       });
+       if (r.error) console.warn('[compra_aportes] No se pudo registrar el aporte: ' + r.error.message);
+     }
+
+     return compraIdGuardada;
+   }
 
    async function deleteCompra(id) {
     const compra = comprasCache.find(x => x.id === id);
@@ -4981,35 +5046,6 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
        if (block) total += parseFloat(block.querySelector('.cp-persona-abono').value) || 0;
      });
      return total;
-   }
-
-   // Registra automáticamente el aporte a Yesenia:
-   // persona = quien tiene la sesión iniciada (vendedor); si la sesión es de
-   // administrador (sin vendedor), se usa el comprador de la compra.
-   // Si ya existe un aporte automático previo de esa persona, se reemplaza
-   // para que el registro refleje siempre el valor actual del abono.
-   async function registrarAporteAutomatico(compraId, compradorFallback = '') {
-     const persona = currentRole.vendedor
-       || compradorFallback
-       || ((comprasCache.find(c => c.id === compraId) || {}).comprador || '')
-       || '';
-     if (!compraId || !persona) return false;
-     const monto = abonoClientesSeleccionados();
-     if (!(monto > 0)) return false;
-     const fecha = hoyColombia();
-     try {
-       await supabaseClient.from('compra_aportes').delete()
-         .eq('compra_id', compraId).eq('persona', persona).eq('observacion', '');
-       const { error } = await supabaseClient.from('compra_aportes').insert({
-         compra_id: compraId, persona, monto, fecha, observacion: ''
-       });
-       if (error) { mostrarToast('Error al registrar el aporte automático: ' + error.message, 'error'); return false; }
-       return true;
-     } catch (e) {
-       logError('registrarAporteAutomatico', e);
-       mostrarToast('Error al registrar el aporte automático.', 'error');
-       return false;
-     }
    }
 
    /* =====================================================
