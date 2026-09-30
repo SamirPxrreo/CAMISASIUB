@@ -46,13 +46,14 @@ AS $$
 DECLARE
   v_compra_id uuid;
   v_fecha     text;
-  v_registro  jsonb;
   v_pedido    jsonb;
   v_id        uuid;
   v_items     text;
   v_abono     numeric;
   v_monto     numeric;
   v_total     numeric;
+  v_persona   text;      -- quién aporta en esta visita
+  v_montoAp   numeric;   -- cuánto aporta
 BEGIN
   v_fecha     := p_compra ->> 'fecha';
   v_total     := COALESCE((p_compra ->> 'total')::numeric, 0);
@@ -107,9 +108,17 @@ BEGIN
     v_abono := COALESCE((v_pedido ->> 'abono_yesenia')::numeric, 0);
     v_monto := COALESCE((v_pedido ->> 'monto_renglon')::numeric, 0);
 
+    -- OJO: `items_camisa` es TEXT en la base, NO jsonb (aunque el PROYECTO.md
+    -- lo diga jsonb — se verificó el 2026-09-30). Por eso `v_items` es text y
+    -- NO lleva `::jsonb`: castearlo a jsonb haría fallar la función.
+    --
+    -- Y el COALESCE es importante: si la app mandara `items_camisa: null`, un
+    -- `SET items_camisa = v_items` GUARDARÍA NULL y se perdería el detalle de
+    -- las camisas del pedido. Con COALESCE, si no llega nada, se conserva lo
+    -- que había. Preferimos un dato viejo a perder información.
     UPDATE ventas
        SET compra_id      = v_compra_id,
-           items_camisa   = v_items,
+           items_camisa   = COALESCE(v_items, items_camisa),
            abono_yesenia  = v_abono,
            updated_at     = now()
      WHERE id = v_id;
