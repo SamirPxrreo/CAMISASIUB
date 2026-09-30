@@ -330,6 +330,66 @@ Reglas en el código:
 
 ---
 
+## 8bis. Cambios del 2026-09-29 (sesión con Samir)
+
+Todo commiteado y en producción. Último commit de la sesión: `58abda1`.
+
+### 62. **Color "Mostaza"** (`app.v2.js`)
+   Añadido a `COLORES_DISPONIBLES`. Sin más cambios: la lista alimenta el `<select>` de color de cada camisa.
+
+### 63. 🔴 **`updateEstado` ya no borra estados — se resolvió con un modal** (#14 y resumen #1)
+   Era el pendiente más grave: el dropdown de Estado aplicaba el mismo estado a **todas** las camisas, así que un pedido con 4 Bordando y 2 Listo para entrega perdía las 2 "Listo" al elegir "Bordando", sin aviso.
+   - La columna Estado ahora es un **botón** con el estado general (`Bordando ▾` o `Mixto ⚠️ ▾`). Al abrirlo, `abrirModalEstadosCamisa(id)` pinta **un dropdown por camisa** en `#estados-camisa-modal`, y `guardarEstadosCamisa()` escribe solo lo que se cambió.
+   - Cada `<select>` es independiente: cambiar uno no toca los demás. **Esto es lo que arregla la pérdida de datos**, no una confirmación.
+   - Valida lo mismo que antes: para `Liquidado` todas deben estar Entregado/Liquidado y `puedeMarcarPagado()` debe dar `ok`.
+   - El estado general que se persiste sigue siendo **el más atrasado** (`ORDEN_ESTADOS`).
+   - `estadosCuentasHtml` ahora pone cada estado en su propia línea (`display:block`) para que la columna no se ensanche.
+   - **`updateEstado` sigue existiendo y ya no se llama desde la tabla**; no se borró (la usan otras cosas), pero ya no pisa estados desde el pedido.
+
+### 64. 🪟 **Editar pedido = modal flotante, sin salir de Pedidos**
+   - `openForm(venta)` ya no hace `navigateTo('new-sale')` cuando viene de **Editar**: mueve el **mismo** `#form-card` dentro de `#editar-modal` con `appendChild`. **No se copió el formulario** a propósito: copiarlo habría duplicado los IDs (`f-cliente`, `f-vendedor`…), y `getElementById` seguiría devolviendo el del `<section>` oculto, rompiendo todo.
+   - `sacarFormDelModal()` lo devuelve a su sección. Se llama en `closeForm()` y en `saveVenta` antes de `openForm(null)`.
+   - `seccionAntesDeEditar` recuerda de dónde se abrió: **cerrar con la X o Cancelar vuelve a Pedidos** (o a donde fuera), ya no manda a Inicio.
+   - `closeForm(irA)` acepta `null` para cerrar sin navegar — lo usa `navigateTo` cuando el modal está abierto, y evita la recursión `closeForm → navigateTo → closeForm`.
+   - `Escape` cierra el modal (`app.v2.js`, bloque de cierre de modales).
+   - **Ancho:** `.modal-card.modal-card-huge` con `max-width: 1180px`. **OJO:** el selector lleva **dos clases a propósito**: el `.modal-card` base (520px) está *definido después* en el archivo y con una sola clase el modal se quedaba en 520px. Es la misma trampa que el `.btn-small` documentado más arriba.
+   - **Teléfono:** en `max-width: 720px` los tres grids del formulario bajan a `minmax(120px, 1fr)` (venían en 200/140/150) y con menos padding, así caben **2 columnas** en vez de 1. En el computador no cambia nada.
+   - Se oculta `#editar-modal-body #form-title` porque el modal ya tiene su título y salía **"Editar venta" dos veces**.
+
+### 65. 🧵 **Abonos Yesenia: el modal cierra al guardar**
+   `saveCompra` ya no re-abría el modal con `openCompraModal(compraIdGuardada)`, que dejaba el bloque "Pedido(s) que cubre este abono" debajo. Ahora: `closeCompraModal()` + `mostrarToast('✅ Abono a Yesenia guardado.')` y uno se queda en la lista.
+   Ese bloque se **eliminó de verdad** (div en el HTML, `renderPedidosDetalleCompra()` y la variable `aportesSection` en el JS, y el CSS `.aportes-section`): ~30 líneas muertas.
+
+### 66. ✅ **Se puede completar un abono a medias desde "Nuevo abono"**
+   El problema: `pedidosDisponiblesParaCompra` sacaba **todo** pedido con `compra_id`, así que un pedido pagado a medias no aparecía nunca y había que ir a Editar el pedido a escribir el valor a mano.
+   - Ahora el filtro solo esconde los que **ya están saldados** (`pendiente <= 1`); los demás aparecen aunque pertenezcan a otra visita.
+   - El picker muestra el aviso "Ya habías abonado $X de $Y en una visita anterior. Abona solo lo que falta: $Z" y el input dice "(solo lo que falta)".
+   - Las tarjetas del resumen cambiaron a "Costo por pagar" / "Pagas ahora" / "Queda pendiente", y `actualizarResumenCompraModal` suma **pendientes**, no costos (cuando nada se abonó antes, pendiente === costo y no cambia nada).
+   - **`saveCompra` ahora SUMA en vez de pisar** (`basePorItem` + parte nueva). Solo cuando el pedido es de **otra** visita: si es de la misma que se está editando, el input es el total de esa compra y se reemplaza, o al reeditar un abono se contaría dos veces.
+
+### 67. 🆕 **Tabla `compra_pedidos` — cada visita a Yesenia por separado** (migración 6)
+   El pedido de Sara pagó $30.000 el domingo y el resto días después. Como `ventas.compra_id` es **una sola columna**, el pedido se "movía" de una visita a la otra: la primera fila perdía al cliente y la nueva mostraba el **acumulado** ($60.000) como si se hubiera pagado todo ese día. No había forma de mostrarlo bien porque el dato no existía.
+   - `compra_pedidos(compra_id, venta_id, monto)` = el renglón de la visita: qué pedido cubrió y cuánto se le pagó **ese día**.
+   - `pedidosDeVisita(id)` y `pagadoEnVisita(id)`: usan los renglones si existen; si no (abono guardado antes de la migración), caen al comportamiento anterior. **Los abonos viejos no cambian de aspecto.**
+   - El **saldo del pedido NO cambia**: sigue viniendo de `items_camisa[].abono_yesenia`, que es el acumulado. Solo cambia cómo se muestra la lista.
+   - `renderPedidosPicker` prellena el input con `montoEnVisita` (no el acumulado) — si no, abrir un abono de $30.000 mostraría $60.000 y se pagaría de más.
+   - `deleteCompra` solo desvincula los pedidos que **siguen** apuntando a esa visita.
+   - RLS: `FOR ALL TO authenticated`, verificado desde afuera (lectura sin sesión = 0 filas, escritura = 401 *"row-level violates RLS"*).
+   - **Aplicada el 2026-09-29.** Ver `aplicar-paso-6-compra-pedidos.sql`.
+
+### 68. **Columnas "Proveedor" y "Comprador" fuera de la lista de abonos**
+   "Proveedor" siempre decía Yesenia y "Comprador" repetía "Quién abona". Se quitaron **solo de la tabla** y sus dos comparadores de orden. El campo `comprador` **sigue existiendo**: define permisos (`puedeGestionar`) y el filtro "Persona que realiza el abono" del modal.
+
+### 69. ⚠️ **Lección: no tocar `app.v2.js` con PowerShell**
+   Al borrar código con `Set-Content -Encoding UTF8` se **rompieron los acentos** y el archivo quedó con `SyntaxError: Invalid regular expression: /[̀-ͯ]/g` (el regex de `sinAcentos`). Es el mismo riesgo que advierte `preparar-despliegue.js` en su encabezado. **Para editar `app.v2.js` usar el editor o Node**, nunca `Set-Content`/`Out-File`. Si se hace, `git checkout -- app.v2.js` y `node --check` para verificar.
+
+### 70. 🟠 **Se intentó el rediseño de la lista de abonos a tarjetas y se revirtió**
+   Se cambió la tabla por una lista de tarjetas (commit `3d62cd6`) a pedido de "se ve muy fea". Al día siguiente Samir pidió volver a la tabla: *"la tabla podia quedar tal cual como estaba, yo solo queria cambiar la ventana de editar abono"*. Revertido en `612b3cf`.
+   **Regla para el futuro:** en este proyecto, los cambios de estructura visual que no se pidieron explícitamente se preguntan primero. SeLostroaron tablas de la app; la tabla de abonos es de las que mejor funcionan.
+
+---
+
+
 ## 9. Migraciones en Supabase (base en la nube)
 
 > ✅ **Todas estas migraciones YA se ejecutaron en la base (Postgres en Supabase).** No volver a ejecutarlas si se clona el repo; están aquí como referencia del esquema.
@@ -516,28 +576,34 @@ UPDATE ventas SET estado='Liquidado' WHERE estado='Pagado';
 
 ---
 
-## 14. Resumen ejecutivo — qué queda pendiente (2026-09-28)
+## 14. Resumen ejecutivo — qué queda pendiente (actualizado 2026-09-29)
 
 Si solo vas a leer una cosa de este documento, lee esto. Ordenado por lo que más duele.
 
 | # | Prioridad | Qué | Estado |
 |---|---|---|---|
-| 1 | 🔴 | **`updateEstado` borra estados de camisas.** Un pedido con 4 Bordando y 2 Listo para entrega: al elegir "Bordando" en el dropdown, **las 2 "Listo" se pierden sin avisar**. Es pérdida de datos real y la más grave que queda. | Pendiente, requiere decisión de Samir |
-| 2 | 🟠 | **`saveCompra` no es atómico.** N `UPDATE` secuenciales sin transacción: si falla el tercero, quedan pedidos con `compra_id` a medias. Difícil de arreglar bien (necesita una función de Postgres). | Pendiente |
-| 3 | 🟡 | **`Shift+rueda`** no desplaza las 4 tablas de Resúmenes. | Pendiente, bajo riesgo |
-| 4 | 🟡 | **`xlsx@0.18.5`** con CVEs públicos sin parche (CDN). | Pendiente, se puede quitar la librería |
-| 5 | ⚪ | **Tabla sobrante** `liquidaciones_ganancias` en Supabase: no la usa la app (0 referencias en el código). Se puede borrar con `DROP TABLE liquidaciones_ganancias;`. | Opcional |
-| 6 | ⚪ | **Key SSH:** no acelera nada (el build es de GitHub). Solo evita el prompt del token al hacer push. | Opcional |
+| 1 | 🟠 | **`saveCompra` no es atómico.** N `UPDATE` secuenciales sin transacción: si se corta la señal en el tercero, quedan pedidos con `compra_id` y `abono_yesenia` a medias. **La opción 1 (validar en JS) se descartó por inútil**: valida y después vuelve a escribir, así que la ventana sigue ahí, y dobla las peticiones. Lo que falta es una **función de Postgres** que persista todo en una transacción. | Pendiente — agreed con Samir |
+| 2 | 🟡 | **`Shift+rueda`** no desplaza las 4 tablas de Resúmenes (los listeners se atan a las `.table-wrap` que ya existen al cargar; esas se crean después). | Pendiente, bajo riesgo |
+| 3 | 🟡 | **`xlsx@0.18.5`** con CVEs públicos sin parche (CDN en el `<head>`). | Pendiente, se puede quitar la librería |
+| 4 | ⚪ | **Tabla sobrante** `liquidaciones_ganancias` en Supabase: no la usa la app (0 referencias). Se puede borrar con `DROP TABLE liquidaciones_ganancias;`. | Opcional |
+| 5 | ⚪ | **Key SSH:** no acelera nada (el build es de GitHub). Solo evita el prompt del token al hacer push. | Opcional |
+| 6 | ⚪ | **Backfill de `compra_pedidos`:** los abonos guardados antes del 2026-09-29 no tienen renglón, así que se muestran como siempre (Samir decidió dejarlos así). Si algún día se quieren separar, hay que reconstruirlos a mano. | Opcional, decidido NO hacer |
 
 **Ya resueltos y no volver a tocar:**
-- ✅ RLS de Postgres: la anon key no lee, escribe ni borra nada. Verificado con `verificar-seguridad.js`.
+- ✅ **`updateEstado` ya no borra estados** (entrada 63): cada camisa se edita en su propio dropdown dentro de un modal. Era el pendiente más grave.
+- ✅ **Abonos a medias**: se completan desde "Nuevo abono", sumando lo pagado en vez de pisarlo (entrada 66).
+- ✅ **Cada visita a Yesenia separada** con la tabla `compra_pedidos` (entrada 67).
+- ✅ RLS de Postgres: la anon key no lee, escribe ni borra nada. Verificado con `verificar-seguridad.js` y también con `compra_pedidos`.
 - ✅ Papelera: borrado lógico con `eliminado_at`, restaurable.
 - ✅ Caché: `?v=` versionado + aviso automático de versión nueva.
 - ✅ Pérdidas entre socios: regla definida por Samir y explicada en pantalla.
 - ✅ Código muerto y XSS: barridos.
 - ✅ Aviso de "el otro dispositivo guardó algo": sin recargar nada (ver entrada 58).
+- ✅ **Editar pedido es un modal** y no te saca de Pedidos (entrada 64).
 
 **Lo que se decidió NO hacer:**
 - La sincronización en tiempo real se retiró (entrada 53): a Samir no le gustó cómo se comportaba dentro de la página.
-- No se tocó `supabase_realtime` (migración paso 6, anulada): sin clientes suscritos no cuesta nada.
+- No se tocó `supabase_realtime` (las 4 tablas siguen ahí): sin clientes suscritos no cuesta nada.
 - No se filtró filas por usuario a nivel de RLS: con dos personas que se conocen, el filtro en la app es suficiente y la alternativa añade complejidad y riesgo.
+- **No rediseñar la lista de abonos**: se intentó con tarjetas y se revirtió (entrada 70). La tabla se queda como estaba.
+- **No copiar el formulario para el modal de edición**: se mueve el nodo, para no duplicar IDs (entrada 64).
