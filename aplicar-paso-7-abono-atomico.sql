@@ -45,17 +45,22 @@ LANGUAGE plpgsql
 AS $$
 DECLARE
   v_compra_id uuid;
-  v_fecha     text;
+  -- `fecha` es una columna DATE en compras_proveedor (verificado el 2026-09-30
+  -- al ejecutar la funcion: "column fecha is of type date but expression is of
+  -- type text"). Por eso esta variable es date y NO text: asignar un text a
+  -- una columna date dentro de plpgsql falla.
+  v_fecha     date;
   v_pedido    jsonb;
   v_id        uuid;
-  v_items     text;
+  v_items     text;      -- items_camisa es TEXT en la base, NO jsonb
   v_abono     numeric;
   v_monto     numeric;
   v_total     numeric;
   v_persona   text;      -- quién aporta en esta visita
   v_montoAp   numeric;   -- cuánto aporta
+  v_fechaAp   date;      -- fecha del aporte (compra_aportes.fecha)
 BEGIN
-  v_fecha     := p_compra ->> 'fecha';
+  v_fecha     := (p_compra ->> 'fecha')::date;
   v_total     := COALESCE((p_compra ->> 'total')::numeric, 0);
 
   ------------------------------------------------------------------
@@ -143,6 +148,7 @@ BEGIN
   ------------------------------------------------------------------
   v_persona := p_aporte ->> 'persona';
   v_montoAp := COALESCE((p_aporte ->> 'monto')::numeric, 0);
+  v_fechaAp := COALESCE((p_aporte ->> 'fecha')::date, v_fecha);
   IF v_persona IS NOT NULL AND v_persona <> '' AND v_montoAp > 0 THEN
     DELETE FROM compra_aportes
      WHERE compra_id = v_compra_id
@@ -154,7 +160,7 @@ BEGIN
       v_compra_id,
       v_persona,
       v_montoAp,
-      COALESCE(p_aporte ->> 'fecha', v_fecha),
+      v_fechaAp,
       ''
     );
   END IF;
