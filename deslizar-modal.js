@@ -29,6 +29,18 @@
     return card.scrollTop > 0;
   }
 
+  // Arma el transform de la hoja mientras se arrastra: baja un poco y se
+  // achica. El achique va hasta 5% y solamente por cada 400px de recorrido, o
+  // sea que a los 400px ya está al máximo; más allá no sigue encogiendo, para
+  // que la hoja nunca se vuelva ilegible.
+  //
+  // Se usa scale() y no un transform con dos valores sueltos porque asi el
+  // navegador puede Promise-resolver solo la parte de la escala.
+  function arrastrar(dy) {
+    var encogimiento = Math.min(dy / 400, 1) * 0.05;
+    return 'translateY(' + dy + 'px) scale(' + (1 - encogimiento).toFixed(4) + ')';
+  }
+
   function alTocar(e) {
     if (!e.touches || e.touches.length !== 1) return;
     var card = e.target.closest ? e.target.closest('.modal-card') : null;
@@ -41,6 +53,18 @@
     inicioT = Date.now();
     movido = false;
     hoja._tocaArriba = contenidoDesplazado(hoja, e.target);
+    // Si el dedo empezó en el encabezado (o en el asa), el arrastre vale
+    // siempre, esté el contenido desplazado o no. El encabezado está fijo, así
+    // que arrastrarlo no puede querer decir "desplazar": solo hay una cosa que
+    // pueda ser, y es cerrar la hoja.
+    hoja._desdeTitulo = empiezaEnTitulo(card, e.target);
+  }
+
+  // ¿El punto donde empezó el toque está dentro del encabezado?
+  function empiezaEnTitulo(card, nodo) {
+    if (!nodo) return false;
+    var head = card.querySelector('.modal-head');
+    return !!(head && head.contains(nodo));
   }
 
   function alMover(e) {
@@ -52,14 +76,15 @@
       if (movido) { hoja.classList.remove('arrastrando'); hoja.style.transform = ''; }
       return;
     }
-    // El gesto hacia abajo solo cuenta si el contenido estaba arriba.
-    if (hoja._tocaArriba) return;
+    // El gesto hacia abajo solo cuenta si el contenido estaba arriba...
+    // SALVO que el dedo haya empezado en el encabezado, que sí cuenta siempre.
+    if (hoja._tocaArriba && !hoja._desdeTitulo) return;
 
     if (!movido) {
       movido = true;
       hoja.classList.add('arrastrando');
     }
-    hoja.style.transform = 'translateY(' + dy + 'px)';
+    hoja.style.transform = arrastrar(dy);
     // Sin preventDefault el navegador hace scroll de la página detrás.
     if (e.cancelable) e.preventDefault();
   }
