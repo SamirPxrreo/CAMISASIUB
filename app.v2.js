@@ -202,7 +202,7 @@
       }, tipo: 'num' }
     } },
     liquidaciones: { render: renderLiquidaciones, campos: {
-      fecha:   { val: l => l.fecha ? l.fecha + ' ' + (l.hora || '00:00') : '', tipo: 'fecha' },
+      fecha:   { val: l => l.fecha ? l.fecha + ' ' + (l.hora || '00:00:00') : '', tipo: 'fecha' },
       pedido:  { val: l => { const v = ventasCache.find(x => x.id === l.venta_id); return v ? ((v.cliente_nombre || '') + ' ' + (v.fecha || '')) : (l.venta_id || ''); }, tipo: 'text' },
       pagador: { val: l => (l.pagador || '').toLowerCase(), tipo: 'text' },
       receptor: { val: l => (l.receptor || '').toLowerCase(), tipo: 'text' },
@@ -546,8 +546,10 @@
     ).join('');
   }
 
+  // Guarda HH:MM:SS (con segundos). Antes guardaba HH:MM y dos abonos del
+  // mismo minuto quedaban indistinguibles al ordenarlos.
   function horaColombia() {
-    return new Date().toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit', hour12: false });
+    return new Date().toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
   }
 
   function horaDeVenta(v) {
@@ -556,7 +558,7 @@
       try {
         const d = new Date(ts);
         if (!isNaN(d.getTime())) {
-          return d.toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit', hour12: false });
+          return d.toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
         }
       } catch (e) { /* sin hora */ }
     }
@@ -584,7 +586,7 @@
       const d = new Date(ts);
       if (isNaN(d.getTime())) return '';
       const fecha = d.toLocaleDateString('es-CO', { timeZone: 'America/Bogota', day: '2-digit', month: 'short' });
-      const hora = d.toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit', hour12: false });
+      const hora = d.toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
       return `${fecha} · ${hora}`;
     } catch (e) { return ''; }
   }
@@ -5454,7 +5456,7 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
         <td><b>${escSimple(u.nombre || 'Sin nombre')}</b></td>
         <td>${escSimple(u.correo)}</td>
         <td>
-          <span class="badge-estado ${u.rol === 'admin' ? 'estado-Liquidado' : 'estado-Comprado'}">
+          <span class="badge-rol ${u.rol === 'admin' ? 'rol-admin' : 'rol-vendedor'}">
             ${u.rol === 'admin' ? 'ADMINISTRADOR' : 'VENDEDOR'}
           </span>
         </td>

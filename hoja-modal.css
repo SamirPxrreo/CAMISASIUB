@@ -33,21 +33,36 @@
     border-bottom: none;
     padding: 6px 16px calc(18px + env(safe-area-inset-bottom, 0px));
     max-height: 92vh;
-    /* Se reemplaza la animación de "pop" por la de subir desde abajo. */
-    animation: hojaSube 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
-    will-change: transform;
+    /* La animación de entrada la pone y quita deslizar-modal.js con la clase
+       .hoja-entrando. En reposo la hoja NO tiene animación.
+
+       will-change y overscroll-behavior importan por el título: will-change
+       equivale a un transform, y un transform crea un bloque contenedor que
+       ROMPE el position:sticky de los hijos. Con will-change: transform
+       siempre puesto, el título dejaba de quedar fijo y en el iPhone se
+       veía el contenido por detrás. Es el bug que reportó Samir.
+
+       No volver a poner `animation: ... both` acá: el "both" incluye
+       forwards, o sea que el transform final se queda pegado para siempre,
+       y eso rompe el sticky igual que will-change. */
+    animation: none;
+    will-change: auto;
+    overscroll-behavior: contain;
   }
 
   /* El título queda fijo arriba mientras el contenido se desplaza, que es
      lo que hace un app de verdad. Sin esto el título se va con el scroll. */
   .modal-head {
     position: sticky;
-    top: -6px;
+    top: 0;
     z-index: 3;
-    margin: 0 -16px 4px;
+    margin: 0 -16px 0;
     padding: 14px 16px 10px;
     background: var(--card);
+    border-bottom: 1px solid var(--line);
+    box-shadow: 0 6px 12px -10px rgba(15, 23, 42, 0.45);
     border-radius: 22px 22px 0 0;
+    touch-action: pan-y;
   }
 
   /* El "asa": la barrita que uno arrastra para cerrar. */

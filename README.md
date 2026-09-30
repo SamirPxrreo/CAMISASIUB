@@ -41,7 +41,8 @@ llenar con el celular en la mano.
 | 🗑️ **Papelera** | Borrar un pedido es reversible: se puede restaurar, borrar uno para siempre o vaciarla |
 | 🔔 **Avisos** | Cuando la otra persona guarda algo, sale un aviso. No se actualiza solo: tú decides cuándo |
 | 🔎 **Buscador global** | `Ctrl+K` desde cualquier pantalla |
-| 🌙 **Tema claro y oscuro** | Los dos se ven bien, medidos con contraste WCAG |
+| 🌙 **Tema claro y oscuro** | Los dos se ven bien, medidos con contraste WCAG (372 mediciones, 0 problemas) |
+| 📱 **En el celular** | Los modales bajan como hojas nativas, con la barrita para arrastrar y cerrar. El título queda fijo mientras se desplaza |
 | 👥 **Roles** | Administrador y vendedor, con lo que cada uno puede ver |
 
 ### Los estados de un pedido
@@ -52,6 +53,10 @@ Cada estado tiene su color, y cada camisa lleva el suyo. El estado que se
 guarda a nivel de pedido es **el más atrasado** de todas sus camisas, para que
 al ordenar por estado no se pierda nada.
 
+El botón de estado va **sólido** con su color, no en tinte: en la columna
+"Estado" se ve de un vistazo en qué va cada pedido. Los seis colores están
+medidos contra su fondo en los dos temas (mínimo 4.5:1).
+
 ---
 
 ## Cómo está hecho
@@ -61,12 +66,26 @@ son los CDNs de Supabase, SheetJS y ExcelJS, cargados en el `<head>`. No hay
 paso de compilación: se edita el archivo, se sube, se publica.
 
 ```
-index.html          Estructura: login, sidebar, secciones, modales
-app.v2.js           Toda la lógica (Supabase, cálculos, renders)
-enhance.v2.js       Mejoras de presentación, sin lógica de negocio
-styles.v2.css       Todo el diseño: claro/oscuro, responsive, impresión
-migracion.sql       Migraciones de Supabase
-PROYECTO.md         Documentación técnica completa
+index.html                    Estructura: login, sidebar, secciones, los 11 modales
+app.v2.js                     Toda la lógica (Supabase, cálculos, renders)
+enhance.v2.js                 Mejoras de presentación, sin lógica de negocio
+deslizar-modal.js             Arrastrar la hoja del celular para cerrarla
+styles.v2.css                 El CSS que se sirve (incluye el diseño v3 al final)
+
+redesign-v3.css               Fuente del diseño. SE EDITA ESTE, no styles.v2.css
+estados-v3.css                Colores por estado del pedido
+hoja-modal.css                Fuente de los modales estilo celular
+aplicar-diseno.js             Pega el diseño v3 en styles.v2.css (--quitar lo saca)
+
+migracion.sql                 Esquema de Supabase
+aplicar-paso-*.sql            Migraciones por paso (casi todas ya ejecutadas)
+revisar-sql.js                Linter de SQL: correr antes de pegar en Supabase
+verificar-seguridad.js        Comprueba que la anon key no lee ni escribe
+preparar-despliegue.js        Cambia el ?v= de los scripts (parte del deploy)
+clean-deployments.ps1         Deja 3 deployments en GitHub Pages
+
+AGENTS.md                     Leer antes de tocar nada: reglas y trampas
+PROYECTO.md                   Documentación técnica completa
 ```
 
 ### Correrlo en local
@@ -85,8 +104,43 @@ Si prefieres servirlo por HTTP (recomendado, algunos navegadores son más
 estrictos con `file://`):
 
 ```bash
-npx serve .
+npx serve .              # queda en el puerto 3000 por defecto
 ```
+
+**Para probarlo en el celular**, que es como más se usa, hay que abrirlo por la
+IP de la compu y no por `localhost`:
+
+```bash
+npx serve -l 3400 .
+```
+
+y entrar desde el celular a `http://<IP-de-la-compu>:3400`. La IP se ve con
+`ipconfig` en Windows.
+
+> Ojo: por `http://192.168.x.x` el navegador **no** considera un contexto
+> seguro, y `navigator.clipboard` no existe. Por eso el botón "Copiar para
+> WhatsApp" tiene un camino de respaldo con un `textarea` oculto, y no solo la
+> API moderna.
+
+---
+
+## Migraciones de la base
+
+La base está en Supabase (Postgres). Los cambios de esquema están en
+`aplicar-paso-*.sql`, en orden. **Casi todas ya se ejecutaron**: están ahí
+como referencia del esquema, no se vuelven a correr.
+
+La única pendiente ahora es `aplicar-paso-8-hora-con-segundos.sql`, para que
+la hora se guarde con segundos (`HH:MM:SS`) y no solo con minutos.
+
+Antes de pegar cualquier cosa en el SQL Editor, pasarla por el linter:
+
+```bash
+node revisar-sql.js
+```
+
+Detecta variables no declaradas, `IF`/`END` desbalanceados, `jsonb` donde la
+columna es texto, y `COALESCE` faltantes.
 
 ---
 
@@ -142,12 +196,23 @@ $env:GH_TOKEN = "ghp_..."   # scope: repo
 
 ## Documentación
 
-**[PROYECTO.md](PROYECTO.md)** tiene todo el detalle técnico: la estructura del
-código, el modelo de datos, cada función de cálculo de dinero, el historial
-completo de cambios y los problemas conocidos que están pendientes.
+### Si vienes a trabajar en esto
 
-Ese archivo es la referencia para mantener la app. El README es solo la
-puerta de entrada.
+Lee primero **[AGENTS.md](AGENTS.md)**. Está escrito para que una IA (o una
+persona nueva) pueda trabajar acá sin saber nada del proyecto. Tiene:
+
+- Las reglas que no se rompen (no tocar el dinero sin preguntar, no subir sin
+  que lo pidan, no escribir datos de prueba).
+- **Las trampas que ya se pisaron**, con el porqué de cada una. Todas son
+  reales y cuestan tiempo: editar con PowerShell rompe los acentos, un
+  `transform` silencio rompe el `position: sticky`, `background-size` no
+  aplica a un color sólido, y varias más.
+- Cómo medir el contraste y cómo probar las reglas de celular sin un celular.
+- Lo que Samir decidió que **no** se haga, para no volver a proponerlo.
+
+Después, **[PROYECTO.md](PROYECTO.md)** tiene el detalle técnico a fondo: la
+estructura del código, el modelo de datos, cada función de cálculo de dinero, el
+historial completo de cambios y los problemas pendientes.
 
 ---
 

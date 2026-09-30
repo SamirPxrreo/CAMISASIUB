@@ -15,7 +15,18 @@ Aplicación web para controlar la venta de camisas del negocio de Samir y Valent
 | `styles.v2.css` | Todo el diseño (claro/oscuro, responsive, impresión). |
 | `app.v2.js` | **Toda la lógica**: Supabase, cálculos, renders. No tocar cálculos ni flujos de dinero sin confirmar. |
 | `enhance.v2.js` | Solo mejoras visuales (etiquetas móvil, animación de avisos). No tiene lógica de negocio. |
+| `deslizar-modal.js` | Arrastrar la hoja del celular para cerrarla. Solo presentación. |
 | `migracion.sql` | Migraciones de Supabase (ver sección 9). |
+| `aplicar-paso-*.sql` | Migraciones por paso. Casi todas ya ejecutadas (ver sección 9). |
+| `redesign-v3.css` | **Fuente** del diseño v3. Es el archivo que se edita, no `styles.v2.css`. |
+| `estados-v3.css` | Colores por estado del pedido. Se pega dentro de `redesign-v3.css`. |
+| `hoja-modal.css` | **Fuente** del bloque de modales estilo celular. |
+| `aplicar-diseno.js` | Pega el diseño v3 al final de `styles.v2.css`. `--quitar` lo saca. |
+| `auditar-contraste.js` | Mide el contraste (WCAG) de los dos temas. Se carga a mano en el navegador. |
+| `revisar-sql.js` | Linter de SQL, para correr antes de pegar algo en Supabase. |
+| `verificar-seguridad.js` | Comprueba que la anon key no lee ni escribe nada. |
+| `preparar-despliegue.js` | Cambia el `?v=` de los scripts. Parte del despliegue. |
+| `AGENTS.md` | **Leer antes de tocar nada.** Reglas, trampas conocidas y flujo. |
 | `PROYECTO.md` | Este documento. |
 | `backup/` | Copia de seguridad (ver sección 11). |
 
@@ -421,6 +432,30 @@ UPDATE ventas SET estado='Bordando' WHERE estado='Bordado';
 UPDATE ventas SET estado='Liquidado' WHERE estado='Pagado';
 ```
 
+### Pendiente de ejecutar: hora con segundos (2026-09-30)
+
+La función `guardar_abono_yesenia` rellenaba `compras_proveedor.hora` con
+`to_char(now() ..., 'HH24:MI')`, o sea **sin segundos**. Dos abonos del mismo
+minuto quedaban con la misma hora y no se distinguían al ordenar.
+
+La app ya manda y muestra `HH:MM:SS` (`horaColombia()` y `horaDeVenta()` en
+`app.v2.js`); faltaba que Postgres guardara los segundos también.
+
+Archivo: `aplicar-paso-8-hora-con-segundos.sql`. **El cuerpo de la función
+está copiado byte a byte del paso 7**, y lo único que cambia es el formato en
+los dos lugares (UPDATE e INSERT). La parte que reparte plata es idéntica, y
+eso se comprobó revirtiendo el cambio y comparando con el paso 7.
+
+```bash
+node revisar-sql.js   # pasarlo por el linter antes de pegarlo
+```
+
+La cabecera del .sql trae un `SELECT` que solo mira (no cambia nada) para
+revisar el tipo de la columna. En Postgres `TIME` sin precisión ya alcanza
+para guardar segundos (`TIME(0)` los guarda). Solo si la columna resulta ser
+`varchar` de 5 caracteres o menos hay que ensancharla primero, porque
+`"16:10:23"` son 8.
+
 ---
 
 ## 10. Convenciones y buenas prácticas para continuar
@@ -435,6 +470,10 @@ UPDATE ventas SET estado='Liquidado' WHERE estado='Pagado';
   ```
 - **No** tocar los archivos de `backup/`.
 - Antes de continuar, confirmar con el usuario (Samir) cualquier cambio que toque la lógica de dinero.
+- **Leer `AGENTS.md` antes de tocar nada.** Tiene la lista de trampas que ya se pisaron, con la explicación de por qué pasó cada una.
+- **El diseño se edita en `redesign-v3.css`, no en `styles.v2.css`.** Después se corre `node aplicar-diseno.js`, que lo pega al final. Ver sección 13 bis.
+- **Nunca dejar `will-change: transform` en reposo, ni `animation: ... both`.** Los dos dejan un `transform` permanente, y eso rompe el `position: sticky` de los hijos. Ver sección 14 bis.
+- **Medir el contraste antes de dar un color por bueno:** `await window.__auditarContraste()` (ver `auditar-contraste.js`).
 
 ---
 
@@ -653,12 +692,150 @@ El respaldo estaba en el `.catch()`, que solo se dispara si la promesa se **rech
 
 ---
 
+## 14 bis. Segunda tanda del 2026-09-30: encabezado fijo, segundos, tabla de usuarios
+
+Todo esto se verificó midiendo en el navegador, no a ojo. Los cuatro pedidos de Samir:
+
+| # | Pedido | Estado |
+|---|---|---|
+| 1 | El encabezado del modal que quede 100% fijo | **Arreglado**, con dos causas distintas |
+| 2 | La hora que guarde también segundos | **Arreglado en la app**; falta que Samir corra el SQL del paso 8 |
+| 3 | Achicar la columna "Acciones" de Configuración | **Arreglado** |
+| 3b | Cambiar los colores de ADMIN y VENDEDOR | **Arreglado**: ADMIN violeta, VENDEDOR gris |
+
+### 1) El encabezado del modal: DOS causas, no una
+
+Samir reportó que en el iPhone los textos de abajo se veían **detrás** del
+encabezado, como si el título fuera transparente. No era una sola cosa:
+
+**Causa 1 — `will-change: transform` estaba siempre.** En la hoja del celular
+había `will-change: transform` en estado de reposo, no solo durante el
+arrastre. `will-change: transform` se comporta **como si hubiera un
+transform**, y cualquier transform (aunque valga 0) convierte al elemento en
+**bloque contenedor**. Eso rompe el `position: sticky` de los hijos: el título
+dejaba de quedar fijo. Ahora es `will-change: auto`.
+
+**Causa 2 — `top: -6px`.** El título se pegaba 6px por encima del borde de la
+hoja, y por esa franja se veía pasar el contenido. Ahora es `top: 0`.
+
+También se le agrego `border-bottom` y una sombra, para que se lea que el
+título y el contenido son dos cosas separadas.
+
+**Medido:** con el contenido desplazado 600px, el título se movió **0px**.
+Y en reposo: `transform: none`, `will-change: auto`, `animation: none`.
+
+> La animación de entrada de la hoja (`.hoja-entrando`) SÍ lleva un
+> transform, pero es de 300ms y la clase se saca sola con un `setTimeout`.
+> Mientras se arrastra también hay transform, y eso es lo correcto: en iOS la
+> hoja sí se mueve. El problema era el de reposo.
+
+**Cuidado con esto:** el arreglo del `border-bottom` tuvo que ponerse
+**dos veces**. Una en el bloque de la hoja, y otra en el bloque del diseño
+v3, porque el diseño v3 tiene `.modal-head { border-bottom: none }` y va
+después, así que le ganaba. Es la misma trampa de especificidad de siempre,
+pero al revés: no es el diseño viejo pisando el arreglo, es el diseño
+**nuevo** pisando el arreglo.
+
+### El gesto: arrastrar desde el título con el contenido desplazado
+
+Antes el arrastre solo arrancaba si el contenido estaba arriba del todo, así
+que si estabas scrolleado y arrastrabas el título no pasaba nada. Ahora, si
+el dedo empieza en el encabezado (o en el asa), el arrastre **siempre**
+vale: el encabezado está fijo, así que arrastrarlo no puede querer decir
+"desplazar".
+
+Y la hoja se **achica** hasta un 5% mientras la arrastrás, además de bajar.
+Es lo que hacen las hojas de iOS y comunica "la estoy cerrando".
+
+### 2) La hora con segundos
+
+Cuatro lugares en `app.v2.js`:
+
+- `horaColombia()` — la que se **guarda** en `compras_proveedor.hora` y `liquidaciones.hora`.
+- `horaDeVenta()` — la que se **muestra** de una venta.
+- La hora de la lista de ventas.
+- El fallback `00:00` de liquidaciones → `00:00:00`.
+
+**Medido:** `16:26:54` → `16:26:56` un segundo después. Y a medianoche da
+`00:05:07`, no `24:05:07` (que es el caso borde de `hour12: false`).
+
+En Postgres hay que correr `aplicar-paso-8-hora-con-segundos.sql` (ver
+sección 9). El cuerpo de la función va copiado byte a byte del paso 7: solo
+cambia el formato, en dos lugares. Se comprobó revirtiendo el cambio y
+comparando con el paso 7: la única diferencia es `HH24:MI` → `HH24:MI:SS`.
+
+### 3) La tabla de Configuración
+
+**Por qué estaba tan ancha:** `styles.v2.css` fuerza
+`min-width: 1800px` en **todas** las tablas, porque las de ventas y compras
+tienen muchas columnas. La de usuarios tiene cinco y ninguna es larga, así
+que quedaba estirada en un contenedor de 488px, con scroll lateral para
+leer "Acciones". Medido antes: 251 + 475 + 368 + 427 + 280 = **1801px**.
+
+Acortar solo la última columna no servía: el navegador le reparte el
+sobrante a las otras. Por eso van los dos cambios juntos:
+
+- `min-width: 720px` para esta tabla (de 1800px a **742px** con contenido real).
+- La columna "Acciones" con `width: 1px` + `white-space: nowrap`, que es el
+  truco clásico para que una columna se encoja hasta lo que necesitan sus
+  botones y no se reparta el sobrante. Quedó en **194px** (era 280px).
+
+Y un tercer detalle que apareció al ver el resultado: la última columna es
+`position: sticky` (lo pone el `.table-wrap` general, para que en las tablas
+grandes los botones siempre se vean). En esta tapaba las columnas del
+medio: se veía Nombre, Correo y Acciones, pero **"Rol / Permisos" quedaba
+debajo de Acciones**, justo lo que se quería mirar. Se anuló el sticky en
+esta tabla; con scroll horizontal normal se llega a todo, en orden.
+
+### 3b) Los colores de los roles
+
+ADMINISTRADOR usaba el verde de "Liquidado" y VENDEDOR el verde azulado de
+"Comprado": dos verdes muy parecidos que costaban de distinguir. Ahora hay
+clases propias (`.badge-rol.rol-admin` y `.rol-vendedor`):
+
+| | ADMIN | VENDEDOR |
+|---|---|---|
+| claro | violeta `#6d28d9`, **5.7:1** | gris `#475569`, **6.5:1** |
+| oscuro | violeta `#d8b4fe`, **7.7:1** | gris `#cbd5e1`, **9.0:1** |
+
+El violeta además es el color de la marca, así que ADMIN se lee como
+"esto es una excepción" y el gris como lo normal, sin competir por la
+atención.
+
+### Cómo se verificaron las reglas de celular sin un celular
+
+Las reglas de la hoja son de `@media (max-width: 720px)` y la ventana de
+prueba mide **1000px reales** (las capturas salen de 800 porque la
+herramienta las reescala; eso hizo creer que la ventana era de 800).
+
+El método que sí sirve: cambiarle **todos** los `@media (max-width: 720px)`
+del archivo a 1200px, medir, y revertir. La primera versión solo cambió el
+del bloque de la hoja y el borde del título seguía en 0px, porque el que
+importaba estaba en el bloque del diseño, con su propio `@media`.
+
+Y copiar el `cssText` de una regla `@media` **no** sirve: se copia el
+`@media` entero, que no matchea, y uno concluye que la regla está rota.
+
+**Lo que NO se puede verificar acá:** el comportamiento real en Safari de un
+iPhone. Los arreglos de `position: sticky` se comprobaron por medición, y
+Samir tiene que confirmarlos en el celular.
+
+### Verificación general
+
+- 372 mediciones de contraste en 6 secciones × 2 temas: **0 problemas**, peor **4.83** (mínimo 4.5).
+- Los modales abren sin errores de consola.
+- `node --check` limpio en `app.v2.js` y `deslizar-modal.js`.
+- Sin BOM, sin LF sueltos, sin texto dañado en ningún archivo.
+
+---
+
 ## 14. Resumen ejecutivo — qué queda pendiente (actualizado 2026-09-30)
 
 Si solo vas a leer una cosa de este documento, lee esto. Ordenado por lo que más duele.
 
 | # | Prioridad | Qué | Estado |
 |---|---|---|---|
+| 0 | 🔴 | **Correr `aplicar-paso-8-hora-con-segundos.sql` en Supabase.** La hora se guarda sin segundos hasta que se corra: la app ya manda `HH:MM:SS`, pero la función `guardar_abono_yesenia` sigue rellenando `HH24:MI`. La cabecera del .sql trae un `SELECT` que solo mira, para revisar el tipo de la columna antes. | Pendiente, lo corre Samir |
 | 1 | 🟠 | **`saveCompra` no es atómico.** N `UPDATE` secuenciales sin transacción: si se corta la señal en el tercero, quedan pedidos con `compra_id` y `abono_yesenia` a medias. **La opción 1 (validar en JS) se descartó por inútil**: valida y después vuelve a escribir, así que la ventana sigue ahí, y dobla las peticiones. Lo que falta es una **función de Postgres** que persista todo en una transacción. | Pendiente — agreed con Samir |
 | 2 | 🟡 | **`Shift+rueda`** no desplaza las 4 tablas de Resúmenes (los listeners se atan a las `.table-wrap` que ya existen al cargar; esas se crean después). | Pendiente, bajo riesgo |
 | 3 | 🟡 | **`xlsx@0.18.5`** con CVEs públicos sin parche (CDN en el `<head>`). | Pendiente, se puede quitar la librería |
