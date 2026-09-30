@@ -2070,20 +2070,74 @@
     return /^@/.test(String(tel || '').trim());
   }
 
+  // Copia un texto al portapapeles y devuelve una promesa con true o false.
+  //
+  // Hay DOS caminos a propósito:
+  //
+  //   1) navigator.clipboard — la forma moderna. Solo existe en contexto
+  //      seguro, o sea HTTPS o localhost. Desde el celular entrando por
+  //      http://192.168.1.x:3400 NO existe, y hay que usar el segundo.
+  //
+  //   2) textarea oculto + execCommand("copy") — está old pero funciona
+  //      también en HTTP. En el celular hay que hacerlo con cuidado:
+  //      el textarea va con readonly para que no se abra el teclado, y se
+  //      selecciona con setSelectionRange, porque en iOS el select() a secas
+  //      no selecciona nada.
+  //
+  // OJO: el respaldo NO puede vivir en un .catch() de la API moderna. Si
+  // navigator.clipboard no existe, la llamada lanza un TypeError antes de
+  // devolver nada, y el .catch() nunca se ejecuta. Ya pasó: el botón
+  // "Copiar para WhatsApp" no hacía nada en el celular por eso.
+  function copiarAlPortapapeles(texto) {
+    const contenido = String(texto == null ? '' : texto);
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(contenido)
+        .then(() => true)
+        .catch(() => respaldoCopiar(contenido));
+    }
+    return Promise.resolve(respaldoCopiar(contenido));
+  }
+
+  // Segundo camino: el textarea oculto. Devuelve true o false de verdad,
+  // sin mentir: execCommand devuelve false cuando nocopió.
+  function respaldoCopiar(texto) {
+    const ta = document.createElement('textarea');
+    ta.value = texto;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.top = '0';
+    ta.style.left = '0';
+    ta.style.width = '1px';
+    ta.style.height = '1px';
+    ta.style.padding = '0';
+    ta.style.border = 'none';
+    ta.style.outline = 'none';
+    ta.style.boxShadow = 'none';
+    ta.style.background = 'transparent';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    try {
+      ta.focus();
+      ta.select();
+      ta.setSelectionRange(0, texto.length);
+      return document.execCommand("copy");
+    } catch (e) {
+      return false;
+    } finally {
+      ta.remove();
+    }
+  }
+
   function copiarUsuarioWhatsApp(usuario) {
     const user = String(usuario || '').trim();
-    const avisar = () => mostrarToast('Usuario ' + user + ' copiado. Búscalo en WhatsApp: Chats > Nuevo chat > buscar.');
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(user).then(avisar).catch(avisar);
-    } else {
-      const ta = document.createElement('textarea');
-      ta.value = user;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      ta.remove();
-      avisar();
-    }
+    copiarAlPortapapeles(user).then(ok => {
+      if (ok) {
+        mostrarToast('Usuario ' + user + ' copiado. Búscalo en WhatsApp: Chats > Nuevo chat > buscar.');
+      } else {
+        mostrarToast('No se pudo copiar. Copiá el usuario a mano: ' + user, 'error');
+      }
+    });
   }
 
   // Clave única del cliente para agrupar pedidos del mismo contacto.
@@ -2156,16 +2210,12 @@
 
   function copiarWhatsApp(msg) {
     const texto = decodeURIComponent(msg);
-    navigator.clipboard.writeText(texto).then(() => {
-      mostrarToast('✅ Mensaje copiado al portapapeles. Pégalo en WhatsApp.');
-    }).catch(() => {
-      const ta = document.createElement('textarea');
-      ta.value = texto;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      ta.remove();
-      mostrarToast('✅ Mensaje copiado. Pégalo en WhatsApp.');
+    copiarAlPortapapeles(texto).then(ok => {
+      if (ok) {
+        mostrarToast('✅ Mensaje copiado al portapapeles. Pégalo en WhatsApp.');
+      } else {
+        mostrarToast('No se pudo copiar. Abrí el pedido y copiá el texto a mano.', 'error');
+      }
     });
   }
 
@@ -6017,11 +6067,35 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
       }).join('');
     }
 
+    pintarSelectsEstado();
+
     const modal = document.getElementById('estados-camisa-modal');
     if (modal) {
       modal.classList.remove('hidden');
       bloquearScrollFondo();
     }
+  }
+
+  // Pinta cada <select> con el color de su estado. Así, al elegir, se ve de
+  // inmediato a qué estado se está pasando la camisa.
+  //
+  // Solo pinta: no cambia el valor, no valida nada y no guarda nada. El
+  // guardado sigue siendo de guardarEstadosCamisa, que no se toca. Los
+  // colores están en el CSS del diseño v3, una regla por estado.
+  function pintarSelectsEstado() {
+    document.querySelectorAll('#estados-camisa-lista .estado-camisa-select').forEach(s => {
+      // Se quitan TODAS las clases de estado antes de poner la nueva: si un
+      // select cambia de "Pedido" a "Bordando" no debe quedar con las dos.
+      s.classList.remove(
+        'estado-Pedido', 'estado-Comprado', 'estado-Bordando',
+        'estado-Listo-para-entrega', 'estado-Entregado', 'estado-Liquidado'
+      );
+      s.classList.add(claseEstado(s.value));
+      if (!s.dataset.pintado) {
+        s.dataset.pintado = '1';
+        s.addEventListener('change', pintarSelectsEstado);
+      }
+    });
   }
 
   function cerrarModalEstadosCamisa() {

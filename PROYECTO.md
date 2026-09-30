@@ -576,7 +576,84 @@ UPDATE ventas SET estado='Liquidado' WHERE estado='Pagado';
 
 ---
 
-## 14. Resumen ejecutivo — qué queda pendiente (actualizado 2026-09-29)
+## 13 bis. REDISEÑO VISUAL v3 (2026-09-30)
+
+Samir pidió un cambio **drastico** de diseño. Se hizo entero en CSS, sin tocar ni una línea de la lógica: la app es el mismo negocio con otra ropa. Va **al final** de `styles.v2.css`, en un bloque marcado `REDISEÑO VISUAL v3`.
+
+**Cómo se vuelve atrás:** `node aplicar-diseno.js --quitar`. Borra el bloque y los colores viejos vuelven. También `node aplicar-diseno.js` lo vuelve a poner.
+
+### Archivos
+
+| Archivo | Qué es |
+|---|---|
+| `redesign-v3.css` | El diseño: paleta, tipografía, botones, tablas, modales. |
+| `estados-v3.css` | Los colores por estado (botón y insignia). Se pega dentro de `redesign-v3.css`. |
+| `aplicar-diseno.js` | Pega el bloque al final de `styles.v2.css`, o lo quita con `--quitar`. **Node, no PowerShell.** |
+| `auditar-contraste.js` | Mide el contraste (WCAG) de los dos temas. Se carga a mano en el navegador: `await window.__auditarContraste()`. |
+| `hoja-modal.css` | Los modales que suben desde abajo. Ya está incluido dentro de `styles.v2.css`. |
+| `deslizar-modal.js` | Arrastrar hacia abajo para cerrar el modal. Solo presentación. |
+
+### Lo que se cambió
+
+- **Paleta**: del cálido de bordado (crema, oro) a un gris frío con acento violeta. El dorado sigue como acento secundario.
+- **Tipografía y espaciado** con más contraste, sombras azuladas (antes marrones, que sobre fondo crema se veían sucias), esquinas más generosas.
+- **Barra lateral** con el ítem activo que sí se nota.
+- **Celular**: botones más grandes y campos a 16px (con menos, iOS hace zoom solo al escribir).
+- **El botón de estado** va **sólido** con el color de su estado, en vez de tinte. Antes el rediseño se lo había tapado con el color violeta de `.btn-small` y la columna había quedado toda igual.
+- **Los `<select>` del modal de estados** también llevan su color. Antes salían del color genérico de campo.
+
+### Errores reales que aparecieron al medir (no se suponían)
+
+| Problema | Medido | Por qué |
+|---|---|---|
+| Violeta oscuro en los botones | 3.51:1 | El color nuevo en oscuro quedaba corto. Va `--thread: #818cf8` con tinta casi negra. |
+| Botón dorado con texto blanco | 3.2:1 | **El mismo error ya documentado en la entrada 61.** El dorado es claro: la letra va oscura. |
+| Página actual en oscuro | 2.98:1 | El CSS viejo (línea 2197) lleva `!important` en fondo, texto y borde, y eso gana a cualquier regla normal. |
+| Guardar cambios, texto grande | 4.32:1 | El tinte violeta no daba contraste para texto de 17px. |
+| Botón dorado (nuevo) | 4.32:1 | Ídem, en claro. |
+
+**Resultado: 372 mediciones en 6 secciones x 2 temas, 0 problemas, peor 4.59** (el mínimo es 4.5).
+
+También se corrigieron restos de la paleta vieja que seguían winning por especificidad: `.badge-modelo.modelo-Nuevo` y `.modelo-Viejo` seguían con el tinte azul y dorado originales.
+
+### Tres cosas que PARECEN bugs y no lo son
+
+1. **Las capturas de este entorno mienten.** En una, el modal salió transparente. Se comprobó con `elementFromPoint`: la tarjeta está opaca y arriba de todo. Es un fallo de render del navegador sin cabeza, de la misma familia que el reloj de animación congelado. No se "arregló" nada porque no había nada que arreglar.
+2. **Las transiciones también están congeladas** en este entorno. Al cambiar de tema, el `body` se queda pegado en el color viejo y mide 1.07:1 en vez de 15. `auditar-contraste.js` apaga transiciones y animaciones antes de medir, por eso.
+3. **Un `linear-gradient` no se mide con `backgroundColor`**: queda `transparent` y el medidor se sube al padre, mide blanco contra blanco y reporta 1.09, que no existe. `auditar-contraste.js` detecta los gradientes y los marca para revisarlos a mano.
+
+### El asa del modal (la barrita para arrastrar)
+
+Samir pidió que la barrita quedara **arriba del título**, no al lado. Dos causas, ambas reales:
+
+1. **`.modal-head` es `display: flex`** (para poner la X al otro lado del título). Y en un contenedor flex el `::before` no es un bloque arriba: es **un ítem más de la fila**, así que se acomodaba al lado. El arreglo es `flex-wrap: wrap` + `flex: 0 0 100%` en el asa, sin tocar el HTML.
+2. **`background-size` solo manda sobre imágenes de fondo.** El asa se armó con `background: var(--asa) center / 40px 5px no-repeat`, que suena a "barrita de 40px centrada", pero un **color sólido no tiene tamaño**: se pintaba en todo el cajón de 356px. Se arregló pintándola con un gradiente de un solo color, que sí es imagen. El comentario en el CSS avisa para que nadie lo "simplifique" de vuelta.
+
+Además el asa era invisible: usaba `var(--line)` = `#e4e7f0` sobre blanco, 1.1:1. Ahora tiene color propio (`--asa`), 2.9:1 en claro y 3.6:1 en oscuro.
+
+Y se le agregó `content: ''` a la regla nueva, que antes dependía de la regla vieja del `@media` de 720px. Funcionaba por casualidad; si esa regla se borraba, el asa desaparecía **sin dar ningún error**.
+
+### Cómo ver el diseño del celular en la compu
+
+Las reglas del asa son de `@media (max-width: 720px)`, y en una pantalla de 800px no se ven. Para revisarlas en la compu hay que subir ese breakpoint a 900px **temporalmente**, mirar, y volverlo a 720px. Se hizo así para probar y se revirtió (verificado: no queda rastro).
+
+### Copiar para WhatsApp del inicio
+
+Samir reportó que no le dejaba copiar la descripción del pedido. **Era un bug real de código:**
+
+```js
+navigator.clipboard.writeText(texto).then(...).catch(respaldo)
+```
+
+El respaldo estaba en el `.catch()`, que solo se dispara si la promesa se **rechaza**. Pero `navigator.clipboard` **no existe** fuera de contexto seguro (HTTPS o localhost), y ahí la llamada lanza un `TypeError` antes de devolver nada: nunca hay promesa y el respaldo nunca corre. En la compu (localhost) funcionaba; desde el celular por `http://192.168.1.x` no.
+
+`copiarUsuarioWhatsApp` sí tenía la comprobación `if (navigator.clipboard && ...)`, por eso ese botón sí funcionaba y este no.
+
+**Arreglo:** un solo camino para las dos, `copiarAlPortapapeles(texto)`, con dos intentos: la API moderna si existe, y si no un `textarea` oculto + `execCommand('copy')`. En el celular el textarea va con `readonly` (para que no salte el teclado) y se selecciona con `setSelectionRange`, porque en iOS el `select()` a secas no selecciona nada. Y si los dos fallan, **se avisa** en vez de fingir que se copió.
+
+---
+
+## 14. Resumen ejecutivo — qué queda pendiente (actualizado 2026-09-30)
 
 Si solo vas a leer una cosa de este documento, lee esto. Ordenado por lo que más duele.
 
@@ -605,5 +682,6 @@ Si solo vas a leer una cosa de este documento, lee esto. Ordenado por lo que má
 - La sincronización en tiempo real se retiró (entrada 53): a Samir no le gustó cómo se comportaba dentro de la página.
 - No se tocó `supabase_realtime` (las 4 tablas siguen ahí): sin clientes suscritos no cuesta nada.
 - No se filtró filas por usuario a nivel de RLS: con dos personas que se conocen, el filtro en la app es suficiente y la alternativa añade complejidad y riesgo.
+- **Rediseño visual v3 (2026-09-30):** se hizo, es solo CSS, y se deshace con `node aplicar-diseno.js --quitar`. La lógica no se tocó (entrada 13 bis).
 - **No rediseñar la lista de abonos**: se intentó con tarjetas y se revirtió (entrada 70). La tabla se queda como estaba.
 - **No copiar el formulario para el modal de edición**: se mueve el nodo, para no duplicar IDs (entrada 64).

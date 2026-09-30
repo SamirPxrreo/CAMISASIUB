@@ -1,0 +1,105 @@
+/* Botón de estado del pedido + insignias.
+   Va aparte porque el bloque del rediseño es largo y las herramientas de
+   edición se traban con tanto texto. Este archivo se pega dentro de
+   redesign-v3.css con unir-redesign.js. */
+
+/* ══════════════════════════════════════════════════════════════════════════
+   BOTÓN DE ESTADO DEL PEDIDO
+   El color del estado es información, no adorno: en la columna "Estado" hay
+   que ver de un vistazo en qué va cada pedido. Por eso el botón va SÓLIDO con
+   el color del estado, y el texto encima lleva el tono que contrasta con él.
+
+   POR QUÉ HACE FALTA: el selector de estado heredaba su color de las clases
+   `.estado-*` (fondo translúcido + texto de color). Al poner `.btn-small` con
+   color violeta fijo, esa regla quedó tapada y la columna perdió los colores.
+   Esto los devuelve, y más fuerte: sólido en vez de tinte.
+
+   CLARO -> fondo saturado oscuro + texto blanco.
+   OSCURO -> fondo claro + tinta casi negra, que "florece" sobre fondo oscuro.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* El "Mixto" no es un estado del flujo: es una advertencia. */
+.estado-camisa-btn {
+  font-weight: 700;
+  border-width: 1.5px;
+  padding: 9px 12px;
+  min-width: 124px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  text-align: left;
+}
+.estado-camisa-btn:hover { filter: brightness(0.94); box-shadow: var(--shadow-sm); }
+.estado-camisa-btn:active { filter: brightness(0.9); }
+
+.estado-camisa-btn.estado-Pedido              { background: #b45309; color: #ffffff; border-color: #b45309; }
+.estado-camisa-btn.estado-Comprado           { background: #0f766e; color: #ffffff; border-color: #0f766e; }
+.estado-camisa-btn.estado-Bordando           { background: #6d28d9; color: #ffffff; border-color: #6d28d9; }
+.estado-camisa-btn.estado-Listo-para-entrega { background: #3f6212; color: #ffffff; border-color: #3f6212; }
+.estado-camisa-btn.estado-Entregado           { background: #1d4ed8; color: #ffffff; border-color: #1d4ed8; }
+.estado-camisa-btn.estado-Liquidado          { background: #047857; color: #ffffff; border-color: #047857; }
+
+[data-theme="dark"] .estado-camisa-btn.estado-Pedido              { background: #fbbf24; color: #1c1917; border-color: #fbbf24; }
+[data-theme="dark"] .estado-camisa-btn.estado-Comprado           { background: #5eead4; color: #04302b; border-color: #5eead4; }
+[data-theme="dark"] .estado-camisa-btn.estado-Bordando           { background: #c084fc; color: #2a0a45; border-color: #c084fc; }
+[data-theme="dark"] .estado-camisa-btn.estado-Listo-para-entrega { background: #a3e635; color: #1a2405; border-color: #a3e635; }
+[data-theme="dark"] .estado-camisa-btn.estado-Entregado           { background: #93c5fd; color: #06203f; border-color: #93c5fd; }
+[data-theme="dark"] .estado-camisa-btn.estado-Liquidado          { background: #6ee7b7; color: #022c22; border-color: #6ee7b7; }
+
+/* Los <select> del modal "estados por camisa" también llevan su color, para
+   que al elegir se vea a qué estado se está pasando. */
+select.estado-camisa-select.estado-Pedido              { background: #b45309; color: #ffffff; border-color: #b45309; }
+select.estado-camisa-select.estado-Comprado           { background: #0f766e; color: #ffffff; border-color: #0f766e; }
+select.estado-camisa-select.estado-Bordando           { background: #6d28d9; color: #ffffff; border-color: #6d28d9; }
+select.estado-camisa-select.estado-Listo-para-entrega { background: #3f6212; color: #ffffff; border-color: #3f6212; }
+select.estado-camisa-select.estado-Entregado           { background: #1d4ed8; color: #ffffff; border-color: #1d4ed8; }
+select.estado-camisa-select.estado-Liquidado          { background: #047857; color: #ffffff; border-color: #047857; }
+
+[data-theme="dark"] select.estado-camisa-select.estado-Pedido              { background: #fbbf24; color: #1c1917; }
+[data-theme="dark"] select.estado-camisa-select.estado-Comprado           { background: #5eead4; color: #04302b; }
+[data-theme="dark"] select.estado-camisa-select.estado-Bordando           { background: #c084fc; color: #2a0a45; }
+[data-theme="dark"] select.estado-camisa-select.estado-Listo-para-entrega { background: #a3e635; color: #1a2405; }
+[data-theme="dark"] select.estado-camisa-select.estado-Entregado           { background: #93c5fd; color: #06203f; }
+[data-theme="dark"] select.estado-camisa-select.estado-Liquidado          { background: #6ee7b7; color: #022c22; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   INSIGNIAS DE ESTADO (las chiquitas de la tabla y el Historial)
+   Estas sí quedan con fondo translúcido: son información secundaria, y poner
+   un bloque de color sólido en cada fila haría la tabla ilegible.
+   ══════════════════════════════════════════════════════════════════════════ */
+.badge-estado {
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.badge-estado.estado-Pedido              { background: rgba(180, 83, 9, 0.13);  color: #92400e; border-color: rgba(180, 83, 9, 0.25); }
+.badge-estado.estado-Comprado           { background: rgba(15, 118, 110, 0.13); color: #0f766e; border-color: rgba(15, 118, 110, 0.25); }
+.badge-estado.estado-Bordando           { background: rgba(109, 40, 217, 0.13); color: #6d28d9; border-color: rgba(109, 40, 217, 0.25); }
+.badge-estado.estado-Listo-para-entrega { background: rgba(63, 98, 18, 0.14);   color: #3f6212; border-color: rgba(63, 98, 18, 0.25); }
+.badge-estado.estado-Entregado           { background: rgba(29, 78, 216, 0.12);  color: #1d4ed8; border-color: rgba(29, 78, 216, 0.25); }
+.badge-estado.estado-Liquidado          { background: rgba(4, 120, 87, 0.12);   color: #047857; border-color: rgba(4, 120, 87, 0.25); }
+
+[data-theme="dark"] .badge-estado.estado-Pedido              { background: rgba(251, 191, 36, 0.15); color: #fcd34d; border-color: rgba(251, 191, 36, 0.3); }
+[data-theme="dark"] .badge-estado.estado-Comprado           { background: rgba(94, 234, 212, 0.14); color: #5eead4; border-color: rgba(94, 234, 212, 0.3); }
+[data-theme="dark"] .badge-estado.estado-Bordando           { background: rgba(192, 132, 252, 0.15); color: #d8b4fe; border-color: rgba(192, 132, 252, 0.3); }
+[data-theme="dark"] .badge-estado.estado-Listo-para-entrega { background: rgba(163, 230, 53, 0.14);  color: #bef264; border-color: rgba(163, 230, 53, 0.3); }
+[data-theme="dark"] .badge-estado.estado-Entregado           { background: rgba(147, 197, 253, 0.14); color: #93c5fd; border-color: rgba(147, 197, 253, 0.3); }
+[data-theme="dark"] .badge-estado.estado-Liquidado          { background: rgba(110, 231, 183, 0.14); color: #6ee7b7; border-color: rgba(110, 231, 183, 0.3); }
+
+.badge-modelo {
+  border-radius: 7px;
+  padding: 3px 8px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  background: var(--thread-soft);
+  color: var(--thread);
+  border: 1px solid var(--line);
+}
+.modelo-Nuevo { background: var(--gold-soft); color: var(--gold-ink); border-color: var(--gold); }

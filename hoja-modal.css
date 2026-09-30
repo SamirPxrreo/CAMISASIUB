@@ -1,0 +1,105 @@
+
+/* ══════════════════════════════════════════════════════════════
+   MODALES ESTILO APP NATIVA (solo teléfono)
+   ══════════════════════════════════════════════════════════════
+   En el computador los modales siguen igual: centrados, como siempre.
+   Solo en pantallas chicas (hasta 720px) el modal se convierte en una
+   "hoja" que sube desde abajo, como las de un celular, y se puede cerrar
+   deslizando hacia abajo con el dedo.
+
+   Nada de esto usa React ni librerías: es CSS puro. La lógica de arrastrar
+   está en enhance.v2.js.
+
+   POR QUÉ `max-width: 100% !important`:
+   cada modal tiene su propio ancho (.modal-card-narrow 440px,
+   .modal-card-wide 780px, .modal-card-huge 1180px). En el teléfono
+   queremos que TODOS ocupen el ancho completo, y sin `!important` la
+   regla de la variante gana por especificidad aunque venga después.
+   Es la misma trampa del `.btn-small` documentada en PROYECTO.md.
+   ────────────────────────────────────────────────────────────── */
+
+@media (max-width: 720px) {
+  .modal-backdrop {
+    align-items: flex-end;
+    padding: 0;
+    background: rgba(20, 24, 52, 0.45);
+  }
+
+  .modal-card {
+    width: 100%;
+    max-width: 100% !important;
+    margin: 0;
+    border-radius: 22px 22px 0 0;
+    border-bottom: none;
+    padding: 6px 16px calc(18px + env(safe-area-inset-bottom, 0px));
+    max-height: 92vh;
+    /* Se reemplaza la animación de "pop" por la de subir desde abajo. */
+    animation: hojaSube 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    will-change: transform;
+  }
+
+  /* El título queda fijo arriba mientras el contenido se desplaza, que es
+     lo que hace un app de verdad. Sin esto el título se va con el scroll. */
+  .modal-head {
+    position: sticky;
+    top: -6px;
+    z-index: 3;
+    margin: 0 -16px 4px;
+    padding: 14px 16px 10px;
+    background: var(--card);
+    border-radius: 22px 22px 0 0;
+  }
+
+  /* El "asa": la barrita que uno arrastra para cerrar. */
+  .modal-head::before {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 4px;
+    margin: 0 auto 12px;
+    border-radius: 999px;
+    background: var(--line);
+  }
+
+  /* La X se ve más chica y al lado, como en los celular. */
+  .modal-x {
+    padding: 4px 8px;
+    font-size: 15px;
+  }
+
+  /* El cuerpo del modal de edición: en el teléfono manda la hoja, no él. */
+  #editar-modal-body {
+    max-height: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Errores y toasts suben un poco para no quedar debajo de la hoja. */
+  @keyframes hojaSube {
+    from { transform: translateY(100%); }
+    to   { transform: translateY(0); }
+  }
+
+  @keyframes hojaCierra {
+    from { transform: translateY(0); }
+    to   { transform: translateY(100%); }
+  }
+
+  /* Se pone mientras se arrastra: sin transición para que el dedo mande. */
+  .modal-card.arrastrando {
+    animation: none;
+    transition: none;
+  }
+
+  /* Se pone al soltar para que se vaya sola. */
+  .modal-card.cerrando {
+    animation: hojaCierra 200ms cubic-bezier(0.4, 0, 1, 1) both;
+  }
+
+  /* Botones un poco más grandes: en el celular el dedo es más grande que
+     el mouse, y los botones chicos fallan deuto. */
+  .form-actions .btn {
+    flex: 1 1 auto;
+    padding: 13px 16px;
+  }
+}

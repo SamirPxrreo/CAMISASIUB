@@ -1,0 +1,898 @@
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ╔═══════════════════════════════════════════════════════════════════════╗
+   ║  REDISEÑO VISUAL v3 — SOLO PRUEBA LOCAL                            ║
+   ╚═══════════════════════════════════════════════════════════════════════╝
+
+   QUÉ ES ESTO
+   Un bloque de CSS que va AL FINAL del archivo y REESCRIBE el aspecto de
+   toda la app. No se tocó ni una línea de HTML ni de JavaScript: la lógica
+   del negocio, los cálculos de dinero y la base de datos quedan intactos.
+   Por eso es seguro: aquí no se puede romper nada de los datos.
+
+   POR QUÉ AL FINAL Y NO MODIFICAR EL CSS VIEJO
+   CSS aplica "la última regla que gana" cuando dos reglas empatan. Poniendo
+   el rediseño al final, gana sin tener que reescribir 3.000 líneas. Y para
+   volver atrás basta con borrar TODO este bloque (desde la línea de ═══ hasta
+   el final del archivo). Es reversible en un segundo.
+
+   SI NO TE GUSTA
+   Decime y borro este bloque. Los colores viejos vuelven como por magia.
+   ────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* ── Color ─────────────────────────────────────────────────────────────
+     Se pasa del "cálido de bordado" (beige, crema, oro) a un gris frío con
+     acento violeta. Sigue siendo serio y de trabajo, pero se ve como app
+     de 2026 y no como página de 2019. */
+  --ink: #0f172a;          /* texto principal. Sobre blanco ≈ 17:1 */
+  --ink-soft: #334155;
+  --muted: #5b6478;        /* texto secundario. Sobre blanco ≈ 5.8:1 */
+  --paper: #f4f5f9;        /* fondo de la página */
+  --card: #ffffff;
+  --line: #e4e7f0;
+  --line-soft: #eef0f6;
+  --section-bg: #fafbfe;
+
+  --thread: #4f46e5;       /* violeta. Botón primario con texto blanco ≈ 6.4:1 */
+  --thread-dark: #4338ca;
+  --thread-soft: #eef2ff;
+
+  --gold: #d97706;
+  --gold-soft: #fef3c7;
+  --gold-ink: #92400e;     /* dorado oscuro para TEXTO (nunca para fondo) */
+
+  --ok: #047857;
+  --ok-ink: #065f46;
+  --ok-soft: #ecfdf5;
+  --warn: #dc2626;
+  --warn-ink: #b91c1c;
+  --warn-soft: #fef2f2;
+  --teal: #0d9488;
+  --teal-ink: #0f766e;
+
+  --info-ink: #1d4ed8;
+
+  /* Estados del pedido. Los mismos nombres, valores nuevos y todos medidos
+     contra su fondo tintado (verificado en el navegador, min 4.5:1). */
+  --estado-pedido: var(--gold-ink);
+  --estado-comprado: var(--teal-ink);
+  --estado-bordando: #6d28d9;
+  --estado-listo: #3f6212;
+  --estado-entregado: var(--info-ink);
+  --estado-liquidado: var(--ok-ink);
+
+  --input-bg: #ffffff;
+  --table-hover: #f8f9fd;
+  --accent-bg: #f1f3f9;
+  --shadow: rgba(15, 23, 42, 0.08);
+
+  --font-display: 'Sora', 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-body: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+
+  /* Sombras: antes eran marrones (rgba(80,60,30)) porque el fondo era crema.
+     Ahora el fondo es frío, así que las sombras son azuladas. Mezclar tonos
+     de sombra con el fondo es lo que hace que un diseño se vea "sucio". */
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 2px 4px rgba(15, 23, 42, 0.04), 0 8px 20px rgba(15, 23, 42, 0.07);
+  --shadow-lg: 0 8px 20px rgba(15, 23, 42, 0.10), 0 24px 48px rgba(15, 23, 42, 0.12);
+  --ring: 0 0 0 3px rgba(79, 70, 229, 0.22);
+
+  /* Radios más generosos: la app se siente "blanda" en vez de "dura". */
+  /* El asa del modal: la barrita para arrastrar y cerrar. Va con su
+     propio color porque var(--line) sobre la tarjeta blanca apenas marcaba
+     1.1:1 y la barra era invisible. Este color da 2.9:1, que sí se ve sin
+     quedar pesado. */
+  --asa: #8d97ab;
+
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+[data-theme="dark"] {
+  /* En oscuro el fondo es casi negro azulado, no gris: hace que las
+     superficies con brillo (botones, chips) resalten de verdad. */
+  --ink: #eef2ff;
+  --ink-soft: #cbd5e1;
+  --muted: #94a3b8;
+  --paper: #0a0f1e;
+  --card: #121a2e;
+  --line: #25304d;
+  --line-soft: #1c2540;
+  --section-bg: #0f1729;
+
+  /* En oscuro el violeta tiene que ser CLARO: es el color de fondo de los
+     botones, y con texto blanco encima un violeta oscuro no llega a 4.5:1
+     (medido: #6366f1 con texto claro daba 3.51). Con #818cf8 y tinta casi
+     negra da 6.2:1, y además el botón "florece" sobre el fondo oscuro. */
+  --thread: #818cf8;
+  --thread-dark: #a5b0ff;
+  --thread-soft: #1e1b4b;
+
+  --gold: #f59e0b;
+  --gold-soft: #3b2607;
+  --gold-ink: #fbbf24;
+
+  --ok: #10b981;
+  --ok-ink: #34d399;
+  --ok-soft: #052e23;
+  --warn: #f87171;
+  --warn-ink: #fca5a5;
+  --warn-soft: #3b0d0d;
+  --teal: #2dd4bf;
+  --teal-ink: #5eead4;
+  --info-ink: #93c5fd;
+
+  --estado-bordando: #c084fc;
+  --estado-listo: #7cb342;
+  --estado-entregado: #93c5fd;
+  --estado-liquidado: #6ee7b7;
+
+  --input-bg: #0d1424;
+  --table-hover: #172038;
+  --accent-bg: #17203a;
+  --shadow: rgba(0, 0, 0, 0.5);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.3), 0 8px 20px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 20px rgba(0, 0, 0, 0.45), 0 24px 48px rgba(0, 0, 0, 0.5);
+  --ring: 0 0 0 3px rgba(129, 140, 248, 0.35);
+
+  /* En oscuro el asa tiene que ser MÁS CLARA que la tarjeta, no más oscura.
+     Contra la tarjeta #121a2e este color da 3.6:1. */
+  --asa: #64748b;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   TIPOGRAFÍA
+   Más contraste entre tamaños y pesos. Antes todo se veía del mismo tamaño
+   y por eso "no se notaba el cambio" en ninguna parte.
+   ══════════════════════════════════════════════════════════════════════════ */
+body {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.page-title {
+  font-size: 27px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  padding-bottom: 0;
+}
+.page-title::after {
+  width: 54px;
+  height: 5px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--thread), var(--gold));
+}
+
+.page-sub {
+  font-size: 14.5px;
+  color: var(--muted);
+  line-height: 1.65;
+  margin-top: 8px;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  margin-top: 34px;
+}
+
+.form-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+}
+
+label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  margin: 16px 0 7px;
+}
+.label-required::after { color: var(--warn); }
+
+.hint {
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 200ms var(--ease-out), transform 200ms var(--ease-out),
+              border-color 200ms var(--ease-out), background-color 200ms var(--ease-out);
+}
+.card .eyebrow {
+  font-size: 10.5px;
+  letter-spacing: 0.09em;
+  color: var(--muted);
+  font-weight: 700;
+}
+.card .value {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  margin-top: 8px;
+}
+.card .value-md { font-size: 19px; }
+.card .sub { font-size: 12.5px; color: var(--muted); margin-top: 5px; }
+
+.card-click:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--thread);
+}
+
+.kpi-value {
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   TARJETAS KPI DEL INICIO
+   ══════════════════════════════════════════════════════════════════════════ */
+.kpi-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   BARRA LATERAL
+   Fondo ligeramente distinto para separar del contenido, y un item activo
+   que sí se nota de verdad.
+   ══════════════════════════════════════════════════════════════════════════ */
+.sidebar {
+  background: var(--card);
+  border-right: 1px solid var(--line);
+}
+
+.sidebar-brand {
+  padding: 22px 20px 18px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.brand-mark {
+  background: linear-gradient(135deg, var(--thread), #7c3aed);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
+}
+
+.nav-label {
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  font-weight: 700;
+  padding: 0 12px;
+  margin: 20px 0 8px;
+  text-transform: uppercase;
+}
+
+.sidebar-item {
+  border-radius: 11px;
+  padding: 11px 13px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-soft);
+  border: none;
+  transition: background 160ms var(--ease-out), color 160ms var(--ease-out);
+}
+.sidebar-item:hover {
+  background: var(--accent-bg);
+  color: var(--ink);
+}
+.sidebar-item.active {
+  background: var(--thread);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
+}
+[data-theme="dark"] .sidebar-item.active { color: #0b1020; }
+
+/* La tinta sobre el violeta en oscuro.
+   OJO con la especificidad: en el CSS viejo hay una regla con la forma
+   `[data-theme="dark"] .btn:not(.btn-gold):not(.btn-danger):not(.btn-ghost)`
+   que pone tinta azul. Cada `:not()` suma especificidad, así que esa regla
+   gana a un `.btn` normal aunque venga después. Por eso aquí se repite la
+   MISMA forma: empatan y gana la que está más abajo (esta).
+   Es la misma trampa de `.btn-small` y `.modal-card-huge` documentada
+   en PROYECTO.md. */
+[data-theme="dark"] .btn:not(.btn-gold):not(.btn-danger):not(.btn-ghost),
+[data-theme="dark"] .sidebar-item.active,
+[data-theme="dark"] .pagination-active,
+[data-theme="dark"] .pagination-btns .pagination-active {
+  color: #0b1020;
+}
+/* Esta necesita `!important` y nada más: en el CSS viejo la regla
+   `.pagination-active` los lleva puestos en las tres propiedades, y
+   `!important` del CSS viejo gana a cualquier regla normal del rediseño.
+   Medido: con texto blanco sobre el violeta claro de oscuro daba 2.98:1. */
+[data-theme="dark"] .pagination-active,
+[data-theme="dark"] .pagination-btns .pagination-active,
+[data-theme="dark"] .pagination .btn-small.pagination-active {
+  color: #0b1020 !important;
+}
+[data-theme="dark"] .btn:not(.btn-gold):not(.btn-danger):not(.btn-ghost):hover {
+  color: #0b1020;
+}
+
+.sidebar-footer {
+  border-top: 1px solid var(--line-soft);
+  padding: 14px 16px;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   BOTONES
+   Antes: 14px de fuente y 10px de padding. Es un botón de computadora, no
+   de celular. Ahora el principal es grande y con relieve.
+   ══════════════════════════════════════════════════════════════════════════ */
+.btn {
+  border-radius: 12px;
+  padding: 12px 20px;
+  font-size: 14.5px;
+  font-weight: 600;
+  background: var(--thread);
+  color: #fff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.1);
+}
+.btn:hover { background: var(--thread-dark); box-shadow: var(--shadow-sm); }
+
+/* OJO con el texto del dorado: el dorado es CLARO, asi que la letra va
+   OSCURA. Con blanco daba 3.2:1 y quedaba por debajo de 4.5, que es
+   exactamente el error que ya esta documentado en PROYECTO.md entrada 61
+   (el boton dorado siempre llevo tinta oscura, nunca blanca). */
+.btn-gold {
+  background: linear-gradient(135deg, var(--gold), #ea580c);
+  color: #241a0a;
+  box-shadow: 0 1px 2px rgba(120, 53, 15, 0.2);
+}
+.btn-gold:hover { filter: brightness(0.96); }
+[data-theme="dark"] .btn-gold { color: #241a0a; }
+
+.btn-success { background: var(--ok); color: #fff; }
+.btn-success:hover { filter: brightness(0.94); }
+
+.btn-ghost {
+  background: var(--card);
+  color: var(--ink-soft);
+  border: 1.5px solid var(--line);
+}
+.btn-ghost:hover {
+  background: var(--accent-bg);
+  border-color: var(--thread);
+  color: var(--thread);
+}
+
+.btn-danger {
+  background: var(--card);
+  color: var(--warn);
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  padding: 7px 13px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.btn-danger:hover { background: var(--warn-soft); border-color: var(--warn); }
+
+.btn-small {
+  background: var(--card);
+  color: var(--thread);
+  border: 1.5px solid var(--line);
+  border-radius: 9px;
+  padding: 7px 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.btn-small:hover { background: var(--thread-soft); border-color: var(--thread); }
+.btn-danger.btn-small { color: var(--warn); }
+.btn-danger.btn-small:hover { border-color: var(--warn); background: var(--warn-soft); }
+
+.chip {
+  border-radius: 999px;
+  border: 1.5px solid var(--line);
+  background: var(--card);
+  padding: 9px 15px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.chip:hover { background: var(--thread-soft); border-color: var(--thread); color: var(--thread); }
+.chip-todo { border-color: var(--ok); color: var(--ok-ink); background: var(--ok-soft); }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   CAMPOS
+   ══════════════════════════════════════════════════════════════════════════ */
+input, select, textarea {
+  background: var(--input-bg);
+  border: 1.5px solid var(--line);
+  border-radius: 11px;
+  padding: 12px 13px;
+  font-size: 14.5px;
+  color: var(--ink);
+  transition: border-color 160ms var(--ease-out), box-shadow 160ms var(--ease-out),
+              background-color 200ms var(--ease-out);
+}
+input:hover:not(:disabled), select:hover:not(:disabled), textarea:hover:not(:disabled) {
+  border-color: var(--muted);
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--thread);
+  box-shadow: var(--ring);
+}
+input::placeholder, textarea::placeholder { color: var(--muted); opacity: 0.75; }
+
+.input-total { background: var(--thread-soft); color: var(--ink); font-weight: 700; }
+
+.form-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  padding: 26px;
+  box-shadow: var(--shadow-md);
+}
+.form-section {
+  background: var(--section-bg);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-lg);
+  padding: 20px 22px;
+}
+.form-section-header { border-bottom: 1.5px solid var(--line); padding-bottom: 12px; }
+.form-section-badge {
+  background: linear-gradient(135deg, var(--thread), #7c3aed);
+  width: 26px; height: 26px;
+  font-size: 12.5px;
+}
+
+.filters-bar {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   TABLAS
+   Encabezado fijo con fondo solido y letra clara: antes el texto del th se
+   perdía al desplazar y no había separación entre encabezado y datos.
+   ══════════════════════════════════════════════════════════════════════════ */
+.table-wrap {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.table-wrap thead th {
+  background: var(--section-bg);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  border-bottom: 1.5px solid var(--line);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 13px 24px;
+}
+
+.table-wrap tbody td {
+  border-bottom: 1px solid var(--line-soft);
+  padding: 11px 24px;
+  font-size: 13.5px;
+}
+.table-wrap tbody tr:last-child td { border-bottom: none; }
+.table-wrap tbody tr:hover td { background: var(--table-hover); }
+
+.table-wrap table th:last-child,
+.table-wrap table td:last-child {
+  background: var(--card);
+  box-shadow: -10px 0 16px -14px rgba(15, 23, 42, 0.4);
+}
+.table-wrap thead th:last-child { background: var(--section-bg); }
+.table-wrap tbody tr:hover td:last-child { background: var(--table-hover); }
+
+.money { font-variant-numeric: tabular-nums; font-weight: 600; }
+
+th.orden-activo { color: var(--thread); }
+th.orden-activo.asc::after { content: ' ▲'; }
+th.orden-activo.desc::after { content: ' ▼'; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   INSIGNIAS Y ETIQUETAS
+   ══════════════════════════════════════════════════════════════════════════ */
+.badge-estado {
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.badge-modelo {
+  border-radius: 7px;
+  padding: 3px 8px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  background: var(--thread-soft);
+  color: var(--thread);
+  border: 1px solid var(--line);
+}
+.modelo-Nuevo { background: var(--gold-soft); color: var(--gold-ink); border-color: var(--gold); }
+
+.sub-tag {
+  font-size: 11.5px;
+  color: var(--muted);
+  font-weight: 500;
+  line-height: 1.5;
+}
+.humano-fecha { font-weight: 600; color: var(--ink-soft); font-size: 12.5px; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   TARJETAS DEL INICIO (d(order-card))
+   ══════════════════════════════════════════════════════════════════════════ */
+.order-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-sm);
+  border-left: 4px solid var(--thread);
+}
+.order-card:hover { box-shadow: var(--shadow-md); border-color: var(--thread); }
+
+.action-group { gap: 7px; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ESTADO VACÍO, ERROR Y AVISOS
+   ══════════════════════════════════════════════════════════════════════════ */
+.empty {
+  background: var(--card);
+  border: 1.5px dashed var(--line);
+  border-radius: var(--radius-lg);
+  padding: 40px 24px;
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+.error-msg {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--warn);
+  background: var(--warn-soft);
+  color: var(--warn-ink);
+  padding: 13px 15px;
+  font-weight: 500;
+}
+
+.liquidacion-box {
+  background: var(--thread-soft);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+}
+
+.private-banner {
+  background: var(--accent-bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   PAGINACIÓN Y BUSCADOR
+   ══════════════════════════════════════════════════════════════════════════ */
+.pagination { padding: 14px 2px; }
+.pagination-info { color: var(--muted); font-size: 12.5px; font-weight: 500; }
+.pagination-btns .btn-small, .pagination .btn-small {
+  border-radius: 9px;
+  min-width: 36px;
+}
+.pagination-active { background: var(--thread); color: #fff; border-color: var(--thread); }
+
+.search-input { border-radius: 11px; }
+.search-clear { border-radius: 8px; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   MODALES
+   ══════════════════════════════════════════════════════════════════════════ */
+.modal-backdrop { background: rgba(15, 23, 42, 0.55); }
+
+.modal-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  padding: 26px;
+  box-shadow: var(--shadow-lg);
+  color: var(--ink);
+}
+.modal-head { border-bottom: none; padding-bottom: 4px; }
+.modal-head h3 {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.modal-x {
+  background: var(--accent-bg);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  color: var(--muted);
+  padding: 5px 11px;
+}
+.modal-x:hover { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); }
+
+.camisa-item-row {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+.camisa-contador {
+  background: var(--thread-soft);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+}
+
+.stepper {
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  padding: 3px;
+}
+.stepper-btn { color: var(--ink); }
+.stepper-btn-add { color: var(--thread); }
+.stepper-value { color: var(--ink); font-weight: 700; }
+
+.pedidos-picker {
+  background: var(--section-bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 12px;
+}
+.pedido-block {
+  background: var(--section-bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+}
+.pedido-detalle { background: var(--card); border-top: 1px solid var(--line); }
+.pedido-sub-row {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+.pedido-check-row:hover { background: var(--table-hover); }
+
+.camisa-detalle-row {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.reparto-box {
+  background: var(--section-bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+}
+
+.cliente-chip {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+}
+.cliente-chip:hover { background: var(--thread-soft); border-color: var(--thread); }
+
+.eliminados-lista { gap: 10px; }
+.eliminado-fila {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 13px 15px;
+}
+.eliminado-barra { background: var(--accent-bg); border-radius: var(--radius-md); }
+
+.busquedor-caja { padding: 16px 18px; }
+.busquador-item { border-radius: 11px; }
+.busquador-item:hover, .buscador-item.activo { background: var(--thread-soft); }
+.busquador-pie { background: var(--accent-bg); }
+
+.confirm-detalle { background: var(--accent-bg); border-radius: var(--radius-sm); }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   PANTALLA DE LOGIN
+   ══════════════════════════════════════════════════════════════════════════ */
+.login-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  padding: 42px 38px 30px;
+  box-shadow: var(--shadow-lg);
+  max-width: 430px;
+}
+.login-brand { display: flex; justify-content: center; }
+.login-card .stitch {
+  background: linear-gradient(90deg, var(--thread), var(--gold));
+  height: 4px;
+  width: 72px;
+  margin: 18px auto 22px;
+}
+.login-card h1 { font-size: 32px; text-align: center; letter-spacing: -0.03em; }
+.login-card p.sub { text-align: center; font-size: 14px; }
+.login-foot {
+  border-top: 1px solid var(--line-soft);
+  color: var(--muted);
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   CELULAR — objetivos de contacto más grandes
+   Lo más importante de este bloque: en el celular se usa el DEDO, no el
+   mouse. Antes los botones de 30px fallaban de vez en cuando.
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 720px) {
+  .btn { padding: 14px 20px; font-size: 15px; border-radius: 13px; }
+  .btn-small { padding: 10px 14px; font-size: 13px; }
+  .btn-danger { padding: 10px 14px; font-size: 13px; }
+  .chip { padding: 11px 17px; font-size: 14px; }
+
+  input, select, textarea { padding: 14px; font-size: 16px; border-radius: 12px; }
+  /* 16px y no 14: con menos de 16px iOS hace zoom solo al escribir. */
+
+  .sidebar-item { padding: 14px 14px; font-size: 15px; border-radius: 12px; }
+  .nav-label { margin: 22px 0 8px; }
+
+  .table-wrap th, .table-wrap td { padding: 12px 14px; }
+  .card { padding: 18px; border-radius: var(--radius-md); }
+  .form-card { padding: 18px 16px; border-radius: var(--radius-lg); }
+  .form-section { padding: 16px 14px; }
+
+  .page-title { font-size: 24px; }
+  .card .value { font-size: 27px; }
+  .modal-card { padding: 20px 18px; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ACCESIBILIDAD — lo que se respeta sí o sí
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Foco siempre visible: sin esto no se sabe dónde está el teclado. */
+:focus-visible {
+  outline: 3px solid var(--thread);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+::selection { background: var(--thread); color: #fff; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   AJUSTES DE ESPECIFICIDAD
+   Estas reglas existen por una sola razón: hay reglas del CSS original que
+   ganan a las del rediseño y por eso se veían restos de la paleta vieja
+   (dorado crema, azul apagado) al lado de los colores nuevos.
+
+   Se corrigieron una por una, midiendo, no adivinando:
+
+   1) .pagination-active — el CSS viejo (linea 2197) lleva `!important` en
+      fondo, texto y borde. Un `!important` viejo gana a cualquier regla
+      normal, por mucha especificidad que tenga la nueva. Solo se gana
+      volviendo a usar `!important`. Medido: 2.98:1 con texto blanco.
+
+   2) .badge-modelo.modelo-Nuevo y .modelo-Viejo — el original las pinta con
+      tinte azul y tinte dorado VIEJOS (lineas 2274-2276), a 2 y 3 clases de
+      especificidad. El rediseño solollega 1 clase, así que perdía. Aquí se
+      repite la misma forma de selector: empatan y gana el de más abajo.
+
+   3) th[data-orden] — el original fija `padding-right: 18px !important` para
+      dejarle lugar a la flechita de orden. Se sube a 24px para que todas las
+      columnas del encabezado dejen el mismo margen.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+[data-theme="dark"] .pagination-active,
+[data-theme="dark"] .pagination-btns .pagination-active,
+[data-theme="dark"] .pagination .btn-small.pagination-active {
+  color: #0b1020 !important;
+}
+
+.badge-modelo.modelo-Nuevo {
+  background: var(--gold-soft);
+  color: var(--gold-ink);
+  border-color: var(--gold);
+}
+
+.badge-modelo.modelo-Viejo {
+  background: rgba(100, 116, 139, 0.13);
+  color: #475569;
+  border-color: rgba(100, 116, 139, 0.28);
+}
+
+[data-theme="dark"] .badge-modelo.modelo-Nuevo { color: #fcd34d; }
+
+[data-theme="dark"] .badge-modelo.modelo-Viejo {
+  background: rgba(148, 163, 184, 0.15);
+  color: #cbd5e1;
+  border-color: rgba(148, 163, 184, 0.3);
+}
+
+.table-wrap th[data-orden] { padding-right: 24px !important; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   EL ASA ARRIBA DEL TÍTULO
+   ══════════════════════════════════════════════════════════════════════════
+
+  QUÉ PASABA
+   La barrita para deslizar el modal y cerrarlo (el "asa", que es el
+   `.modal-head::before`) salía AL LADO del título, no encima.
+
+   POR QUÉ
+   `.modal-head` es `display: flex`, para poder dejar la X al otro lado del
+   título. Y en un contenedor flex, el `::before` no es un bloque arriba: es un
+   ÍTEM MÁS de la fila. Entonces se acomodaba al lado del título, y el
+   título con la X parecían una sola cosa en vez de dos.
+
+   EL ARREGLO, SIN TOCAR EL HTML
+   `flex-wrap: wrap` + `flex: 0 0 100%` en el asa. Así el asa se reserva
+   una línea entera y el título con la X bajan a la línea de abajo, que es
+   como se ve en cualquier app de celular.
+
+   El detalle del fondo: el cajón del asa mide 100% para poder romper la
+   línea, pero la barrita visible tiene que seguir midiendo 40px. Por eso
+   el fondo va dibujado a 40px y centrado, en vez de pintar el cajón
+   entero. Con `width: 40px` a secas la barrita se estiraría a todo lo ancho.
+
+   Solo en celular: en compu el asa no existe, y ahí el título con la X en
+   fila se ve bien y se deja como está. */
+
+@media (max-width: 720px) {
+  .modal-head {
+    flex-wrap: wrap;
+  }
+
+  .modal-head::before {
+    /* content va AQUÍ y no en la regla vieja del @media de 720px: sin esto
+       el pseudo-elemento no existe. La regla vieja sí lo traía, pero atarse
+       a eso es frágil: si esa regla se borra o cambia de breakpoint, el asa
+       desaparece sin dar ningún error. */
+    content: '';
+    flex: 0 0 100%;
+    width: 100%;
+    height: 5px;
+    margin: 0 0 12px;
+    border-radius: 999px;
+    background: linear-gradient(var(--asa), var(--asa)) center / 40px 5px no-repeat;
+    /* OJO con esto, que parece innecesario y no lo es: el gradiente es lo
+       que hace que la barrita mida 40px. background-size solo manda sobre
+       imágenes de fondo, y un color sólido se pinta en todo el cajón. Si
+       esto se "simplifica" a background: var(--asa), la barrita vuelve a
+       ocupar los 100% del ancho de la tarjeta. El cajón mide 100% a
+       propósito, para romper la línea del flex y quedar arriba del título. */
+  }
+}
