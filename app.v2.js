@@ -2283,6 +2283,8 @@
       const modeloTxt = (typeof etiquetaModelo === 'function' ? etiquetaModelo(it.modelo) : (it.modelo || '')) || '';
       const desc = [capitalizarColor(it.color), it.talla ? `Talla ${it.talla}` : '', it.genero || '', modeloTxt].filter(Boolean).join(' · ');
       const prog = it.programa ? `<div class="prog">Bordado: ${escSimple(it.programa)}</div>` : '';
+      const rest = Math.max(precio - abono, 0);
+      const restBadge = rest === 0 ? 'badge-success' : 'badge-warning';
       return `
         <tr>
           <td class="c">${i + 1}</td>
@@ -2290,6 +2292,7 @@
           <td class="c">1</td>
           <td class="money">${fmt(precio)}</td>
           <td class="money">${fmt(abono)}</td>
+          <td class="money"><span class="badge ${restBadge}">${fmt(rest)}</span></td>
         </tr>`;
     }).join('');
 
@@ -2304,6 +2307,7 @@
     const saldoPos = Math.max(saldo, 0);
     const estadoPill = stateText(venta);
     const notaTxt = (venta.nota || '').trim();
+  // Plantilla recibo v2: estilo dashboard A4 con tarjetas (ejemplo mi_proyecto_pdf)
     const html = `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -2311,115 +2315,123 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Recibo #${escSimple(String(venta.id).slice(-6).toUpperCase())} — ${escSimple(venta.cliente_nombre || 'Pedido')}</title>
 <style>
-  :root{--ink:#0F172A;--muted:#64748B;--line:#E2E8F0;--bg:#F8FAFC;--gold:#B45309}
-  *{box-sizing:border-box}
-  body{font-family:Inter, Segoe UI, Arial, Helvetica, sans-serif; color:var(--ink); margin:0; background:#fff; font-size:13px; line-height:1.45}
-  .sheet{max-width:780px; margin:0 auto; padding:24px}
-  .toolbar{display:flex; gap:8px; justify-content:flex-end; margin-bottom:14px}
-  .btn{padding:8px 14px; border-radius:8px; border:1px solid var(--line); background:#fff; cursor:pointer; font-weight:700; font-size:12px}
-  .btn-primary{background:var(--ink); color:#fff; border-color:var(--ink)}
-  .brand{display:flex; justify-content:space-between; align-items:flex-start; gap:16px; border-bottom:3px solid var(--ink); padding-bottom:14px; margin-bottom:16px}
-  .brand h1{margin:0; font-size:26px; letter-spacing:.06em; line-height:1}
-  .brand .tag{font-size:11px; color:var(--muted); letter-spacing:.1em; text-transform:uppercase; margin-top:4px}
-  .meta{text-align:right; font-size:12px; line-height:1.35}
-  .meta .num{font-size:18px; font-weight:800; letter-spacing:.02em}
-  .meta .date{color:var(--muted)}
-  .meta .pill{display:inline-block; margin-top:6px; padding:3px 9px; border-radius:999px; font-size:11px; font-weight:800; border:1px solid var(--line); background:#fff}
-  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px}
-  @media(max-width:640px){.grid2{grid-template-columns:1fr}}
-  .card{border:1px solid var(--line); border-radius:10px; padding:12px; background:var(--bg)}
-  .card h3{margin:0 0 8px; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted)}
-  .kv{display:grid; grid-template-columns:108px 1fr; gap:4px 8px; font-size:13px}
-  .kv dt{color:var(--muted)}
-  .kv dd{margin:0; font-weight:600; word-break:break-word}
-  table{width:100%; border-collapse:collapse; border:1px solid var(--line); border-radius:10px; overflow:hidden; margin:0}
-  th{background:var(--ink); color:#fff; font-size:11px; letter-spacing:.06em; text-transform:uppercase; padding:9px 8px; text-align:left}
-  th.c, td.c{text-align:center}
-  th.money, td.money{text-align:right}
-  td{padding:9px 8px; border-top:1px solid var(--line); vertical-align:top; font-size:13px}
-  tr:nth-child(even) td{background:#F8FAFC}
-  .prog{font-size:11px; color:#475569; margin-top:3px}
-  .totals{display:flex; justify-content:flex-end; margin-top:14px}
-  .totals-box{width:340px; border:1px solid var(--line); border-radius:10px; overflow:hidden}
-  .row{display:flex; justify-content:space-between; padding:10px 12px; border-top:1px solid var(--line); background:#fff}
-  .row:first-child{border-top:none}
-  .row.total{background:var(--ink); color:#fff; font-weight:800; font-size:15px}
-  .row b{font-variant-numeric:tabular-nums}
-  .note{margin-top:12px; border:1px dashed var(--line); border-radius:10px; padding:10px 12px; background:#FFFEFB; font-size:12px; color:#334155}
-  .sigs{display:grid; grid-template-columns:1fr 1fr; gap:32px; margin-top:30px; text-align:center}
-  .sig{border-top:1px solid var(--ink); padding-top:8px; font-size:11px; color:var(--muted); margin-top:40px}
-  .foot{text-align:center; color:var(--muted); font-size:11px; margin-top:16px; border-top:1px solid var(--line); padding-top:10px}
-  @media print{.toolbar{display:none} body{margin:0} .sheet{padding:10mm} @page{margin:10mm}}
+  @page { size: A4 portrait; margin: 10mm; background-color: #f8fafc; }
+  *, *::before, *::after { box-sizing: border-box; }
+  body { font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; margin: 0; padding: 0; font-size: 9.5pt; background-color: #f8fafc; line-height: 1.45; }
+  .sheet { max-width: 780px; margin: 0 auto; padding: 24px; }
+  .toolbar { display: flex; gap: 8px; justify-content: flex-end; margin-bottom: 14px; }
+  .btn { padding: 8px 14px; border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; cursor: pointer; font-weight: 700; font-size: 12px; }
+  .btn-primary { background: #0284c7; color: #fff; border-color: #0284c7; }
+  .header { background: #0284c7; color: #fff; margin: -24px -24px 12px; padding: 18px 24px 14px; }
+  .header h1 { margin: 0 0 4px; font-size: 15pt; font-weight: 700; letter-spacing: -0.5px; }
+  .header p { margin: 0; font-size: 9pt; opacity: 0.9; }
+  .summary-cards { margin-bottom: 12px; }
+  .summary-table { width: 100%; border-collapse: separate; border-spacing: 6px 0; margin-left: -6px; margin-right: -6px; }
+  .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 12px; vertical-align: top; }
+  .card-title { font-size: 7pt; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; font-weight: 600; margin-bottom: 2px; }
+  .card-value { font-size: 12pt; font-weight: 700; color: #0f172a; }
+  .card-value.green { color: #16a34a; }
+  .card-value.amber { color: #d97706; }
+  .card-value.blue { color: #0284c7; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+  @media(max-width:640px) { .grid2 { grid-template-columns: 1fr; } }
+  .kv { display: grid; grid-template-columns: 108px 1fr; gap: 4px 8px; font-size: 13px; }
+  .kv dt { color: #64748b; }
+  .kv dd { margin: 0; font-weight: 600; word-break: break-word; }
+  table.data-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; }
+  table.data-table th { background: #0f172a; color: #fff; font-size: 7.5pt; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 7px 8px; text-align: left; }
+  table.data-table td { padding: 6px 8px; border-bottom: 1px solid #f1f5f9; font-size: 8.5pt; vertical-align: middle; }
+  table.data-table tr:nth-child(even) { background-color: #f8fafc; }
+  .money { text-align: right; }
+  .c { text-align: center; }
+  .prog { font-size: 7pt; color: #475569; margin-top: 3px; }
+  .badge { display: inline-block; padding: 2.5px 6px; border-radius: 12px; font-size: 7pt; font-weight: 600; }
+  .badge-success { background-color: #dcfce7; color: #15803d; }
+  .badge-warning { background-color: #fef3c7; color: #b45309; }
+  .note { margin-top: 12px; border: 1px dashed #e2e8f0; border-radius: 8px; padding: 10px 12px; background: #FFFEFB; font-size: 12px; color: #334155; }
+  .totals { display: flex; justify-content: flex-end; margin-top: 14px; }
+  .totals-box { width: 340px; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background: #fff; }
+  .row { display: flex; justify-content: space-between; padding: 10px 12px; border-top: 1px solid #e2e8f0; }
+  .row:first-child { border-top: none; }
+  .row.total { background: #0f172a; color: #fff; font-weight: 800; font-size: 15px; }
+  .row b { font-variant-numeric: tabular-nums; }
+  .foot { margin-top: 12px; padding-top: 8px; border-top: 1px solid #e2e8f0; font-size: 8pt; color: #64748b; text-align: center; }
+  @media print { .toolbar { display: none; } body { margin: 0; padding: 0; } .sheet { padding: 10mm; } .header { margin: -10mm -10mm 12px; padding: 18px 10mm 14px; } }
 </style>
 </head>
 <body>
-  <div class="sheet">
-    <div class="toolbar">
-      <button class="btn" onclick="window.close()" type="button">Cerrar</button>
-      <button class="btn btn-primary" onclick="window.print()" type="button">🖨️ Imprimir / Guardar PDF</button>
-    </div>
+<div class="sheet">
+  <div class="toolbar">
+    <button class="btn" onclick="window.close()" type="button">Cerrar</button>
+    <button class="btn btn-primary" onclick="window.print()" type="button">🖨️ Imprimir / Guardar PDF</button>
+  </div>
 
-    <div class="brand">
-      <div>
-        <h1>CAMISAS IUB</h1>
-      </div>
-      <div class="meta">
-        <div class="num">RECIBO #${escSimple(String(venta.id).slice(-6).toUpperCase())}</div>
-        <div class="date">${fechaPedidoTxt} · ${escSimple(vendedorLabel(venta))}</div>
-        <div class="pill">${estadoPill}</div>
-      </div>
-    </div>
+  <div class="header">
+    <h1>CAMISAS IUB — RECIBO</h1>
+    <p>Recibo #${escSimple(String(venta.id).slice(-6).toUpperCase())} | Cliente: ${escSimple(venta.cliente_nombre || '—')} | Vendedor: ${escSimple(venta.vendedor || '—')} | Fecha: ${fechaPedidoTxt} | Estado: ${estadoPill}</p>
+  </div>
 
-    <div class="grid2">
-      <div class="card">
-        <h3>Cliente</h3>
-        <dl class="kv">
-          <dt>Nombre</dt><dd>${escSimple(venta.cliente_nombre || '—')}</dd>
-          <dt>Teléfono</dt><dd>${escSimple(venta.cliente_telefono || '—')}</dd>
-          <dt>Lugar</dt><dd>${escSimple(venta.lugar_entrega || 'Por definir')}</dd>
-          ${notaTxt ? `<dt>Nota</dt><dd>${escSimple(notaTxt)}</dd>` : ''}
-        </dl>
-      </div>
-      <div class="card">
-        <h3>Entrega</h3>
-        <dl class="kv">
-          <dt>Fecha</dt><dd>${fechaEntrega}</dd>
-          <dt>Entrega por</dt><dd>${escSimple(venta.entrega_por || 'Sin asignar')}</dd>
-          <dt>Vendedor</dt><dd>${escSimple(venta.vendedor || '—')}</dd>
-          <dt>Pedido del</dt><dd>${fechaPedidoTxt}</dd>
-        </dl>
-      </div>
-    </div>
-
-    <table>
-      <thead>
-        <tr><th style="width:36px">#</th><th>Descripción</th><th class="c" style="width:52px">Cant.</th><th class="money" style="width:96px">Precio</th><th class="money" style="width:96px">Abono</th></tr>
-      </thead>
-      <tbody>${filas}</tbody>
+  <div class="summary-cards">
+    <table class="summary-table">
+      <tr>
+        <td class="card" width="25%"><div class="card-title">Unidades</div><div class="card-value blue">${items.length}</div></td>
+        <td class="card" width="25%"><div class="card-title">Total del pedido</div><div class="card-value">${fmt(total)}</div></td>
+        <td class="card" width="25%"><div class="card-title">Abono cliente</div><div class="card-value green">${fmt(abonoTotal)}</div></td>
+        <td class="card" width="25%"><div class="card-title">Saldo pendiente</div><div class="card-value amber">${fmt(saldoPos)}</div></td>
+      </tr>
     </table>
-    ${programaTexto ? `<div class="note"><b>Bordados:</b> ${programaTexto}</div>` : ''}
+  </div>
 
-    <div class="totals">
-      <div class="totals-box">
-        <div class="row"><span>Total del pedido</span><b>${fmt(total)}</b></div>
-        <div class="row"><span>Abono cliente</span><b>${fmt(abonoTotal)}</b></div>
-        <div class="row total"><span>Saldo por pagar</span><b>${fmt(saldoPos)}</b></div>
-      </div>
+  <div class="grid2">
+    <div class="card">
+      <h3 style="margin:0 0 8px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#64748b">Cliente</h3>
+      <dl class="kv">
+        <dt>Nombre</dt><dd>${escSimple(venta.cliente_nombre || '—')}</dd>
+        <dt>Teléfono</dt><dd>${escSimple(venta.cliente_telefono || '—')}</dd>
+        <dt>Lugar</dt><dd>${escSimple(venta.lugar_entrega || 'Por definir')}</dd>
+        ${notaTxt ? `<dt>Nota</dt><dd>${escSimple(notaTxt)}</dd>` : ''}
+      </dl>
     </div>
-
-    ${notaTxt ? `<div class="note"><b>Nota:</b> ${escSimple(notaTxt)}</div>` : ''}
-
-    <div class="foot">
-      Gracias por tu pedido 💙 — Camisas IUB<br>
-      ${new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota', dateStyle: 'full', timeStyle: 'short' })} · Este recibo no es factura fiscal
+    <div class="card">
+      <h3 style="margin:0 0 8px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#64748b">Entrega</h3>
+      <dl class="kv">
+        <dt>Fecha</dt><dd>${fechaEntrega}</dd>
+        <dt>Entrega por</dt><dd>${escSimple(venta.entrega_por || 'Sin asignar')}</dd>
+        <dt>Vendedor</dt><dd>${escSimple(venta.vendedor || '—')}</dd>
+        <dt>Pedido del</dt><dd>${fechaPedidoTxt}</dd>
+      </dl>
     </div>
   </div>
 
-  <script>
-    window.onload = function () {
-      setTimeout(function () { window.print(); }, 150);
-    };
-  <\/script>
+  <table class="data-table">
+    <thead>
+      <tr><th class="c" style="width:36px">#</th><th>Descripción</th><th class="c" style="width:52px">Cant.</th><th class="money" style="width:96px">Precio</th><th class="money" style="width:96px">Abono</th><th class="money" style="width:96px">Restante</th></tr>
+    </thead>
+    <tbody>${filas}</tbody>
+  </table>
+  ${programaTexto ? `<div class="note"><b>Bordados:</b> ${programaTexto}</div>` : ''}
+
+  <div class="totals">
+    <div class="totals-box">
+      <div class="row"><span>Total del pedido</span><b>${fmt(total)}</b></div>
+      <div class="row"><span>Abono cliente</span><b>${fmt(abonoTotal)}</b></div>
+      <div class="row total"><span>Saldo por pagar</span><b>${fmt(saldoPos)}</b></div>
+    </div>
+  </div>
+
+  ${notaTxt ? `<div class="note"><b>Nota:</b> ${escSimple(notaTxt)}</div>` : ''}
+
+  <div class="foot">
+    Gracias por tu pedido 💙 — Camisas IUB<br>
+    ${new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota', dateStyle: 'full', timeStyle: 'short' })} · Este recibo no es factura fiscal
+  </div>
+</div>
+
+<script>
+window.onload = function () {
+  setTimeout(function () { window.print(); }, 150);
+};
+<\/script>
 </body>
 </html>`;
 
@@ -6699,23 +6711,128 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
       const ab = Number(it.abono)||0;
       const desc = [capitalizarColor(it.color), it.talla ? `Talla ${it.talla}` : '', it.genero||'', etiquetaModelo(it.modelo)||''].filter(Boolean).join(' · ');
       const prog = it.programa ? `<div class="prog">Bordado: ${escSimple(it.programa)}</div><div class="prog" style="font-size:10px;color:var(--muted)">Pedido: ${escSimple(v.fecha||'')} · ${escSimple(v.estado||'')}</div>` : `<div class="prog" style="font-size:10px;color:var(--muted)">Pedido: ${escSimple(v.fecha||'')} · ${escSimple(v.estado||'')}</div>`;
-      return `<tr><td class="c">${i+1}</td><td>${escSimple(desc)}${prog}</td><td class="c">1</td><td class="money">${fmt(p)}</td><td class="money">${fmt(ab)}</td></tr>`;
+      const rest = Math.max(p - ab, 0);
+      const restBadge = rest === 0 ? 'badge-success' : 'badge-warning';
+      return `<tr><td class="c">${i+1}</td><td>${escSimple(desc)}${prog}</td><td class="c">1</td><td class="money">${fmt(p)}</td><td class="money">${fmt(ab)}</td><td class="money"><span class="badge ${restBadge}">${fmt(rest)}</span></td></tr>`;
     }).join('');
-    const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Factura — ${escSimple(cliente)}</title><style>
-  :root{--ink:#0F172A;--muted:#64748B;--line:#E2E8F0;--bg:#F8FAFC;--gold:#B45309}
-  *{box-sizing:border-box} body{font-family:Inter, Segoe UI, Arial, sans-serif; color:var(--ink); margin:0; background:#fff; font-size:13px; line-height:1.45}
-  .sheet{max-width:780px; margin:0 auto; padding:24px} .toolbar{display:flex; gap:8px; justify-content:flex-end; margin-bottom:14px} .btn{padding:8px 14px; border-radius:8px; border:1px solid var(--line); background:#fff; cursor:pointer; font-weight:700; font-size:12px} .btn-primary{background:var(--ink); color:#fff; border-color:var(--ink)}
-  .brand{display:flex; justify-content:space-between; align-items:flex-start; gap:16px; border-bottom:3px solid var(--ink); padding-bottom:14px; margin-bottom:16px} .brand h1{margin:0; font-size:26px; letter-spacing:.06em; line-height:1} .meta{text-align:right; font-size:12px; line-height:1.35} .meta .num{font-size:18px; font-weight:800} .meta .date{color:var(--muted)}
-  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px} @media(max-width:640px){.grid2{grid-template-columns:1fr}} .card{border:1px solid var(--line); border-radius:10px; padding:12px; background:var(--bg)} .card h3{margin:0 0 8px; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted)} .kv{display:grid; grid-template-columns:108px 1fr; gap:4px 8px; font-size:13px} .kv dt{color:var(--muted)} .kv dd{margin:0; font-weight:600; word-break:break-word}
-  table{width:100%; border-collapse:collapse; border:1px solid var(--line); border-radius:10px; overflow:hidden; margin:0} th{background:var(--ink); color:#fff; font-size:11px; letter-spacing:.06em; text-transform:uppercase; padding:9px 8px; text-align:left} th.c, td.c{text-align:center} th.money, td.money{text-align:right} td{padding:9px 8px; border-top:1px solid var(--line); vertical-align:top; font-size:13px} tr:nth-child(even) td{background:#F8FAFC} .prog{font-size:11px; color:#475569; margin-top:3px}
-  .totals{display:flex; justify-content:flex-end; margin-top:14px} .totals-box{width:340px; border:1px solid var(--line); border-radius:10px; overflow:hidden} .row{display:flex; justify-content:space-between; padding:10px 12px; border-top:1px solid var(--line); background:#fff} .row:first-child{border-top:none} .row.total{background:var(--ink); color:#fff; font-weight:800; font-size:15px} .row b{font-variant-numeric:tabular-nums} .note{margin-top:12px; border:1px dashed var(--line); border-radius:10px; padding:10px 12px; background:#FFFEFB; font-size:12px; color:#334155} .foot{text-align:center; color:var(--muted); font-size:11px; margin-top:16px; border-top:1px solid var(--line); padding-top:10px} @media print{.toolbar{display:none} body{margin:0} .sheet{padding:10mm} @page{margin:10mm}}
-  </style></head><body><div class="sheet"><div class="toolbar"><button class="btn" onclick="window.close()" type="button">Cerrar</button><button class="btn btn-primary" onclick="window.print()" type="button">🖨️ Imprimir / Guardar PDF</button></div>
-    <div class="brand"><div><h1>CAMISAS IUB</h1><div class="tag">Factura personalizada</div></div><div class="meta"><div class="num">FACTURA — ${escSimple(cliente)}</div><div class="date">${new Date().toLocaleDateString('es-CO',{timeZone:'America/Bogota'})} · ${seleccion.length} camisa(s) · ${grupo.pedidos.length} pedido(s) cliente</div></div></div>
-    <div class="grid2"><div class="card"><h3>Cliente</h3><dl class="kv"><dt>Nombre</dt><dd>${escSimple(cliente)}</dd><dt>Teléfono</dt><dd>${escSimple(telefono||'—')}</dd><dt>Entrega</dt><dd>Entrega conjunta</dd></dl></div><div class="card"><h3>Resumen</h3><dl class="kv"><dt>Pedidos incluidos</dt><dd>${seleccion.length} camisas seleccionadas</dd><dt>Total</dt><dd>${fmt(total)}</dd><dt>Abono</dt><dd>${fmt(abonoTot)}</dd><dt>Saldo</dt><dd>${fmt(saldo)}</dd></dl></div></div>
-    <table><thead><tr><th style="width:36px">#</th><th>Descripción</th><th class="c" style="width:52px">Cant.</th><th class="money" style="width:96px">Precio</th><th class="money" style="width:96px">Abono</th></tr></thead><tbody>${filas}</tbody></table>
-    ${notaTxt ? `<div class="note"><b>Notas de los pedidos:</b> ${escSimple(notaTxt)}</div>` : ''}
-    <div class="totals"><div class="totals-box"><div class="row"><span>Total</span><b>${fmt(total)}</b></div><div class="row"><span>Abono</span><b>${fmt(abonoTot)}</b></div><div class="row total"><span>Saldo por pagar</span><b>${fmt(saldo)}</b></div></div></div>
-    <div class="foot">Gracias por tu pedido 💙 — Camisas IUB<br>${new Date().toLocaleString('es-CO',{timeZone:'America/Bogota', dateStyle:'full', timeStyle:'short'})} · Este documento no es factura fiscal</div></div><script>window.onload=function(){ setTimeout(function(){ window.print(); },150);}<\/script></body></html>`;
+    const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Factura — ${escSimple(cliente)}</title>
+<style>
+  @page { size: A4 portrait; margin: 10mm; background-color: #f8fafc; }
+  *, *::before, *::after { box-sizing: border-box; }
+  body { font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; margin: 0; padding: 0; font-size: 9.5pt; background-color: #f8fafc; line-height: 1.45; }
+  .sheet { max-width: 780px; margin: 0 auto; padding: 24px; }
+  .toolbar { display: flex; gap: 8px; justify-content: flex-end; margin-bottom: 14px; }
+  .btn { padding: 8px 14px; border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; cursor: pointer; font-weight: 700; font-size: 12px; }
+  .btn-primary { background: #0284c7; color: #fff; border-color: #0284c7; }
+  .header { background: #0284c7; color: #fff; margin: -24px -24px 12px; padding: 18px 24px 14px; }
+  .header h1 { margin: 0 0 4px; font-size: 15pt; font-weight: 700; letter-spacing: -0.5px; }
+  .header p { margin: 0; font-size: 9pt; opacity: 0.9; }
+  .summary-cards { margin-bottom: 12px; }
+  .summary-table { width: 100%; border-collapse: separate; border-spacing: 6px 0; margin-left: -6px; margin-right: -6px; }
+  .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 12px; vertical-align: top; }
+  .card-title { font-size: 7pt; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; font-weight: 600; margin-bottom: 2px; }
+  .card-value { font-size: 12pt; font-weight: 700; color: #0f172a; }
+  .card-value.green { color: #16a34a; }
+  .card-value.amber { color: #d97706; }
+  .card-value.blue { color: #0284c7; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+  @media(max-width:640px) { .grid2 { grid-template-columns: 1fr; } }
+  .kv { display: grid; grid-template-columns: 108px 1fr; gap: 4px 8px; font-size: 13px; }
+  .kv dt { color: #64748b; }
+  .kv dd { margin: 0; font-weight: 600; word-break: break-word; }
+  table.data-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; }
+  table.data-table th { background: #0f172a; color: #fff; font-size: 7.5pt; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 7px 8px; text-align: left; }
+  table.data-table td { padding: 6px 8px; border-bottom: 1px solid #f1f5f9; font-size: 8.5pt; vertical-align: middle; }
+  table.data-table tr:nth-child(even) { background-color: #f8fafc; }
+  .money { text-align: right; }
+  .c { text-align: center; }
+  .prog { font-size: 7pt; color: #475569; margin-top: 3px; }
+  .badge { display: inline-block; padding: 2.5px 6px; border-radius: 12px; font-size: 7pt; font-weight: 600; }
+  .badge-success { background-color: #dcfce7; color: #15803d; }
+  .badge-warning { background-color: #fef3c7; color: #b45309; }
+  .note { margin-top: 12px; border: 1px dashed #e2e8f0; border-radius: 8px; padding: 10px 12px; background: #FFFEFB; font-size: 12px; color: #334155; }
+  .totals { display: flex; justify-content: flex-end; margin-top: 14px; }
+  .totals-box { width: 340px; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background: #fff; }
+  .row { display: flex; justify-content: space-between; padding: 10px 12px; border-top: 1px solid #e2e8f0; }
+  .row:first-child { border-top: none; }
+  .row.total { background: #0f172a; color: #fff; font-weight: 800; font-size: 15px; }
+  .row b { font-variant-numeric: tabular-nums; }
+  .foot { margin-top: 12px; padding-top: 8px; border-top: 1px solid #e2e8f0; font-size: 8pt; color: #64748b; text-align: center; }
+  @media print { .toolbar { display: none; } body { margin: 0; padding: 0; } .sheet { padding: 10mm; } .header { margin: -10mm -10mm 12px; padding: 18px 10mm 14px; } }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <div class="toolbar">
+    <button class="btn" onclick="window.close()" type="button">Cerrar</button>
+    <button class="btn btn-primary" onclick="window.print()" type="button">🖨️ Imprimir / Guardar PDF</button>
+  </div>
+
+  <div class="header">
+    <h1>CAMISAS IUB — FACTURA</h1>
+    <p>Cliente: ${escSimple(cliente)} | ${seleccion.length} camisa(s) | ${grupo.pedidos.length} pedido(s) cliente | Fecha: ${new Date().toLocaleDateString('es-CO',{timeZone:'America/Bogota'})}</p>
+  </div>
+
+  <div class="summary-cards">
+    <table class="summary-table">
+      <tr>
+        <td class="card" width="25%"><div class="card-title">Total Prendas</div><div class="card-value blue">${seleccion.length}</div></td>
+        <td class="card" width="25%"><div class="card-title">Total Facturado</div><div class="card-value">${fmt(total)}</div></td>
+        <td class="card" width="25%"><div class="card-title">Total Recaudado</div><div class="card-value green">${fmt(abonoTot)}</div></td>
+        <td class="card" width="25%"><div class="card-title">Saldo Pendiente</div><div class="card-value amber">${fmt(saldo)}</div></td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3 style="margin:0 0 8px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#64748b">Cliente</h3>
+      <dl class="kv">
+        <dt>Nombre</dt><dd>${escSimple(cliente)}</dd>
+        <dt>Teléfono</dt><dd>${escSimple(telefono||'—')}</dd>
+        <dt>Entrega</dt><dd>Entrega conjunta</dd>
+      </dl>
+    </div>
+    <div class="card">
+      <h3 style="margin:0 0 8px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#64748b">Resumen</h3>
+      <dl class="kv">
+        <dt>Pedidos incluidos</dt><dd>${seleccion.length} camisas</dd>
+        <dt>Total</dt><dd>${fmt(total)}</dd>
+        <dt>Abono</dt><dd>${fmt(abonoTot)}</dd>
+        <dt>Saldo</dt><dd>${fmt(saldo)}</dd>
+      </dl>
+    </div>
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr><th class="c" style="width:36px">#</th><th>Descripción</th><th class="c" style="width:52px">Cant.</th><th class="money" style="width:96px">Precio</th><th class="money" style="width:96px">Abono</th><th class="money" style="width:96px">Restante</th></tr>
+    </thead>
+    <tbody>${filas}</tbody>
+  </table>
+  ${notaTxt ? `<div class="note"><b>Notas de los pedidos:</b> ${escSimple(notaTxt)}</div>` : ''}
+
+  <div class="totals">
+    <div class="totals-box">
+      <div class="row"><span>Total</span><b>${fmt(total)}</b></div>
+      <div class="row"><span>Abono</span><b>${fmt(abonoTot)}</b></div>
+      <div class="row total"><span>Saldo por pagar</span><b>${fmt(saldo)}</b></div>
+    </div>
+  </div>
+
+  <div class="foot">
+    Gracias por tu pedido 💙 — Camisas IUB<br>
+    ${new Date().toLocaleString('es-CO',{timeZone:'America/Bogota', dateStyle:'full', timeStyle:'short'})} · Este documento no es factura fiscal
+  </div>
+</div>
+<script>window.onload=function(){ setTimeout(function(){ window.print(); },150);}<\/script>
+</body>
+</html>`;
     const w = window.open('', '_blank', 'width=820,height=720');
     if (!w){ mostrarToast('Permite las ventanas emergentes para imprimir.', 'error'); return; }
     w.document.write(html); w.document.close();
