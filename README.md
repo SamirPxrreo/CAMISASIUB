@@ -70,22 +70,29 @@ index.html                    Estructura: login, sidebar, secciones, los 11 moda
 app.v2.js                     Toda la lógica (Supabase, cálculos, renders)
 enhance.v2.js                 Mejoras de presentación, sin lógica de negocio
 deslizar-modal.js             Arrastrar la hoja del celular para cerrarla
-styles.v2.css                 El CSS que se sirve (incluye el diseño v3 al final)
+styles.v2.css                 El CSS que se sirve. NO se edita a mano: es generado
 
-redesign-v3.css               Fuente del diseño. SE EDITA ESTE, no styles.v2.css
-estados-v3.css                Colores por estado del pedido
-hoja-modal.css                Fuente de los modales estilo celular
-aplicar-diseno.js             Pega el diseño v3 en styles.v2.css (--quitar lo saca)
+redesign-v3.css               Fuente. Capa 1 del diseño: la paleta
+estados-v3.css                Fuente. Capa 1: colores por estado del pedido
+glass-v4.css                  Fuente. Capa 2: el cristal (liquid glass)
+hoja-modal.css                Fuente. Los modales que suben desde abajo
+estructura-v4.css             Fuente. Capa 3: la forma (menú, tarjetas, alertas)
+aplicar-diseno.js             Pega las 3 capas en styles.v2.css (--quitar las saca)
+revisar-css.js                Analiza el CSS de verdad. aplicar-diseno.js lo corre
+probar-analizador.js          Pruebas de revisar-css.js
+auditar-contraste.js          Mide WCAG. En el navegador: await __auditarContraste()
 
 migracion.sql                 Esquema de Supabase
 aplicar-paso-*.sql            Migraciones por paso (casi todas ya ejecutadas)
 revisar-sql.js                Linter de SQL: correr antes de pegar en Supabase
 verificar-seguridad.js        Comprueba que la anon key no lee ni escribe
 preparar-despliegue.js        Cambia el ?v= de los scripts (parte del deploy)
-clean-deployments.ps1         Deja 3 deployments en GitHub Pages
+clean-deployments.ps1         Deja 3 deployments: el vivo, el anterior y el ANCLA FIJA
 
 AGENTS.md                     Leer antes de tocar nada: reglas y trampas
-PROYECTO.md                   Documentación técnica completa
+PROYECTO.md                   Documentación técnica completa (la sección 15
+                               es el rediseño v4)
+PLAN-v4-liquid-glass.md       El plan del rediseño v4 y cómo quedó
 ```
 
 ### Correrlo en local
@@ -184,13 +191,24 @@ el JavaScript viejo. `preparar-despliegue.js` lo pone con fecha y hora para que
 no haya que acordarse.
 
 GitHub Pages guarda todos los deployments, así que después de subir se limpian
-para dejar siempre 3 (el vivo, el anterior para hacer rollback y el más viejo
-como ancla):
+para dejar siempre 3:
+
+1. **el que acabas de subir** — el vivo
+2. **el anterior** — para hacer rollback de un paso
+3. **el ANCLA FIJO: `59a5516`** — no cambia nunca, por más pushes que haya
+
+El ancla es un commit concreto, no "el más viejo". Esa diferencia importa: con la
+regla de "conservar los 3 más recientes" el tercer puesto rodaba en cada push, y
+el 59a5516 se habría perdido en el siguiente.
 
 ```powershell
 $env:GH_TOKEN = "ghp_..."   # scope: repo
-.\clean-deployments.ps1
+.\clean-deployments.ps1           # pregunta antes de borrar
+.\clean-deployments.ps1 -Si       # sin preguntar, para correr sin interacción
 ```
+
+El script **siempre imprime qué conserva y qué borra antes de borrar**, porque
+borrar un deployment no tiene vuelta atrás.
 
 ---
 
