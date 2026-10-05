@@ -3380,6 +3380,37 @@ tbody tr:nth-child(n+7) td { animation-delay: 180ms; }
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* ══════════════════════════════════════════════════════════════════════════
    ╔═══════════════════════════════════════════════════════════════════════╗
    ║  REDISEÑO VISUAL v3 — SOLO PRUEBA LOCAL                            ║
@@ -3977,7 +4008,14 @@ select.estado-camisa-select.estado-Liquidado          { background: #047857; col
 }
 
 .badge-estado.estado-Pedido              { background: rgba(180, 83, 9, 0.13);  color: #92400e; border-color: rgba(180, 83, 9, 0.25); }
-.badge-estado.estado-Comprado           { background: rgba(15, 118, 110, 0.13); color: #0f766e; border-color: rgba(15, 118, 110, 0.25); }
+/* El texto va en #0b5f59 y no en #0f766e (2026-10-05). Medido: con #0f766e daba
+   4.38:1 sobre el fondo compuesto de la insignia, y el minimo pedido es 4.5:1.
+   Con #0b5f59 da 6.02:1.
+
+   OJO: se oscurece SOLO el texto de la insignia. El fondo del botón de estado
+   sigue siendo #0f766e con texto blanco, que da 4.9:1 y va bien: si se tocara
+   ese, el botón cambiaria de aspecto. */
+.badge-estado.estado-Comprado           { background: rgba(15, 118, 110, 0.13); color: #0b5f59; border-color: rgba(15, 118, 110, 0.25); }
 .badge-estado.estado-Bordando           { background: rgba(109, 40, 217, 0.13); color: #6d28d9; border-color: rgba(109, 40, 217, 0.25); }
 .badge-estado.estado-Listo-para-entrega { background: rgba(63, 98, 18, 0.14);   color: #3f6212; border-color: rgba(63, 98, 18, 0.25); }
 .badge-estado.estado-Entregado           { background: rgba(29, 78, 216, 0.12);  color: #1d4ed8; border-color: rgba(29, 78, 216, 0.25); }
@@ -4473,4 +4511,1458 @@ select.estado-camisa-select.estado-Liquidado          { background: #047857; col
   background: rgba(148, 163, 184, 0.15);
   color: #cbd5e1;
   border-color: rgba(148, 163, 184, 0.3);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   REDISEÑO v4 — LIQUID GLASS  (versión 2, más fiel a la referencia)
+   ══════════════════════════════════════════════════════════════════════════
+
+  ── EL ERROR DE LA VERSIÓN 1, Y POR QUÉ ───────────────────────────────────
+  La primera vez subí el blanco del cristal a 0.72 "para asegurar el contraste"
+  y bajé el degradado a un 25%. Quedó prolijo, pero dejó de parecerse a la
+  referencia: sin color de fondo no hay cristal, y con el cristal opaco el
+  color no se ve por ningún lado.
+
+  El razonamiento estaba mal de raíz. La referencia tiene el fondo CLARO
+  (menta, crema, rosa) y el texto OSCURO. Sobre un fondo claro, un vidrio
+  casi transparente sigue teniendo contraste de sobra, porque el fondo que
+  se ve a través es claro y la tinta es oscura.
+
+  O sea: para este caso, cristal transparente Y buen contraste van juntos.
+  El que rompe el contraste es el fondo OSCURO detrás de un texto claro.
+  Por eso el tema oscuro sí necesita vidrio más opaco que el claro, y aquí
+  se los trata distinto a propósito.
+
+  ── LO QUE FALTABA Y AHORA ESTÁ ──────────────────────────────────────────
+    1. El degradado se ve. Es el color dominante de la pantalla.
+    2. La app flota: márgenes, esquinas muy redondeadas y sombra grande, así
+       que el degradado se ve por los cuatro lados, como en la referencia.
+    3. Cristal de verdad: entre 0.28 y 0.55 de blanco, no 0.72.
+    4. Los círculos de color arriba a la derecha de cada tarjeta, con su
+       anillo. Es el detalle que más se nota de la referencia y se hace solo
+       con CSS, sin tocar el JavaScript.
+    5. Campos con forma de cápsula.
+    6. Más aire: más padding y más separación entre bloques.
+
+  ── LO QUE NO SE TOCA ────────────────────────────────────────────────────
+    Los seis estados siguen SÓLIDOS. Son información: "Pedido" y "Comprado"
+    se distinguen por el color. Volverlos translúcidos sería deshacer un
+    arreglo tuyo reciente. Y la tabla no es cristal: 80 filas con
+    backdrop-filter hunde el scroll en un celular y los números tienen que
+    estar nítidos.
+
+  ── CUIDADO CON LO QUE ROMPE COSAS ────────────────────────────────────────
+    Nada de `will-change: transform` en reposo: equivale a un transform, crea
+    un bloque contenedor y ROMPE el `position: sticky` del encabezado del
+    modal. Ese bug costó el 30 de septiembre. Y el modal sí lleva
+    backdrop-filter, que crea bloque contenedor igual que un transform, así
+    que eso está medido, no supuesto.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════════════════════
+   1. EL FONDO — el color de toda la pantalla
+   ══════════════════════════════════════════════════════════════════════════ */
+
+body {
+  /* El fondo base: si esto no se ve, el degradado tampoco. */
+  background: linear-gradient(140deg, #e8f8ec 0%, #fdf7dd 38%, #fbe6f0 68%, #eae4fb 100%);
+  background-attachment: fixed;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  /* Manchas de color concentradas, que es lo que da el aspecto de la
+     referencia: verde arriba a la izquierda, crema en el medio, rosa a la
+     derecha, lavanda abajo. */
+  background:
+    radial-gradient(900px 700px at 6% 4%, rgba(120, 235, 180, 0.55) 0%, rgba(120, 235, 180, 0) 60%),
+    radial-gradient(1000px 800px at 96% 12%, rgba(255, 175, 215, 0.5) 0%, rgba(255, 175, 215, 0) 58%),
+    radial-gradient(1100px 850px at 50% 100%, rgba(196, 181, 253, 0.45) 0%, rgba(196, 181, 253, 0) 60%),
+    radial-gradient(700px 600px at 88% 78%, rgba(255, 214, 140, 0.35) 0%, rgba(255, 214, 140, 0) 58%),
+    radial-gradient(600px 500px at 14% 82%, rgba(167, 243, 208, 0.4) 0%, rgba(167, 243, 208, 0) 58%);
+}
+
+[data-theme="dark"] body {
+  /* En oscuro el fondo es casi negro. Ahí SÍ hace falta vidrio más opaco:
+     con texto claro sobre fondo oscuro, un cristal muy transparente deja
+     pasar el degradado y el contraste se cae. */
+  background: linear-gradient(140deg, #070b16 0%, #0a1020 40%, #0c0a18 70%, #080a14 100%);
+}
+
+[data-theme="dark"] body::before {
+  background:
+    radial-gradient(900px 700px at 6% 4%, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0) 60%),
+    radial-gradient(1000px 800px at 96% 12%, rgba(217, 70, 239, 0.16) 0%, rgba(217, 70, 239, 0) 58%),
+    radial-gradient(1100px 850px at 50% 100%, rgba(139, 92, 246, 0.14) 0%, rgba(139, 92, 246, 0) 60%);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   2. LA APP FLOTA
+   En la referencia la app es una ventana con esquinas redondeadas sobre el
+   degradado, y se ve el color por los cuatro lados. Eso se logra con margen
+   en el contenedor, no con un borde.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+@media (min-width: 769px) {
+  .app-layout {
+    margin: 20px;
+    border-radius: 30px;
+    overflow: hidden;
+    box-shadow:
+      0 30px 90px rgba(30, 41, 59, 0.18),
+      0 8px 24px rgba(30, 41, 59, 0.1);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   3. TOKENS DEL CRISTAL
+   Claro: se ve mucho el fondo, y el texto es oscuro, así que el vidrio puede
+   ser bastante transparente.
+   Oscuro: vidrio más opaco, porque el texto es claro y el fondo oscuro.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Cristal de verdad. La receta clínica dice 0.12; acá va un poco más alto
+     porque hay tablas y formulariosdense, pero sigue siendo traslúcido. */
+  --vidrio: rgba(255, 255, 255, 0.42);
+  --vidrio-alto: rgba(255, 255, 255, 0.55);   /* campos y tablas */
+  --vidrio-bajo: rgba(255, 255, 255, 0.3);
+
+  /* Canto de luz: más claro que el relleno. Sobre fondo claro hace falta
+     además una sombra suave para que la caja se separe. */
+  --canto: rgba(255, 255, 255, 0.75);
+  --canto-halo: 0 0 0 1px rgba(255, 255, 255, 0.5);
+
+  --sombra-vidrio:
+    0 12px 36px rgba(30, 41, 59, 0.1),
+    0 3px 10px rgba(30, 41, 59, 0.06),
+    var(--canto-halo),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+
+  --escarcha-panel: blur(22px) saturate(180%);
+  --escarcha-fuerte: blur(40px) saturate(190%);
+  --escarcha-tenue: blur(14px) saturate(160%);
+
+  /* Los colores de los anillos de las tarjetas. En la referencia cada
+     tarjeta tiene un disco de un color distinto arriba a la derecha. */
+  --anillo-1: #fb7185;
+  --anillo-2: #facc15;
+  --anillo-3: #111827;
+  --anillo-4: #a855f7;
+  --anillo-5: #22d3ee;
+  --anillo-6: #fbbf24;
+}
+
+[data-theme="dark"] {
+  /* Más opaco que en claro, y por el motivo del punto 3. */
+  --vidrio: rgba(18, 26, 48, 0.72);
+  --vidrio-alto: rgba(14, 20, 38, 0.84);
+  --vidrio-bajo: rgba(26, 36, 62, 0.6);
+  --canto: rgba(148, 163, 184, 0.2);
+  --canto-halo: 0 0 0 1px rgba(148, 163, 184, 0.14);
+  --sombra-vidrio:
+    0 14px 44px rgba(0, 0, 0, 0.5),
+    0 3px 10px rgba(0, 0, 0, 0.35),
+    var(--canto-halo),
+    inset 0 1px 0 rgba(148, 163, 184, 0.14);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   4. LOS PANELES
+   Los cuatro ingredientes del cristal, juntos, siempre:
+   escarcha, translucidez, canto de luz y sombra en capas.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.card,
+.form-card,
+.filters-bar,
+.sidebar,
+.modal-card,
+.kpi-card,
+.order-card {
+  background: var(--vidrio);
+  border: 1px solid var(--canto);
+  box-shadow: var(--sombra-vidrio);
+  -webkit-backdrop-filter: var(--escarcha-panel);
+  backdrop-filter: var(--escarcha-panel);
+  transition:
+    transform 240ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.form-card {
+  background: var(--vidrio-alto);
+  -webkit-backdrop-filter: var(--escarcha-fuerte);
+  backdrop-filter: var(--escarcha-fuerte);
+}
+
+.modal-card {
+  -webkit-backdrop-filter: var(--escarcha-fuerte);
+  backdrop-filter: var(--escarcha-fuerte);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   COLORES DE LOS MODALES
+   ══════════════════════════════════════════════════════════════════════════
+
+   Samir pidio corregir los colores de las ventanas, en especial en tema claro.
+   Medido lo que habia:
+
+     velo atras            rgba(15, 23, 42, 0.55)   azul marino al 55%
+     tarjeta               rgba(255, 255, 255, 0.42)   blanco al 42%
+     fondo real bajo texto rgb(220, 221, 220)       gris, no blanco
+
+   Son dos capas que se arrugan entre si. El velo era azul casi negro al 55%:
+   en tema claro eso le pone una cortina oscura encima de una pagina pastel
+   claro, y el fondo deja de leerse, la pantalla se ve apagada.
+
+   Y la tarjeta era solo 42% de blanco: con el velo oscuro detras, el desenfoque
+   fuerte (blur 40px) mezcla ese gris adentro y la tarjeta termina gris en vez
+   de blanca. O sea, el gris no venia de un color mal puesto, era el resultado
+   de componer 42% de blanco sobre una cortina al 55%.
+
+   QUE SE CAMBIA, Y POR QUE
+   - Velo claro: rgba(51, 65, 85, 0.38). Menos denso, para que el fondo pastel se
+     siga leyendo, y en pizarra en vez de azul casi negro, que es la familia que
+     ya usa la app (--ink-soft es #334155). El 38% alcanza para que se vea que hay
+     un modal encima.
+   - Tarjeta clara: 86% de blanco. Sigue siendo cristal, con su blur y su borde,
+     pero el texto queda sobre una superficie casi blanca. Compuesto a mano:
+     0,86 de blanco sobre el velo da ~242,244,244.
+
+   En oscuro NO se cambia el color: ahi el velo al 55% sobre fondo oscuro ya
+   cumple su trabajo y la tarjeta rgba(18,26,48,0.72) tambien. Se declara igual,
+   para que quede explicito y no dependa de la regla vieja de redesign-v3.css.
+
+   ── LO QUE RESUELVE DE PASO ───────────────────────────────────────────────
+   El boton de cerrar (la X) daba 4.36:1 contra el minimo de 4.5:1, porque su
+   texto gris caia sobre el fondo gris compuesto. Con la tarjeta casi blanca el
+   fondo real pasa a ~242,244,244 y la X queda en 5.38:1, sin tocarle el color.
+
+   OJO: la tarjeta del modal NO puede usar el token --vidrio como las demas
+   paneles, porque ese token (0,42 de blanco) lo comparten la barra lateral, las
+   tarjetas y los filtros, y subirlo los volveria todos opacos. Por eso el
+   modal lleva su propio valor. */
+.modal-card {
+  background: rgba(255, 255, 255, 0.86);
+}
+
+/* La tarjeta oscura del modal.
+   Hace falta porque el color oscuro de antes no venia de una regla
+   [data-theme="dark"] .modal-card, sino del token --vidrio (que en oscuro vale
+   rgba(18, 26, 48, 0.72) y que comparten la barra lateral, las tarjetas del
+   inicio y los filtros). Al poner un valor fijo arriba, ese token dejo de mandar
+   para el modal y la tarjeta se quedo casi BLANCA en tema oscuro: un modal
+   blanco de noche.
+
+   El token --vidrio no se sube a 0,86 porque lo comparten muchas cosas y se
+   perderia el cristal en toda la app. Por eso el modal lleva valor propio, y por
+   eso necesita su variante oscura explicita.
+
+   Se deja en 0.72, que es el que ya tenia y medido. No se sube a 0.86 como el
+   claro: el pedido era para tema claro. */
+[data-theme="dark"] .modal-card {
+  background: rgba(18, 26, 48, 0.72);
+}
+
+.modal-backdrop {
+  background: rgba(51, 65, 85, 0.38);
+}
+
+[data-theme="dark"] .modal-backdrop {
+  background: rgba(15, 23, 42, 0.55);
+}
+
+/* ── El hover ───────────────────────────────────────────────────────────────
+   Las tarjetas del inicio: se usa unas 20 veces al día. Movimiento corto y
+   sin tocar el blur, que es lo caro. */
+.card-click:hover,
+.order-card:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 20px 52px rgba(30, 41, 59, 0.14),
+    0 5px 14px rgba(30, 41, 59, 0.08),
+    var(--canto-halo),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   5. LOS ANILLOS DE COLOR DE LAS TARJETAS (van en estructura-v4.css)
+   El detalle que más se nota de la referencia: un disco con anillo de color
+   arriba a la derecha de cada tarjeta. Ese anillo NO se define acá: vive en
+   estructura-v4.css, y va en ::before, no en ::after.
+
+   Y esa diferencia es una señal, no un detalle de estilo: ::after ya está en
+   uso por el puntito que la app usa para marcar alertas (--warn, --thread,
+   --gold, --ok). Con el anillo ahí encima se perdía la señal de "esto es una
+   alerta". Ver la nota al principio de estructura-v4.css.
+/* ════════════════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════════════════════
+   6. CAMPOS EN CÁPSULA
+   Los inputs de búsqueda de la referencia son cápsulas: bordes muy
+   redondeados y más alto.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+input, select, textarea {
+  background: var(--vidrio-alto);
+  border: 1px solid var(--canto);
+  border-radius: 999px;
+  box-shadow: inset 0 1px 2px rgba(30, 41, 59, 0.05);
+}
+
+textarea {
+  border-radius: 16px;
+}
+
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  background: rgba(10, 16, 32, 0.8);
+}
+
+input:focus, select:focus, textarea:focus {
+  background: rgba(255, 255, 255, 0.72);
+  border-color: var(--thread);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.18);
+}
+
+[data-theme="dark"] input:focus,
+[data-theme="dark"] select:focus,
+[data-theme="dark"] textarea:focus {
+  background: rgba(12, 19, 38, 0.92);
+}
+
+/* La cápsula de búsqueda del inicio, la de la referencia. */
+.search-input {
+  padding: 14px 22px;
+  font-size: 14.5px;
+}
+
+.btn {
+  border-radius: 999px;
+  box-shadow:
+    0 4px 14px rgba(30, 41, 59, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+.btn-small {
+  background: var(--vidrio-alto);
+  border: 1px solid var(--canto);
+  border-radius: 999px;
+  box-shadow: 0 2px 6px rgba(30, 41, 59, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+[data-theme="dark"] .btn-small {
+  background: rgba(22, 30, 52, 0.8);
+}
+
+.btn-ghost {
+  background: var(--vidrio-alto);
+  -webkit-backdrop-filter: var(--escarcha-tenue);
+  backdrop-filter: var(--escarcha-tenue);
+  border: 1px solid var(--canto);
+  border-radius: 999px;
+}
+
+[data-theme="dark"] .btn-ghost {
+  background: rgba(22, 30, 52, 0.8);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   7. LA BARRA LATERAL
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.sidebar {
+  border-right: 1px solid var(--canto);
+}
+
+.sidebar-item {
+  border-radius: 999px;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.sidebar-item:hover {
+  background: rgba(255, 255, 255, 0.55);
+}
+
+[data-theme="dark"] .sidebar-item:hover {
+  background: rgba(30, 40, 66, 0.7);
+}
+
+/* El ítem activo: cápsula violeta, como en la referencia.
+
+   OJO con la especificidad de estas dos reglas: `[data-theme="dark"] .x` pesa
+   MÁS que `.x` (tres clases contra dos), así que la regla de tema oscuro gana
+   aunque la clara esté después. Por eso el color del texto y del fondo tiene que
+   ir en las dos, y no solo en la de arriba.
+
+   El violeta va un poco más oscuro que el de la referencia a propósito: el
+   texto blanco sobre #6366f1 daba 4.47:1 y el mínimo es 4.5:1, quedaba a un
+   pelo. Con estos tonos da 6.29:1 y 5.70:1, y sigue siendo la misma familia de
+   violeta. Ver la nota igual en estructura-v4.css. */
+.sidebar-item.active {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  color: #ffffff;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  box-shadow:
+    0 8px 22px rgba(79, 70, 229, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+[data-theme="dark"] .sidebar-item.active {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  color: #ffffff;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   8. LA TABLA — CABECERA CRISTAL, CUERPO NÍTIDO
+   80 filas con backdrop-filter hunde el scroll en un celular, y los números
+   tienen que estar nítidos. La cabecera sí lleva escarcha.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.table-wrap {
+  background: var(--vidrio-alto);
+  border: 1px solid var(--canto);
+  border-radius: 24px;
+  box-shadow: var(--sombra-vidrio);
+  -webkit-backdrop-filter: var(--escarcha-panel);
+  backdrop-filter: var(--escarcha-panel);
+}
+
+.table-wrap thead th {
+  background: rgba(255, 255, 255, 0.5);
+  -webkit-backdrop-filter: var(--escarcha-tenue);
+  backdrop-filter: var(--escarcha-tenue);
+  border-bottom: 1px solid var(--canto);
+  color: var(--muted);
+  border-radius: 0;
+}
+
+[data-theme="dark"] .table-wrap thead th {
+  background: rgba(28, 38, 64, 0.7);
+}
+
+.table-wrap tbody td {
+  background: rgba(255, 255, 255, 0.72);
+}
+
+[data-theme="dark"] .table-wrap tbody td {
+  background: rgba(15, 22, 40, 0.9);
+}
+
+.table-wrap tbody tr:hover td {
+  background: rgba(255, 255, 255, 0.88);
+}
+
+[data-theme="dark"] .table-wrap tbody tr:hover td {
+  background: rgba(23, 32, 56, 0.94);
+}
+
+.table-wrap table th:last-child,
+.table-wrap table td:last-child {
+  background: rgba(255, 255, 255, 0.76);
+  box-shadow: -10px 0 16px -14px rgba(30, 41, 59, 0.4);
+}
+
+[data-theme="dark"] .table-wrap table th:last-child,
+[data-theme="dark"] .table-wrap table td:last-child {
+  background: rgba(15, 22, 40, 0.94);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   9. LOS SEIS ESTADOS — SÓLIDOS
+   Información, no decoración. Solo se les suma la sombra del estilo nuevo.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.estado-camisa-btn {
+  border-width: 1.5px;
+  border-radius: 16px;
+  box-shadow:
+    0 8px 22px rgba(30, 41, 59, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.14);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   10. MÁS AIRE
+   La referencia respira más. Sin esto el cristal queda apretado.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.card {
+  padding: 26px 28px;
+  border-radius: 24px;
+}
+
+.page-title {
+  letter-spacing: -0.035em;
+}
+
+.page-sub {
+  line-height: 1.7;
+}
+
+.form-section {
+  background: rgba(255, 255, 255, 0.38);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 24px;
+}
+
+[data-theme="dark"] .form-section {
+  background: rgba(24, 33, 58, 0.55);
+  border-color: rgba(148, 163, 184, 0.16);
+}
+
+.form-section-badge {
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.filters-bar {
+  border-radius: 24px;
+  padding: 16px 20px;
+}
+
+.camisa-item-row,
+.pedido-block,
+.cliente-chip {
+  background: rgba(255, 255, 255, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+}
+
+[data-theme="dark"] .camisa-item-row,
+[data-theme="dark"] .pedido-block,
+[data-theme="dark"] .cliente-chip {
+  background: rgba(24, 33, 58, 0.6);
+  border-color: rgba(148, 163, 184, 0.16);
+}
+
+.pedido-detalle,
+.pedido-sub-row,
+.camisa-detalle-row {
+  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+}
+
+[data-theme="dark"] .pedido-detalle,
+[data-theme="dark"] .pedido-sub-row,
+[data-theme="dark"] .camisa-detalle-row {
+  background: rgba(18, 26, 46, 0.74);
+  border-color: rgba(148, 163, 184, 0.16);
+}
+
+/* El encabezado del modal del celular, opaco para que el contenido de abajo
+   no se vea por detrás. Ese bug se corrigió el 30 de septiembre. */
+@media (max-width: 720px) {
+  .modal-head {
+    background: rgba(255, 255, 255, 0.95);
+    border-bottom: 1px solid var(--line);
+    box-shadow: 0 6px 12px -10px rgba(15, 23, 42, 0.45);
+  }
+
+  [data-theme="dark"] .modal-head {
+    background: rgba(18, 26, 46, 0.97);
+  }
+}
+
+/* En celular la app ocupa todo, sin flotar. */
+@media (max-width: 768px) {
+  .app-layout {
+    margin: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   11. ACCESIBILIDAD
+   ══════════════════════════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-transparency: reduce) {
+  .card,
+  .form-card,
+  .filters-bar,
+  .sidebar,
+  .modal-card,
+  .kpi-card,
+  .order-card,
+  .table-wrap,
+  .btn-ghost,
+  .btn-small {
+    background: var(--card);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    border-color: var(--line);
+  }
+
+  .table-wrap tbody td,
+  .table-wrap table td:last-child {
+    background: var(--card);
+  }
+
+  .table-wrap thead th {
+    background: var(--section-bg);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .form-section,
+  .camisa-item-row,
+  .pedido-block,
+  .cliente-chip,
+  .pedido-detalle,
+  .pedido-sub-row,
+  .camisa-detalle-row {
+    background: var(--section-bg);
+    border-color: var(--line);
+  }
+
+  .modal-head { background: var(--card) !important; }
+  .app-layout { box-shadow: none; }
+
+  /* Los círculos de color siguen, pero sin el halo. */
+  .kpi-card::after { box-shadow: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .form-card,
+  .filters-bar,
+  .sidebar,
+  .modal-card,
+  .kpi-card,
+  .order-card,
+  .table-wrap,
+  .btn-ghost,
+  .btn-small {
+    transition: none;
+  }
+
+  .card-click:hover,
+  .order-card:hover {
+    transform: none;
+  }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .card,
+  .form-card,
+  .filters-bar,
+  .sidebar,
+  .modal-card,
+  .kpi-card,
+  .order-card,
+  .table-wrap,
+  .btn-ghost,
+  .btn-small {
+    background: var(--card);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    border-color: var(--line);
+  }
+
+  .table-wrap tbody td,
+  .table-wrap table td:last-child {
+    background: var(--card);
+  }
+
+  .table-wrap thead th {
+    background: var(--section-bg);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .modal-head { background: var(--card) !important; }
+
+  /* El fondo se ve igual: los degradados no dependen de backdrop-filter. */
+}
+/* ══════════════════════════════════════════════════════════════════════════
+   ESTRUCTURA: BARRA LATERAL Y TARJETAS
+   ══════════════════════════════════════════════════════════════════════════
+
+  Esto no es textura: es FORMA. La diferencia entre esto y la referencia no la
+  hace el cristal, la hace que las piezas tengan otra silueta.
+
+  ── LA BARRA LATERAL ──────────────────────────────────────────────────────
+  Tu sidebar es `position: fixed` pegada al borde, de altura completa, con
+  `padding-left: 248px` en el layout. En la referencia es un PANEL FLOTANTE:
+  con margen a los lados, esquinas redondeadas en las cuatro, y los ítems en
+  forma de cápsula.
+
+  Eso se cambia solo con CSS: margen, radio y el padding del layout. No hace
+  falta tocar el HTML ni el JavaScript, y el comportamiento del cajón en
+  celular se mantiene (en celular vuelve a ser una hoja pegada al borde).
+
+  ── LOS PUNTITOS DE ESTADO DE LAS TARJETAS ────────────────────────────────
+  OJO, esto es una trampa que casi piso: `.kpi-card::after` YA ESTÁ EN USO por
+  el puntito de estado que la app usa para marcar alertas
+  (`.kpi-card[style*="--warn"]::after`, y también con --thread, --gold, --ok).
+  Ese puntito es información: si se pisa con el anillo, se pierde la señal de
+  "esto es una alerta".
+
+  Por eso el anillo va en `::before` y el puntito se queda en `::after`,
+  centrado dentro del anillo. Los dos conviven: el anillo es la pieza
+  decorativa del estilo nuevo, y el puntito sigue diciendo lo que decía.
+   ══════════════════════════════════════════════════════════════════════════
+
+   El corte es 769px y no 900px a propósito: es el MISMO corte que ya usa la
+   app para decidir si la barra es fija o cajón. Con un corte propio en 900,
+   en una ventana de 800px ganaba la regla de celular y la barra quedaba
+   pegada al borde, distinta a la referencia, en cualquier pantalla mediana.
+   ══════════════════════════════════════════════════════════════════════════
+
+   1. EL MENÚ LATERAL
+   ══════════════════════════════════════════════════════════════════════════
+
+   El menu toma la FORMA de la referencia de navbar (ficha de icono, boton de
+   plegar, badge sobre la ficha, aire, salir atenuado) pero no el COLOR: el
+   panel de alla es casi negro y aca se sigue usando el cristal que ya tenia,
+   igual que en el resto de la app.
+
+   El ancho lo manda una sola variable, --ancho-menu, porque el layout tiene que
+   compensar el ancho de la barra y esa compensacion cambia al plegar. Con dos
+   numeros fijos en dos lugares, el margen se desalinea en cuanto cambia uno.
+
+   Y todo lo de .menu-plegada va dentro de min-width: 769px a proposito: en
+   celular la barra es un cajon y nunca se plega (esPantallaChica() en
+   app.v2.js). Si esas reglas existieran tambien en celular, habria que
+   desarmarlas con resets, y un reset con menos especificidad que la regla que
+   deshace, no gana. Mejor que no existan. */
+
+:root {
+  /* Ancho de la barra con el menu abierto. La deja un poco mas ancha que los
+     248px de antes, porque la ficha de 40px + 12 de separacion + el texto ya
+     no dejaban buen margen. El plegado la baja a 84px (abajo). */
+  --ancho-menu: 252px;
+}
+
+@media (min-width: 769px) {
+  /* 20 de margen + el ancho de la barra + 20 de margen */
+  .app-layout {
+    padding-left: calc(var(--ancho-menu) + 40px);
+  }
+
+  .sidebar {
+    width: var(--ancho-menu);
+    left: 20px;
+    top: 20px;
+    height: calc(100vh - 40px);
+    border-radius: 28px;
+    border: 1px solid var(--canto);
+    box-shadow: var(--sombra-vidrio);
+    padding: 14px 14px;
+    transition: width 240ms var(--ease-out);
+  }
+}
+
+@media (max-width: 768px) {
+  .app-layout {
+    padding-left: 0;
+  }
+
+  .sidebar {
+    left: 0;
+    top: 0;
+    width: 264px;
+    height: 100vh;
+    border-radius: 0 26px 26px 0;
+    border-left: none;
+    border-top: none;
+    border-bottom: none;
+  }
+
+  /* OJO: el "display: none" del boton de plegar en celular NO va aqui.
+     Esta regla esta ANTES de la regla base de .sidebar-plegar mas abajo, y con
+     la misma especificidad gana la ULTIMA: el boton se veia en el cajon del
+     telefono. Ah que no hace nada, porque en celular esPantallaChica() hace que
+     toggleMenuColapsada() salga temprano. O sea: un boton que promete algo que
+     no hace. Esta en su propio @media mas abajo, DESPUES de la base. */
+}
+
+/* ── La ficha del icono ─────────────────────────────────────────────────────
+   Es lo que mas cambia el aspecto: antes era un emoji suelto en la linea de
+   texto. Los emojis son de color y multicolor, y arriba de una ficha clara
+   se ven mal. Con un icono de trazo, monocromo, dentro de una ficha, todos los
+   items se ven de la misma familia. */
+.item-ico {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  background: var(--vidrio-alto);
+  border: 1px solid var(--canto);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  color: var(--ink);
+  transition: background 200ms ease, color 200ms ease, border-color 200ms ease;
+}
+
+.item-ico svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+[data-theme="dark"] .item-ico {
+  background: rgba(30, 40, 66, 0.72);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* ── El boton de plegar ───────────────────────────────────────────────────── */
+.sidebar-plegar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 5px 10px;
+  margin-bottom: 10px;
+  border-radius: 18px;
+  background: var(--vidrio-alto);
+  border: 1px solid var(--canto);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 200ms ease;
+}
+
+.sidebar-plegar:hover {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+[data-theme="dark"] .sidebar-plegar {
+  background: rgba(22, 30, 52, 0.8);
+}
+
+[data-theme="dark"] .sidebar-plegar:hover {
+  background: rgba(38, 50, 82, 0.9);
+}
+
+/* En celular el boton de plegar no se muestra. Va DESPUES de la regla base de
+   arriba, a proposito: dos reglas con la misma especificidad gana la ultima, y
+   si esto quedara antes, la base lo volveria a poner visible. */
+@media (max-width: 768px) {
+  .sidebar-plegar {
+    display: none;
+  }
+}
+
+/* ── La marca ─────────────────────────────────────────────────────────────── */
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 2px 4px 12px;
+  margin: 0 0 10px;
+  border-bottom: 1px solid var(--canto);
+}
+
+.sidebar-brand .brand-mark {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  font-size: 20px;
+  border-radius: 13px;
+  /* Violeta oscuro a proposito: la "C" es blanca y sobre #6366f1 daba 4.47:1,
+     con el minimo pedido en 4.5. Con estos tonos da 6.29:1. */
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  box-shadow:
+    0 6px 18px rgba(79, 70, 229, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.sidebar-brand .brand-text strong {
+  display: block;
+  font-size: 14.5px;
+  letter-spacing: -0.01em;
+}
+
+.sidebar-brand .brand-text small {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* ── Los titulos de grupo ─────────────────────────────────────────────────── */
+.nav-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 10px 0 2px;
+  padding: 0 6px;
+}
+
+.nav-label:first-child {
+  margin-top: 0;
+}
+
+/* ── Los items ────────────────────────────────────────────────────────────── */
+.sidebar-nav {
+  gap: 3px;
+}
+
+.sidebar-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 5px 10px;
+  border-radius: 18px;
+  background: none;
+  border: 1px solid transparent;
+  color: var(--ink);
+  font-size: 14.5px;
+  font-weight: 500;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 200ms ease, border-color 200ms ease;
+}
+
+.sidebar-item:hover {
+  background: rgba(255, 255, 255, 0.55);
+  border-color: var(--canto);
+}
+
+[data-theme="dark"] .sidebar-item:hover {
+  background: rgba(30, 40, 66, 0.7);
+}
+
+/* El activo: la ficha en violeta. Es la pieza que mas se mira del dia, asi que
+   el contraste va medido, no supuesto (6.29:1 con texto blanco). */
+.sidebar-item.active {
+  background: rgba(255, 255, 255, 0.5);
+  border-color: var(--canto);
+  font-weight: 600;
+  /* OJO, esto no es cosmetico. Las capas de abajo (cristal) dejan el item
+     activo con `color: #ffffff`, que era correcto cuando no habia ficha: el
+     texto blanco iba sobre la fila toda violeta. Ahora el violeta esta SOLO en
+     la ficha de 40px, asi que la etiqueta quedaria blanca sobre fondo claro y
+     daba 1.11:1. La etiqueta vuelve a tomar el color normal, y el blanco se
+     queda en el icono, que es lo unico que va sobre el violeta.
+
+     La regla de tema oscuro del cristal pesa mas que esta (tres clases contra
+     dos), asi que hay que repetirla para ganarle. */
+  color: var(--ink);
+}
+
+[data-theme="dark"] .sidebar-item.active {
+  color: var(--ink);
+}
+
+.sidebar-item.active .item-ico {
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  border-color: rgba(255, 255, 255, 0.42);
+  color: #ffffff;
+  box-shadow:
+    0 6px 16px rgba(79, 70, 229, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+[data-theme="dark"] .sidebar-item.active {
+  background: rgba(30, 40, 66, 0.55);
+}
+
+/* ── El badge, sobre la esquina de la ficha ──────────────────────────────────
+   Asi lo tiene la referencia: un circulo pegado a la esquina de arriba de la
+   derecha de la ficha, no al final de la linea de texto.
+
+   OJO: .sidebar-item .badge ya existia con margin-left:auto (empujado al
+   final). Como hoy NADA genera un badge en el menu, se puede cambiar de lugar
+   sin riesgo. Si alguna vez se agrega un contador, tiene que caer acá, no
+   volver al final. */
+.sidebar-item .badge {
+  position: absolute;
+  top: 2px;
+  left: 36px;
+  margin-left: 0;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #ffffff;
+  border: 2px solid var(--card);
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── El pie: tema y salir ──────────────────────────────────────────────────── */
+.sidebar-footer {
+  margin: 10px 0 0;
+  padding: 10px 0 0;
+  border-top: 1px solid var(--canto);
+}
+
+.user-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.footer-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+/* .btn-ghost.btn tiene especificidad (0,2,0), asi que alcanza con (0,2,0) mas
+   adelante en la cascada. El padding y el fondo propios gana igual. */
+.footer-actions .btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: 18px;
+  background: none;
+  border: 1px solid transparent;
+  color: var(--ink);
+  font-size: 14.5px;
+  font-weight: 500;
+  text-align: left;
+  transition: background 200ms ease, border-color 200ms ease;
+}
+
+.footer-actions .btn:hover {
+  background: rgba(255, 255, 255, 0.55);
+  border-color: var(--canto);
+}
+
+[data-theme="dark"] .footer-actions .btn:hover {
+  background: rgba(30, 40, 66, 0.7);
+}
+
+/* Salir va atenuado: es una accion destructiva y no compite con las de arriba. */
+.footer-actions .menu-salir {
+  color: var(--muted);
+}
+
+.footer-actions .menu-salir .item-ico {
+  background: transparent;
+  border-color: var(--canto);
+  box-shadow: none;
+}
+
+/* ── El modo replegado ─────────────────────────────────────────────────────
+   Solo lectura de iconos, como el estado izquierdo de la referencia. El alto
+   del panel no se toca, asi que los items no se estiran. */
+@media (min-width: 769px) {
+  body.menu-plegada {
+    --ancho-menu: 84px;
+  }
+
+  body.menu-plegada .item-txt,
+  body.menu-plegada .nav-label,
+  body.menu-plegada .brand-text {
+    display: none;
+  }
+
+  body.menu-plegada .sidebar-plegar,
+  body.menu-plegada .sidebar-item,
+  body.menu-plegada .footer-actions .btn {
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  body.menu-plegada .sidebar-brand {
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+    border-bottom-color: transparent;
+  }
+
+  body.menu-plegada .user-chip {
+    justify-content: center;
+  }
+
+  /* La flecha del boton mira al otro lado: si esta plegada, la accion es abrir. */
+  body.menu-plegada .flecha-plegar {
+    transform: scaleX(-1);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   2. LAS TARJETAS
+   ══════════════════════════════════════════════════════════════════════════
+
+   MEDIDAS COPIADAS DEL SITIO EN VIVO
+   Samir dijo "guiate del proyecto principal, aqui se ve superbien", asi que en
+   vez de seguir calculando se midio el sitio publicado y se copiaron sus
+   medidas. Medido en la ventana de 1000px:
+
+     .kpi-grid   repeat(auto-fill, minmax(190px, 1fr)), hueco 16px
+                 con 768px o menos -> repeat(2,1fr), hueco 10px
+     .kpi-card   relleno 18px 20px, radio 20px, SIN alto minimo
+     .kpi-label  12px, apagada, peso 600, margen abajo 6px
+     .kpi-value  26px, peso 700, interlineado 1,15, cifras tabulares
+     .kpi-sub    12px, apagada, margen arriba 4px, interlineado 1,5
+     el puntito  8px, a 14px de cada lado
+
+   Tarjetas de ahi: 215 x 118 y 215 x 130, o sea 1,66:1 a 1,92:1.
+
+   ── QUE ESTABA MAL Y POR QUE SE SENTIAN ANCHAS ──────────────────────────────
+   - La tarjeta tenia alto minimo de 158px y el sitio en vivo no tiene ninguno:
+     alla la altura la decide el contenido. Con 158px y 309 de ancho salia
+     1,96:1, que es una franja y no una caja.
+   - La cifra llegaba a 36,8px a 1920px, porque se media contra el ancho de la
+     tarjeta. El sitio en vivo usa 26px fijo.
+   - La etiqueta estaba empujada al fondo con margin-bottom auto, y el texto
+     chico reservaba dos lineas. El sitio en vivo no hace ninguna de las dos
+     cosas: los deja como texto normal y deja que la altura la decida el texto.
+   - La rejilla contaba columnas a mano. El sitio en vivo usa auto-fill con un
+     minimo de 190px, asi que las tarjetas nunca salen mas angostas de eso.
+
+   ── QUE SE MANTIENE, Y NO ESTABA EN EL SITIO EN VIVO ───────────────────────
+   overflow-wrap: anywhere en la cifra: si un monto se hace mas largo de lo que
+   entra, parte la linea en vez de salirse de la tarjeta.
+
+   Y 14px de aire a la derecha de la etiqueta, para que una etiqueta de cuatro
+   palabras no se meta debajo del puntito de la esquina. El sitio en vivo no lo
+   tiene porque alla las etiquetas son cortas.
+
+   ── POR QUE LA CIFRA VA EN 26px FIJO ───────────────────────────────────────
+   Con relleno de 18px 20px y una tarjeta de 190px (el minimo de la rejilla)
+   quedan 150px utiles, y "$290.000" a 26px ocupa 138: entra con 12px de margen.
+   O sea que ya entra con tamano fijo, y asi se ve igual en todas las pantallas,
+   que es justo lo que gustaba del sitio en vivo. */
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.kpi-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 18px 20px;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.kpi-card .kpi-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 6px;
+
+  /* Los 14px son para que una etiqueta larga no se meta debajo del puntito de
+     la esquina. El sitio en vivo no los tiene porque alla las etiquetas cortas. */
+  padding-right: 14px;
+}
+
+.kpi-card .kpi-value {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+
+  /* La red de seguridad: sin esto un monto mas largo de lo que entra se sale de
+     la tarjeta. */
+  overflow-wrap: anywhere;
+  hyphens: none;
+}
+
+.kpi-card .kpi-sub {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 4px;
+  line-height: 1.5;
+}
+
+/* Las de navegacion ("Registrar", "Ver") son botones, no indicadores. El sitio en
+   vivo les baja el cuerpo a 16px con un tamano en el estilo en linea, que es
+   justo lo que se quito: con eso el mismo "15" se via a 16px en una tarjeta y a
+   40px en la otra. */
+.kpi-card--atajo .kpi-value {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* El puntito de estado, en la misma esquina que el sitio en vivo: 14px de cada
+   lado. Ojo que este NO es decoracion: dice si algo requiere atencion, y es el
+   unico canal de color de la tarjeta, porque el borde izquierdo de colores esta
+   anulado a proposito en styles.v2.css con un !important. */
+.kpi-card[style*="--warn"]::after,
+.kpi-card[style*="--thread"]::after,
+.kpi-card[style*="--gold"]::after,
+.kpi-card[style*="--ok"]::after {
+  top: 14px;
+  right: 14px;
+  width: 8px;
+  height: 8px;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.55);
+}
+
+[data-theme="dark"] .kpi-card[style*="--warn"]::after,
+[data-theme="dark"] .kpi-card[style*="--thread"]::after,
+[data-theme="dark"] .kpi-card[style*="--gold"]::after,
+[data-theme="dark"] .kpi-card[style*="--ok"]::after {
+  box-shadow: 0 0 0 2px rgba(15, 22, 40, 0.7);
+}
+
+@media (max-width: 768px) {
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .kpi-card .kpi-value {
+    font-size: 21px;
+  }
+
+  .kpi-card--atajo .kpi-value {
+    font-size: 16px;
+  }
+
+  .kpi-card[style*="--warn"]::after,
+  .kpi-card[style*="--thread"]::after,
+  .kpi-card[style*="--gold"]::after,
+  .kpi-card[style*="--ok"]::after {
+    top: 12px;
+    right: 12px;
+  }
+}
+/* ══════════════════════════════════════════════════════════════════════════
+   3. LOS TÍTULOS DE PÁGINA, más grandes y con más aire
+   En la referencia el título domina la pantalla.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.page-head {
+  margin-bottom: 26px;
+  gap: 16px;
+}
+
+.page-title {
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  padding-bottom: 12px;
+}
+
+.page-title::after {
+  width: 64px;
+  height: 5px;
+  background: linear-gradient(90deg, #6366f1, #a855f7, #fbbf24);
+}
+
+.page-sub {
+  font-size: 15.5px;
+  margin-top: 12px;
+}
+
+@media (max-width: 720px) {
+  .page-title {
+    font-size: 25px;
+  }
+
+  .page-sub {
+    font-size: 14px;
+  }
+}
+
+.dash-section {
+  margin-bottom: 38px;
+}
+
+.dash-section h2 {
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  margin-bottom: 16px;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   4. LOS ACCESOS RÁPIDOS, con la misma forma de tarjeta grande
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.card,
+.filters-bar {
+  border-radius: 24px;
+}
+
+.card {
+  padding: 26px 28px;
+}
+
+.filters-bar {
+  padding: 18px 22px;
+}
+
+/* El botón dorado, en forma de cápsula como el resto. */
+.btn-gold {
+  border-radius: 999px;
+}
+
+.btn {
+  border-radius: 999px;
+  padding: 13px 24px;
+}
+
+.btn-small {
+  padding: 8px 16px;
+}
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ESTRUCTURA sin movimiento
+   Esta capa mueve el panel de la barra lateral y levanta las tarjetas al pasar
+   por encima. Si la persona pidio menos movimiento, eso se apaga.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+  .kpi-card,
+  .order-card,
+  .card,
+  .card-click,
+  .sidebar,
+  .sidebar-item {
+    transition: none;
+  }
+
+  .card-click:hover,
+  .order-card:hover,
+  .sidebar-item:active {
+    transform: none;
+  }
+}
+/* ── El icono del boton de tema ──────────────────────────────────────────────
+   Sol y luna en el mismo SVG, y el CSS muestra el que toca. El tema se pone en
+   data-theme SOLO cuando es oscuro (en claro se quita el atributo), asi que:
+     sin data-theme  -> sol
+     con data-theme="dark" -> luna
+
+   Se usaba un emoji (Luna / Sol) Y un icono SVG: dos soles o dos lunas en el
+   mismo boton. El emoji se fue; queda el icono, que ahora si cambia. */
+.ico-tema .cara-luna {
+  display: none;
+}
+
+[data-theme="dark"] .ico-tema .cara-sol {
+  display: none;
+}
+
+[data-theme="dark"] .ico-tema .cara-luna {
+  display: block;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   LAS ALERTAS DEL INICIO, EN COLUMNAS
+   ══════════════════════════════════════════════════════════════════════════
+
+   Samir pidio que las alertas se vieran en columnas de 3. Para eso hubo que
+   separar antes las lineas en el JavaScript: antes iban todas metidas en un
+   solo .alert-item, unidas por <br>. Eso no es una rejilla, es un bloque de
+   texto, y con columnas no habia nada que repartir: todas ocupaban el mismo
+   ancho y una alerta larga estiraba el bloque entero.
+
+   Ahora cada linea es su propia tarjeta. Ver calcularAlertas() en app.v2.js.
+
+   El titulo del grupo ocupa todas las columnas, para que se lea como titulo y
+   no como una tarjeta mas. */
+#dashboard-alertas {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-bottom: 26px;
+  align-items: start;
+}
+
+/* El titulo del grupo atraviesa toda la rejilla. */
+.alertas-grupo {
+  grid-column: 1 / -1;
+  margin: 10px 0 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.alertas-grupo:first-child {
+  margin-top: 0;
+}
+
+/* Cada alerta es una tarjeta. El texto arriba, no centrado: antes venia
+   centrado porque el bloque era una sola linea; con varias lineas de texto
+   centrado se ve raro. */
+.alert-item {
+  display: block;
+  padding: 12px 14px 12px 16px;
+  border-radius: 14px;
+  font-size: 13.5px;
+  line-height: 1.45;
+  text-align: left;
+  hyphens: none;
+}
+
+/* El filete de color: es lo que hace que se escanee de un vistazo cual es
+   urgente. Es decorativo, no lleva texto, asi que no entra en la medicion de
+   contraste. Los fondos y los textos de los cuatro tipos no se tocan.
+
+   OJO: el ancho del filete va DENTRO de las reglas de cada tipo y no en una
+   regla general. Las reglas viejas usan el atajo "border", que pone los cuatro
+   lados, y tienen dos clases (.alert-item + .info) contra una de una regla
+   general. Con dos contra uno gana la vieja y el ancho se queda en 1px. */
+.alert-item.critical { border-left-width: 3px; border-left-color: #ef4444; }
+.alert-item.warning  { border-left-width: 3px; border-left-color: #f59e0b; }
+.alert-item.info     { border-left-width: 3px; border-left-color: #3b82f6; }
+.alert-item.success  { border-left-width: 3px; border-left-color: #22c55e; }
+
+/* darkThemeDelFilete: en oscuro hace falta repetirlo con el atributo del tema,
+   porque [data-theme="dark"] .alert-item.info pesa tres clases y le gana a
+   .alert-item.info. Estos colores son versions mas claras: sobre fondo oscuro un
+   rojo apagado no se ve. */
+[data-theme="dark"] .alert-item.critical { border-left-width: 3px; border-left-color: #f87171; }
+[data-theme="dark"] .alert-item.warning  { border-left-width: 3px; border-left-color: #fbbf24; }
+[data-theme="dark"] .alert-item.info     { border-left-width: 3px; border-left-color: #60a5fa; }
+[data-theme="dark"] .alert-item.success  { border-left-width: 3px; border-left-color: #4ade80; }
+
+/* El nombre del cliente va en negrita (ya viene asi del JavaScript) y se lo
+   saca de negrita al resto para que la mirada caiga en el nombre. */
+.alert-item b {
+  font-weight: 700;
+}
+
+/* Dos columnas en tablet. */
+@media (min-width: 620px) {
+  #dashboard-alertas {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Tres columnas en pantalla grande: lo que pidio Samir. */
+@media (min-width: 1000px) {
+  #dashboard-alertas {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* En el celular la tarjeta se achica un poco mas: con tres alertas apiladas se
+   lee mejor en una columna y con el texto un poco mas abajo. */
+@media (max-width: 620px) {
+  .alert-item {
+    font-size: 13px;
+  }
 }

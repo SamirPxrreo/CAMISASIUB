@@ -849,7 +849,6 @@
   function applyTheme(theme) {
     currentTheme = theme;
     localStorage.setItem('theme_preference', theme);
-    const icon = document.getElementById('theme-icon');
     const label = document.getElementById('theme-label');
 
     let activeTheme = theme;
@@ -859,11 +858,9 @@
 
     if (activeTheme === 'dark') {
       document.documentElement.setAttribute('data-theme', 'dark');
-      if (icon) icon.textContent = '🌙';
       if (label) label.textContent = theme === 'system' ? 'Sistema' : 'Oscuro';
     } else {
       document.documentElement.removeAttribute('data-theme');
-      if (icon) icon.textContent = '☀️';
       if (label) label.textContent = theme === 'system' ? 'Sistema' : 'Claro';
     }
   }
@@ -881,8 +878,47 @@
   /* =====================================================
      INICIALIZACIÓN DE LA APLICACIÓN
      ===================================================== */
+   /* =====================================================
+      MENU LATERAL PLEGADO
+      =====================================================
+      El boton de arriba pliega la barra a solo los iconos, y queda acordada
+      entre visitas en localStorage.
+
+      Ojo con esto: NO es el mismo control que toggleSidebar() de mas arriba.
+      Ese abre y cierra el cajon de celular. Este reduce la barra de escritorio.
+      Si se mezclaran, en celular el boton de plegar haria lo mismo que el
+      boton "Menu" de arriba, y quedaria sin forma de agrandarla.
+
+      En celular no se pliega: la barra es un cajon, y a 84px de iconos sin
+      texto no dice nada. Por eso la clase se quita sola al cruzar el corte y
+      no solo al cargar. */
+   const CLAVE_MENU_PLEGADO = 'menu-lateral-plegado';
+
+   function esPantallaChica() {
+     return window.matchMedia('(max-width: 768px)').matches;
+   }
+
+   function aplicarMenuColapsada() {
+     let plegada = false;
+     try { plegada = localStorage.getItem(CLAVE_MENU_PLEGADO) === '1'; } catch (e) { /* sin localStorage */ }
+     if (esPantallaChica()) plegada = false;
+     document.body.classList.toggle('menu-plegada', plegada);
+   }
+
+   function toggleMenuColapsada() {
+     if (esPantallaChica()) return;
+     const plegada = document.body.classList.toggle('menu-plegada');
+     try { localStorage.setItem(CLAVE_MENU_PLEGADO, plegada ? '1' : '0'); } catch (e) { /* sin localStorage */ }
+   }
+
+   // Si se agranda la ventana con la barra plegada, vuelve a abrir sola.
+   window.matchMedia('(max-width: 768px)').addEventListener('change', function (e) {
+     if (!e.matches) aplicarMenuColapsada();
+   });
+
    document.addEventListener('DOMContentLoaded', async () => {
      applyTheme(currentTheme);
+     aplicarMenuColapsada();
 
      const fechaInput = document.getElementById('f-fecha');
      if (fechaInput) fechaInput.value = hoyColombia();
@@ -1927,24 +1963,24 @@
       <div class="dash-section" style="margin-bottom:24px;">
         <h2 style="font-size:17px;font-weight:600;margin:0 0 10px;">⚡ Accesos rápidos</h2>
         <div class="kpi-grid">
-          <div class="kpi-card" style="cursor:pointer;" onclick="navigateTo('new-sale')">
+          <div class="kpi-card kpi-card--atajo" style="cursor:pointer;" onclick="navigateTo('new-sale')">
             <div class="kpi-label">➕ Nueva Venta</div>
-            <div class="kpi-value" style="font-size:16px;">Registrar</div>
+            <div class="kpi-value">Registrar</div>
             <div class="kpi-sub">Crea un nuevo pedido de camisas</div>
           </div>
-          <div class="kpi-card" style="cursor:pointer;" onclick="navigateTo('orders')">
+          <div class="kpi-card kpi-card--atajo" style="cursor:pointer;" onclick="navigateTo('orders')">
             <div class="kpi-label">📋 Pedidos</div>
-            <div class="kpi-value" style="font-size:16px;">${pendientes.length}</div>
+            <div class="kpi-value">${pendientes.length}</div>
             <div class="kpi-sub">Pedidos activos</div>
           </div>
-          <div class="kpi-card" style="cursor:pointer;" onclick="navigateTo('summaries')">
+          <div class="kpi-card kpi-card--atajo" style="cursor:pointer;" onclick="navigateTo('summaries')">
             <div class="kpi-label">📊 Resúmenes</div>
-            <div class="kpi-value" style="font-size:16px;">Ver</div>
+            <div class="kpi-value">Ver</div>
             <div class="kpi-sub">Estadísticas y análisis del negocio</div>
           </div>
-          <div class="kpi-card" style="cursor:pointer;" onclick="navigateTo('settlements')">
+          <div class="kpi-card kpi-card--atajo" style="cursor:pointer;" onclick="navigateTo('settlements')">
             <div class="kpi-label">💰 Liquidaciones</div>
-            <div class="kpi-value" style="font-size:16px;">Ver</div>
+            <div class="kpi-value">Ver</div>
             <div class="kpi-sub">Saldos y ganancias entre socios</div>
           </div>
         </div>
@@ -2494,21 +2530,53 @@
       if (deuda > 100000) alertas.push({ tipo: 'warning', msg: `⚠️ Cliente con deuda alta: <b>${nombre}</b> — debe ${fmt(deuda)}` });
     });
 
+    // ── POR QUE ESTO SE CAMBIO ───────────────────────────────────────────────
+    // Samir dijo: "esta parte de alertas hay que corregir como se muestra, tengo
+    // pensado que sea por columnas de 3 filas".
+    //
+    // Antes estas dos alertas iban METIDAS en un solo .alert-item, con todas sus
+    // lineas pegadas por <br>. Medido: un unico bloque de 562px por 89px con 4
+    // lineas adentro.
+    //
+    // Asi no hay forma de hacer columnas, porque las alertas no eran elementos
+    // sino lineas de texto: todas ocupaban el mismo ancho, una alerta larga
+    // estiraba el bloque y desalineaba a las demas. Ademas, al ir todas juntas,
+    // se perdia el color por tipo: las de "listo para entrega" salian todas en
+    // violeta y las de "tiempo muerto" todas en ambar.
+    //
+    // Ahora cada linea es su propia tarjeta, con su tipo y su color, y el titulo
+    // del grupo va aparte ocupando todas las columnas. No se toco ningun
+    // calculo ni ningun texto: solo como se muestran.
+
     // Ítem 4 — tiempo muerto por estado (camisa atascada demasiados días).
     const muertos = alertasTiempoMuerto();
     if (muertos.length) {
-      alertas.push({ tipo: 'warning', msg: '🕐 <b>Tiempo muerto en estados:</b><br>' + muertos.join('<br>') });
+      alertas.push({ tipo: 'titulo', msg: 'Tiempo muerto en estados' });
+      // Se saca la viñeta que traia: dentro de una tarjeta sobra, y ademas
+      // quedaban mezclados los tres tipos de aviso que si llevan emoji.
+      muertos.forEach(linea => alertas.push({
+        tipo: 'warning',
+        msg: '🕐 ' + linea.replace(/^•\s*/, '')
+      }));
     }
 
     // "Listo para entrega" sin fecha o sin entregarse.
     const listosSinEntrega = alertasListosSinEntrega();
     if (listosSinEntrega.length) {
-      alertas.push({ tipo: 'info', msg: listosSinEntrega.join('<br>') });
+      alertas.push({ tipo: 'titulo', msg: 'Listo para entrega sin cerrar' });
+      listosSinEntrega.forEach(linea => alertas.push({ tipo: 'info', msg: linea }));
     }
 
-    if (alertas.length === 0) alertas.push({ tipo: 'success', msg: '✅ Todo al día — No hay alertas pendientes.' });
+    // Se cuentan solo las alertas de verdad, no los titulos: si no hay ninguna,
+    // lo que se muestra es que todo esta al dia.
+    const reales = alertas.filter(a => a.tipo !== 'titulo');
+    if (reales.length === 0) alertas.push({ tipo: 'success', msg: '✅ Todo al día — No hay alertas pendientes.' });
 
-    container.innerHTML = alertas.map(a => `<div class="alert-item ${a.tipo}">${a.msg}</div>`).join('');
+    container.innerHTML = alertas.map(a =>
+      a.tipo === 'titulo'
+        ? `<h3 class="alertas-grupo">${a.msg}</h3>`
+        : `<div class="alert-item ${a.tipo}">${a.msg}</div>`
+    ).join('');
   }
 
   /* =====================================================
