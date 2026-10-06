@@ -276,7 +276,15 @@
   // vuelve a pedir el HTML con un parametro nuevo.
   function hardRefresh() {
     try { if ('caches' in window) caches.keys().then(ns => ns.forEach(n => caches.delete(n))); } catch(e){}
-    const url = location.href.split('?')[0] + '?v=' + Date.now();
+    // El hash va DESPUÉS del query en una URL: ruta?query#hash.
+    //
+    // Antes se armaba la URL con location.href.split('?')[0] + '?v=' + hora, y
+    // eso TIRABA el hash: de ".../CAMISASIUB/?v=2026#pedidos" salía
+    // ".../CAMISASIUB/?v=1757...". Al recargar, la app no encontraba sección y
+    // arrancaba en el Inicio, aunque uno estuviera en Pedidos.
+    //
+    // Por eso se arman las tres partes por separado en vez de recortar la URL.
+    const url = location.pathname + '?v=' + Date.now() + location.hash;
     // 'reload' fuerza a revalidar en el servidor en vez de usar la cache.
     try { location.replace(url); } catch (e) { location.href = url; }
     // Si el replace no dispara (raro), un reload duro como respaldo.
