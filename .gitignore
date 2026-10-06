@@ -1,2 +1,13 @@
 token.txt
 # token local con GH_TOKEN - no subir al repo
+
+# ── NO se publican en el sitio (2026-10-06) ───────────────────────────
+# GitHub Pages sirve todo lo que hay en la rama, sin mirar este archivo.
+# Estos siguen en disco para trabajar, pero no se suben.
+
+AGENTS.md
+docs/
+fuentes/
+herramientas/
+migraciones/
+deploy/

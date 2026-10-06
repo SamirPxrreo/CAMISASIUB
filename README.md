@@ -65,37 +65,33 @@ medidos contra su fondo en los dos temas (mínimo 4.5:1).
 son los CDNs de Supabase, SheetJS y ExcelJS, cargados en el `<head>`. No hay
 paso de compilación: se edita el archivo, se sube, se publica.
 
+Este repo tiene **lo mínimo que el sitio necesita**:
+
 ```
-index.html                    Estructura: login, sidebar, secciones, los 11 modales
-app.v2.js                     Toda la lógica (Supabase, cálculos, renders)
-enhance.v2.js                 Mejoras de presentación, sin lógica de negocio
-deslizar-modal.js             Arrastrar la hoja del celular para cerrarla
-styles.v2.css                 El CSS que se sirve. NO se edita a mano: es generado
-favicon.ico / favicon.png      El ícono de la pestaña
-
-fuentes/redesign-v3.css       Fuente. Capa 1 del diseño: la paleta
-fuentes/estados-v3.css        Fuente. Capa 1: colores por estado del pedido
-fuentes/glass-v4.css          Fuente. Capa 2: el cristal (liquid glass)
-fuentes/hoja-modal.css        Fuente. Los modales que suben desde abajo
-fuentes/estructura-v4.css     Fuente. Capa 3: la forma (menú, tarjetas, alertas)
-fuentes/aplicar-diseno.js     Pega las capas en styles.v2.css (--quitar las saca)
-
-herramientas/revisar-css.js       Analiza el CSS de verdad. Lo corre aplicar-diseno
-herramientas/probar-analizador.js Pruebas del analizador de CSS
-herramientas/auditar-contraste.js Mide WCAG. En el navegador: await __auditarContraste()
-herramientas/revisar-sql.js       Linter de SQL: correr antes de pegar en Supabase
-herramientas/verificar-seguridad.js Comprueba que la anon key no lee ni escribe
-
-migraciones/migracion.sql        Esquema de Supabase
-migraciones/aplicar-paso-*.sql   Migraciones por paso (casi todas ya ejecutadas)
-
-deploy/preparar-despliegue.js     Cambia el ?v= de los scripts (parte del deploy)
-deploy/clean-deployments.ps1     Deja 3 deployments: el vivo, el anterior y el ANCLA FIJA
-
-AGENTS.md                     Leer antes de tocar nada: reglas y trampas
-docs/PROYECTO.md              Documentación técnica completa (la sección 15 es el v4)
-docs/PLAN-v4-liquid-glass.md  El plan del rediseño v4 y cómo quedó
+index.html       Estructura: login, sidebar, secciones, los 11 modales
+app.v2.js        Toda la lógica (Supabase, cálculos, renders)
+enhance.v2.js    Mejoras de presentación, sin lógica de negocio
+deslizar-modal.js  Arrastrar la hoja del celular para cerrarla
+styles.v2.css    El CSS que se sirve
+favicon.ico / favicon.png   El ícono de la pestaña
 ```
+
+`styles.v2.css` es **generado**: se arma pegando al final varios CSS fuente que
+viven fuera de este repo. Está completo y no depende de ningún otro archivo, así
+que el sitio funciona con solo estos 6.
+
+### Lo que no está en el repo, a propósito
+
+El esquema de la base, las migraciones, las reglas internas y las herramientas
+de trabajo se guardan **fuera del repo**, en la máquina donde se desarrolla.
+
+La razón: GitHub Pages sirve **todo** lo que hay en la rama publicada, sin mirar
+el `.gitignore`. Con la documentación dentro, cualquiera podía descargar con un
+clic el esquema de la base de datos, los correos de las cuentas y la lista de
+bugs conocidos. Eso no sirve ni para correr el sitio.
+
+Si clonás el repo y querés trabajar en serio, vas a necesitar esas piezas
+aparte. Para despliegue y para consultas puntuales alcanza con lo que está acá.
 
 ### Correrlo en local
 

@@ -2544,10 +2544,6 @@ window.onload = function () {
     w.document.close();
   }
 
-  function vendedorLabel(v) {
-    return escSimple(v.vendedor || 'Sin vendedor');
-  }
-
   function stateText(v) {
     const eg = estadoGeneralVenta(v);
     return eg === 'Mixto' ? 'En proceso (Mixto)' : escSimple(eg);
