@@ -26,7 +26,7 @@
 <!-- ExcelJS para Reporte con diseño (2 hojas con estilos) -->
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 
-<link rel="stylesheet" href="styles.v2.css?v=20261005-1626">
+<link rel="stylesheet" href="styles.v2.css?v=20261006-1609">
 </head>
 
 <body>
@@ -104,7 +104,7 @@
 
     <nav class="sidebar-nav">
       <p class="nav-label">Principal</p>
-      <button class="sidebar-item active" data-section="dashboard" onclick="navigateTo('dashboard')">
+      <a class="sidebar-item active" data-section="dashboard"  href="#inicio">
         <span class="item-ico">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -115,10 +115,10 @@
           </svg>
         </span>
         <span class="item-txt">Inicio</span>
-      </button>
+      </a>
 
       <p class="nav-label">Ventas</p>
-      <button class="sidebar-item" data-section="new-sale" onclick="navigateTo('new-sale')">
+      <a class="sidebar-item" data-section="new-sale"  href="#nueva-venta">
         <span class="item-ico">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -126,8 +126,8 @@
           </svg>
         </span>
         <span class="item-txt">Nueva Venta</span>
-      </button>
-      <button class="sidebar-item" data-section="orders" onclick="navigateTo('orders')">
+      </a>
+      <a class="sidebar-item" data-section="orders"  href="#pedidos">
         <span class="item-ico">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -137,8 +137,8 @@
           </svg>
         </span>
         <span class="item-txt">Pedidos</span>
-      </button>
-      <button class="sidebar-item" data-section="cuentas" onclick="navigateTo('cuentas')">
+      </a>
+      <a class="sidebar-item" data-section="cuentas"  href="#cuentas">
         <span class="item-ico">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -148,8 +148,8 @@
           </svg>
         </span>
         <span class="item-txt">Cuentas</span>
-      </button>
-      <button class="sidebar-item" data-section="history" onclick="navigateTo('history')">
+      </a>
+      <a class="sidebar-item" data-section="history"  href="#historial">
         <span class="item-ico">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -158,10 +158,10 @@
           </svg>
         </span>
         <span class="item-txt">Historial</span>
-      </button>
+      </a>
 
       <p class="nav-label">Socios</p>
-      <button class="sidebar-item" data-section="purchases" onclick="navigateTo('purchases')">
+      <a class="sidebar-item" data-section="purchases"  href="#abonos-yesenia">
         <span class="item-ico">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -170,8 +170,8 @@
           </svg>
         </span>
         <span class="item-txt">Abonos Yesenia</span>
-      </button>
-      <button class="sidebar-item" data-section="settlements" onclick="navigateTo('settlements')">
+      </a>
+      <a class="sidebar-item" data-section="settlements"  href="#liquidaciones">
         <span class="item-ico">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -181,10 +181,10 @@
           </svg>
         </span>
         <span class="item-txt">Liquidaciones</span>
-      </button>
+      </a>
 
       <p class="nav-label">Datos</p>
-      <button class="sidebar-item" data-section="summaries" onclick="navigateTo('summaries')">
+      <a class="sidebar-item" data-section="summaries"  href="#resumenes">
         <span class="item-ico">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -195,8 +195,8 @@
           </svg>
         </span>
         <span class="item-txt">Resúmenes</span>
-      </button>
-      <button class="sidebar-item" data-section="reports" onclick="navigateTo('reports')">
+      </a>
+      <a class="sidebar-item" data-section="reports"  href="#reportes">
         <span class="item-ico">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -205,10 +205,10 @@
           </svg>
         </span>
         <span class="item-txt">Reportes</span>
-      </button>
+      </a>
 
       <p class="nav-label">Sistema</p>
-      <button class="sidebar-item hidden" data-section="settings" id="tab-users-btn" onclick="navigateTo('settings')">
+      <a class="sidebar-item hidden" data-section="settings" id="tab-users-btn"  href="#usuarios">
         <span class="item-ico">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -219,7 +219,7 @@
           </svg>
         </span>
         <span class="item-txt">Configuración</span>
-      </button>
+      </a>
     </nav>
 
     <div class="sidebar-footer">
@@ -1106,10 +1106,10 @@
      ===================================================== -->
 
 
-<script src="app.v2.js?v=20261005-1626"></script>
-<script src="enhance.v2.js?v=20261005-1626"></script>
+<script src="app.v2.js?v=20261006-1609"></script>
+<script src="enhance.v2.js?v=20261006-1609"></script>
 <!-- Deslizar para cerrar los modales, estilo app de celular. Solo presentación.
      No hace nada en el computador y no toca ninguna regla de negocio. -->
-<script src="deslizar-modal.js?v=20261005-1626"></script>
+<script src="deslizar-modal.js?v=20261006-1609"></script>
 </body>
 </html>

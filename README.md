@@ -71,28 +71,30 @@ app.v2.js                     Toda la lógica (Supabase, cálculos, renders)
 enhance.v2.js                 Mejoras de presentación, sin lógica de negocio
 deslizar-modal.js             Arrastrar la hoja del celular para cerrarla
 styles.v2.css                 El CSS que se sirve. NO se edita a mano: es generado
+favicon.ico / favicon.png      El ícono de la pestaña
 
-redesign-v3.css               Fuente. Capa 1 del diseño: la paleta
-estados-v3.css                Fuente. Capa 1: colores por estado del pedido
-glass-v4.css                  Fuente. Capa 2: el cristal (liquid glass)
-hoja-modal.css                Fuente. Los modales que suben desde abajo
-estructura-v4.css             Fuente. Capa 3: la forma (menú, tarjetas, alertas)
-aplicar-diseno.js             Pega las 3 capas en styles.v2.css (--quitar las saca)
-revisar-css.js                Analiza el CSS de verdad. aplicar-diseno.js lo corre
-probar-analizador.js          Pruebas de revisar-css.js
-auditar-contraste.js          Mide WCAG. En el navegador: await __auditarContraste()
+fuentes/redesign-v3.css       Fuente. Capa 1 del diseño: la paleta
+fuentes/estados-v3.css        Fuente. Capa 1: colores por estado del pedido
+fuentes/glass-v4.css          Fuente. Capa 2: el cristal (liquid glass)
+fuentes/hoja-modal.css        Fuente. Los modales que suben desde abajo
+fuentes/estructura-v4.css     Fuente. Capa 3: la forma (menú, tarjetas, alertas)
+fuentes/aplicar-diseno.js     Pega las capas en styles.v2.css (--quitar las saca)
 
-migracion.sql                 Esquema de Supabase
-aplicar-paso-*.sql            Migraciones por paso (casi todas ya ejecutadas)
-revisar-sql.js                Linter de SQL: correr antes de pegar en Supabase
-verificar-seguridad.js        Comprueba que la anon key no lee ni escribe
-preparar-despliegue.js        Cambia el ?v= de los scripts (parte del deploy)
-clean-deployments.ps1         Deja 3 deployments: el vivo, el anterior y el ANCLA FIJA
+herramientas/revisar-css.js       Analiza el CSS de verdad. Lo corre aplicar-diseno
+herramientas/probar-analizador.js Pruebas del analizador de CSS
+herramientas/auditar-contraste.js Mide WCAG. En el navegador: await __auditarContraste()
+herramientas/revisar-sql.js       Linter de SQL: correr antes de pegar en Supabase
+herramientas/verificar-seguridad.js Comprueba que la anon key no lee ni escribe
+
+migraciones/migracion.sql        Esquema de Supabase
+migraciones/aplicar-paso-*.sql   Migraciones por paso (casi todas ya ejecutadas)
+
+deploy/preparar-despliegue.js     Cambia el ?v= de los scripts (parte del deploy)
+deploy/clean-deployments.ps1     Deja 3 deployments: el vivo, el anterior y el ANCLA FIJA
 
 AGENTS.md                     Leer antes de tocar nada: reglas y trampas
-PROYECTO.md                   Documentación técnica completa (la sección 15
-                               es el rediseño v4)
-PLAN-v4-liquid-glass.md       El plan del rediseño v4 y cómo quedó
+docs/PROYECTO.md              Documentación técnica completa (la sección 15 es el v4)
+docs/PLAN-v4-liquid-glass.md  El plan del rediseño v4 y cómo quedó
 ```
 
 ### Correrlo en local
@@ -134,7 +136,7 @@ y entrar desde el celular a `http://<IP-de-la-compu>:3400`. La IP se ve con
 ## Migraciones de la base
 
 La base está en Supabase (Postgres). Los cambios de esquema están en
-`aplicar-paso-*.sql`, en orden. **Casi todas ya se ejecutaron**: están ahí
+`migraciones/aplicar-paso-*.sql`, en orden. **Casi todas ya se ejecutaron**: están ahí
 como referencia del esquema, no se vuelven a correr.
 
 La única pendiente ahora es `aplicar-paso-8-hora-con-segundos.sql`, para que
@@ -143,7 +145,7 @@ la hora se guarde con segundos (`HH:MM:SS`) y no solo con minutos.
 Antes de pegar cualquier cosa en el SQL Editor, pasarla por el linter:
 
 ```bash
-node revisar-sql.js
+node herramientas/revisar-sql.js
 ```
 
 Detecta variables no declaradas, `IF`/`END` desbalanceados, `jsonb` donde la
@@ -162,7 +164,7 @@ iniciar sesión: las cinco tablas tienen RLS activo y ninguna política para el
 rol `anon`. Para volver a comprobarlo:
 
 ```bash
-node verificar-seguridad.js
+node herramientas/verificar-seguridad.js
 ```
 
 No modifica datos: las sondas de escritura usan un UUID inexistente.
@@ -180,14 +182,14 @@ Cada `git push` a `main` publica el sitio. Tarda unos 35 segundos.
 ```bash
 git add .
 git commit -m "descripción del cambio"
-node preparar-despliegue.js --aplicar   # actualiza el ?v= de los scripts
+node deploy/preparar-despliegue.js --aplicar   # actualiza el ?v= de los scripts
 git add index.html
 git commit --amend --no-edit
 git push
 ```
 
 El paso del `?v=` no es opcional: es lo que evita que el navegador se quede con
-el JavaScript viejo. `preparar-despliegue.js` lo pone con fecha y hora para que
+el JavaScript viejo. `deploy/preparar-despliegue.js` lo pone con fecha y hora para que
 no haya que acordarse.
 
 GitHub Pages guarda todos los deployments, así que después de subir se limpian
@@ -203,8 +205,8 @@ el 59a5516 se habría perdido en el siguiente.
 
 ```powershell
 $env:GH_TOKEN = "ghp_..."   # scope: repo
-.\clean-deployments.ps1           # pregunta antes de borrar
-.\clean-deployments.ps1 -Si       # sin preguntar, para correr sin interacción
+.\deploy\clean-deployments.ps1           # pregunta antes de borrar
+.\deploy\clean-deployments.ps1 -Si       # sin preguntar, para correr sin interacción
 ```
 
 El script **siempre imprime qué conserva y qué borra antes de borrar**, porque
@@ -228,7 +230,7 @@ persona nueva) pueda trabajar acá sin saber nada del proyecto. Tiene:
 - Cómo medir el contraste y cómo probar las reglas de celular sin un celular.
 - Lo que Samir decidió que **no** se haga, para no volver a proponerlo.
 
-Después, **[PROYECTO.md](PROYECTO.md)** tiene el detalle técnico a fondo: la
+Después, **[PROYECTO.md](docs/PROYECTO.md)** tiene el detalle técnico a fondo: la
 estructura del código, el modelo de datos, cada función de cálculo de dinero, el
 historial completo de cambios y los problemas pendientes.
 

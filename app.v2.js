@@ -1739,9 +1739,17 @@
 
     iniciarControlVersion();
     iniciarAvisos();
-    // sinRender: los loaders de arriba ya dejaron el Inicio pintado. Sin esto
-    // se dibujaba una segunda vez y se veía la animación repetida.
-    navigateTo('dashboard', { sinRender: true });
+
+    // Si la URL traía una sección (#pedidos, #cuentas...), se entra directo ahí.
+    // Es lo que hace que el enlace se pueda compartir y que al recargar no se
+    // pierda el lugar. Sin hash, es el Inicio de siempre.
+    const seccionInicial = seccionDesdeHash();
+
+    // sinRender solo cuando se arranca en el Inicio: los loaders de arriba ya lo
+    // dejaron pintado, y volver a dibujarlo mostraba la animación dos veces
+    // seguidas (la "carga doble" que se veía). Entrar a otra sección sí
+    // necesita su render propio.
+    navigateTo(seccionInicial || 'dashboard', { sinRender: !seccionInicial });
   }
 
   async function handleLogin() {
@@ -1781,6 +1789,89 @@
 
 
   /* =====================================================
+     RUTAS POR HASH  (#pedidos, #cuentas, ...)
+
+     Cada opción del menú es un <a href="#...">, no un <button onclick>. Eso da
+     tres cosas que antes no había:
+
+       - el enlace se puede copiar y abrir en otra pestaña;
+       - al recargar la página se queda en la sección, no vuelve al Inicio;
+       - el botón "atrás" del navegador sirve de verdad.
+
+     Los ids internos NO se cambian (mismo `data-section`, mismo
+     `id="section-..."`). Solo se traduce el nombre. `navigateTo` sigue siendo
+     la única función que dibuja: el hash la llama a ella, no al revés.
+
+     Los nombres del hash van en español y son cortos, porque son lo que la
+     gente ve en la barra de direcciones: inicio, pedidos, cuentas...
+     ===================================================== */
+  const SECCION_POR_HASH = {
+    'inicio': 'dashboard',
+    'nueva-venta': 'new-sale',
+    'pedidos': 'orders',
+    'cuentas': 'cuentas',
+    'historial': 'history',
+    'abonos-yesenia': 'purchases',
+    'liquidaciones': 'settlements',
+    'resumenes': 'summaries',
+    'reportes': 'reports',
+    'usuarios': 'settings'
+  };
+  const HASH_POR_SECCION = {};
+  Object.keys(SECCION_POR_HASH).forEach(h => { HASH_POR_SECCION[SECCION_POR_HASH[h]] = h; });
+
+  // Evita el eco: navigateTo escribe el hash, y el hashchange del navegador
+  // vuelve a llamar a navigateTo. Con esta bandera el segundo paso no hace nada.
+  let escribiendoHash = false;
+  // La PRIMERA escritura va con replaceState, para no dejar una entrada de
+  // historial de más: si no, el botón "atrás" sacaría de la app al terreno
+  // anterior al login.
+  let hashYaIniciado = false;
+
+  function seccionDesdeHash() {
+    const h = (location.hash || '').replace(/^#/, '').trim().toLowerCase();
+    return SECCION_POR_HASH[h] || '';
+  }
+
+  // `settings` (Usuarios) solo existe para admin. Un vendedor que abra #usuarios
+  // no debe quedarse mirando una sección vacía: lo manda al Inicio.
+  function seccionPermitida(section) {
+    if (section === 'settings') return currentRole.role === 'admin';
+    return true;
+  }
+
+  function escribirHashDeSeccion(section) {
+    const h = HASH_POR_SECCION[section];
+    if (!h) return;
+    if ((location.hash || '').replace(/^#/, '') === h) return;
+
+    escribiendoHash = true;
+    if (!hashYaIniciado) {
+      hashYaIniciado = true;
+      history.replaceState(null, '', location.pathname + location.search + '#' + h);
+    } else {
+      location.hash = h;
+    }
+    // Se suelta en el siguiente turno: si se solta ya, el hashchange que dispara
+    // el propio navegador llega con la bandera puesta y se pierde.
+    setTimeout(() => { escribiendoHash = false; }, 0);
+  }
+
+  window.addEventListener('hashchange', () => {
+    if (escribiendoHash) return;
+
+    // Hash vacío: se llega acá con el botón "atrás", y la sección que importa ya
+    // está en pantalla (la escribió replaceState). No hay nada que hacer.
+    const bruto = (location.hash || '').replace(/^#/, '').trim();
+    if (!bruto) return;
+
+    const destino = seccionDesdeHash();
+    // Hash desconocido (#no-existe, o una sección prohibida para este rol):
+    // se corrige a Inicio, para que lo que dice la URL sea lo que se ve.
+    navigateTo(destino || 'dashboard');
+  });
+
+  /* =====================================================
      NAVEGACIÓN POR SIDEBAR
 
      `opciones.sinRender` existe para un caso concreto: al arrancar la app.
@@ -1796,7 +1887,12 @@
      ===================================================== */
   function navigateTo(section, opciones) {
     const sinRender = !!(opciones && opciones.sinRender);
+
+    // Pedir una sección que no existe o que no le toca a este rol no deja la
+    // pantalla en blanco: se corrige a Inicio antes de seguir.
     const sections = ['dashboard', 'new-sale', 'orders', 'cuentas', 'purchases', 'settlements', 'summaries', 'reports', 'settings', 'history'];
+    if (!sections.includes(section) || !seccionPermitida(section)) section = 'dashboard';
+
     seccionActual = section;
     // Si se navega a otra sección con el modal de edición abierto, se cierra
     // (y el formulario vuelve a su lugar) para no dejarlo flotando.
@@ -1811,6 +1907,10 @@
 
     const sidebarItem = document.querySelector(`.sidebar-item[data-section="${section}"]`);
     if (sidebarItem) sidebarItem.classList.add('active');
+
+    // La URL se actualiza acá y no al final: así también queda escrita en las
+    // llamadas con sinRender (el arranque de la app), que cortan antes.
+    escribirHashDeSeccion(section);
 
     if (sinRender) {
       document.getElementById('sidebar').classList.remove('open');

@@ -3367,50 +3367,6 @@ tbody tr:nth-child(n+7) td { animation-delay: 180ms; }
   }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /* ══════════════════════════════════════════════════════════════════════════
    ╔═══════════════════════════════════════════════════════════════════════╗
    ║  REDISEÑO VISUAL v3 — SOLO PRUEBA LOCAL                            ║
@@ -5426,6 +5382,9 @@ input:focus, select:focus, textarea:focus {
   font-family: inherit;
   text-align: left;
   cursor: pointer;
+  /* Los items del menú son <a href="#...">, no <button>: sin esto los
+     subrayados que el navegador les pone por defecto salen en el texto. */
+  text-decoration: none;
   transition: background 200ms ease, border-color 200ms ease;
 }
 
