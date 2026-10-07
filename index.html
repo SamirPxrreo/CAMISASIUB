@@ -12,10 +12,16 @@
 <title>Camisas IUB — Control de ventas, compras y liquidaciones</title>
 <link rel="icon" type="image/png" href="favicon.png">
 
-<!-- Fonts -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Fonts: ninguna.
+
+     Se usaba Google Fonts para traer Sora (titulos) y Albert Sans. Ya no se
+     pide ninguna fuente: la app usa la del sistema, que en iPhone es SF Pro y se
+     resuelve sin descargar nada.
+
+     Por que importa mas alla del gusto: esta app se usa desde el celular, con
+     senal mala a veces. Cada peticion que se quita es una que no puede fallar ni
+     retrasar la pantalla. Con SF Pro del sistema, ademas, la letra se ve igual
+     en todos los dispositivos de Apple y no hay destello de fuente al cargar. -->
 
 <!-- Supabase SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -75,6 +81,23 @@
   <div id="sin-conexion" class="sin-conexion hidden" role="status" aria-live="polite">
     <span class="sin-conexion-punto"></span>
     <span id="sin-conexion-txt">Sin conexión. Puedes seguir escribiendo, pero no se podrá guardar hasta que vuelva la señal.</span>
+  </div>
+
+  <!-- Aviso de que los datos NO se pudieron cargar.
+
+       Es distinto del de sin conexión, y la diferencia importa: aquel dice
+       "no se puede guardar", este dice "lo que ves no es la información real".
+       Sin este aviso, una falla al cargar deja la app dibujada con cero
+       pedidos, y eso es indistinguible de "hoy no hay pedidos". En una app que
+       maneja plata, la reacción natural es volver a registrar las ventas que
+       "no aparecen". -->
+  <div id="no-se-cargo" class="no-se-cargo hidden" role="alert">
+    <svg class="no-se-cargo-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5 2.5 20h19L12 3.5Z"/><path d="M12 9.5v5M12 17.2v.1"/></svg>
+    <div class="no-se-cargo-texto">
+      <b>No se pudieron cargar los datos.</b>
+      <span id="no-se-cargo-detalle">Lo que ves puede estar incompleto. No es que no haya nada.</span>
+    </div>
+    <button class="no-se-cargo-btn" id="no-se-cargo-reintentar" type="button">Reintentar</button>
   </div>
 
   <aside class="sidebar" id="sidebar">
@@ -264,8 +287,8 @@
   <main class="main-content" id="main-content">
 
     <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px;">
-      <button class="sidebar-toggle" onclick="toggleSidebar()" type="button">☰ Menú</button>
-      <button class="btn-ghost btn" onclick="hardRefresh()" type="button" title="Recargar app (limpia caché)" style="padding:6px 10px; font-size:13px;">🔄 Actualizar</button>
+      <button class="sidebar-toggle" onclick="toggleSidebar()" type="button"><svg class="btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg> Menú</button>
+      <button class="btn-ghost btn" onclick="hardRefresh()" type="button" title="Recargar app (limpia caché)" style="padding:6px 10px; font-size:13px;"><svg class="btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 4v4h-4"/></svg> Actualizar</button>
     </div>
 
     <div id="section-dashboard">
@@ -275,7 +298,7 @@
     <div id="section-new-sale" class="hidden">
       <div class="page-head">
         <div>
-          <h2 class="page-title">Nueva Venta</h2>
+          <h1 class="page-title">Nueva Venta</h1>
           <p class="page-sub">Registra un nuevo pedido de camisas.</p>
         </div>
         <div class="actions-right">
@@ -286,7 +309,7 @@
       <div id="form-validation-error" class="error-msg hidden"></div>
 
       <div class="form-card" id="form-card">
-        <h3 id="form-title">Registrar venta</h3>
+        <h2 id="form-title" class="form-title">Registrar venta</h2>
 
         <div class="form-section">
           <div class="form-section-header">
@@ -308,7 +331,7 @@
             </div>
             <div>
               <label class="label-required">Vendedor asignado</label>
-              <select id="f-vendedor">
+              <select id="f-vendedor" aria-label="Vendedor asignado">
                 <option value="Samir">Samir</option>
                 <option value="Valentina">Valentina</option>
               </select>
@@ -337,7 +360,7 @@
             <b>+</b> agrega una fila en blanco (no te mueve la pantalla, así que puedes agregar varias de una).
             En cada fila, el <b>&minus; n +</b> dice <b>cuántas camisas iguales</b> son: si Sara pide 5 negras talla S de mujer,
             llenas la fila una vez, pones <b>5</b> y ya está. Usa <b>⧉</b> para copiar una fila y cambiarle algo,
-            y <b>🗑️</b> para quitarla. El contador de arriba suma todas las camisas.
+            y la papelera para quitarla. El contador de arriba suma todas las camisas.
           </p>
         </div>
 
@@ -352,20 +375,20 @@
           <div class="form-grid">
             <div>
               <label class="label-required">Precio por camisa ($)</label>
-              <input type="number" id="f-precio" value="39000" min="0">
+              <input type="number" id="f-precio" aria-label="Precio de venta por defecto" value="39000" min="0">
             </div>
             <div>
               <label class="label-required">Costo por camisa ($)</label>
-              <input type="number" id="f-costo" value="30000" min="0">
+              <input type="number" id="f-costo" aria-label="Costo de Yesenia por defecto" value="30000" min="0">
               <p class="hint" style="margin-top:4px;">Auto según talla y versión: 2XL +$2.000, 3XL +$4.000, 4XL +$6.000; versión 2 +$1.000. Puedes editarlo.</p>
             </div>
             <div>
               <label>Total abono recibido del cliente ($)</label>
-              <input type="number" id="f-abono" value="20000" min="0" disabled class="input-total">
+              <input type="number" id="f-abono" aria-label="Abono recibido del pedido" value="20000" min="0" disabled class="input-total">
             </div>
             <div>
               <label class="label-required">Estado del pedido</label>
-              <select id="f-estado">
+              <select id="f-estado" aria-label="Estado general del pedido">
                 <option value="" selected disabled>Selecciona un estado</option>
                 <option value="Pedido">Pedido</option>
                 <option value="Comprado">Comprado</option>
@@ -386,7 +409,7 @@
           <div class="form-grid">
             <div>
               <label>Persona que entrega</label>
-              <select id="f-entrega-por">
+              <select id="f-entrega-por" aria-label="Quién hace la entrega">
                 <option value="">Selecciona quién entrega</option>
                 <option value="Samir">Samir</option>
                 <option value="Valentina">Valentina</option>
@@ -394,15 +417,15 @@
             </div>
             <div>
               <label class="label-required">Fecha del pedido</label>
-              <input type="date" id="f-fecha">
+              <input type="date" id="f-fecha" aria-label="Fecha del pedido">
             </div>
             <div>
               <label>Fecha de entrega</label>
-              <input type="date" id="f-fecha-entrega">
+              <input type="date" id="f-fecha-entrega" aria-label="Fecha de entrega">
             </div>
             <div>
               <label>Lugar de entrega</label>
-              <select id="f-lugar-entrega">
+              <select id="f-lugar-entrega" aria-label="Lugar de entrega">
                 <option value="">Selecciona un lugar</option>
               </select>
             </div>
@@ -430,7 +453,7 @@
 
         <div id="form-comprado-actions" class="hidden" style="margin-top:10px; padding:10px 14px; border:1px dashed var(--line); border-radius:10px; background:var(--accent-bg); display:flex; justify-content:space-between; align-items:center; gap:12px;">
           <span style="font-size:13px; color:var(--muted);"><span id="form-comprado-info"></span></span>
-          <button class="btn-danger btn" id="clear-comprado-btn" type="button" onclick="clearCompradoAt()" title="Borrar fecha de compra">🗑️ Eliminar fecha de compra</button>
+          <button class="btn-danger btn" id="clear-comprado-btn" type="button" onclick="clearCompradoAt()" title="Borrar fecha de compra"><svg class="btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 6.5h15"/><path d="M9.5 6.5V5a1.5 1.5 0 0 1 1.5-1.5h2A1.5 1.5 0 0 1 14.5 5v1.5"/><path d="M6.5 6.5 7.4 19a1.6 1.6 0 0 0 1.6 1.5h6a1.6 1.6 0 0 0 1.6-1.5l.9-12.5"/><path d="M10.5 10v6.5M13.5 10v6.5"/></svg> Eliminar fecha de compra</button>
         </div>
 
         <div class="form-actions">
@@ -443,11 +466,11 @@
     <div id="section-orders" class="hidden">
       <div class="page-head">
         <div>
-          <h2 class="page-title">Pedidos</h2>
+          <h1 class="page-title">Pedidos</h1>
           <p class="page-sub">Consulta, filtra y administra todos los pedidos.</p>
         </div>
         <div class="actions-right">
-          <button class="btn-ghost btn" id="btn-eliminados" onclick="abrirEliminados()" type="button" title="Pedidos borrados que puedes recuperar">🗑️ Eliminados</button>
+          <button class="btn-ghost btn" id="btn-eliminados" onclick="abrirEliminados()" type="button" title="Pedidos borrados que puedes recuperar"><svg class="btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 6.5h15"/><path d="M9.5 6.5V5a1.5 1.5 0 0 1 1.5-1.5h2A1.5 1.5 0 0 1 14.5 5v1.5"/><path d="M6.5 6.5 7.4 19a1.6 1.6 0 0 0 1.6 1.5h6a1.6 1.6 0 0 0 1.6-1.5l.9-12.5"/><path d="M10.5 10v6.5M13.5 10v6.5"/></svg> Eliminados</button>
           <button class="btn btn-success" id="export-buy-btn" type="button">Exportar compra</button>
           <button class="btn btn-gold hidden" id="export-full-btn" type="button">Exportar Excel completo</button>
           <button class="btn" onclick="navigateTo('new-sale')" type="button">Nueva venta</button>
@@ -501,14 +524,14 @@
           <button class="btn" onclick="navigateTo('new-sale')" type="button">Crear primera venta</button>
         </div>
       </div>
-      <p class="table-hint">💡 Mantén <kbd>Shift</kbd> + rueda para desplazar lateralmente</p>
+      <p class="table-hint">Mantén <kbd>Shift</kbd> + rueda para desplazar lateralmente</p>
       <div id="orders-pagination"></div>
     </div>
 
     <div id="section-history" class="hidden">
       <div class="page-head">
         <div>
-          <h2 class="page-title">Historial de pedidos</h2>
+          <h1 class="page-title">Historial de pedidos</h1>
           <p class="page-sub">Pedidos finalizados. Consulta y, si fue un error, restaura a la lista activa.</p>
         </div>
       </div>
@@ -542,7 +565,6 @@
           <button class="btn" onclick="navigateTo('orders')" type="button">Ver pedidos</button>
         </div>
       </div>
-      <p class="table-hint">💡 Mantén <kbd>Shift</kbd> + rueda para desplazar lateralmente</p>
       <div id="historial-pagination"></div>
     </div>
 
@@ -552,7 +574,7 @@
       </div>
       <div class="page-head">
         <div>
-          <h2 class="page-title">Abonos Yesenia</h2>
+          <h1 class="page-title">Abonos Yesenia</h1>
           <p class="page-sub">Cada abono agrupa los pedidos pagados en una misma visita a Yesenia, con los aportes de cada quien y la liquidación entre quienes participaron.</p>
         </div>
         <div class="actions-right">
@@ -590,13 +612,12 @@
           <button class="btn btn-gold" onclick="openCompraModal()" type="button">Nuevo abono</button>
         </div>
       </div>
-      <p class="table-hint">💡 Mantén <kbd>Shift</kbd> + rueda para desplazar lateralmente</p>
     </div>
 
     <div id="section-settlements" class="hidden">
       <div class="page-head">
         <div>
-          <h2 class="page-title">Ganancias y Liquidaciones entre Socios</h2>
+          <h1 class="page-title">Ganancias y Liquidaciones entre Socios</h1>
           <p class="page-sub">Reparto 50/50 de utilidades netas y control de saldos pendientes entre Samir y Valentina.</p>
         </div>
         <div class="actions-right">
@@ -648,13 +669,12 @@
           <button class="btn btn-gold" onclick="openLiquidacionModal()" type="button">Registrar pago</button>
         </div>
       </div>
-      <p class="table-hint">💡 Mantén <kbd>Shift</kbd> + rueda para desplazar lateralmente</p>
     </div>
 
     <div id="section-summaries" class="hidden">
       <div class="page-head">
         <div>
-          <h2 class="page-title">Resúmenes</h2>
+          <h1 class="page-title">Resúmenes</h1>
           <p class="page-sub">Estadísticas y análisis del negocio con filtros por período, vendedor y cliente.</p>
         </div>
       </div>
@@ -663,7 +683,7 @@
         <div class="filters filters-labeled">
           <div>
             <label class="mini-label">Período</label>
-            <select id="res-periodo" onchange="resRangoToggle(); renderResumenes();">
+            <select id="res-periodo" aria-label="Período a resumir" onchange="resRangoToggle(); renderResumenes();">
               <option value="todo" selected>Todos</option>
               <option value="hoy">Hoy</option>
               <option value="ayer">Ayer</option>
@@ -676,22 +696,22 @@
           <div id="res-rango-block" class="hidden rango-block">
             <div>
               <label class="mini-label">Desde</label>
-              <input type="date" id="res-desde" onchange="renderResumenes();">
+              <input type="date" id="res-desde" aria-label="Resúmenes desde esta fecha" onchange="renderResumenes();">
             </div>
             <div>
               <label class="mini-label">Hasta</label>
-              <input type="date" id="res-hasta" onchange="renderResumenes();">
+              <input type="date" id="res-hasta" aria-label="Resúmenes hasta esta fecha" onchange="renderResumenes();">
             </div>
           </div>
           <div>
             <label class="mini-label">Vendedor</label>
-            <select id="res-vendedor" onchange="renderResumenes();">
+            <select id="res-vendedor" aria-label="Filtrar resúmenes por vendedor" onchange="renderResumenes();">
               <option value="">Todos</option>
             </select>
           </div>
           <div>
             <label class="mini-label">Cliente</label>
-            <select id="res-cliente" onchange="renderResumenes();">
+            <select id="res-cliente" aria-label="Filtrar resúmenes por cliente" onchange="renderResumenes();">
               <option value="">Todos</option>
             </select>
           </div>
@@ -704,7 +724,7 @@
     <div id="section-reports" class="hidden">
       <div class="page-head">
         <div>
-          <h2 class="page-title">Reportes</h2>
+          <h1 class="page-title">Reportes</h1>
           <p class="page-sub">Exportación de datos y estadísticas del negocio.</p>
         </div>
       </div>
@@ -726,8 +746,8 @@
     <div id="section-cuentas" class="hidden">
       <div class="page-head">
         <div>
-          <h2 class="page-title">Cuentas por cliente</h2>
-          <p class="page-sub">Saldo total por cliente sumando sus pedidos activos. Usa 🧾 Factura para entregar varios pedidos/camisas juntos.</p>
+          <h1 class="page-title">Cuentas por cliente</h1>
+          <p class="page-sub">Saldo total por cliente sumando sus pedidos activos. Usa "Factura" para entregar varios pedidos a un mismo cliente.</p>
         </div>
       </div>
       <div class="cards" id="cuentas-kpis"></div>
@@ -756,14 +776,13 @@
           <b>No hay cuentas pendientes.</b><br>Todos los clientes están al día.
         </div>
       </div>
-      <p class="table-hint">💡 Mantén <kbd>Shift</kbd> + rueda para desplazar lateralmente</p>
       <div id="cuentas-pagination"></div>
     </div>
 
     <div id="section-settings" class="hidden">
       <div class="page-head">
         <div>
-          <h2 class="page-title">Configuración — Usuarios y Permisos</h2>
+          <h1 class="page-title">Configuración — Usuarios y Permisos</h1>
           <p class="page-sub">Gestiona las cuentas y accesos del sistema.</p>
         </div>
         <div class="actions-right">
@@ -794,7 +813,6 @@
           <button class="btn btn-gold" onclick="openUserModal()" type="button">Crear usuario</button>
         </div>
       </div>
-      <p class="table-hint">💡 Mantén <kbd>Shift</kbd> + rueda para desplazar lateralmente</p>
     </div>
 
   </main>
@@ -803,8 +821,8 @@
 <div id="compra-modal" class="modal-backdrop hidden">
   <div class="modal-card modal-card-wide">
     <div class="modal-head">
-      <h3 id="compra-modal-title">Nuevo abono a Yesenia</h3>
-      <button class="btn-ghost btn modal-x" onclick="closeCompraModal()" type="button" title="Cerrar">✕</button>
+      <h2 id="compra-modal-title" class="modal-title">Nuevo abono a Yesenia</h3>
+      <button class="btn-ghost btn modal-x" onclick="closeCompraModal()" type="button" title="Cerrar"><svg class="cerrar-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </div>
 
     <div class="form-grid">
@@ -862,7 +880,7 @@
   <div class="modal-card">
     <div class="modal-head">
       <h3>Registrar Pago entre Socios</h3>
-      <button class="btn-ghost btn modal-x" onclick="closeLiquidacionModal()" type="button" title="Cerrar">✕</button>
+      <button class="btn-ghost btn modal-x" onclick="closeLiquidacionModal()" type="button" title="Cerrar"><svg class="cerrar-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </div>
 
     <p class="page-sub modal-intro">Selecciona el pedido que estás liquidando. El monto sugerido es el 50% de la ganancia pendiente de ese pedido.</p>
@@ -909,7 +927,7 @@
   <div class="modal-card modal-card-narrow">
     <div class="modal-head">
       <h3 id="confirm-titulo">Confirmar</h3>
-      <button class="btn-ghost btn modal-x" onclick="resolverConfirm(false)" type="button" title="Cerrar">✕</button>
+      <button class="btn-ghost btn modal-x" onclick="resolverConfirm(false)" type="button" title="Cerrar"><svg class="cerrar-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </div>
     <p id="confirm-texto" class="modal-intro"></p>
     <div id="confirm-detalle" class="confirm-detalle hidden"></div>
@@ -923,8 +941,8 @@
 <div id="eliminados-modal" class="modal-backdrop hidden">
   <div class="modal-card modal-card-wide">
     <div class="modal-head">
-      <h3>🗑️ Pedidos eliminados</h3>
-      <button class="btn-ghost btn modal-x" onclick="cerrarEliminados()" type="button" title="Cerrar">✕</button>
+      <h2 class="modal-title"><svg class="btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 6.5h15"/><path d="M9.5 6.5V5a1.5 1.5 0 0 1 1.5-1.5h2A1.5 1.5 0 0 1 14.5 5v1.5"/><path d="M6.5 6.5 7.4 19a1.6 1.6 0 0 0 1.6 1.5h6a1.6 1.6 0 0 0 1.6-1.5l.9-12.5"/><path d="M10.5 10v6.5M13.5 10v6.5"/></svg> Pedidos eliminados</h2>
+      <button class="btn-ghost btn modal-x" onclick="cerrarEliminados()" type="button" title="Cerrar"><svg class="cerrar-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </div>
     <p class="modal-intro">Estos pedidos se borraron pero siguen guardados. Puedes devolverlos a "Pedidos" cuando quieras.</p>
     <div id="eliminados-barra" class="eliminados-barra hidden">
@@ -941,7 +959,7 @@
 <div id="buscador-global" class="modal-backdrop hidden">
   <div class="modal-card buscador-card">
     <div class="buscador-caja">
-      <span class="buscador-icono">🔎</span>
+      <span class="buscador-icono"><svg class="buscar-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg></span>
       <input type="search" id="buscador-input" placeholder="Buscar cliente, teléfono o ir a una sección..." autocomplete="off" spellcheck="false">
       <kbd class="buscador-esc">Esc</kbd>
     </div>
@@ -958,7 +976,7 @@
   <div class="modal-card modal-card-narrow">
     <div class="modal-head">
       <h3>Registrar abono del cliente</h3>
-      <button class="btn-ghost btn modal-x" onclick="cerrarModalAbono()" type="button" title="Cerrar">✕</button>
+      <button class="btn-ghost btn modal-x" onclick="cerrarModalAbono()" type="button" title="Cerrar"><svg class="cerrar-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </div>
 
     <p class="modal-intro" id="abono-cliente"></p>
@@ -1000,8 +1018,8 @@
 <div id="user-modal" class="modal-backdrop hidden">
   <div class="modal-card">
     <div class="modal-head">
-      <h3 id="user-modal-title">Nuevo Usuario</h3>
-      <button class="btn-ghost btn modal-x" onclick="closeUserModal()" type="button" title="Cerrar">✕</button>
+      <h2 id="user-modal-title" class="modal-title">Nuevo Usuario</h3>
+      <button class="btn-ghost btn modal-x" onclick="closeUserModal()" type="button" title="Cerrar"><svg class="cerrar-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </div>
 
     <label class="label-required">Nombre Completo</label>
@@ -1034,8 +1052,8 @@
 <div id="factura-modal" class="modal-backdrop hidden">
   <div class="modal-card modal-card-wide">
     <div class="modal-head">
-      <h3 id="factura-modal-title">Factura personalizada</h3>
-      <button class="btn-ghost btn modal-x" onclick="closeFacturaModal()" type="button" title="Cerrar">✕</button>
+      <h2 id="factura-modal-title" class="modal-title">Factura personalizada</h3>
+      <button class="btn-ghost btn modal-x" onclick="closeFacturaModal()" type="button" title="Cerrar"><svg class="cerrar-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </div>
     <p class="page-sub modal-intro" id="factura-modal-sub"></p>
     <div id="factura-pedidos-lista" class="pedidos-picker" style="max-height:420px; overflow-y:auto;"></div>
@@ -1061,7 +1079,7 @@
     <div class="error-msg hidden" id="factura-error"></div>
     <div class="form-actions">
       <button class="btn-ghost btn" onclick="closeFacturaModal()" type="button">Cancelar</button>
-      <button class="btn btn-gold" onclick="generarFacturaPersonalizada()" type="button">🧾 Generar PDF</button>
+      <button class="btn btn-gold" onclick="generarFacturaPersonalizada()" type="button"><svg class="btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8.5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v1.5a2 2 0 0 0 0 3.5v1.5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V15a2 2 0 0 0 0-3.5V8.5Z"/><path d="M13 6.5v9" stroke-dasharray="2 2"/></svg> Generar PDF</button>
     </div>
   </div>
 </div>
@@ -1069,8 +1087,8 @@
 <div id="estados-camisa-modal" class="modal-backdrop hidden">
   <div class="modal-card modal-card-wide">
     <div class="modal-head">
-      <h3>Estados por camisa</h3>
-      <button class="btn-ghost btn modal-x" onclick="cerrarModalEstadosCamisa()" type="button" title="Cerrar">✕</button>
+      <h2 class="modal-title">Estados por camisa</h2>
+      <button class="btn-ghost btn modal-x" onclick="cerrarModalEstadosCamisa()" type="button" title="Cerrar"><svg class="cerrar-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </div>
     <p class="page-sub modal-intro" id="estados-camisa-cliente"></p>
     <div id="estados-camisa-lista" class="pedidos-picker" style="max-height:420px; overflow-y:auto;"></div>
@@ -1094,8 +1112,8 @@
 <div id="editar-modal" class="modal-backdrop hidden">
   <div class="modal-card modal-card-huge">
     <div class="modal-head">
-      <h3 id="editar-modal-title">Editar venta</h3>
-      <button class="btn-ghost btn modal-x" onclick="closeForm()" type="button" title="Cerrar">✕</button>
+      <h2 id="editar-modal-title" class="modal-title">Editar venta</h3>
+      <button class="btn-ghost btn modal-x" onclick="closeForm()" type="button" title="Cerrar"><svg class="cerrar-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </div>
     <div id="editar-modal-body"></div>
   </div>

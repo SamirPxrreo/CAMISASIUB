@@ -37,6 +37,19 @@
   }
 
   function nombreSesion() {
+    // Antes se sacaba el nombre de la etiqueta de sesion, que dice
+    // "Sesión: admin@gmail.com (Administrador)". De ahi salia un fragmento del
+    // correo: a la administradora le decia "Admin" (que es el rol, no el
+    // nombre) y a Valentina "Val" (tres letras, por cortar en la arroba).
+    //
+    // Ahora se usa currentRole.nombre, que app.v2.js arma con el nombre real
+    // de la tabla de usuarios. Si no esta (un usuario nuevo todavia sin fila),
+    // se cae al fragmento del correo como antes, que al menos no queda vacio.
+    const rol = window.currentRole;
+    if (rol && rol.nombre) {
+      const n = String(rol.nombre).trim();
+      if (n) return n;
+    }
     const who = document.getElementById('who-label');
     const m = who ? who.textContent.match(/Sesión:\s*([^@\s(]+)/) : null;
     if (!m) return '';
@@ -70,13 +83,27 @@
     if (!g) {
       g = document.createElement('div');
       g.className = 'dash-greet';
-      g.innerHTML = '<h2></h2><p></p>';
+
+      // El <h1> va con el NOMBRE DE LA PANTALLA, no con el saludo.
+      //
+      // Antes el saludo con el nombre ("Buenas tardes, Samir") era el titulo
+      // principal. Con lector de pantalla eso no dice en que pantalla estas: es
+      // una linea de cortesia, no un encabezado. Ahora el <h1> es "Inicio", que
+      // si responde "donde estoy", y el saludo queda como una linea de apoyo
+      // debajo, donde aporta.
+      //
+      // Las demas pantallas usan .page-title, y este es su equivalente en el
+      // Inicio, que lo arma JavaScript y por eso no estaba en el HTML.
+      g.innerHTML = '<h1 class="page-title"></h1><p class="dash-saludo"></p><p></p>';
       cont.prepend(g);
     }
-    const h2 = nombre ? saludoHora() + ', ' + nombre : saludoHora();
+    const h1 = 'Inicio';
+    const saludo = nombre ? saludoHora() + ', ' + nombre : saludoHora();
     const sub = fechaHoy() + (total > 0 ? ' · <strong>' + total + (total === 1 ? ' asunto pendiente' : ' asuntos pendientes') + '</strong>' : ' · Todo al día');
-    if (g.querySelector('h2').textContent !== h2) g.querySelector('h2').textContent = h2;
-    if (g.querySelector('p').innerHTML !== sub) g.querySelector('p').innerHTML = sub;
+
+    if (g.querySelector('h1').textContent !== h1) g.querySelector('h1').textContent = h1;
+    if (g.querySelector('.dash-saludo').textContent !== saludo) g.querySelector('.dash-saludo').textContent = saludo;
+    if (g.querySelector('p:not(.dash-saludo)').innerHTML !== sub) g.querySelector('p:not(.dash-saludo)').innerHTML = sub;
   }
 
   function esReducedMotion() {

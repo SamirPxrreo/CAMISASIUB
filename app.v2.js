@@ -318,12 +318,61 @@
     // cinco y tienen que quedar como una sola fila de datos, no como cinco
     // imagenes.
     'fecha': '<rect x="3.5" y="5" width="17" height="16" rx="2.5"/><path d="M3.5 10h17M8 3.5V6M16 3.5V6"/>',
+
+    // Encabezados de las tarjetas de Resúmenes (eran 💵 👕 🛒 📦 📅 🏆)
+    'ventas': '<path d="M3 7.5h18M12 7.5V20M7.5 7.5V5a1.5 1.5 0 0 1 1.5-1.5h6A1.5 1.5 0 0 1 16.5 5v2.5"/><path d="M12 12.5v3M10.5 14h3"/>',
+    'camisas': '<path d="M9 3.5 12 6l3-2.5 4 2.5-2.5 4V20H7.5V10L5 6l4-2.5Z"/>',
+    'abonos-icono': '<path d="M6 7h12l-1 13H7L6 7Z"/><path d="M9 7V5.5a3 3 0 0 1 6 0V7"/>',
+    'flujo': '<path d="M3.5 8.5h5V4h7v4.5h5V14h-5v4.5h-7V14h-5V8.5Z"/>',
+    'actividad': '<path d="M4 19V5M4 19h16"/><path d="m7.5 15 3.5-4 3 2.5 4.5-6"/>',
+    'rankings': '<path d="M8 4h8v4.5a4 4 0 0 1-8 0V4Z"/><path d="M8 5.5H5.5A1.5 1.5 0 0 0 4 7v.5a1.5 1.5 0 0 0 1.5 1.5H8M16 5.5h2.5A1.5 1.5 0 0 1 20 7v.5a1.5 1.5 0 0 1-1.5 1.5H16"/><path d="M12 12.5V16M9 20h6M12 16v4"/>',
+
+    // Buscador global y avisos
+    'inicio-ico': '<rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/>',
+    'mas': '<path d="M12 5v14M5 12h14"/>',
+    'cartera': '<path d="M3.5 7.5A2 2 0 0 1 5.5 5.5h13a2 2 0 0 1 2 2v1"/><path d="M3.5 7.5v10a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-2h-17Z"/><circle cx="16.5" cy="13.5" r="1.2"/>',
+    'libro': '<path d="M4 5.5A2 2 0 0 1 6 3.5h13v14H6a2 2 0 0 0-2 2V5.5Z"/><path d="M4 19.5a2 2 0 0 1 2-2h13v3H6a2 2 0 0 1-2-2Z"/>',
+    'hilo': '<path d="M6 7h12l-1 13H7L6 7Z"/><path d="M9 7V5.5a3 3 0 0 1 6 0V7"/>',
+    'moneda': '<circle cx="12" cy="12" r="8.5"/><path d="M12 7v10M14.5 9.5h-4a1.8 1.8 0 0 0 0 3.6h3a1.8 1.8 0 0 1 0 3.6h-4"/>',
+    'grafico': '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+    'tendencia': '<path d="m3.5 16 5.5-5.5 4 4 7.5-7.5"/><path d="M15.5 7h5v5"/>',
+    'ajustes': '<circle cx="12" cy="12" r="3"/><path d="M19.4 14.5a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2v.2a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.6 1.7 1.7 0 0 0-1.9.4l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0-1.2-2.9H4a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1.1 1.7 1.7 0 0 0-.4-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H10a1.7 1.7 0 0 0 1-1.5V4a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9v.1a1.7 1.7 0 0 0 1.5 1H20a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/>',
+    'campana': '<path d="M18 8.5a6 6 0 1 0-12 0c0 5-2 6.5-2 6.5h16s-2-1.5-2-6.5Z"/><path d="M13.7 19a2 2 0 0 1-3.4 0"/>',
+    'ticket': '<path d="M4 8.5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v1.5a2 2 0 0 0 0 3.5v1.5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V15a2 2 0 0 0 0-3.5V8.5Z"/><path d="M13 6.5v9" stroke-dasharray="2 2"/>',
+    'papelera': '<path d="M4.5 6.5h15"/><path d="M9.5 6.5V5a1.5 1.5 0 0 1 1.5-1.5h2A1.5 1.5 0 0 1 14.5 5v1.5"/><path d="M6.5 6.5 7.4 19a1.6 1.6 0 0 0 1.6 1.5h6a1.6 1.6 0 0 0 1.6-1.5l.9-12.5"/><path d="M10.5 10v6.5M13.5 10v6.5"/>',
+    'camisa': '<path d="M9 3.5 12 6l3-2.5 4 2.5-2.5 4V20H7.5V10L5 6l4-2.5Z"/>',
     'reloj': '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3.5 2"/>',
     'lugar': '<path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11Z"/><circle cx="12" cy="10" r="2.6"/>',
     'cliente': '<circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20c0-4.1 3.4-7 7.5-7s7.5 2.9 7.5 7"/>',
     'telefono': '<path d="M6.5 3.5h3l1.5 4-2 1.5a12 12 0 0 0 6 6l1.5-2 4 1.5v3a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 4.5 5.7 2 2 0 0 1 6.5 3.5Z"/>',
     'saldo': '<circle cx="12" cy="12" r="8.5"/><path d="M12 7v10M14.5 9.5h-4a1.8 1.8 0 0 0 0 3.6h3a1.8 1.8 0 0 1 0 3.6h-4"/>',
-    'copiar': '<rect x="8.5" y="8.5" width="11" height="11" rx="2"/><path d="M15.5 8.5v-2a2 2 0 0 0-2-2h-8a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>'
+    'copiar': '<rect x="8.5" y="8.5" width="11" height="11" rx="2"/><path d="M15.5 8.5v-2a2 2 0 0 0-2-2h-8a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>',
+
+    // Etiquetas de celda y franjas de estado (eran 🕐 📞 📍 🚚 🛒 🛡 🔒)
+    'camion': '<path d="M2.5 6.5h11v10h-11z"/><path d="M13.5 10h4l4 3.5v3h-8z"/><circle cx="7" cy="18.5" r="2"/><circle cx="17.5" cy="18.5" r="2"/>',
+    'escudo': '<path d="M12 3.2 4.5 6v6c0 4.4 3.1 7.6 7.5 8.8 4.4-1.2 7.5-4.4 7.5-8.8V6L12 3.2Z"/><path d="m8.8 12 2.3 2.3 4.2-4.6"/>',
+    'candado': '<rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><path d="M12 14.5v2"/>',
+    'nota': '<path d="M5 4.5h14v15H5z"/><path d="M8.5 9h7M8.5 12.5h7M8.5 16h4"/>',
+    'lapiz': '<path d="M4.5 19.5h4l10-10a2.1 2.1 0 0 0-3-3l-10 10v3Z"/><path d="m14.5 6.5 3 3"/>',
+    'ojo': '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/>',
+    'imprimir': '<path d="M6.5 9.5V3.5h11v6"/><rect x="3.5" y="9.5" width="17" height="7" rx="2"/><path d="M6.5 14h11v6.5h-11z"/>',
+
+    // El visto de "Sin deuda pendiente" (era ✅). Vive en el mismo sistema que
+    // los demas y hereda el color del estado.
+    'visto': '<circle cx="12" cy="12" r="8.5"/><path d="m8.2 12.2 2.6 2.6 5-5.4"/>',
+
+    // Restaurar un pedido del Historial. No se llama "volver" porque el
+    // historial no es un historial de cambios: el pedido sale de Pedidos y
+    // vuelve a estar vivo.
+    'deshacer': '<path d="M4 10.5h10.5a5 5 0 0 1 0 10H9"/><path d="m7.5 6.5-4 4 4 4"/>',
+
+    // Iconos que estaban como emoji en el HTML estatico. index.html no puede
+    // llamar a ico() porque no es una plantilla de JavaScript: el SVG va escrito
+    // ahi, con los mismos atributos.
+    'menu': '<path d="M4 7h16M4 12h16M4 17h16"/>',
+    'refrescar': '<path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 4v4h-4"/>',
+    'cerrar': '<path d="M6 6l12 12M18 6L6 18"/>',
+    'buscar': '<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/>'
   };
 
   function ico(nombre, clase) {
@@ -408,7 +457,7 @@
       'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
     ];
 
-    return `📅 ${diasSemana[fechaObj.getDay()]} ${dia} de ${meses[fechaObj.getMonth()]} de ${anio}`;
+    return `${diasSemana[fechaObj.getDay()]} ${dia} de ${meses[fechaObj.getMonth()]} de ${anio}`;
   }
 
   function fmt(n) {
@@ -417,7 +466,7 @@
 
   function textoFechaEntrega(v) {
     if (!(v && v.fecha_entrega)) return 'Pendiente por definir';
-    return formatearFechaHumana(v.fecha_entrega).replace(/^📅\s*/, '');
+    return formatearFechaHumana(v.fecha_entrega);
   }
 
   // Días enteros entre hoy (Colombia) y una fecha YYYY-MM-DD. Positivo = han pasado N días.
@@ -545,14 +594,28 @@
     return crudos.filter(it => normalizarEstado(it.estado || ePedido) === 'Pedido').length;
   }
 
+  // La insignia del estado de una camisa dentro de un pedido.
+  //
+  // El tamano va en el style en linea, no en el CSS, y eso es a proposito: esta
+  // insignia se dibuja repetida, muchas veces en la misma celda, y hay que
+  // poder Compactarla sin que el resto de insignias de la app cambien de
+  // tamano. Si estuviera en el CSS, una regla general la alcanzaria.
+  //
+  // Subida de 9.5px a 11px (decision de Samir). 9.5 era el unico texto por
+  // debajo del piso de letra que quedo en la app. A 11px la insignia entra en la
+  // misma medida que el resto del texto chico, que es donde ya se lee bien.
+  // El compactado sigue funcionando por el padding de 1px en vez de 3px.
   function badgeEstadoItem(estado) {
     const e = normalizarEstado(estado) || 'Pedido';
-    return `<span class="badge-estado ${claseEstado(e)}" style="font-size:9.5px;padding:1px 6px;">${escSimple(e)}</span>`;
+    return `<span class="badge-estado ${claseEstado(e)}" style="font-size:11px;padding:0 6px;">${escSimple(e)}</span>`;
   }
 
   function badgeEstadoGeneral(v) {
     const eg = estadoGeneralVenta(v);
-    return `<span class="badge-estado ${claseEstado(eg)}" style="${eg === 'Mixto' ? 'color:var(--warn);font-weight:800;' : ''}">${escSimple(eg === 'Mixto' ? 'Mixto ⚠️' : eg)}</span>`;
+    // El ⚠️ de "Mixto" se quito del texto. La insignia ya se pinta en ambar y en
+    // negrita cuando es Mixto: el emoji decia lo mismo dos veces, y de paso se
+    // colaba en el texto por el que el buscador filtra.
+    return `<span class="badge-estado ${claseEstado(eg)}" style="${eg === 'Mixto' ? 'color:var(--warn);font-weight:800;' : ''}">${escSimple(eg)}</span>`;
   }
 
   // Estado "principal" del pedido para la columna de Estado: el más atrasado
@@ -570,7 +633,7 @@
       const n = es.filter(x => x === e).length;
       if (n > 0) dist.push(`<span style="display:block;">${badgeEstadoItem(e)} <b style="color:var(--text);">×${n}</b></span>`);
     });
-    return `<span style="display:block;font-size:10px;color:var(--thread);margin-top:4px;line-height:1.7;">${dist.join('')}</span>`;
+    return `<span style="display:block;font-size:11px;color:var(--thread);margin-top:4px;line-height:1.7;">${dist.join('')}</span>`;
   }
 
   // Costo sugerido a proveedor (Yesenia) según versión y talla.
@@ -814,7 +877,7 @@
       totalGeneral += total;
 
       if (deudas.length === 0) {
-        return `<div style="background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; display:flex; align-items:center; gap:8px;"><span style="width:8px; height:8px; border-radius:50%; background:var(--ok); flex-shrink:0;"></span><b>${escSimple(vendedor)}</b> <span style="color:var(--ok);">— ✅ Sin deuda pendiente</span></div>`;
+        return `<div style="background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; display:flex; align-items:center; gap:8px;"><span style="width:8px; height:8px; border-radius:50%; background:var(--ok); flex-shrink:0;"></span><b>${escSimple(vendedor)}</b> <span style="color:var(--ok);">${ico('visto', 'card-ico')} Sin deuda pendiente</span></div>`;
       }
 
       // Agrupa por contacto (mismo teléfono/@ = mismo cliente) para no duplicar
@@ -838,19 +901,19 @@
           : '';
         const estadosUnicos = [...new Set(g.ventas.map(v => estadoGeneralVenta(v)).filter(Boolean))];
         const fechasTxt = g.ventas.length === 1
-          ? (g.ventas[0].fecha ? formatearFechaHumana(g.ventas[0].fecha).replace(/^📅\s*/,'') : '?')
+          ? (g.ventas[0].fecha ? formatearFechaHumana(g.ventas[0].fecha) : '?')
           : g.ventas.map(v => v.fecha || '?').join(' · ');
-        const badgesEstado = estadosUnicos.map(e => `<span class="badge-estado ${claseEstado(e)}" style="font-size:10px; padding:2px 7px; vertical-align:middle;">${escSimple(normalizarEstado(e))}</span>`).join(' ');
+        const badgesEstado = estadosUnicos.map(e => `<span class="badge-estado ${claseEstado(e)}" style="font-size:11px; padding:1px 7px; vertical-align:middle;">${escSimple(normalizarEstado(e))}</span>`).join(' ');
         const metaLine = g.ventas.length > 1
-          ? `${g.ventas.length} pedidos${badgesEstado ? ` · ${badgesEstado}` : ''} · <span style="white-space:nowrap;">📅 ${escSimple(fechasTxt)}</span>`
-          : `${badgesEstado ? `${badgesEstado} · ` : ''}<span style="white-space:nowrap;">📅 ${escSimple(fechasTxt)}</span>`;
+          ? `${g.ventas.length} pedidos${badgesEstado ? ` · ${badgesEstado}` : ''} · <span style="white-space:nowrap;">${ico('fecha', 'card-ico')} ${escSimple(fechasTxt)}</span>`
+          : `${badgesEstado ? `${badgesEstado} · ` : ''}<span style="white-space:nowrap;">${ico('fecha', 'card-ico')} ${escSimple(fechasTxt)}</span>`;
         return `
         <div style="display:flex; justify-content:space-between; gap:12px; padding:7px 0; border-bottom:1px dashed var(--line); font-size:13px; align-items:center;">
           <span style="display:flex; flex-direction:column; gap:2px; min-width:0;">
             <span style="line-height:1.3;"><b>${escSimple(g.nombre)}</b>${telTag}</span>
-            <span style="font-size:11.5px; color:var(--muted); line-height:1.4;">${metaLine}</span>
+            <span style="font-size:11px; color:var(--muted); line-height:1.4;">${metaLine}</span>
           </span>
-          <b style="color:var(--warn); white-space:nowrap; font-variant-numeric:tabular-nums; font-size:13.5px;">${fmt(g.pendiente)}</b>
+          <b style="color:var(--warn); white-space:nowrap; font-variant-numeric:tabular-nums; font-size:13px;">${fmt(g.pendiente)}</b>
         </div>
       `;
       }).join('');
@@ -865,9 +928,9 @@
               <span style="width:8px; height:8px; border-radius:50%; background:${total > 0 ? 'var(--warn)' : 'var(--ok)'}; flex-shrink:0;"></span>
               <b style="font-size:14px;">${escSimple(vendedor)}</b>
             </span>
-            <span style="background:${total > 0 ? 'rgba(201,47,47,0.10)' : 'rgba(47,143,91,0.12)'}; color:${total > 0 ? 'var(--warn)' : 'var(--ok)'}; padding:4px 10px; border-radius:999px; font-size:12.5px; font-weight:700; font-variant-numeric:tabular-nums; border:1px solid ${total > 0 ? 'rgba(201,47,47,0.18)' : 'rgba(47,143,91,0.18)'};">${fmt(total)}</span>
+            <span style="background:${total > 0 ? 'rgba(201,47,47,0.10)' : 'rgba(47,143,91,0.12)'}; color:${total > 0 ? 'var(--warn)' : 'var(--ok)'}; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:700; font-variant-numeric:tabular-nums; border:1px solid ${total > 0 ? 'rgba(201,47,47,0.18)' : 'rgba(47,143,91,0.18)'};">${fmt(total)}</span>
           </div>
-          ${filas || '<span style="color:var(--muted); font-size:12.5px;">Sin filas</span>'}
+          ${filas || '<span style="color:var(--muted); font-size:12px;">Sin filas</span>'}
         </div>
       `;
     }).join('');
@@ -880,7 +943,7 @@
     box.classList.remove('hidden');
     box.innerHTML = `
       <div style="margin-bottom:10px;">
-        <b>📋 Deuda con Yesenia por pedidos no marcados como Liquidado</b>
+        <b>${ico('pedidos', 'sec-ico')} Deuda con Yesenia por pedidos no marcados como Liquidado</b>
         <p style="color:var(--muted); font-size:12px; margin:4px 0 0;">Suma lo que falta cubrir del costo de tus pedidos activos según los abonos registrados en cada visita.</p>
       </div>
       ${bloquesWrap}
@@ -1083,7 +1146,7 @@
       aviso.addEventListener('click', () => { location.href = 'index.html?v=' + Date.now(); });
       document.body.appendChild(aviso);
     }
-    aviso.innerHTML = '⬆️ Hay una versión nueva — <b>Tocar para actualizar</b>';
+    aviso.innerHTML = ico('refrescar', 'franja-ico') + ' Hay una versión nueva — <b>Tocar para actualizar</b>';
     aviso.classList.remove('hidden');
     aviso.title = 'Versión desplegada: ' + versionNueva;
   }
@@ -1151,6 +1214,35 @@
     return `No se pudo guardar ${guardado}. Revisa los datos e intenta de nuevo.`;
   }
 
+  // Las cargas van en paralelo, así que hace falta un conjunto y no un
+  // interruptor: si una termina bien mientras otra falló, con un solo aviso
+  // se perdería el del fallo. El aviso se queda mientras quede algo sin cargar.
+  const cargasSinTraer = new Set();
+
+  // Aviso de que los datos no se pudieron cargar. Distinto del de sin
+  // conexión: aquel dice "no se puede guardar", este dice "lo que ves no es la
+  // información real". Que es el que importa: si no se dice, una pantalla vacía
+  // parece una pantalla sin datos.
+  function avisarNoSeCargo(que) {
+    cargasSinTraer.add(que);
+    const franja = document.getElementById('no-se-cargo');
+    if (!franja) return;
+    const detalle = document.getElementById('no-se-cargo-detalle');
+    if (detalle) {
+      detalle.textContent = cargasSinTraer.size === 1
+        ? [...cargasSinTraer][0]
+        : 'Falta cargar: ' + [...cargasSinTraer].join(', ') + '.';
+    }
+    franja.classList.remove('hidden');
+  }
+
+  function ocultarAvisoNoSeCargo(que) {
+    if (que) cargasSinTraer.delete(que);
+    else cargasSinTraer.clear();
+    const franja = document.getElementById('no-se-cargo');
+    if (franja && cargasSinTraer.size === 0) franja.classList.add('hidden');
+  }
+
   // Franja de arriba. Se llama al cargar y cada vez que cambia la señal.
   function pintarSinConexion() {
     const franja = document.getElementById('sin-conexion');
@@ -1159,7 +1251,25 @@
     franja.classList.toggle('hidden', !sinSenal);
   }
 
+  // El boton de reintentar del aviso de carga. Relanza la carga de las ventas,
+  // que es la que mueve el resto de las pantallas.
+  function cablearReintento() {
+    const btn = document.getElementById('no-se-cargo-reintentar');
+    if (!btn || btn.dataset.cableado === '1') return;
+    btn.dataset.cableado = '1';
+    btn.addEventListener('click', () => {
+      btn.disabled = true;
+      btn.textContent = 'Cargando...';
+      loadVentas().finally(() => {
+        btn.disabled = false;
+        btn.textContent = 'Reintentar';
+      });
+    });
+  }
+
   function vigilarConexion() {
+    pintarSinConexion();
+    cablearReintento();
     pintarSinConexion();
     window.addEventListener('online', () => {
       pintarSinConexion();
@@ -1193,7 +1303,7 @@
   let avisoTimer = null;
 
   const ICONO_AVISO = {
-    venta: '📋', abono: '💵', compra: '🧵', liquidacion: '💰'
+    venta: 'pedidos', abono: 'moneda', compra: 'hilo', liquidacion: 'moneda'
   };
 
   function iniciarAvisos() {
@@ -1265,11 +1375,14 @@
     }
     const n = avisosRecibidos.length;
     const quien = avisosRecibidos[0].autorNombre || 'La otra persona';
-    const ico = ICONO_AVISO[avisosRecibidos[0].tipo] || '🔔';
+    // OJO con el nombre: antes esta variable se llamaba `ico`, y al agregar la
+    // funcion ico() que dibuja los SVG, esa variable la tapaba dentro de esta
+    // funcion y rompia el dibujado. Ahora se llama nombreIcono.
+    const nombreIcono = ICONO_AVISO[avisosRecibidos[0].tipo] || 'campana';
     const texto = n === 1
       ? `<b>${escSimple(quien)}</b> ${escSimple(avisosRecibidos[0].texto)}`
       : `<b>${escSimple(quien)}</b> y ${n - 1} ${n === 2 ? 'cambio más' : 'cambios más'}`;
-    aviso.innerHTML = `${ico} ${texto} <b>· Ver</b>`;
+    aviso.innerHTML = `${ico(nombreIcono, 'bus-ico')} ${texto} <b>· Ver</b>`;
     aviso.classList.remove('hidden');
   }
 
@@ -1305,16 +1418,16 @@
      de cada tabla: es un atajo para llegar rápido.
      ===================================================== */
   const SECCIONES_BUSCADOR = [
-    { id: 'dashboard', ico: '🏠', txt: 'Inicio' },
-    { id: 'new-sale',  ico: '➕', txt: 'Nueva venta' },
-    { id: 'orders',    ico: '📋', txt: 'Pedidos' },
-    { id: 'cuentas',   ico: '💳', txt: 'Cuentas por cliente' },
-    { id: 'history',   ico: '📚', txt: 'Historial' },
-    { id: 'purchases', ico: '🧵', txt: 'Abonos Yesenia' },
-    { id: 'settlements', ico: '💰', txt: 'Liquidaciones' },
-    { id: 'summaries', ico: '📊', txt: 'Resúmenes' },
-    { id: 'reports',   ico: '📈', txt: 'Reportes' },
-    { id: 'settings',  ico: '⚙️', txt: 'Configuración', soloAdmin: true }
+    { id: 'dashboard', ico: 'inicio-ico', txt: 'Inicio' },
+    { id: 'new-sale', ico: 'mas', txt: 'Nueva venta' },
+    { id: 'orders', ico: 'pedidos', txt: 'Pedidos' },
+    { id: 'cuentas', ico: 'cartera', txt: 'Cuentas por cliente' },
+    { id: 'history', ico: 'libro', txt: 'Historial' },
+    { id: 'purchases', ico: 'hilo', txt: 'Abonos Yesenia' },
+    { id: 'settlements', ico: 'moneda', txt: 'Liquidaciones' },
+    { id: 'summaries', ico: 'grafico', txt: 'Resúmenes' },
+    { id: 'reports', ico: 'tendencia', txt: 'Reportes' },
+    { id: 'settings', ico: 'ajustes', txt: 'Configuración', soloAdmin: true }
   ];
 
   let busItems = [];
@@ -1340,7 +1453,7 @@
           const saldo = precio - abonoClienteTotal(v);
           salida.push({
             grupo: 'Pedidos',
-            ico: '📋',
+            ico: 'pedidos',
             titulo: v.cliente_nombre || 'Sin nombre',
             sub: [v.cliente_telefono, formatearFechaHumana(v.fecha), estadoGeneralVenta(v)].filter(Boolean).join(' · '),
             dato: saldo > 0 ? `debe ${fmt(saldo)}` : 'al día',
@@ -1373,7 +1486,7 @@
     busItems.forEach((it, i) => {
       if (it.grupo !== grupoActual) { grupoActual = it.grupo; html += `<div class="buscador-grupo">${escSimple(it.grupo)}</div>`; }
       html += `<button type="button" class="buscador-item${i === busActivo ? ' activo' : ''}" data-i="${i}">
-        <span class="buscador-item-ico">${it.ico}</span>
+        <span class="buscador-item-ico">${ico(it.ico, 'bus-ico')}</span>
         <span class="buscador-item-txt">
           <span class="buscador-item-titulo">${escSimple(it.titulo)}</span>
           ${it.sub ? `<span class="buscador-item-sub">${escSimple(it.sub)}</span>` : ''}
@@ -1493,7 +1606,24 @@
       .from('ventas').select('*')
       .not('eliminado_at', 'is', null)
       .order('eliminado_at', { ascending: false });
-    if (error) { papeleraActiva = false; return []; }
+    if (error) {
+      // OJO AQUI. Esta bandera hace que los borrados dejen de ser
+      // reversibles. Si un corte de senal la apagara, "borrar" pasaria a ser
+      // "borrar para siempre" sin que nadie lo decidiera.
+      //
+      // Por eso solo se apaga cuando el error dice que la columna no existe.
+      // Cualquier otro fallo (señal, tiempo de espera) es temporal: se avisa y
+      // se deja la papelera como estaba.
+      const noExisteColumna = /column|does not exist|schema|42703|PGRST/i.test(
+        String((error && error.message) || error));
+      if (noExisteColumna) {
+        papeleraActiva = false;
+      } else {
+        logError('loadEliminados', error);
+        avisarNoSeCargo('No se pudo abrir la papelera de pedidos eliminados.');
+      }
+      return [];
+    }
     return data || [];
   }
 
@@ -1541,8 +1671,8 @@
           <small>Borrado ${v.eliminado_at ? formatearFechaHumana(String(v.eliminado_at).slice(0, 10)) : ''}</small>
         </div>
         <div class="eliminado-acciones">
-          <button type="button" class="btn-ghost btn" data-restaurar="${escAttr(v.id)}">↩️ Restaurar</button>
-          ${esAdmin ? `<button type="button" class="btn-ghost btn eliminado-borrar" data-borrar-def="${escAttr(v.id)}" title="Borrar este pedido para siempre">🗑️ Borrar</button>` : ''}
+          <button type="button" class="btn-ghost btn" data-restaurar="${escAttr(v.id)}">${ico('deshacer', 'btn-ico')} Restaurar</button>
+          ${esAdmin ? `<button type="button" class="btn-ghost btn eliminado-borrar" data-borrar-def="${escAttr(v.id)}" title="Borrar este pedido para siempre">${ico('papelera', 'btn-ico')} Borrar</button>` : ''}
         </div>
       </div>`).join('');
 
@@ -1682,7 +1812,7 @@
     const ok = await confirmarFuerte({
       titulo: 'Eliminar pedido',
       texto: papeleraActiva
-        ? 'El pedido sale de Pedidos, pero queda guardado en 🗑️ Eliminados y lo puedes recuperar.'
+        ? 'El pedido sale de Pedidos, pero queda guardado en "Eliminados" y lo puedes recuperar.'
         : '⚠️ Esto borra el pedido definitivamente, sin opción de recuperarlo.',
       detalle: v ? `<b>${escSimple(v.cliente_nombre || 'Sin nombre')}</b>
         <span>${escSimple(v.cliente_telefono || '')} · ${v.fecha ? formatearFechaHumana(v.fecha) : 'sin fecha'} · ${camisas} camisa(s)</span>` : '',
@@ -1759,6 +1889,11 @@
 
     document.getElementById('login-view').classList.add('hidden');
     document.getElementById('app-view').classList.remove('hidden');
+
+    // enhance.v2.js necesita el nombre real de quien entró para el saludo del
+    // Inicio. currentRole vive dentro de este IIFE, asi que sin esto el otro
+    // archivo no lo puede ver y terminaba saludando por el rol.
+    window.currentRole = currentRole;
 
     document.getElementById('who-label').textContent =
       `Sesión: ${email} (${currentRole.role === 'admin' ? 'Administrador' : 'Vendedor'})`;
@@ -2037,9 +2172,15 @@
         .select('*')
         .order('fecha', { ascending: false });
 
-      if (error) logError('loadVentas', error);
+      if (error) {
+        logError('loadVentas', error);
+        // Fallo de red SI se avisa: si no, la app se dibuja con cero pedidos y
+        // eso parece "hoy no hay pedidos". Un fallo de esquema NO se avisa, para
+        // eso esta el aviso propio del optional.
+        if (esFalloDeRed(error)) avisarNoSeCargo('No se pudieron cargar los pedidos.');
+      }
       // Los borrados lógicos no deben aparecer en ninguna pantalla.
-      ventasCache = (data || []).filter(v => !v.eliminado_at);
+      ventasCache = error ? ventasCache : (data || []).filter(v => !v.eliminado_at);
 
       renderVendorFilter();
       renderDashboard();
@@ -2047,6 +2188,7 @@
       renderHistorial();
       renderCompras();
       actualizarDatalistClientes();
+      if (!error) ocultarAvisoNoSeCargo();
     } catch (err) {
       logError('loadVentas', err);
     } finally { showLoading(false); }
@@ -2517,7 +2659,7 @@
 <div class="sheet">
   <div class="toolbar">
     <button class="btn" onclick="window.close()" type="button">Cerrar</button>
-    <button class="btn btn-primary" onclick="window.print()" type="button">🖨️ Imprimir / Guardar PDF</button>
+    <button class="btn btn-primary" onclick="window.print()" type="button">${ico('imprimir', 'btn-ico')} Imprimir / Guardar PDF</button>
   </div>
 
   <div class="header">
@@ -2658,9 +2800,9 @@ window.onload = function () {
     const listas = [];
     porClave.forEach(g => {
       if (g.sinFecha) {
-        listas.push(`📦 <b>${g.cliente}</b> (${g.vendedor}) — ${g.count} pedido${g.count > 1 ? 's' : ''} en <b>Listo para entrega</b> sin fecha`);
+        listas.push(`${ico('flujo', 'bus-ico')} <b>${g.cliente}</b> (${g.vendedor}) — ${g.count} pedido${g.count > 1 ? 's' : ''} en <b>Listo para entrega</b> sin fecha`);
       } else if (g.dias !== null && g.dias >= 2) {
-        listas.push(`📦 <b>${g.cliente}</b> (${g.vendedor}) — ${g.count} pedido${g.count > 1 ? 's' : ''} en <b>Listo para entrega</b> desde ${formatearFechaHumana(g.fecha)} (hace ${g.dias} días)`);
+        listas.push(`${ico('flujo', 'bus-ico')} <b>${g.cliente}</b> (${g.vendedor}) — ${g.count} pedido${g.count > 1 ? 's' : ''} en <b>Listo para entrega</b> desde ${formatearFechaHumana(g.fecha)} (hace ${g.dias} días)`);
       }
     });
     return listas;
@@ -2718,7 +2860,7 @@ window.onload = function () {
       // quedaban mezclados los tres tipos de aviso que si llevan emoji.
       muertos.forEach(linea => alertas.push({
         tipo: 'warning',
-        msg: '🕐 ' + linea.replace(/^•\s*/, '')
+        msg: linea.replace(/^•\s*/, '')
       }));
     }
 
@@ -3117,9 +3259,9 @@ window.onload = function () {
       }).join('');
 
     document.getElementById('resumen-contenido').innerHTML = `
-      <div style="color:var(--muted); font-size:12.5px; margin-bottom:12px;">Período: <b>${resPeriodoLabel()}</b>${fVendedor ? ` · Vendedor: <b>${escSimple(fVendedor)}</b>` : ''}${fCliente ? ` · Cliente: <b>${escSimple(fCliente)}</b>` : ''}</div>
+      <div style="color:var(--muted); font-size:12px; margin-bottom:12px;">Período: <b>${resPeriodoLabel()}</b>${fVendedor ? ` · Vendedor: <b>${escSimple(fVendedor)}</b>` : ''}${fCliente ? ` · Cliente: <b>${escSimple(fCliente)}</b>` : ''}</div>
 
-      <h3 style="margin:0 0 12px; font-size:15px;">💵 Ventas del período</h3>
+      <h3 style="margin:0 0 12px; font-size:15px;">${ico('ventas', 'sec-ico')} Ventas del período</h3>
       <div class="kpi-grid">
         <div class="kpi-card">
           <div class="kpi-label">Ventas (total vendido)</div>
@@ -3143,7 +3285,7 @@ window.onload = function () {
         </div>
       </div>
 
-<h3 style="margin:24px 0 12px; font-size:15px;">👕 Camisas por versión</h3>
+<h3 style="margin:24px 0 12px; font-size:15px;">${ico('camisas', 'sec-ico')} Camisas por versión</h3>
         <div class="kpi-grid">
           <div class="kpi-card" style="border-left:3px solid var(--gold);">
             <div class="kpi-label">Versión 1</div>
@@ -3170,7 +3312,7 @@ window.onload = function () {
       </div>
       <p class="hint" style="margin:12px 0 0;">La <b>${liderModelo === 'Viejo' ? 'Versión 1' : 'Versión 2'}</b> es la que más se vende en este período (${pctLider}% de las camisas).</p>
 
-      <h3 style="margin:24px 0 12px; font-size:15px;">🛒 Abonos a Yesenia (estado actual)</h3>
+      <h3 style="margin:24px 0 12px; font-size:15px;">${ico('abonos-icono', 'sec-ico')} Abonos a Yesenia (estado actual)</h3>
       <div class="kpi-grid">
         <div class="kpi-card" style="border-left:3px solid var(--warn);">
           <div class="kpi-label">Camisas por comprar</div>
@@ -3194,7 +3336,7 @@ window.onload = function () {
         </div>
       </div>
 
-      <h3 style="margin:24px 0 12px; font-size:15px;">📦 Flujo de pedidos</h3>
+      <h3 style="margin:24px 0 12px; font-size:15px;">${ico('flujo', 'sec-ico')} Flujo de pedidos</h3>
       <div class="kpi-grid">
         <div class="kpi-card">
           <div class="kpi-label">Pedidos activos</div>
@@ -3218,7 +3360,7 @@ window.onload = function () {
         </div>
       </div>
 
-      <h3 style="margin:24px 0 12px; font-size:15px;">📅 Actividad ${desglose.porDia ? 'por día' : 'por mes'}</h3>
+      <h3 style="margin:24px 0 12px; font-size:15px;">${ico('actividad', 'sec-ico')} Actividad ${desglose.porDia ? 'por día' : 'por mes'}</h3>
       <div class="table-wrap">
         <table class="admin-table" data-orden-clave="resumenDias">
           <thead>
@@ -3234,9 +3376,9 @@ window.onload = function () {
         </table>
       </div>
 
-      <h3 style="margin:24px 0 12px; font-size:15px;">🏆 Rankings</h3>
+      <h3 style="margin:24px 0 12px; font-size:15px;">${ico('rankings', 'sec-ico')} Rankings</h3>
       <div class="table-wrap" style="margin-top:0;">
-        <h4 style="margin:0 0 8px; font-size:13.5px;">Vendedores</h4>
+        <h4 style="margin:0 0 8px; font-size:13px;">Vendedores</h4>
         <table class="admin-table" data-orden-clave="resumenVendedores">
           <thead>
             <tr>
@@ -3253,7 +3395,7 @@ window.onload = function () {
       </div>
 
       <div class="table-wrap" style="margin-top:18px;">
-        <h4 style="margin:0 0 8px; font-size:13.5px;">Camisas más vendidas (top 8)</h4>
+        <h4 style="margin:0 0 8px; font-size:13px;">Camisas más vendidas (top 8)</h4>
         <table class="admin-table" data-orden-clave="resumenColores">
           <thead>
             <tr>
@@ -3269,7 +3411,7 @@ window.onload = function () {
       </div>
 
       <div class="table-wrap" style="margin-top:18px;">
-        <h4 style="margin:0 0 8px; font-size:13.5px;">Clientes (top 8)</h4>
+        <h4 style="margin:0 0 8px; font-size:13px;">Clientes (top 8)</h4>
         <table class="admin-table" data-orden-clave="resumenClientes">
           <thead>
             <tr>
@@ -3388,11 +3530,11 @@ window.onload = function () {
 
       return `
         <tr data-id="${v.id}">
-          <td>${v.fecha ? formatearFechaHumana(v.fecha) : ''}<span class="sub-tag">🕐 ${horaDeVenta(v) || ''}</span></td>
+          <td>${v.fecha ? formatearFechaHumana(v.fecha) : ''}<span class="sub-tag">${ico('reloj', 'tag-ico')} ${horaDeVenta(v) || ''}</span></td>
           <td><b>${escSimple(v.vendedor || '')}</b></td>
           <td>
             <b>${escSimple(v.cliente_nombre || '')}</b>
-            <span class="sub-tag">📞 ${escSimple(v.cliente_telefono || '')}${(() => { const t = String(v.cliente_telefono || '').trim(); const d = t.replace(/\D/g, ''); if (d) return ` · <a href="https://wa.me/57${d}" target="_blank" style="color:var(--ok);font-weight:600;text-decoration:none;">WhatsApp</a>`; if (esUsuarioWhatsApp(t)) return ` · <a href="#" onclick="copiarUsuarioWhatsApp('${argOnClick(t)}');return false;" style="color:var(--ok);font-weight:600;text-decoration:none;">Copiar @</a>`; return ''; })()}</span>
+            <span class="sub-tag">${ico('telefono', 'tag-ico')} ${escSimple(v.cliente_telefono || '')}${(() => { const t = String(v.cliente_telefono || '').trim(); const d = t.replace(/\D/g, ''); if (d) return ` · <a href="https://wa.me/57${d}" target="_blank" style="color:var(--ok);font-weight:600;text-decoration:none;">WhatsApp</a>`; if (esUsuarioWhatsApp(t)) return ` · <a href="#" onclick="copiarUsuarioWhatsApp('${argOnClick(t)}');return false;" style="color:var(--ok);font-weight:600;text-decoration:none;">Copiar @</a>`; return ''; })()}</span>
           </td>
           <td>
             <div style="margin-bottom:6px;">${badgeModeloVenta(v)}</div>
@@ -3406,23 +3548,23 @@ window.onload = function () {
           <td class="money" style="color:${pendienteYesenia > 0 ? 'var(--warn)' : 'var(--ok)'}">${fmt(pendienteYesenia)}</td>
           <td>
             <span class="humano-fecha">${fechaEntregaHumana}</span>
-            <span class="sub-tag">📍 ${escSimple(v.lugar_entrega || 'Sin definir')} · 🚚 ${escSimple(v.entrega_por || 'Sin asignar')}</span>
+            <span class="sub-tag">${ico('lugar', 'tag-ico')} ${escSimple(v.lugar_entrega || 'Sin definir')} · ${ico('camion', 'tag-ico')} ${escSimple(v.entrega_por || 'Sin asignar')}</span>
           </td>
           <td>
             <button class="btn-small estado-camisa-btn ${claseEstado(eg)}" data-id="${v.id}" type="button" title="Editar estado de cada camisa">
-              ${esMixto ? 'Mixto ⚠️' : escSimple(eg)} <span style="font-size:10px;opacity:0.7;">▾</span>
+              ${esMixto ? 'Mixto' : escSimple(eg)} <span style="font-size:10px;opacity:0.7;">▾</span>
             </button>
-            ${v.comprado_at ? `<span class="sub-tag" style="color:var(--teal-ink);">🛒 ${formatearCompradoAt(v)}</span>` : ''}
+            ${v.comprado_at ? `<span class="sub-tag" style="color:var(--teal-ink);">${ico('por-comprar', 'tag-ico')} ${formatearCompradoAt(v)}</span>` : ''}
             ${esMixto ? estadosCuentasHtml(v) : ''}
-            ${(() => { const listo = puedeMarcarPagado(v).ok && todosItemsListosEntrega(v); const pend = !pedidoSocioLiquidado(v) || !costoProveedorPagado(v); if (listo) return '<span class="sub-tag" style="color:var(--ok);font-weight:700;">✅ Listo para liquidar</span>'; if (pend) return '<span class="sub-tag" style="color:var(--warn);">Socio/proveedor pendiente</span>'; return ''; })()}
+            ${(() => { const listo = puedeMarcarPagado(v).ok && todosItemsListosEntrega(v); const pend = !pedidoSocioLiquidado(v) || !costoProveedorPagado(v); if (listo) return '<span class="sub-tag" style="color:var(--ok);font-weight:700;">' + ico('visto', 'tag-ico') + ' Listo para liquidar</span>'; if (pend) return '<span class="sub-tag" style="color:var(--warn);">Socio/proveedor pendiente</span>'; return ''; })()}
           </td>
           <td>
             <div class="action-group">
-              <button class="btn-small editar-button" data-id="${v.id}" type="button">Editar</button>
-              <button class="btn-small abono-button" data-id="${v.id}" type="button">+ Abono</button>
-              <button class="btn-small recibo-button" data-id="${v.id}" type="button" title="Imprimir recibo del pedido">🧾 Recibo</button>
-              <button class="btn-small finalizar-button" data-id="${v.id}" type="button" ${!estadosTodosLiquidado(v) ? 'disabled title="Solo se puede finalizar cuando TODAS las camisas están Liquidado (proveedor y socios liquidados)" style="opacity:0.45;cursor:not-allowed;"' : 'title="Finalizar pedido (mover a Historial)"'}>Finalizar</button>
-              <button class="btn-danger borrar-button" data-id="${v.id}" type="button">Borrar</button>
+              <button class="btn-small editar-button" data-id="${v.id}" type="button">${ico('lapiz', 'btn-ico')} Editar</button>
+              <button class="btn-small abono-button" data-id="${v.id}" type="button">${ico('moneda', 'btn-ico')} + Abono</button>
+              <button class="btn-small recibo-button" data-id="${v.id}" type="button" title="Imprimir recibo del pedido">${ico('ticket', 'btn-ico')} Recibo</button>
+              <button class="btn-small finalizar-button" data-id="${v.id}" type="button" ${!estadosTodosLiquidado(v) ? 'disabled title="Solo se puede finalizar cuando TODAS las camisas están Liquidado (proveedor y socios liquidados)" style="opacity:0.45;cursor:not-allowed;"' : 'title="Finalizar pedido (mover a Historial)"'}>${ico('visto', 'btn-ico')} Finalizar</button>
+              <button class="btn-danger borrar-button" data-id="${v.id}" type="button">${ico('papelera', 'btn-ico')} Borrar</button>
             </div>
           </td>
         </tr>
@@ -3560,20 +3702,20 @@ window.onload = function () {
               <button type="button" class="stepper-btn stepper-btn-add" data-accion="mas-fila" data-index="${i}" aria-label="Agregar otra camisa igual a esta">+</button>
             </div>
             <button type="button" class="camisa-item-del" data-accion="duplicar" data-index="${i}" title="Duplicar esta fila para cambiarle algo" aria-label="Duplicar la fila ${i + 1}">&#10697;</button>
-            <button type="button" class="camisa-item-del camisa-item-del--borrar" data-accion="borrar" data-index="${i}" title="Quitar esta fila del pedido" aria-label="Quitar la fila ${i + 1}">&#128465;</button>
+            <button type="button" class="camisa-item-del camisa-item-del--borrar" data-accion="borrar" data-index="${i}" title="Quitar esta fila del pedido" aria-label="Quitar la fila ${i + 1}">${ico('papelera', 'tag-ico')}</button>
           </div>
         </div>
         <div class="camisa-item-fields">
           <div>
             <label>Versión</label>
-            <select class="ci-modelo">
+            <select class="ci-modelo" aria-label="Modelo de la camisa ${i + 1}">
               <option value="Viejo" ${item.modelo && item.modelo !== 'Viejo' ? '' : 'selected'}>Versión 1</option>
               <option value="Nuevo" ${item.modelo === 'Nuevo' ? 'selected' : ''}>Versión 2</option>
             </select>
           </div>
           <div>
             <label class="label-required">Género</label>
-            <select class="ci-genero">
+            <select class="ci-genero" aria-label="Género de la camisa ${i + 1}">
               <option value="" ${!item.genero ? 'selected' : ''} disabled>Selecciona un género</option>
               <option value="Hombre" ${item.genero === 'Hombre' ? 'selected' : ''}>Hombre</option>
               <option value="Mujer" ${item.genero === 'Mujer' ? 'selected' : ''}>Mujer</option>
@@ -3581,36 +3723,36 @@ window.onload = function () {
           </div>
           <div>
             <label class="label-required">Color</label>
-            <select class="ci-color">${coloresOptionsHtml(item.color)}</select>
+            <select class="ci-color" aria-label="Color de la camisa ${i + 1}">${coloresOptionsHtml(item.color)}</select>
           </div>
           <div>
             <label class="label-required">Talla</label>
-            <select class="ci-talla">
+            <select class="ci-talla" aria-label="Talla de la camisa ${i + 1}">
               <option value="">Selecciona una talla</option>
               ${TALLAS_DISPONIBLES.map(t => `<option value="${t}" ${item.talla === t ? 'selected' : ''}>${t}</option>`).join('')}
             </select>
           </div>
           <div>
             <label>Bordado</label>
-            <input type="text" class="ci-programa" value="${escSimple(item.programa)}" placeholder="Ej. Ingeniería">
+            <input type="text" class="ci-programa" aria-label="Bordado de la camisa ${i + 1}" value="${escSimple(item.programa)}" placeholder="Ej. Ingeniería">
           </div>
         </div>
         <div class="camisa-item-money">
           <div>
             <label class="label-required">Precio venta ($)</label>
-            <input type="number" class="ci-precio" min="0" value="${numOrBlank(item.precio)}" placeholder="${(document.getElementById('f-precio') || {}).value || 39000}">
+            <input type="number" class="ci-precio" aria-label="Precio de venta de la camisa ${i + 1}" min="0" value="${numOrBlank(item.precio)}" placeholder="${(document.getElementById('f-precio') || {}).value || 39000}">
           </div>
           <div>
             <label class="label-required">Costo Yesenia ($)</label>
-            <input type="number" class="ci-costo" min="0" value="${numOrBlank(item.costo)}" placeholder="${(document.getElementById('f-costo') || {}).value || 30000}">
+            <input type="number" class="ci-costo" aria-label="Costo de Yesenia de la camisa ${i + 1}" min="0" value="${numOrBlank(item.costo)}" placeholder="${(document.getElementById('f-costo') || {}).value || 30000}">
           </div>
           <div>
             <label class="label-required">Abono recibido ($)</label>
-            <input type="number" class="ci-abono" min="0" value="${numOrBlank(item.abono)}" placeholder="0">
+            <input type="number" class="ci-abono" aria-label="Abono recibido de la camisa ${i + 1}" min="0" value="${numOrBlank(item.abono)}" placeholder="0">
           </div>
           <div>
             <label class="label-required">Estado</label>
-            <select class="ci-estado">
+            <select class="ci-estado" aria-label="Estado de la camisa ${i + 1}">
               ${ESTADOS.map(e => `<option value="${e}" ${estadoItem === e ? 'selected' : ''}>${e}</option>`).join('')}
             </select>
           </div>
@@ -4106,7 +4248,7 @@ window.onload = function () {
     const compradoInfo = document.getElementById('form-comprado-info');
     if (venta && venta.comprado_at) {
       compradoBox.classList.remove('hidden');
-      compradoInfo.textContent = `🛒 Comprado: ${formatearCompradoAt(venta)}`;
+      compradoInfo.textContent = `Comprado: ${formatearCompradoAt(venta)}`;
     } else {
       compradoBox.classList.add('hidden');
     }
@@ -4402,8 +4544,12 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
         .select('*')
         .order('fecha', { ascending: false });
 
-      if (error) logError('loadCompras', error);
-      comprasCache = data || [];
+      if (error) {
+        logError('loadCompras', error);
+        if (esFalloDeRed(error)) avisarNoSeCargo('No se pudieron cargar las compras.');
+        else ocultarAvisoNoSeCargo('las compras.');
+      }
+      comprasCache = error ? comprasCache : (data || []);
 
       await Promise.all([loadCompraAportes(), loadCompraPedidos()]);
       renderCompras();
@@ -4450,7 +4596,12 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
         .select('*')
         .order('fecha', { ascending: false });
 
-      if (error) { logError('loadCompraAportes', error); return; }
+      if (error) {
+        logError('loadCompraAportes', error);
+        if (esFalloDeRed(error)) avisarNoSeCargo('No se pudieron cargar los aportes a Yesenia.');
+        else ocultarAvisoNoSeCargo('los aportes a Yesenia.');
+        return;
+      }
       compraAportesCache = data || [];
     } catch (e) { logError('loadCompraAportes', e); }
   }
@@ -4511,9 +4662,9 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
   function renderCompras() {
     const banner = document.getElementById('compras-privacy-banner');
     if (currentRole.role === 'admin') {
-      banner.innerHTML = '🛡️ <span><b>Modo Administrador:</b> Viendo todos los abonos a Yesenia registrados.</span>';
+      banner.innerHTML = ico('escudo', 'franja-ico') + '<span><b>Modo Administrador:</b> Viendo todos los abonos a Yesenia registrados.</span>';
     } else {
-      banner.innerHTML = `🔒 <span><b>Acceso Privado:</b> Estás viendo únicamente los abonos a Yesenia donde tienes pedidos propios (${currentRole.vendedor}).</span>`;
+      banner.innerHTML = ico('candado', 'franja-ico') + `<span><b>Acceso Privado:</b> Estás viendo únicamente los abonos a Yesenia donde tienes pedidos propios (${currentRole.vendedor}).</span>`;
     }
 
     let rows = comprasVisibles();
@@ -4550,9 +4701,9 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
       const saldo = costoTotal - aportado;
       const puedeGestionar = currentRole.role === 'admin' || c.comprador === currentRole.vendedor;
       const acciones = puedeGestionar
-        ? `<button class="btn-small" onclick="openCompraModal('${c.id}')" type="button">Editar</button>
-           <button class="btn-danger" onclick="deleteCompra('${c.id}')" type="button">Eliminar</button>`
-        : `<button class="btn-small" onclick="openCompraModal('${c.id}')" type="button">Ver / Abonar</button>`;
+        ? `<button class="btn-small" onclick="openCompraModal('${c.id}')" type="button">${ico('lapiz', 'btn-ico')} Editar</button>
+           <button class="btn-danger" onclick="deleteCompra('${c.id}')" type="button">${ico('papelera', 'btn-ico')} Eliminar</button>`
+        : `<button class="btn-small" onclick="openCompraModal('${c.id}')" type="button">${ico('ojo', 'btn-ico')} Ver / Abonar</button>`;
 
       const personasAbono = [...new Set(aportesCompra.map(a => a.persona).filter(Boolean))];
       const quienesAbonanHtml = personasAbono.length === 0
@@ -4605,7 +4756,7 @@ abono: items.reduce((sum, it) => sum + (isNaN(it.abono) ? 0 : it.abono), 0),
 
       return `
         <tr>
-          <td>${formatearFechaHumana(c.fecha)}<span class="sub-tag">🕐 ${c.hora || ''}</span></td>
+          <td>${formatearFechaHumana(c.fecha)}<span class="sub-tag">${ico('reloj', 'tag-ico')} ${c.hora || ''}</span></td>
           <td>${quienesAbonanHtml}</td>
           <td>
             <div style="font-weight:700; margin-bottom:4px;">${cantidad} camisa(s)</div>
@@ -4798,7 +4949,7 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
                   const costoPedido = costoTotalVenta(p);
                   const cantPedido = Number(p.cantidad) || 1;
                   const abPedido = yaAsignados.has(p.id) ? (montoEnVisita[p.id] || 0) : 0;
-                  const fechaTxt = p.fecha ? formatearFechaHumana(p.fecha).replace(/^📅\s*/,'') : '?';
+                  const fechaTxt = p.fecha ? formatearFechaHumana(p.fecha) : '?';
                   const estadoBadge = badgeEstadoGeneral(p);
                   return `
                   <div class="pedido-sub-row">
@@ -4840,7 +4991,7 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
           <div class="pedido-detalle ${checked ? '' : 'hidden'}">
             ${avisoPrevio}
             <div class="camisa-detalle-row">
-              <span class="camisa-detalle-info">💵 Abono total que paga a Yesenia${tieneAbonoPrevio ? ' <b>(solo lo que falta)</b>' : ''}</span>
+              <span class="camisa-detalle-info">Abono total que paga a Yesenia${tieneAbonoPrevio ? ' <b>(solo lo que falta)</b>' : ''}</span>
               <span class="camisa-abono-campo">
                 <input type="number" class="cp-persona-abono" data-persona="${escSimple(clave)}" data-costo="${costo}" min="0" step="1000" placeholder="$ Abono" value="${abonoPrev || ''}" ${soloAportes ? 'disabled' : ''}>
               </span>
@@ -5341,8 +5492,12 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
         .order('fecha', { ascending: false })
         .order('hora', { ascending: false });
 
-      if (error) logError('loadLiquidaciones', error);
-      liquidacionesCache = data || [];
+      if (error) {
+        logError('loadLiquidaciones', error);
+        if (esFalloDeRed(error)) avisarNoSeCargo('No se pudieron cargar las liquidaciones.');
+        else ocultarAvisoNoSeCargo('las liquidaciones.');
+      }
+      liquidacionesCache = error ? liquidacionesCache : (data || []);
       renderLiquidaciones();
       renderTable();
     } catch (e) { logError('loadLiquidaciones', e); }
@@ -5439,7 +5594,7 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
       </div>` : '';
 
     balCard.innerHTML = `
-      <div class="eyebrow">💰 Balance entre socios</div>
+      <div class="eyebrow">${ico('moneda', 'sec-ico')} Balance entre socios</div>
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:13px; border:1px solid var(--line); border-radius:8px; padding:10px; margin-top:8px;">
         <div>
           <b>Samir</b> le debe liquidar a <b>Valentina</b>:<br>
@@ -5491,11 +5646,11 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
           : (l.venta_id ? 'Pedido eliminado' : '—');
         const puedeBorrar = currentRole.role === 'admin' || currentRole.vendedor === l.pagador;
         const acciones = puedeBorrar
-          ? `<button class="btn-danger" onclick="deleteLiquidacion('${l.id}')" type="button">Borrar</button>`
+          ? `<button class="btn-danger" onclick="deleteLiquidacion('${l.id}')" type="button">${ico('papelera', 'btn-ico')} Borrar</button>`
           : '<span style="color:var(--muted);">—</span>';
         return `
         <tr>
-          <td>${formatearFechaHumana(l.fecha)}<span class="sub-tag">🕐 ${l.hora || ''}</span></td>
+          <td>${formatearFechaHumana(l.fecha)}<span class="sub-tag">${ico('reloj', 'tag-ico')} ${l.hora || ''}</span></td>
           <td>${pedidoLabel}</td>
           <td><b>${escSimple(l.pagador)}</b></td>
           <td><b>${escSimple(l.receptor)}</b></td>
@@ -5647,7 +5802,12 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) { logError('loadUsuarios', error); return; }
+      if (error) {
+        logError('loadUsuarios', error);
+        if (esFalloDeRed(error)) avisarNoSeCargo('No se pudieron cargar los usuarios.');
+        else ocultarAvisoNoSeCargo('los usuarios.');
+        return;
+      }
       usuariosCache = data || [];
       renderUsuariosTable();
     } catch (err) { logError('loadUsuarios', err); }
@@ -5693,8 +5853,8 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
         <td>${u.created_at ? formatearFechaHumana(u.created_at.split('T')[0]) : '—'}</td>
         <td>
           <div class="action-group" style="flex-direction:row;">
-            <button class="btn-small" onclick="editUser('${u.id}')" type="button">Editar</button>
-            <button class="btn-danger" onclick="deleteUser('${u.id}')" type="button">Eliminar</button>
+            <button class="btn-small" onclick="editUser('${u.id}')" type="button">${ico('lapiz', 'btn-ico')} Editar</button>
+            <button class="btn-danger" onclick="deleteUser('${u.id}')" type="button">${ico('papelera', 'btn-ico')} Eliminar</button>
           </div>
         </td>
       </tr>
@@ -5919,7 +6079,7 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
       });
 
       const resumen = [
-        ['FECHA DE EXPORTACIÓN', formatearFechaHumana(hoyColombia()).replace(/^📅\s*/, '')],
+        ['FECHA DE EXPORTACIÓN', formatearFechaHumana(hoyColombia())],
         [],
         ['Pedidos por comprar', dataset.length],
         ['Camisas por comprar', totalCamisas],
@@ -6589,11 +6749,11 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
 
       return `
         <tr data-id="${v.id}">
-          <td>${v.fecha ? formatearFechaHumana(v.fecha) : ''}<span class="sub-tag">🕐 ${horaDeVenta(v) || ''}</span></td>
+          <td>${v.fecha ? formatearFechaHumana(v.fecha) : ''}<span class="sub-tag">${ico('reloj', 'tag-ico')} ${horaDeVenta(v) || ''}</span></td>
           <td><b>${escSimple(v.vendedor || '')}</b></td>
           <td>
             <b>${escSimple(v.cliente_nombre || '')}</b>
-            <span class="sub-tag">📞 ${escSimple(v.cliente_telefono || '')}</span>
+            <span class="sub-tag">${ico('telefono', 'tag-ico')} ${escSimple(v.cliente_telefono || '')}</span>
           </td>
           <td>
             <div style="margin-bottom:6px;">${badgeModeloVenta(v)}</div>
@@ -6605,15 +6765,15 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
           <td class="money" style="color:${restanteCliente > 0 ? 'var(--warn)' : 'var(--ok)'}">${fmt(restanteCliente)}</td>
           <td>
             <span class="humano-fecha">${textoFechaEntrega(v)}</span>
-            <span class="sub-tag">📍 ${escSimple(v.lugar_entrega || 'Sin definir')} · 🚚 ${escSimple(v.entrega_por || 'Sin asignar')}</span>
+            <span class="sub-tag">${ico('lugar', 'tag-ico')} ${escSimple(v.lugar_entrega || 'Sin definir')} · ${ico('camion', 'tag-ico')} ${escSimple(v.entrega_por || 'Sin asignar')}</span>
           </td>
-          <td>${badgeEstadoGeneral(v)}${v.comprado_at ? `<span class="sub-tag" style="color:var(--teal-ink);">🛒 ${formatearCompradoAt(v)}</span>` : ''}</td>
+          <td>${badgeEstadoGeneral(v)}${v.comprado_at ? `<span class="sub-tag" style="color:var(--teal-ink);">${ico('por-comprar', 'tag-ico')} ${formatearCompradoAt(v)}</span>` : ''}</td>
           <td>
             <div class="action-group">
-              ${esAdmin ? `<button class="btn-small editar-historial-button" data-id="${v.id}" type="button">✏️ Editar</button>` : ''}
-              <button class="btn-small restaurar-button" data-id="${v.id}" type="button">Restaurar</button>
-              <button class="btn-small recibo-button" data-id="${v.id}" type="button" title="Imprimir recibo del pedido">🧾 Recibo</button>
-              ${esAdmin ? `<button class="btn-danger borrar-historial-button" data-id="${v.id}" type="button">Borrar</button>` : ''}
+              ${esAdmin ? `<button class="btn-small editar-historial-button" data-id="${v.id}" type="button">${ico('lapiz', 'btn-ico')} Editar</button>` : ''}
+              <button class="btn-small restaurar-button" data-id="${v.id}" type="button">${ico('deshacer', 'btn-ico')} Restaurar</button>
+              <button class="btn-small recibo-button" data-id="${v.id}" type="button" title="Imprimir recibo del pedido">${ico('ticket', 'btn-ico')} Recibo</button>
+              ${esAdmin ? `<button class="btn-danger borrar-historial-button" data-id="${v.id}" type="button">${ico('papelera', 'btn-ico')} Borrar</button>` : ''}
             </div>
           </td>
         </tr>
@@ -6711,10 +6871,10 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
     const pageRows = filas.slice(start, start + PAGE_SIZE);
     body.innerHTML = pageRows.map(r => {
       const pedidosTxt = r.pedidos.length === 1 ? '1 pedido' : `${r.pedidos.length} pedidos`;
-      const entregaTxt = r.ultimaEntrega ? formatearFechaHumana(r.ultimaEntrega).replace(/^📅\s*/,'') : 'Sin fecha';
+      const entregaTxt = r.ultimaEntrega ? formatearFechaHumana(r.ultimaEntrega) : 'Sin fecha';
       return `
         <tr>
-          <td style="max-width:220px;"><b>${escSimple(r.cliente)}</b><span class="sub-tag">📞 ${escSimple(r.telefono||r.clave)} · ${pedidosTxt}</span></td>
+          <td style="max-width:220px;"><b>${escSimple(r.cliente)}</b><span class="sub-tag">${ico('telefono', 'tag-ico')} ${escSimple(r.telefono||r.clave)} · ${pedidosTxt}</span></td>
           <td>${escSimple(r.vendedores || '—')}</td>
           <td class="c"><b>${r.pedidos.length}</b></td>
           <td class="c">${r.camisas}</td>
@@ -6723,8 +6883,8 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
           <td class="money" style="color:${r.saldo>0?'var(--warn)':'var(--ok)'}"><b>${fmt(r.saldo)}</b></td>
           <td>
             <div class="action-group">
-              <button class="btn-small" onclick="openFacturaModal('${argOnClick(r.clave)}')" type="button">🧾 Factura</button>
-              <button class="btn-small" onclick="verPedidosCliente('${argOnClick(r.clave)}')" type="button">👁️ Pedidos</button>
+              <button class="btn-small" onclick="openFacturaModal('${argOnClick(r.clave)}')" type="button">${ico('ticket', 'btn-ico')} Factura</button>
+              <button class="btn-small" onclick="verPedidosCliente('${argOnClick(r.clave)}')" type="button">${ico('ojo', 'btn-ico')} Pedidos</button>
             </div>
           </td>
         </tr>
@@ -6753,9 +6913,9 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
     cont.innerHTML = grupo.pedidos.map(v=>{
       const crudos = itemsCrudosVenta(v);
       const items = crudos && crudos.length ? crudos : [{genero:v.genero||'', color:v.color||'', talla:v.talla||'', programa:v.cliente_programa||'', precio:v.precio_unitario||0, costo:v.costo_unitario||0, abono:0, estado: v.estado||'Pedido'}];
-      const fechaTxt = v.fecha ? formatearFechaHumana(v.fecha).replace(/^📅\s*/,'') : '?';
-      const compradoTag = v.comprado_at ? `<span class="sub-tag" style="color:var(--teal-ink)">🛒 ${formatearCompradoAt(v)}</span>` : '';
-      const notaTag = v.nota ? `<span class="sub-tag" style="color:var(--warn)">📝 ${escSimple(v.nota.slice(0,60))}${v.nota.length>60?'…':''}</span>` : '';
+      const fechaTxt = v.fecha ? formatearFechaHumana(v.fecha) : '?';
+      const compradoTag = v.comprado_at ? `<span class="sub-tag" style="color:var(--teal-ink)">${ico('por-comprar', 'tag-ico')} ${formatearCompradoAt(v)}</span>` : '';
+      const notaTag = v.nota ? `<span class="sub-tag" style="color:var(--warn)">${ico('nota', 'tag-ico')} ${escSimple(v.nota.slice(0,60))}${v.nota.length>60?'…':''}</span>` : '';
       return `
         <div class="pedido-block" data-pedido-id="${v.id}">
           <label class="pedido-check-row" style="background:var(--accent-bg); font-weight:700;">
@@ -6860,7 +7020,7 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
       const p = precioDeItem(it, v);
       const ab = Number(it.abono)||0;
       const desc = [capitalizarColor(it.color), it.talla ? `Talla ${it.talla}` : '', it.genero||'', etiquetaModelo(it.modelo)||''].filter(Boolean).join(' · ');
-      const prog = it.programa ? `<div class="prog">Bordado: ${escSimple(it.programa)}</div><div class="prog" style="font-size:10px;color:var(--muted)">Pedido: ${escSimple(v.fecha||'')} · ${escSimple(v.estado||'')}</div>` : `<div class="prog" style="font-size:10px;color:var(--muted)">Pedido: ${escSimple(v.fecha||'')} · ${escSimple(v.estado||'')}</div>`;
+      const prog = it.programa ? `<div class="prog">Bordado: ${escSimple(it.programa)}</div><div class="prog" style="font-size:11px;color:var(--muted)">Pedido: ${escSimple(v.fecha||'')} · ${escSimple(v.estado||'')}</div>` : `<div class="prog" style="font-size:11px;color:var(--muted)">Pedido: ${escSimple(v.fecha||'')} · ${escSimple(v.estado||'')}</div>`;
       const rest = Math.max(p - ab, 0);
       const restBadge = rest === 0 ? 'badge-success' : 'badge-warning';
       return `<tr><td class="c">${i+1}</td><td>${escSimple(desc)}${prog}</td><td class="c">1</td><td class="money">${fmt(p)}</td><td class="money">${fmt(ab)}</td><td class="money"><span class="badge ${restBadge}">${fmt(rest)}</span></td></tr>`;
@@ -6920,7 +7080,7 @@ function distribuirAbonoEquitativo(abonoTotal, pedidos) {
 <div class="sheet">
   <div class="toolbar">
     <button class="btn" onclick="window.close()" type="button">Cerrar</button>
-    <button class="btn btn-primary" onclick="window.print()" type="button">🖨️ Imprimir / Guardar PDF</button>
+    <button class="btn btn-primary" onclick="window.print()" type="button">${ico('imprimir', 'btn-ico')} Imprimir / Guardar PDF</button>
   </div>
 
   <div class="header">
