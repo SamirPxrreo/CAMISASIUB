@@ -5883,6 +5883,88 @@ input:focus, select:focus, textarea:focus {
 /* La X de cerrar un dialogo (era el glifo de multiplicacion). El boton mide
    15px de letra; a 15px de icono el trazo queda en 1.3, que es lo que se ve a
    esa escala. */
+/* Aviso de que los datos NO se pudieron cargar.
+
+   Es distinto del de sin conexión, y la diferencia no es de estilo: aquel dice
+   "no se puede guardar", este dice "lo que ves no es la información real". Sin
+   este aviso, una falla al cargar deja la app con cero pedidos y eso parece
+   "hoy no tengo pedidos".
+
+   Va fija arriba, como la de sin conexión, y no en un toast: un toast se va solo
+   y con la lentitud de una red mala eso puede pasar antes de que se lea. Además
+   lleva un botón de reintentar, porque la acción obvia cuando algo no carga es
+   volver a intentar.
+
+   El color es el de advertencia, no el de error: no se perdio nada, no se
+   guardo nada mal. Es un estado del que se sale, no un fallo del que hay que salir. */
+.no-se-cargo {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--warn-ink, var(--warn));
+  background: var(--warn-soft);
+  border-bottom: 1px solid var(--warn-line, var(--line));
+}
+
+.no-se-cargo.hidden { display: none; }
+
+.no-se-cargo-ico {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  color: var(--warn);
+}
+
+.no-se-cargo-texto {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.no-se-cargo-texto b { display: block; }
+
+.no-se-cargo-texto span {
+  display: block;
+  color: var(--muted);
+}
+
+/* El botón de reintentar. Va arriba y con borde, para que se lea como acción y
+   no como parte del texto.
+
+   El alto mínimo es de 40px por una razón concreta: este botón se toca justo
+   cuando no hay señal, o sea con el dedo, con la app a medio cargar y sin
+   paciencia. Un botón de 30px ahí es un botón que se falla. Con min-height se
+   garantiza el alto sin tocar el padding, que es lo que da el ancho. */
+.no-se-cargo-btn {
+  flex: 0 0 auto;
+  min-height: 40px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--warn);
+  background: var(--card);
+  border: 1px solid var(--warn);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.no-se-cargo-btn:hover { background: rgba(201, 47, 47, 0.08); }
+.no-se-cargo-btn:active { transform: scale(0.98); }
+
+@media (max-width: 560px) {
+  /* En el celular el aviso ocupa mucho alto. El texto se deja en dos lineas y
+     el botón baja, porque es lo que importa que se lea entero. */
+  .no-se-cargo { flex-wrap: wrap; padding: 10px 12px; }
+  .no-se-cargo-btn { margin-left: 26px; }
+}
+
 .cerrar-ico {
   display: inline-block;
   width: 15px;
