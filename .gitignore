@@ -11,3 +11,24 @@ fuentes/
 herramientas/
 migraciones/
 deploy/
+
+# PRODUCT.md (2026-10-07)
+# Contexto del negocio que arma la skill de diseño Impeccable. Habla de los
+# socios, de los roles, de quién borda y de las reglas del dinero. No necesita
+# estar en el sitio.
+PRODUCT.md
+
+# ── Skills de diseño de terceros (Impeccable, 2026-10-07) ────────────────
+# La skill de Impeccable se instala en .opencode/, y el instalador también
+# deja copias en .claude/ y .dsh/ porque detecta varios programas. Son unos
+# 56 MB en total (la misma skill repetida tres veces).
+#
+# Van acá por dos razones: ocupan una barbaridad, y GitHub Pages sirve todo lo
+# que hay en la rama, sin mirar este archivo. Publicar 56 MB de documentación
+# de diseño dejaría el sitio servido desde un repo gigante.
+#
+# Si algún día hay que reinstalarla:  npx impeccable install --yes --project
+
+.claude/
+.dsh/
+.opencode/
