@@ -5348,12 +5348,15 @@ input:focus, select:focus, textarea:focus {
 
 /* ── Los titulos de grupo ─────────────────────────────────────────────────── */
 .nav-label {
-  font-size: 10px;
+  /* 11px, no 10. Los títulos de grupo son texto de verdad: se leen, no son
+     adorno. A 10px en un celular de 390px quedaban por debajo del piso de
+     legibilidad, y el detector de diseño los marcó como texto chica. */
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--muted);
-  margin: 10px 0 2px;
+  margin: 12px 0 4px;
   padding: 0 6px;
 }
 
@@ -5616,7 +5619,37 @@ input:focus, select:focus, textarea:focus {
   padding: 18px 20px;
   border-radius: 20px;
   overflow: hidden;
+
+  /* Alto parejo. Antes las de "Accesos rápidos" medían 100px y las de
+     "Estado del negocio" 112px, porque la etiqueta larga ("Pedidos sin fecha
+     de entrega") se iba a dos líneas y empujaba el resto de la tarjeta. Con
+     min-height todas arrancan en el mismo piso y la fila se lee como una fila. */
+  min-height: 118px;
 }
+
+/* El icono va pegado a la etiqueta, no suelto antes de ella: el texto de las
+   tarjetas empieza siempre en el mismo x, con o sin icono. */
+.kpi-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 20px;
+}
+
+.kpi-ico {
+  flex: 0 0 auto;
+  width: 15px;
+  height: 15px;
+  color: var(--muted);
+  opacity: 0.85;
+}
+
+/* La tarjeta de estado pinta su icono con el color de su propio estado, que es
+   el mismo canal que usa el puntito de la esquina. */
+.kpi-card[style*="--warn"] .kpi-ico { color: var(--warn); opacity: 1; }
+.kpi-card[style*="--thread"] .kpi-ico { color: var(--thread); opacity: 1; }
+.kpi-card[style*="--gold"] .kpi-ico { color: var(--gold-ink); opacity: 1; }
+.kpi-card[style*="--ok"] .kpi-ico { color: var(--ok); opacity: 1; }
 
 .kpi-card .kpi-label {
   font-size: 12px;
@@ -5627,6 +5660,17 @@ input:focus, select:focus, textarea:focus {
   /* Los 14px son para que una etiqueta larga no se meta debajo del puntito de
      la esquina. El sitio en vivo no los tiene porque alla las etiquetas cortas. */
   padding-right: 14px;
+}
+
+/* Con dos líneas de etiqueta la tarjeta queda más alta que las de al lado y la
+   fila se ve dentada. Una sola línea con puntos suspensivos mantiene la
+   grilla recta, y el texto largo se lee entero en el title (lo pone el JS). */
+.kpi-card .kpi-label span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .kpi-card .kpi-value {
@@ -5743,6 +5787,45 @@ input:focus, select:focus, textarea:focus {
 
 .dash-section {
   margin-bottom: 38px;
+}
+
+/* Encabezado de seccion con icono. Antes era un emoji suelto pegado al texto
+   (⚡ 🏭 📦 🛒), que cambia de forma y de color segun el telefono. */
+.dash-section h2,
+.dash-list-header h2 {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.dash-ico {
+  flex: 0 0 auto;
+  width: 17px;
+  height: 17px;
+  color: var(--muted);
+  opacity: 0.8;
+}
+
+/* Iconos de las tarjetas de pedido del inicio. Antes eran cinco emoji por
+   tarjeta (👤 📞 💰 📅 📍 📋), que ademas de cambiar de forma en cada telefono
+   competian con el saldo, que es el dato que hay que leer. Chicos (13px) y con
+   la tinta apagada: el saldo y el nombre mandan. */
+.card-ico {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  margin-right: 5px;
+  vertical-align: -2px;
+  color: var(--muted);
+  opacity: 0.75;
+}
+
+/* El saldo ya tiene su propio color (warn u ok). El icono se lo acompaña para
+   que la fila no quede con un color suelto en medio del texto. */
+.order-card-saldo .card-ico,
+.order-card-phone .card-ico {
+  color: currentColor;
+  opacity: 0.85;
 }
 
 .dash-section h2 {

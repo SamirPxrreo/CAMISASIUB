@@ -292,6 +292,46 @@
   }
   window.hardRefresh = hardRefresh;
 
+  // Iconos del dashboard. Se dibujan con el mismo trazo que los del menu
+  // lateral (viewBox 24x24, stroke currentColor, grosor 1.8) para que las dos
+  // mitades de la app se vean de la misma familia.
+  //
+  // Antes estas tarjetas usaban emoji (➕ 📋 📊 💰 🛒 📦 🏦 ⚡ 🏭) y el menu
+  // usaba SVG. Con eso el mismo producto hablaba dos idiomas: la barra
+  // monocroma y el escritorio multicolor. Los emoji ademas cambian de forma
+  // segun el sistema operativo y de color segun el fabricante.
+  const ICONOS_DASH = {
+    'nueva-venta': '<path d="M12 5v14M5 12h14"/>',
+    'pedidos': '<rect x="4" y="3.5" width="16" height="17" rx="2.5"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+    'resumenes': '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+    'liquidaciones': '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v9M9.5 9.5h4a2 2 0 0 1 0 4h-3a2 2 0 0 0 0 4h4"/>',
+    'por-comprar': '<path d="M6 7h12l-1 13H7L6 7Z"/><path d="M9 7V5.5a3 3 0 0 1 6 0V7"/>',
+    'sin-fecha': '<rect x="3.5" y="5" width="17" height="16" rx="2.5"/><path d="M3.5 10h17M8 3.5V6M16 3.5V6"/>',
+    'por-cobrar': '<path d="M3 9.5 12 4l9 5.5"/><path d="M5.5 10.5V19h13v-8.5"/><path d="M9.5 19v-5h5v5"/>',
+    'activos': '<circle cx="12" cy="12" r="8.5"/><path d="m8.5 12 2.5 2.5 4.5-5"/>',
+    'atajos': '<path d="M13 2.5 4 14h7l-1 7.5 9-11.5h-7l1-7.5Z"/>',
+    'negocio': '<path d="M3.5 20.5h17"/><path d="M5 20.5V9l7-5.5L19 9v11.5"/><path d="M9.5 20.5v-6h5v6"/>',
+    'mis-ventas': '<circle cx="9" cy="8.5" r="3.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 6.5h5M18.5 4v5"/>',
+    'debo-entregar': '<rect x="2.5" y="6.5" width="14" height="11" rx="2"/><path d="M16.5 10h3l2 3.5v4h-5"/><circle cx="7" cy="18" r="2"/><circle cx="17.5" cy="18" r="2"/>',
+
+    // Tarjetas de pedido del inicio. Chicos y monocromos: en una tarjeta hay
+    // cinco y tienen que quedar como una sola fila de datos, no como cinco
+    // imagenes.
+    'fecha': '<rect x="3.5" y="5" width="17" height="16" rx="2.5"/><path d="M3.5 10h17M8 3.5V6M16 3.5V6"/>',
+    'reloj': '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3.5 2"/>',
+    'lugar': '<path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11Z"/><circle cx="12" cy="10" r="2.6"/>',
+    'cliente': '<circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20c0-4.1 3.4-7 7.5-7s7.5 2.9 7.5 7"/>',
+    'telefono': '<path d="M6.5 3.5h3l1.5 4-2 1.5a12 12 0 0 0 6 6l1.5-2 4 1.5v3a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 4.5 5.7 2 2 0 0 1 6.5 3.5Z"/>',
+    'saldo': '<circle cx="12" cy="12" r="8.5"/><path d="M12 7v10M14.5 9.5h-4a1.8 1.8 0 0 0 0 3.6h3a1.8 1.8 0 0 1 0 3.6h-4"/>',
+    'copiar': '<rect x="8.5" y="8.5" width="11" height="11" rx="2"/><path d="M15.5 8.5v-2a2 2 0 0 0-2-2h-8a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>'
+  };
+
+  function ico(nombre, clase) {
+    const d = ICONOS_DASH[nombre];
+    if (!d) return '';
+    return `<svg class="${clase || 'kpi-ico'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+  }
+
   const LUGARES_ENTREGA = [
     "Soledad",
     "Plaza de la Paz",
@@ -2069,50 +2109,50 @@
     document.getElementById('dashboard-contenido').innerHTML = `
       <div id="dashboard-alertas"></div>
       <div class="dash-section" style="margin-bottom:24px;">
-        <h2 style="font-size:17px;font-weight:600;margin:0 0 10px;">⚡ Accesos rápidos</h2>
+        <h2 style="font-size:17px;font-weight:600;margin:0 0 10px;">${ico('atajos', 'dash-ico')} Accesos rápidos</h2>
         <div class="kpi-grid">
           <div class="kpi-card kpi-card--atajo" style="cursor:pointer;" onclick="navigateTo('new-sale')">
-            <div class="kpi-label">➕ Nueva Venta</div>
+            <div class="kpi-label">${ico('nueva-venta')}<span>Nueva Venta</span></div>
             <div class="kpi-value">Registrar</div>
             <div class="kpi-sub">Crea un nuevo pedido de camisas</div>
           </div>
           <div class="kpi-card kpi-card--atajo" style="cursor:pointer;" onclick="navigateTo('orders')">
-            <div class="kpi-label">📋 Pedidos</div>
+            <div class="kpi-label">${ico('pedidos')}<span>Pedidos</span></div>
             <div class="kpi-value">${pendientes.length}</div>
             <div class="kpi-sub">Pedidos activos</div>
           </div>
           <div class="kpi-card kpi-card--atajo" style="cursor:pointer;" onclick="navigateTo('summaries')">
-            <div class="kpi-label">📊 Resúmenes</div>
+            <div class="kpi-label">${ico('resumenes')}<span>Resúmenes</span></div>
             <div class="kpi-value">Ver</div>
             <div class="kpi-sub">Estadísticas y análisis del negocio</div>
           </div>
           <div class="kpi-card kpi-card--atajo" style="cursor:pointer;" onclick="navigateTo('settlements')">
-            <div class="kpi-label">💰 Liquidaciones</div>
+            <div class="kpi-label">${ico('liquidaciones')}<span>Liquidaciones</span></div>
             <div class="kpi-value">Ver</div>
             <div class="kpi-sub">Saldos y ganancias entre socios</div>
           </div>
         </div>
       </div>
       <div class="dash-section" style="margin-bottom:24px;">
-        <h2 style="font-size:17px;font-weight:600;margin:0 0 10px;">🏭 Estado del negocio</h2>
+        <h2 style="font-size:17px;font-weight:600;margin:0 0 10px;">${ico('negocio', 'dash-ico')} Estado del negocio</h2>
         <div class="kpi-grid">
-          <div class="kpi-card" style="border-left:3px solid var(--warn);">
-            <div class="kpi-label">🛒 Camisas por comprar</div>
+          <div class="kpi-card" style="--warn">
+            <div class="kpi-label">${ico('por-comprar')}<span title="Camisas por comprar">Camisas por comprar</span></div>
             <div class="kpi-value">${porComprar}</div>
             <div class="kpi-sub">${porComprarPedidos} pedidos sin ir a la distribuidora</div>
           </div>
-          <div class="kpi-card" style="border-left:3px solid var(--thread);">
-            <div class="kpi-label">📦 Pedidos sin fecha de entrega</div>
+          <div class="kpi-card" style="--thread">
+            <div class="kpi-label">${ico('sin-fecha')}<span title="Pedidos sin fecha de entrega">Pedidos sin fecha de entrega</span></div>
             <div class="kpi-value">${sinFecha}</div>
             <div class="kpi-sub">Esperando definir la entrega</div>
           </div>
-          <div class="kpi-card" style="border-left:3px solid var(--gold);">
-            <div class="kpi-label">🏦 Por cobrar</div>
+          <div class="kpi-card" style="--gold">
+            <div class="kpi-label">${ico('por-cobrar')}<span>Por cobrar</span></div>
             <div class="kpi-value">${fmt(totalPorCobrar)}</div>
             <div class="kpi-sub">Saldo pendiente de los clientes</div>
           </div>
-          <div class="kpi-card" style="border-left:3px solid var(--ok);">
-            <div class="kpi-label">📋 Pedidos activos</div>
+          <div class="kpi-card" style="--ok">
+            <div class="kpi-label">${ico('activos')}<span>Pedidos activos</span></div>
             <div class="kpi-value">${pendientes.length}</div>
             <div class="kpi-sub">En la lista de trabajo</div>
           </div>
@@ -2121,29 +2161,29 @@
       <div class="dash-two-col">
         <div class="dash-list">
           <div class="dash-list-header">
-            <h2>🛒 Pedidos que vendí</h2>
+            <h2>${ico('mis-ventas', 'dash-ico')} Pedidos que vendí</h2>
             <span class="dash-list-subtitle">Pedidos vendidos por mí, sin importar quién realiza la entrega.</span>
             <span class="dash-list-count">${_qV ? `${misVentasFiltr.length} de ${misVentas.length}` : misVentas.length}</span>
           </div>
           <div class="dash-search-wrap">
-            <div class="search-wrap"><input type="text" id="dash-search-ventas" class="dash-search" placeholder="🔍 Buscar cliente, teléfono o @" value="${escSimple(dashFiltroVentas)}" autocomplete="off"><button class="search-clear" data-target="dash-search-ventas" type="button" aria-label="Limpiar búsqueda">×</button></div>
+            <div class="search-wrap"><input type="text" id="dash-search-ventas" class="dash-search" placeholder="Buscar cliente, teléfono o @" value="${escSimple(dashFiltroVentas)}" autocomplete="off"><button class="search-clear" data-target="dash-search-ventas" type="button" aria-label="Limpiar búsqueda">×</button></div>
           </div>
           ${misVentasFiltr.length === 0
-            ? (_qV ? '<div class="dash-empty">🔍 Sin resultados para esa búsqueda.</div>' : '<div class="dash-empty">🎉 No hay pedidos pendientes.</div>')
+            ? (_qV ? '<div class="dash-empty">Sin resultados para esa búsqueda.</div>' : '<div class="dash-empty">No hay pedidos pendientes.</div>')
             : misVentasFiltr.map(v => renderOrderCard(v)).join('')
           }
         </div>
         <div class="dash-list">
           <div class="dash-list-header">
-            <h2>📦 Pedidos que debo entregar</h2>
+            <h2>${ico('debo-entregar', 'dash-ico')} Pedidos que debo entregar</h2>
             <span class="dash-list-subtitle">Pedidos cuya entrega está asignada a mí.</span>
             <span class="dash-list-count">${_qE ? `${misEntregasFiltr.length} de ${misEntregas.length}` : misEntregas.length}</span>
           </div>
           <div class="dash-search-wrap">
-            <div class="search-wrap"><input type="text" id="dash-search-entregas" class="dash-search" placeholder="🔍 Buscar cliente, teléfono o @" value="${escSimple(dashFiltroEntregas)}" autocomplete="off"><button class="search-clear" data-target="dash-search-entregas" type="button" aria-label="Limpiar búsqueda">×</button></div>
+            <div class="search-wrap"><input type="text" id="dash-search-entregas" class="dash-search" placeholder="Buscar cliente, teléfono o @" value="${escSimple(dashFiltroEntregas)}" autocomplete="off"><button class="search-clear" data-target="dash-search-entregas" type="button" aria-label="Limpiar búsqueda">×</button></div>
           </div>
           ${misEntregasFiltr.length === 0
-            ? (_qE ? '<div class="dash-empty">🔍 Sin resultados para esa búsqueda.</div>' : '<div class="dash-empty">🎉 No hay entregas asignadas.</div>')
+            ? (_qE ? '<div class="dash-empty">Sin resultados para esa búsqueda.</div>' : '<div class="dash-empty">No hay entregas asignadas.</div>')
             : misEntregasFiltr.map(v => renderOrderCard(v)).join('')
           }
         </div>
@@ -2325,19 +2365,25 @@
     const msgWhatsApp = encodeURIComponent(
       `📌 *Recordatorio Camisas IUB* 🧵\n\n👤 *Cliente:* ${v.cliente_nombre}\n📞 *Teléfono:* ${v.cliente_telefono}\n👕 *Detalle:* \n     ${detalleWhatsApp}\n🔢 *Cantidad:* ${cant}\n💰 *Saldo Pendiente:* ${fmt(saldo)}\n*Fecha Entrega:* ${textoFechaEntrega(v)}\n📍 *Lugar:* ${v.lugar_entrega || 'Sin definir'}`
     );
-    const fechaEntregaDisplay = v.fecha_entrega ? `📅 ${textoFechaEntrega(v)}` : '⏳ Pendiente por definir';
+
+    // El recordatorio de arriba conserva los emoji a proposito: ese texto se
+    // pega en WhatsApp, donde el emoji es parte del mensaje que lee el cliente.
+    // Lo que va en la tarjeta de la app lleva SVG.
+    const fechaEntregaDisplay = v.fecha_entrega
+      ? `${ico('fecha', 'card-ico')} ${textoFechaEntrega(v)}`
+      : `${ico('reloj', 'card-ico')} Pendiente por definir`;
 
     return `
       <div class="order-card">
         <div class="order-card-row order-card-meta">
           <span class="order-card-date">${fechaEntregaDisplay}</span>
-          <span class="order-card-entrega">📍 Entrega: ${v.lugar_entrega ? escSimple(v.lugar_entrega) : 'Por definir'}, ${v.entrega_por ? escSimple(v.entrega_por) : 'Sin asignar'}</span>
+          <span class="order-card-entrega">${ico('lugar', 'card-ico')} Entrega: ${v.lugar_entrega ? escSimple(v.lugar_entrega) : 'Por definir'}, ${v.entrega_por ? escSimple(v.entrega_por) : 'Sin asignar'}</span>
           <span class="order-card-vendedor">Vendedor: ${escSimple(v.vendedor || '')}</span>
         </div>
         <div class="order-card-row">
-          <span class="order-card-client">👤 ${escSimple(v.cliente_nombre || '—')}</span>
-          <span class="order-card-phone">📞 ${escSimple(v.cliente_telefono || '—')}${waLink ? ` · <a href="${waLink}" target="_blank" style="color:var(--ok);font-weight:600;text-decoration:none;">WhatsApp</a>` : (waUsuario ? ` · <a href="#" onclick="copiarUsuarioWhatsApp('${waUsuario}');return false;" style="color:var(--ok);font-weight:600;text-decoration:none;">Copiar @</a>` : '')}</span>
-          <span class="order-card-saldo" style="color:${saldo > 0 ? 'var(--warn)' : 'var(--ok)'}">💰 ${fmt(saldo)}</span>
+          <span class="order-card-client">${ico('cliente', 'card-ico')} ${escSimple(v.cliente_nombre || '—')}</span>
+          <span class="order-card-phone">${ico('telefono', 'card-ico')} ${escSimple(v.cliente_telefono || '—')}${waLink ? ` · <a href="${waLink}" target="_blank" style="color:var(--ok);font-weight:600;text-decoration:none;">WhatsApp</a>` : (waUsuario ? ` · <a href="#" onclick="copiarUsuarioWhatsApp('${waUsuario}');return false;" style="color:var(--ok);font-weight:600;text-decoration:none;">Copiar @</a>` : '')}</span>
+          <span class="order-card-saldo" style="color:${saldo > 0 ? 'var(--warn)' : 'var(--ok)'}">${ico('saldo', 'card-ico')} ${fmt(saldo)}</span>
         </div>
         <div class="order-card-row">
           <span class="badge-estado ${claseEstado(v.estado)}">${escSimple(normalizarEstado(v.estado))}</span>
@@ -2348,7 +2394,7 @@
           ${items.map(it => `<div class="order-card-item">${it}</div>`).join('')}
         </div>
         <div class="order-card-footer">
-          <button class="btn-copy-card" onclick="copiarWhatsApp('${argOnClick(msgWhatsApp)}')" type="button">📋 Copiar para WhatsApp</button>
+          <button class="btn-copy-card" onclick="copiarWhatsApp('${argOnClick(msgWhatsApp)}')" type="button">${ico('copiar', 'card-ico')} Copiar para WhatsApp</button>
         </div>
       </div>
     `;
