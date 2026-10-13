@@ -121,6 +121,7 @@ CAMISASIUB/
 │       │   ├── DataContext.jsx         # Acceso a Supabase, Realtime y catálogos locales
 │       │   └── ThemeContext.jsx        # 5 temas visuales con persistencia
 │       └── lib/
+│           ├── excelExport.js          # Motor ExcelJS: AutoFilter, estilos y hoja Tallas/Colores
 │           ├── supabase.js             # Inicialización de Supabase client
 │           └── utils.js                # Funciones auxiliares, matemáticas, formatos COP
 ```
@@ -173,5 +174,25 @@ git push origin main:redesign-impeccable
 La aplicación está completamente adaptada para usarse como una app instalada en teléfonos inteligentes (Android / iPhone):
 - En Chrome (Android): menú de 3 puntos ➔ **"Agregar a la pantalla principal"** o **"Instalar aplicación"**.
 - En Safari (iOS): botón de compartir ➔ **"Agregar a pantalla de inicio"**.
-- Funciona a pantalla completa sin la barra de direcciones del navegador (`viewport-fit=cover`, `mobile-web-app-capable=yes`).
 - Los modales, selectores y tarjetas están calculados con zonas de toque amplias (mínimo 44px de altura) y físicas táctiles suaves.
+- Viewport adaptativo `100dvh` para evitar que la barra de direcciones de Android o iOS desplace el navbar inferior hacia arriba.
+
+---
+
+## 8. Sistema de Exportación Excel y Adaptabilidad de Pantalla
+
+### Exportación a Excel con ExcelJS (`excelExport.js`):
+- **Botón "Exportar por Comprar" en Pedidos**: Filtra en tiempo real únicamente los pedidos con camisas en estado `'Pedido'` para generar la lista de compras del taller de confección (Yesenia).
+- **Hoja "Resumen Tallas y Colores"**: Agrupa estrictamente por **Género, Color y Talla** ignorando el bordado, sumando la cantidad total de prendas idénticas (ej. combina múltiples pedidos de *Mujer Negro S* en una sola fila con la cantidad sumada).
+- **Hojas Adicionales del Libro**:
+  - *Lista con Bordados*: Agrupada con versión de camisa, género, color, talla y programa de bordado para el taller de bordado.
+  - *Detalle Prendas a Comprar*: Registro fila por fila con ID de pedido, cliente, teléfono, costos y notas.
+  - *Resumen de Compra*: Métricas de prendas, costo total a pagar a Yesenia, venta proyectada y repartición 50/50 de ganancia entre Samir y Valentina.
+- **AutoFilter**: Todas las columnas cuentan con flechas de ordenamiento y filtrado nativas de Excel.
+- **Exportación Individual**: Botón en `OrderDetailModal` para descargar un pedido puntual con su resumen de tallas/colores y detalle.
+
+### Responsividad Móvil y Zoom (110% - 125%):
+- **Viewport Dinámico (`100dvh`)**: Evita desajustes por la barra de navegación del navegador en teléfonos móviles.
+- **Barra de Navegación Docked (`BottomNav.jsx`)**: Anclaje inferior limpio a 64px (`h-16`) con `env(safe-area-inset-bottom, 0px)` y adaptación automática a todos los temas (modo oscuro `#131b2e` y temas claros).
+- **Prendas sin Truncamiento (`break-words`)**: Descripciones completas en tarjetas y modales que fluyen naturalmente a múltiples líneas en pantallas pequeñas o zoom alto.
+
