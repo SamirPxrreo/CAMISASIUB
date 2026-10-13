@@ -199,3 +199,15 @@ html, body {
 .lbi-eye[data-show="true"] .eye-close {
   display: block;
 }
+
+/* ========================================================
+   BENCHO.DEV INLINE CONFIRM WITH FUSE ANIMATION
+   ======================================================== */
+@keyframes say-burn {
+  0% { width: 100%; }
+  100% { width: 0%; }
+}
+
+.say-fuse {
+  animation: say-burn linear forwards;
+}

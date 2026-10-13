@@ -26,8 +26,10 @@ import {
   itemsCrudosVenta,
   normalizarEstado,
   getEstadoBadgeStyle,
-  getWhatsAppLink
+  getWhatsAppLink,
+  ESTADOS_PASTEL_CHIP
 } from '../lib/utils';
+import InlineDeleteConfirm from './InlineDeleteConfirm';
 
 export default function OrdersView({ onOpenNewSale, onEditOrder }) {
   const { ventas, updateItemEstado, deleteVenta } = useData();
@@ -160,11 +162,16 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
         </div>
       </div>
 
-      {/* 2. CHIPS DE FILTRO DE ESTADO CON CONTEOS */}
+      {/* 2. CHIPS DE FILTRO DE ESTADO EN TONOS PASTEL CON CONTEOS */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
         {filtros.map((filtro) => {
           const isActive = estadoFiltro === filtro;
           const count = conteoPorEstado[filtro] || 0;
+          const chipStyle = ESTADOS_PASTEL_CHIP[filtro] || {
+            active: 'bg-indigo-100 text-indigo-950 border-indigo-300 shadow-xs',
+            pill: 'bg-indigo-300 text-indigo-950'
+          };
+
           return (
             <motion.button
               key={filtro}
@@ -173,13 +180,13 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
               onClick={() => setEstadoFiltro(filtro)}
               className={`relative px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
                 isActive
-                  ? 'text-indigo-800 bg-indigo-100 border border-indigo-300 shadow-xs'
+                  ? `${chipStyle.active} border`
                   : 'text-slate-600 bg-white border border-slate-200/80 hover:bg-slate-50'
               }`}
             >
               <span>{filtro}</span>
-              <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
-                isActive ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-500'
+              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
+                isActive ? chipStyle.pill : 'bg-slate-100 text-slate-500'
               }`}>
                 {count}
               </span>
@@ -373,16 +380,12 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
                       <span>Editar</span>
                     </button>
 
-                    {/* Botón Papelera */}
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(v.id, v.cliente_nombre)}
-                      className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
-                      title="Enviar a la papelera"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      <span>Borrar</span>
-                    </button>
+                    {/* Botón Papelera con microinteracción Bencho Confirm */}
+                    <InlineDeleteConfirm
+                      onDelete={() => deleteVenta(v.id)}
+                      clienteNombre={v.cliente_nombre}
+                      duration={4500}
+                    />
                   </div>
                 </div>
               </motion.div>

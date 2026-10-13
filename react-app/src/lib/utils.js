@@ -269,46 +269,77 @@ export function generarMensajeWhatsApp(v) {
   return `👕 *Recordatorio Camisas IUB* 👕\n\n👤 *Cliente:* ${v.cliente_nombre}\n📱 *Teléfono:* ${v.cliente_telefono || '-'}\n📋 *Detalle:*\n     ${detalle}\n📦 *Cantidad:* ${cant}\n💰 *Saldo Pendiente:* ${fmt(saldo)}\n📅 *Fecha Entrega:* ${v.fecha_entrega || 'Por definir'}\n📍 *Lugar:* ${v.lugar_entrega || 'Sin definir'}`;
 }
 
-// Colores oficiales y exactos de los estados (acorde a Impeccable y la app original)
+// Paleta de colores pastel refinada, amigable y de alta legibilidad
 export const ESTADOS_COLOR = {
   'Pedido': {
-    badge: 'bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950/80 dark:text-amber-200 dark:border-amber-700',
-    dot: 'bg-amber-500',
-    border: 'border-amber-300'
+    badge: 'bg-amber-50 text-amber-900 border-amber-200/90 shadow-2xs',
+    dot: 'bg-amber-400',
+    border: 'border-amber-200'
   },
   'Comprado': {
-    badge: 'bg-cyan-100 text-cyan-900 border-cyan-300 dark:bg-cyan-950/80 dark:text-cyan-200 dark:border-cyan-700',
-    dot: 'bg-cyan-500',
-    border: 'border-cyan-300'
+    badge: 'bg-sky-50 text-sky-900 border-sky-200/90 shadow-2xs',
+    dot: 'bg-sky-400',
+    border: 'border-sky-200'
   },
   'Bordando': {
-    badge: 'bg-indigo-100 text-indigo-900 border-indigo-300 dark:bg-indigo-950/80 dark:text-indigo-200 dark:border-indigo-700',
-    dot: 'bg-indigo-500',
-    border: 'border-indigo-300'
+    badge: 'bg-purple-50 text-purple-900 border-purple-200/90 shadow-2xs',
+    dot: 'bg-purple-400',
+    border: 'border-purple-200'
   },
   'Listo para entrega': {
-    badge: 'bg-emerald-100 text-emerald-900 border-emerald-300 dark:bg-emerald-950/80 dark:text-emerald-200 dark:border-emerald-700',
-    dot: 'bg-emerald-500',
-    border: 'border-emerald-300'
+    badge: 'bg-emerald-50 text-emerald-900 border-emerald-200/90 shadow-2xs',
+    dot: 'bg-emerald-400',
+    border: 'border-emerald-200'
   },
   'Entregado': {
-    badge: 'bg-blue-100 text-blue-900 border-blue-300 dark:bg-blue-950/80 dark:text-blue-200 dark:border-blue-700',
-    dot: 'bg-blue-500',
-    border: 'border-blue-300'
+    badge: 'bg-blue-50 text-blue-900 border-blue-200/90 shadow-2xs',
+    dot: 'bg-blue-400',
+    border: 'border-blue-200'
   },
   'Liquidado': {
-    badge: 'bg-green-100 text-green-900 border-green-300 dark:bg-green-950/80 dark:text-green-200 dark:border-green-700',
-    dot: 'bg-green-500',
-    border: 'border-green-300'
+    badge: 'bg-teal-50 text-teal-900 border-teal-200/90 shadow-2xs',
+    dot: 'bg-teal-400',
+    border: 'border-teal-200'
   },
   'Mixto': {
-    badge: 'bg-purple-100 text-purple-900 border-purple-300 dark:bg-purple-950/80 dark:text-purple-200 dark:border-purple-700',
-    dot: 'bg-purple-500',
-    border: 'border-purple-300'
+    badge: 'bg-rose-50 text-rose-900 border-rose-200/90 shadow-2xs',
+    dot: 'bg-rose-400',
+    border: 'border-rose-200'
+  }
+};
+
+export const ESTADOS_PASTEL_CHIP = {
+  'Todos': {
+    active: 'bg-slate-900 text-white border-slate-900 shadow-xs',
+    pill: 'bg-slate-700 text-white'
+  },
+  'Pedido': {
+    active: 'bg-amber-100 text-amber-950 border-amber-300 shadow-xs',
+    pill: 'bg-amber-300 text-amber-950'
+  },
+  'Comprado': {
+    active: 'bg-sky-100 text-sky-950 border-sky-300 shadow-xs',
+    pill: 'bg-sky-300 text-sky-950'
+  },
+  'Bordando': {
+    active: 'bg-purple-100 text-purple-950 border-purple-300 shadow-xs',
+    pill: 'bg-purple-300 text-purple-950'
+  },
+  'Listo para entrega': {
+    active: 'bg-emerald-100 text-emerald-950 border-emerald-300 shadow-xs',
+    pill: 'bg-emerald-300 text-emerald-950'
+  },
+  'Entregado': {
+    active: 'bg-blue-100 text-blue-950 border-blue-300 shadow-xs',
+    pill: 'bg-blue-300 text-blue-950'
+  },
+  'Liquidado': {
+    active: 'bg-teal-100 text-teal-950 border-teal-300 shadow-xs',
+    pill: 'bg-teal-300 text-teal-950'
   }
 };
 
 export function getEstadoBadgeStyle(estado) {
   const norm = normalizarEstado(estado);
-  return ESTADOS_COLOR[norm]?.badge || 'bg-slate-100 text-slate-800 border-slate-200';
+  return ESTADOS_COLOR[norm]?.badge || 'bg-slate-50 text-slate-800 border-slate-200';
 }
