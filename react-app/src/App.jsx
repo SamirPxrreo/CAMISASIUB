@@ -8,8 +8,13 @@ import BottomNav from './components/BottomNav';
 import TopBar from './components/TopBar';
 import DashboardView from './components/DashboardView';
 import OrdersView from './components/OrdersView';
+import CuentasView from './components/CuentasView';
+import HistoryView from './components/HistoryView';
+import PurchasesView from './components/PurchasesView';
 import SettlementsView from './components/SettlementsView';
 import SummariesView from './components/SummariesView';
+import ReportsView from './components/ReportsView';
+import TrashView from './components/TrashView';
 import NewSaleModal from './components/NewSaleModal';
 import LoginView from './components/LoginView';
 
@@ -19,6 +24,7 @@ function AppContent() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isNewSaleOpen, setIsNewSaleOpen] = useState(false);
+  const [editingOrder, setEditingOrder] = useState(null);
 
   if (loading) {
     return (
@@ -33,6 +39,16 @@ function AppContent() {
     return <LoginView onLoginSuccess={() => setCurrentSection('dashboard')} />;
   }
 
+  const handleOpenNewSale = () => {
+    setEditingOrder(null);
+    setIsNewSaleOpen(true);
+  };
+
+  const handleEditOrder = (order) => {
+    setEditingOrder(order);
+    setIsNewSaleOpen(true);
+  };
+
   return (
     <div className="min-h-screen flex bg-slate-50/60 font-sans text-slate-900">
       {/* 1. Barra Lateral (Desktop) */}
@@ -40,7 +56,7 @@ function AppContent() {
         currentSection={currentSection}
         onNavigate={(sec) => {
           if (sec === 'new-sale') {
-            setIsNewSaleOpen(true);
+            handleOpenNewSale();
           } else {
             setCurrentSection(sec);
           }
@@ -56,7 +72,7 @@ function AppContent() {
         {/* TopBar */}
         <TopBar
           onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
-          onOpenNewSale={() => setIsNewSaleOpen(true)}
+          onOpenNewSale={handleOpenNewSale}
         />
 
         {/* Vistas Dinámicas con Animación de Entrada */}
@@ -64,7 +80,7 @@ function AppContent() {
           <AnimatePresence mode="wait">
             <motion.div
               key={currentSection}
-              initial={{ opacity: 0, y: 12, scale: 0.99 }}
+              initial={{ opacity: 0, y: 10, scale: 0.99 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -8, scale: 0.99 }}
               transition={{ type: "spring", stiffness: 350, damping: 28 }}
@@ -72,14 +88,29 @@ function AppContent() {
               {currentSection === 'dashboard' && (
                 <DashboardView
                   onNavigate={setCurrentSection}
-                  onOpenNewSale={() => setIsNewSaleOpen(true)}
+                  onOpenNewSale={handleOpenNewSale}
                 />
               )}
 
               {currentSection === 'orders' && (
                 <OrdersView
-                  onOpenNewSale={() => setIsNewSaleOpen(true)}
+                  onOpenNewSale={handleOpenNewSale}
+                  onEditOrder={handleEditOrder}
                 />
+              )}
+
+              {currentSection === 'cuentas' && (
+                <CuentasView />
+              )}
+
+              {currentSection === 'history' && (
+                <HistoryView
+                  onEditOrder={handleEditOrder}
+                />
+              )}
+
+              {currentSection === 'purchases' && (
+                <PurchasesView />
               )}
 
               {currentSection === 'settlements' && (
@@ -90,20 +121,12 @@ function AppContent() {
                 <SummariesView />
               )}
 
-              {/* Vistas en construcción que redirigen a órdenes o inicio */}
-              {['cuentas', 'history', 'purchases', 'reports'].includes(currentSection) && (
-                <div className="bg-white rounded-3xl border border-slate-200/80 p-12 text-center max-w-xl mx-auto space-y-4">
-                  <h3 className="text-lg font-bold text-slate-800">Sección en integración</h3>
-                  <p className="text-xs text-slate-500">
-                    Estamos migrando esta vista al nuevo diseño Full Motion. Mientras tanto, puedes gestionar todas tus ventas en Pedidos o volver a Inicio.
-                  </p>
-                  <button
-                    onClick={() => setCurrentSection('orders')}
-                    className="px-5 py-2.5 rounded-2xl bg-indigo-600 text-white font-bold text-xs shadow-md shadow-indigo-500/20 cursor-pointer"
-                  >
-                    Ir a Pedidos
-                  </button>
-                </div>
+              {currentSection === 'reports' && (
+                <ReportsView />
+              )}
+
+              {currentSection === 'trash' && (
+                <TrashView />
               )}
             </motion.div>
           </AnimatePresence>
@@ -114,13 +137,17 @@ function AppContent() {
       <BottomNav
         currentSection={currentSection}
         onNavigate={setCurrentSection}
-        onOpenNewSale={() => setIsNewSaleOpen(true)}
+        onOpenNewSale={handleOpenNewSale}
       />
 
-      {/* 4. Modal Nueva Venta */}
+      {/* 4. Modal Nueva Venta / Editar Pedido */}
       <NewSaleModal
         isOpen={isNewSaleOpen}
-        onClose={() => setIsNewSaleOpen(false)}
+        onClose={() => {
+          setIsNewSaleOpen(false);
+          setEditingOrder(null);
+        }}
+        editingOrder={editingOrder}
       />
     </div>
   );

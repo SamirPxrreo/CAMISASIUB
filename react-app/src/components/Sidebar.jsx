@@ -15,7 +15,8 @@ import {
   ChevronRight,
   Sparkles,
   Shirt,
-  LogOut
+  LogOut,
+  Trash2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -29,6 +30,7 @@ const NAV_ITEMS = [
   { id: 'settlements', label: 'Liquidaciones', icon: DollarSign, section: 'Socios' },
   { id: 'summaries', label: 'Resúmenes', icon: BarChart3, section: 'Datos' },
   { id: 'reports', label: 'Reportes', icon: FileSpreadsheet, section: 'Datos' },
+  { id: 'trash', label: 'Papelera', icon: Trash2, section: 'Datos' }
 ];
 
 export default function Sidebar({ currentSection, onNavigate, isCollapsed, onToggleCollapse, isOpenMobile, onCloseMobile }) {
