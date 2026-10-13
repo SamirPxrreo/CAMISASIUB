@@ -25,7 +25,9 @@ import {
   getWhatsAppLink,
   estadosTodosLiquidado,
   formatearFechaHumana,
-  getEstadoBadgeStyle
+  getEstadoBadgeStyle,
+  itemsCrudosVenta,
+  precioDeItem
 } from '../lib/utils';
 
 export default function CuentasView() {
@@ -100,8 +102,173 @@ export default function CuentasView() {
 
   const getClientWhatsAppLink = (cuenta) => {
     if (!cuenta.telefono) return null;
-    const texto = `Hola *${cuenta.cliente}*, te escribimos de *Camisas IUB* 👕.\n\nQueremos recordarte que tienes un saldo pendiente acumulado de *${fmt(cuenta.saldo)}* por tus pedidos de camisas Polo.\n\nPor favor confírmanos tu pago para continuar con la entrega. ¡Muchas gracias!`;
-    return getWhatsAppLink(cuenta.telefono, texto);
+    return getWhatsAppLink(cuenta.telefono);
+  };
+
+  const generarReciboFacturaPDF = (grupo) => {
+    if (!grupo) return;
+    const cliente = grupo.cliente || 'Cliente';
+    const telefono = grupo.telefono || '';
+    const pedidos = grupo.pedidos || [];
+    const fechaHoy = new Date().toLocaleDateString('es-CO', { timeZone: 'America/Bogota' });
+
+    const seleccion = [];
+    pedidos.forEach(v => {
+      const crudos = itemsCrudosVenta(v);
+      if (crudos && crudos.length) {
+        crudos.forEach(it => seleccion.push({ venta: v, item: it }));
+      } else {
+        seleccion.push({
+          venta: v,
+          item: {
+            modelo: v.modelo || '1',
+            color: v.color || 'Blanco',
+            talla: v.talla || 'U',
+            genero: v.genero || 'Hombre',
+            programa: v.cliente_programa || '',
+            precio: v.precio_unitario || 30000,
+            abono: v.abono || 0
+          }
+        });
+      }
+    });
+
+    const total = grupo.vendido;
+    const abonoTot = grupo.abono;
+    const saldo = grupo.saldo;
+
+    const filas = seleccion.map((x, i) => {
+      const it = x.item;
+      const v = x.venta;
+      const p = precioDeItem(it, v);
+      const ab = Number(it.abono) || 0;
+      const modeloTxt = it.modelo === 'Nuevo' ? 'Versión 2' : 'Versión 1';
+      const desc = `${modeloTxt} Polo · ${it.color || 'Color'} · Talla ${it.talla || 'U'} (${it.genero === 'Mujer' ? 'M' : 'H'})`;
+      const prog = it.programa ? `<div style="font-size:10px;color:#4f46e5;font-weight:700;margin-top:2px;">Bordado: ${it.programa}</div>` : '';
+      const rest = Math.max(p - ab, 0);
+      const restBadge = rest === 0
+        ? '<span style="background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:800;">Pagado</span>'
+        : `<span style="background:#fef3c7;color:#b45309;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:800;">${fmt(rest)}</span>`;
+
+      return `
+        <tr>
+          <td style="text-align:center;padding:9px;border-bottom:1px solid #f1f5f9;font-weight:700;">${i + 1}</td>
+          <td style="padding:9px;border-bottom:1px solid #f1f5f9;">
+            <div style="font-weight:800;color:#0f172a;">${desc}</div>
+            ${prog}
+            <div style="font-size:10px;color:#64748b;margin-top:2px;">Pedido: ${v.fecha || ''} · ${v.estado || 'Pedido'}</div>
+          </td>
+          <td style="text-align:center;padding:9px;border-bottom:1px solid #f1f5f9;font-weight:700;">1</td>
+          <td style="text-align:right;padding:9px;border-bottom:1px solid #f1f5f9;font-weight:700;">${fmt(p)}</td>
+          <td style="text-align:right;padding:9px;border-bottom:1px solid #f1f5f9;color:#16a34a;font-weight:700;">${fmt(ab)}</td>
+          <td style="text-align:right;padding:9px;border-bottom:1px solid #f1f5f9;">${restBadge}</td>
+        </tr>
+      `;
+    }).join('');
+
+    const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Recibo / Factura — ${cliente}</title>
+<style>
+  @page { size: A4 portrait; margin: 12mm; }
+  *, *::before, *::after { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; margin: 0; padding: 0; font-size: 10pt; background: #f8fafc; line-height: 1.45; }
+  .sheet { max-width: 800px; margin: 0 auto; padding: 24px; background: #fff; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
+  .toolbar { display: flex; gap: 10px; justify-content: flex-end; margin-bottom: 20px; }
+  .btn { padding: 9px 18px; border-radius: 12px; border: 1px solid #e2e8f0; background: #fff; cursor: pointer; font-weight: 700; font-size: 13px; transition: all 0.2s; }
+  .btn-primary { background: #4f46e5; color: #fff; border-color: #4f46e5; }
+  .btn-primary:hover { background: #4338ca; }
+  .header { background: linear-gradient(135deg, #1e1b4b, #312e81, #4338ca); color: #fff; border-radius: 14px; padding: 24px; margin-bottom: 20px; }
+  .header h1 { margin: 0 0 6px; font-size: 20pt; font-weight: 900; letter-spacing: -0.5px; }
+  .header p { margin: 0; font-size: 10pt; opacity: 0.9; }
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+  .kpi-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 14px; }
+  .kpi-title { font-size: 8pt; text-transform: uppercase; letter-spacing: 0.6px; color: #64748b; font-weight: 700; margin-bottom: 4px; }
+  .kpi-val { font-size: 14pt; font-weight: 900; color: #0f172a; }
+  .kpi-val.green { color: #16a34a; }
+  .kpi-val.amber { color: #d97706; }
+  .client-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 18px; margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 10pt; }
+  .client-box dt { color: #64748b; font-weight: 600; font-size: 8.5pt; text-transform: uppercase; }
+  .client-box dd { margin: 0; font-weight: 800; color: #0f172a; }
+  table.data-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; margin-bottom: 20px; }
+  table.data-table th { background: #0f172a; color: #fff; font-size: 8.5pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 10px 12px; text-align: left; }
+  .totals-wrap { display: flex; justify-content: flex-end; margin-bottom: 20px; }
+  .totals-box { width: 340px; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: #fff; }
+  .row { display: flex; justify-content: space-between; padding: 10px 14px; border-top: 1px solid #e2e8f0; font-size: 10pt; }
+  .row:first-child { border-top: none; }
+  .row.highlight { background: #0f172a; color: #fff; font-weight: 900; font-size: 12pt; }
+  .foot { border-top: 1px solid #e2e8f0; padding-top: 14px; text-align: center; color: #94a3b8; font-size: 8.5pt; }
+  @media print {
+    body { background: #fff; padding: 0; }
+    .toolbar { display: none; }
+    .sheet { box-shadow: none; padding: 0; max-width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <div class="toolbar">
+    <button class="btn" onclick="window.close()" type="button">Cerrar</button>
+    <button class="btn btn-primary" onclick="window.print()" type="button">🖨️ Imprimir / Guardar como PDF</button>
+  </div>
+
+  <div class="header">
+    <h1>CAMISAS IUB — RECIBO / FACTURA</h1>
+    <p>Cliente: <b>${cliente}</b> · Emisión: ${fechaHoy} · ${seleccion.length} prendas registradas</p>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card"><div class="kpi-title">Total Prendas</div><div class="kpi-val">${seleccion.length}</div></div>
+    <div class="kpi-card"><div class="kpi-title">Total Venta</div><div class="kpi-val">${fmt(total)}</div></div>
+    <div class="kpi-card"><div class="kpi-title">Abonado</div><div class="kpi-val green">${fmt(abonoTot)}</div></div>
+    <div class="kpi-card"><div class="kpi-title">Saldo Pendiente</div><div class="kpi-val amber">${fmt(saldo)}</div></div>
+  </div>
+
+  <div class="client-box">
+    <div><dt>Cliente</dt><dd>${cliente}</dd></div>
+    <div><dt>Teléfono</dt><dd>${telefono || 'No registrado'}</dd></div>
+    <div><dt>Vendedores asociados</dt><dd>${grupo.vendedoresStr || 'Samir'}</dd></div>
+    <div><dt>Pedidos en cuenta</dt><dd>${pedidos.length} pedido(s)</dd></div>
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width:40px;text-align:center;">#</th>
+        <th>Descripción de Prenda</th>
+        <th style="width:50px;text-align:center;">Cant</th>
+        <th style="width:90px;text-align:right;">Precio</th>
+        <th style="width:90px;text-align:right;">Abono</th>
+        <th style="width:100px;text-align:right;">Saldo</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${filas}
+    </tbody>
+  </table>
+
+  <div class="totals-wrap">
+    <div class="totals-box">
+      <div class="row"><span>Subtotal Prendas:</span><b>${fmt(total)}</b></div>
+      <div class="row"><span style="color:#16a34a;">Total Abonado:</span><b style="color:#16a34a;">-${fmt(abonoTot)}</b></div>
+      <div class="row highlight"><span>Saldo a Cobrar:</span><b>${fmt(saldo)}</b></div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <p>Camisas IUB · Comprobante oficial de venta y estado de cuenta · Gracias por tu compra</p>
+  </div>
+</div>
+</body>
+</html>`;
+
+    const ventana = window.open('', '_blank');
+    if (ventana) {
+      ventana.document.write(html);
+      ventana.document.close();
+    }
   };
 
   return (
@@ -242,13 +409,24 @@ export default function CuentasView() {
 
                     {/* Acciones */}
                     <div className="flex items-center gap-1.5">
+                      {/* Botón Generar PDF */}
+                      <button
+                        type="button"
+                        onClick={() => generarReciboFacturaPDF(c)}
+                        className="p-2 px-2.5 rounded-2xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition-colors cursor-pointer flex items-center gap-1 text-xs font-bold"
+                        title="Generar Factura / Recibo PDF"
+                      >
+                        <FileText className="w-4 h-4 text-indigo-600" />
+                        <span className="hidden sm:inline">PDF</span>
+                      </button>
+
                       {c.saldo > 0 && waLink && (
                         <a
                           href={waLink}
                           target="_blank"
                           rel="noreferrer"
                           className="p-2 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition-colors"
-                          title="Enviar cobro por WhatsApp"
+                          title="Abrir chat en WhatsApp"
                         >
                           <MessageCircle className="w-4 h-4" />
                         </a>

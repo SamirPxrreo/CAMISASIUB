@@ -266,7 +266,49 @@ export function generarMensajeWhatsApp(v) {
     ? crudos.map(it => `• ${(it.modelo === 'Nuevo' ? 'Versión 2' : 'Versión 1')} ${it.genero || ''} ${it.color || ''} Talla ${it.talla || ''}${it.programa ? ' (' + it.programa + ')' : ''}`).join('\n     ')
     : `• ${cant} camisa(s)`;
 
-  return `👕 *Recordatorio Camisas IUB* 👕\n\n👤 *Cliente:* ${v.cliente_nombre}\n📱 *Teléfono:* ${v.cliente_telefono || '-'}\n📋 *Detalle:*\n     ${detalle}\n📦 *Cantidad:* ${cant}\n💰 *Saldo Pendiente:* ${fmt(saldo)}\n📅 *Fecha Entrega:* ${v.fecha_entrega || 'Por definir'}\n📍 *Lugar:* ${v.lugar_entrega || 'Sin definir'}`;
+  return `👕 *Recordatorio Camisas IUB* 👕\n\n👤 *Cliente:* ${v.cliente_nombre}\n📱 *Teléfono:* ${v.cliente_telefono || '-'}\n📋 *Detalle:*\n     ${detalle}\n📦 *Cantidad:* ${cant}\n💰 *Saldo Pendiente:* ${fmt(saldo)}\n📅 *Fecha Entrega:* ${v.fecha_entrega ? formatearFechaHumana(v.fecha_entrega) : 'Por definir'}\n📍 *Lugar:* ${v.lugar_entrega || 'Sin definir'}`;
+}
+
+// Resumen completo de un pedido para copiar al portapapeles
+export function generarTextoResumenPedido(v) {
+  const cant = Number(v.cantidad) || 1;
+  const saldo = saldoCliente(v);
+  const total = precioTotalVenta(v);
+  const abono = abonoClienteTotal(v);
+  const crudos = itemsCrudosVenta(v) || [];
+  const detallePrendas = crudos.length
+    ? crudos.map(it => `  • ${(it.modelo === 'Nuevo' ? 'Versión 2' : 'Versión 1')} Polo ${it.color || 'Color'} - Talla ${it.talla || 'U'} (${it.genero === 'Mujer' ? 'Mujer' : 'Hombre'})${it.programa ? ' | Bordado: ' + it.programa : ''}`).join('\n')
+    : `  • ${cant} camisa(s) Tipo Polo`;
+
+  return `👕 *PEDIDO CAMISAS IUB*\n━━━━━━━━━━━━━━━━━━━━━━\n👤 *Cliente:* ${v.cliente_nombre || 'Cliente'}\n📱 *Teléfono:* ${v.cliente_telefono || v.telefono || 'Sin teléfono'}\n🏷️ *Vendedor:* ${v.vendedor || 'Samir'}\n🏷️ *Estado:* ${v.estado || 'Pedido'}\n\n📦 *Prendas (${cant}):*\n${detallePrendas}\n\n💰 *Total:* ${fmt(total)}\n💵 *Abono:* ${fmt(abono)}\n💳 *Saldo Pendiente:* ${saldo > 0 ? fmt(saldo) : 'Pagado ($0)'}\n\n📅 *Fecha Entrega:* ${v.fecha_entrega ? formatearFechaHumana(v.fecha_entrega) : 'Por definir'}\n📍 *Lugar Entrega:* ${v.lugar_entrega || 'Sin definir'}${v.nota ? `\n📝 *Nota:* "${v.nota}"` : ''}`;
+}
+
+// Cálculos de deuda con el proveedor de confección (Yesenia)
+export function abonosProveedorPorVentaId(venta) {
+  if (!venta) return { abonado: 0, costoTotal: 0, pendiente: 0 };
+  const costoVenta = costoTotalVenta(venta);
+  const crudos = itemsCrudosVenta(venta);
+  let abonado = 0;
+  if (crudos && crudos.some(it => it.abono_yesenia != null && it.abono_yesenia !== '')) {
+    abonado = crudos.reduce((s, it) => s + (Number(it.abono_yesenia) || 0), 0);
+  } else {
+    abonado = Number(venta.abono_yesenia) || 0;
+  }
+  return {
+    abonado: Math.round(abonado),
+    costoTotal: costoVenta,
+    pendiente: Math.max(costoVenta - Math.round(abonado), 0)
+  };
+}
+
+export function calcularDeudaProveedorVendedor(vendedor, ventas) {
+  return (ventas || [])
+    .filter(v => v.vendedor === vendedor && normalizarEstado(v.estado) !== 'Liquidado' && !v.finalizado)
+    .map(v => {
+      const pagos = abonosProveedorPorVentaId(v);
+      return { venta: v, pendiente: pagos.pendiente, costoTotal: pagos.costoTotal };
+    })
+    .filter(x => x.pendiente > 1);
 }
 
 // Paleta de colores pastel refinada, amigable y de alta legibilidad

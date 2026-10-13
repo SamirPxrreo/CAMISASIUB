@@ -13,7 +13,9 @@ import {
   CheckCircle2,
   ShoppingBag,
   Shirt,
-  MessageCircle
+  MessageCircle,
+  Copy,
+  Check
 } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import {
@@ -27,7 +29,8 @@ import {
   normalizarEstado,
   getEstadoBadgeStyle,
   getWhatsAppLink,
-  ESTADOS_PASTEL_CHIP
+  ESTADOS_PASTEL_CHIP,
+  generarTextoResumenPedido
 } from '../lib/utils';
 import InlineDeleteConfirm from './InlineDeleteConfirm';
 
@@ -37,6 +40,14 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
   const [estadoFiltro, setEstadoFiltro] = useState('Todos');
   const [vendedorFiltro, setVendedorFiltro] = useState('Todos');
   const [expandedId, setExpandedId] = useState(null);
+  const [copiadoPedidoId, setCopiadoPedidoId] = useState(null);
+
+  const handleCopiarPedido = (v) => {
+    const texto = generarTextoResumenPedido(v);
+    navigator.clipboard.writeText(texto);
+    setCopiadoPedidoId(v.id);
+    setTimeout(() => setCopiadoPedidoId(null), 2500);
+  };
 
   // Conteo por estado
   const conteoPorEstado = useMemo(() => {
@@ -344,15 +355,39 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
                     </div>
                   </div>
 
-                  {/* Fila de Botones: WhatsApp directo sin texto, Editar, Borrar */}
-                  <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-100">
+                  {/* Fila de Botones: Copiar Pedido, WhatsApp, Editar, Borrar */}
+                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
+                    {/* Botón Copiar Pedido */}
+                    <button
+                      type="button"
+                      onClick={() => handleCopiarPedido(v)}
+                      className={`flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        copiadoPedidoId === v.id
+                          ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                          : 'bg-indigo-50/80 hover:bg-indigo-100 text-indigo-700'
+                      }`}
+                      title="Copiar resumen del pedido completo"
+                    >
+                      {copiadoPedidoId === v.id ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>¡Copiado! ✓</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3.5 h-3.5 text-indigo-600" />
+                          <span>Copiar Pedido</span>
+                        </>
+                      )}
+                    </button>
+
                     {/* Botón WhatsApp directo (sin texto preestablecido) */}
                     {waLink ? (
                       <a
                         href={waLink}
                         target="_blank"
                         rel="noreferrer"
-                        className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold transition-colors cursor-pointer"
+                        className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold transition-colors cursor-pointer"
                         title="Abrir chat en WhatsApp"
                       >
                         <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
@@ -362,7 +397,7 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
                       <button
                         type="button"
                         disabled
-                        className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl bg-slate-50 text-slate-300 text-xs font-bold cursor-not-allowed"
+                        className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-slate-50 text-slate-300 text-xs font-bold cursor-not-allowed"
                         title="Sin teléfono registrado"
                       >
                         <MessageCircle className="w-3.5 h-3.5 text-slate-300" />
@@ -374,7 +409,7 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
                     <button
                       type="button"
                       onClick={() => onEditOrder && onEditOrder(v)}
-                      className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold transition-colors cursor-pointer"
+                      className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold transition-colors cursor-pointer"
                     >
                       <Pencil className="w-3.5 h-3.5" />
                       <span>Editar</span>

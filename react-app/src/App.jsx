@@ -8,6 +8,7 @@ import BottomNav from './components/BottomNav';
 import TopBar from './components/TopBar';
 import DashboardView from './components/DashboardView';
 import OrdersView from './components/OrdersView';
+import CalendarView from './components/CalendarView';
 import CuentasView from './components/CuentasView';
 import HistoryView from './components/HistoryView';
 import PurchasesView from './components/PurchasesView';
@@ -95,6 +96,12 @@ function AppContent() {
               {currentSection === 'orders' && (
                 <OrdersView
                   onOpenNewSale={handleOpenNewSale}
+                  onEditOrder={handleEditOrder}
+                />
+              )}
+
+              {currentSection === 'calendar' && (
+                <CalendarView
                   onEditOrder={handleEditOrder}
                 />
               )}

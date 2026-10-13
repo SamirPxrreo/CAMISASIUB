@@ -16,7 +16,8 @@ import {
   Sparkles,
   Shirt,
   LogOut,
-  Trash2
+  Trash2,
+  Calendar
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -24,6 +25,7 @@ const NAV_ITEMS = [
   { id: 'dashboard', label: 'Inicio', icon: LayoutDashboard, section: 'Principal' },
   { id: 'new-sale', label: 'Nueva Venta', icon: PlusCircle, section: 'Ventas', highlight: true },
   { id: 'orders', label: 'Pedidos', icon: ShoppingBag, section: 'Ventas' },
+  { id: 'calendar', label: 'Calendario', icon: Calendar, section: 'Ventas' },
   { id: 'cuentas', label: 'Cuentas', icon: CreditCard, section: 'Ventas' },
   { id: 'history', label: 'Historial', icon: History, section: 'Ventas' },
   { id: 'purchases', label: 'Abonos Yesenia', icon: Tag, section: 'Socios' },
