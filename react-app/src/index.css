@@ -33,3 +33,169 @@ html, body {
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+/* ========================================================
+   BENCHO.DEV FLOATING LABEL INPUT (corner = 26px, dark theme)
+   ======================================================== */
+
+.lbi {
+  --lbi-bg: rgba(15, 23, 42, 0.72);
+  --lbi-border: rgba(255, 255, 255, 0.16);
+  --lbi-border-focus: #818cf8;
+  --lbi-label-color: #94a3b8;
+  --lbi-label-active: #a5b4fc;
+  --lbi-text: #f8fafc;
+  position: relative;
+  width: 100%;
+  padding-top: 8px;
+}
+
+.lbi-box {
+  position: relative;
+  width: 100%;
+  height: 52px;
+  background: var(--lbi-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.lbi[data-focus="true"] .lbi-box {
+  background: rgba(30, 41, 59, 0.75);
+  box-shadow: 0 0 25px -4px rgba(99, 102, 241, 0.25);
+}
+
+.lbi-ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.lbi-ring path {
+  stroke: var(--lbi-border);
+  stroke-width: 1.5;
+  fill: none;
+  transition: stroke 0.22s ease, filter 0.22s ease;
+}
+
+.lbi[data-focus="true"] .lbi-ring path {
+  stroke: var(--lbi-border-focus);
+  filter: drop-shadow(0 0 7px rgba(129, 140, 248, 0.45));
+}
+
+.lbi-gap {
+  stroke-dasharray: 1 2;
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 0.24s cubic-bezier(0.16, 1, 0.3, 1), stroke 0.2s ease;
+}
+
+.lbi[data-up="true"] .lbi-gap {
+  stroke-dashoffset: -1;
+}
+
+.lbi-label {
+  position: absolute;
+  left: var(--lbi-x, 26px);
+  top: 50%;
+  transform: translateY(-50%);
+  transform-origin: left center;
+  display: flex;
+  color: var(--lbi-label-color);
+  font-size: 14.5px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  pointer-events: none;
+  user-select: none;
+  transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s ease;
+  z-index: 2;
+}
+
+.lbi[data-up="true"] .lbi-label {
+  transform: translateY(-26px) scale(0.78);
+  color: var(--lbi-label-color);
+}
+
+.lbi[data-focus="true"][data-up="true"] .lbi-label {
+  color: var(--lbi-label-active);
+  font-weight: 600;
+}
+
+.lbi-label span {
+  display: inline-block;
+  white-space: pre;
+}
+
+.lbi[data-focus="true"] .lbi-label span {
+  animation: lbi-hop 0.34s ease-out calc(var(--i, 0) * 22ms);
+}
+
+@keyframes lbi-hop {
+  0% { transform: translateY(0); }
+  36% { transform: translateY(-3.5px); }
+  100% { transform: translateY(0); }
+}
+
+.lbi-field {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--lbi-text);
+  font-size: 15px;
+  font-weight: 500;
+  border-radius: inherit;
+  font-family: inherit;
+  transition: color 0.2s ease;
+}
+
+.lbi-field::placeholder {
+  color: transparent;
+}
+
+.lbi-eye {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  transition: all 0.2s ease;
+  z-index: 3;
+}
+
+.lbi-eye:hover {
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.lbi-eye:active {
+  transform: translateY(-50%) scale(0.92);
+}
+
+.lbi-eye[data-show="false"] .eye-close {
+  display: none;
+}
+.lbi-eye[data-show="false"] .eye-open {
+  display: block;
+}
+
+.lbi-eye[data-show="true"] .eye-open {
+  display: none;
+}
+.lbi-eye[data-show="true"] .eye-close {
+  display: block;
+}
