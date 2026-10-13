@@ -32,3 +32,5 @@ PRODUCT.md
 .claude/
 .dsh/
 .opencode/
+react-app/node_modules/
+react-app/dist/
