@@ -57,7 +57,16 @@ Diseñados en tonos pastel en modo claro y con luminiscencia translúcida de alt
 ## 4. Módulo de Configuración & Catálogo Dinámico
 
 - **Colores de Camisas**: Gestión completa (alta, edición de nombre y muestra hexadecimal, eliminación y restablecimiento a valores iniciales). Sincronizado en tiempo real con el selector de pedidos de `NewSaleModal`.
+- **Lugares de Entrega**: Configuración dinámica de sedes y puntos de entrega (crear, editar, eliminar y restablecer a predeterminados). Opciones sincronizadas directamente con el registro de pedidos.
 - **Usuarios & Accesos**: Creación de cuentas con roles diferenciados (`ADMINISTRADOR` / `VENDEDOR`), correo y contraseña.
+
+---
+
+## 5. Componentes Exclusivos de Interacción
+
+- **`CustomSelect`**: Selector desplegable flotante con físicas de resorte (Framer Motion), búsqueda integrada, muestras visuales de color y cierre automático por clic exterior.
+- **`OrderDetailModal`**: Modal detallado para pedidos con múltiples prendas; desglosa cada camisa con su estado individual, bordado, talla, saldos y botón directo para copiar mensaje a WhatsApp.
+- **`StatusDropdown`**: Selector de estados con insignias semánticas y transiciones suaves sin menús nativos del navegador.
 
 ---
 

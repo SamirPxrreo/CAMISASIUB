@@ -30,17 +30,24 @@ import {
   fmt,
   itemsCrudosVenta
 } from '../lib/utils';
+import CustomSelect from './CustomSelect';
+import StatusDropdown from './StatusDropdown';
 
 export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
-  const { addVenta, updateVenta, ventas, coloresNombres } = useData();
+  const { addVenta, updateVenta, ventas, colores, coloresNombres, lugaresEntrega } = useData();
   const { role } = useAuth();
   const listaColores = (coloresNombres && coloresNombres.length > 0) ? coloresNombres : COLORES_DISPONIBLES;
+  const opcionesColores = (colores && colores.length > 0)
+    ? colores.map(c => ({ value: c.nombre, label: c.nombre, colorDot: c.hex }))
+    : listaColores.map(c => ({ value: c, label: c }));
+  const opcionesLugares = (lugaresEntrega && lugaresEntrega.length > 0) ? lugaresEntrega : LUGARES_ENTREGA;
 
   const [cliente, setCliente] = useState('');
   const [telefono, setTelefono] = useState('');
   const miNombreVendedor = role?.vendedor || role?.nombre || 'Samir';
   const [vendedor, setVendedor] = useState(miNombreVendedor);
-  const [lugarEntrega, setLugarEntrega] = useState('Soledad');
+  const primerLugar = opcionesLugares[0] || 'Sede Principal (IUB)';
+  const [lugarEntrega, setLugarEntrega] = useState(primerLugar);
   const [lugarOtro, setLugarOtro] = useState('');
   const [fecha, setFecha] = useState(hoyColombia());
   const [fechaEntrega, setFechaEntrega] = useState('');
@@ -73,14 +80,14 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
       setCliente(editingOrder.cliente_nombre || '');
       setTelefono(editingOrder.cliente_telefono || editingOrder.telefono || '');
       setVendedor(editingOrder.vendedor || 'Samir');
-      if (LUGARES_ENTREGA.includes(editingOrder.lugar_entrega)) {
+      if (opcionesLugares.includes(editingOrder.lugar_entrega)) {
         setLugarEntrega(editingOrder.lugar_entrega);
         setLugarOtro('');
       } else if (editingOrder.lugar_entrega) {
         setLugarEntrega('Otro');
         setLugarOtro(editingOrder.lugar_entrega);
       } else {
-        setLugarEntrega('Soledad');
+        setLugarEntrega(primerLugar);
         setLugarOtro('');
       }
       setFecha(editingOrder.fecha || hoyColombia());
@@ -121,7 +128,7 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
       setCliente('');
       setTelefono('');
       setVendedor(miNombreVendedor);
-      setLugarEntrega('Soledad');
+      setLugarEntrega(primerLugar);
       setLugarOtro('');
       setFecha(hoyColombia());
       setFechaEntrega('');
@@ -433,15 +440,16 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
                   <label className="text-xs font-semibold text-slate-700 block mb-1">
                     Vendedor asignado {role?.role !== 'admin' && <span className="text-[10px] text-slate-400 font-normal">(Fijo a tu cuenta)</span>}
                   </label>
-                  <select
+                  <CustomSelect
                     value={vendedor}
-                    onChange={(e) => setVendedor(e.target.value)}
+                    onChange={(val) => setVendedor(val)}
                     disabled={role?.role !== 'admin'}
-                    className={`w-full px-3 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:bg-white text-sm outline-none transition-all font-medium ${role?.role !== 'admin' ? 'opacity-75 cursor-not-allowed bg-slate-100' : ''}`}
-                  >
-                    <option value="Samir">Samir</option>
-                    <option value="Valentina">Valentina</option>
-                  </select>
+                    icon={User}
+                    options={[
+                      { value: 'Samir', label: 'Samir' },
+                      { value: 'Valentina', label: 'Valentina' }
+                    ]}
+                  />
                 </div>
 
                 <div>
@@ -462,18 +470,13 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                 <div>
                   <label className="text-xs font-semibold text-slate-700 block mb-1">Lugar de Entrega</label>
-                  <div className="relative">
-                    <MapPin className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                    <select
-                      value={lugarEntrega}
-                      onChange={(e) => setLugarEntrega(e.target.value)}
-                      className="w-full pl-10 pr-3 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:bg-white text-sm outline-none transition-all font-medium"
-                    >
-                      {LUGARES_ENTREGA.map(l => (
-                        <option key={l} value={l}>{l}</option>
-                      ))}
-                    </select>
-                  </div>
+                  <CustomSelect
+                    value={lugarEntrega}
+                    onChange={(val) => setLugarEntrega(val)}
+                    icon={MapPin}
+                    options={opcionesLugares}
+                    searchable
+                  />
                   {lugarEntrega === 'Otro' && (
                     <input
                       type="text"
@@ -600,54 +603,46 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
                     <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                       <div>
                         <label className="text-[11px] font-semibold text-slate-600 block mb-1">Versión</label>
-                        <select
+                        <CustomSelect
                           value={f.modelo}
-                          onChange={(e) => updateFila(idx, 'modelo', e.target.value)}
-                          className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold outline-none"
-                        >
-                          {VERSIONES_DISPONIBLES.map(v => (
-                            <option key={v.id} value={v.id}>{v.nombre}</option>
-                          ))}
-                        </select>
+                          onChange={(val) => updateFila(idx, 'modelo', val)}
+                          options={[
+                            { value: 'Viejo', label: 'Versión 1' },
+                            { value: 'Nuevo', label: 'Versión 2', badge: 'v2' }
+                          ]}
+                          size="sm"
+                        />
                       </div>
 
                       <div>
                         <label className="text-[11px] font-semibold text-slate-600 block mb-1">Género</label>
-                        <select
+                        <CustomSelect
                           value={f.genero}
-                          onChange={(e) => updateFila(idx, 'genero', e.target.value)}
-                          className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold outline-none"
-                        >
-                          {GENEROS_DISPONIBLES.map(g => (
-                            <option key={g} value={g}>{g}</option>
-                          ))}
-                        </select>
+                          onChange={(val) => updateFila(idx, 'genero', val)}
+                          options={GENEROS_DISPONIBLES}
+                          size="sm"
+                        />
                       </div>
 
                       <div>
                         <label className="text-[11px] font-semibold text-slate-600 block mb-1">Color</label>
-                        <select
+                        <CustomSelect
                           value={f.color}
-                          onChange={(e) => updateFila(idx, 'color', e.target.value)}
-                          className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold outline-none"
-                        >
-                          {listaColores.map(c => (
-                            <option key={c} value={c}>{c}</option>
-                          ))}
-                        </select>
+                          onChange={(val) => updateFila(idx, 'color', val)}
+                          options={opcionesColores}
+                          size="sm"
+                          searchable
+                        />
                       </div>
 
                       <div>
                         <label className="text-[11px] font-semibold text-slate-600 block mb-1">Talla</label>
-                        <select
+                        <CustomSelect
                           value={f.talla}
-                          onChange={(e) => updateFila(idx, 'talla', e.target.value)}
-                          className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold outline-none"
-                        >
-                          {TALLAS_DISPONIBLES.map(t => (
-                            <option key={t} value={t}>{t}</option>
-                          ))}
-                        </select>
+                          onChange={(val) => updateFila(idx, 'talla', val)}
+                          options={TALLAS_DISPONIBLES}
+                          size="sm"
+                        />
                       </div>
 
                       <div className="col-span-2 sm:col-span-1">
@@ -663,7 +658,7 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
                     </div>
 
                     {/* Precios, Abonos y Estado de la camisa */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 border-t border-slate-200/40">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 border-t border-slate-200/40 items-end">
                       <div>
                         <label className="text-[10.5px] font-semibold text-slate-500 block mb-0.5">Precio Venta ($)</label>
                         <input
@@ -695,16 +690,12 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
                       </div>
 
                       <div>
-                        <label className="text-[10.5px] font-semibold text-slate-500 block mb-0.5">Estado</label>
-                        <select
+                        <label className="text-[10.5px] font-semibold text-slate-500 block mb-1">Estado prenda</label>
+                        <StatusDropdown
                           value={f.estado}
-                          onChange={(e) => updateFila(idx, 'estado', e.target.value)}
-                          className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold outline-none"
-                        >
-                          {ORDEN_ESTADOS.map(es => (
-                            <option key={es} value={es}>{es}</option>
-                          ))}
-                        </select>
+                          onChange={(nuevoEst) => updateFila(idx, 'estado', nuevoEst)}
+                          size="sm"
+                        />
                       </div>
                     </div>
                   </div>

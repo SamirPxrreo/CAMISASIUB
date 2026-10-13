@@ -21,7 +21,8 @@ import {
   Info,
   GitBranch,
   Layers,
-  ArrowRight
+  ArrowRight,
+  MapPin
 } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
@@ -55,6 +56,11 @@ export default function SettingsView() {
     actualizarColor,
     eliminarColor,
     restablecerColores,
+    lugaresEntrega,
+    agregarLugarEntrega,
+    actualizarLugarEntrega,
+    eliminarLugarEntrega,
+    restablecerLugaresEntrega,
     usuarios,
     agregarUsuario,
     actualizarUsuario,
@@ -64,11 +70,12 @@ export default function SettingsView() {
   const { role } = useAuth();
   const { theme, setTheme, THEMES } = useTheme();
 
-  // Tab activo: 'colores' | 'usuarios' | 'temas' | 'versiones'
+  // Tab activo: 'colores' | 'lugares' | 'usuarios' | 'temas' | 'versiones'
   const [activeTab, setActiveTab] = useState('colores');
 
   // Filtros de búsqueda
   const [searchColor, setSearchColor] = useState('');
+  const [searchLugar, setSearchLugar] = useState('');
   const [searchUser, setSearchUser] = useState('');
 
   // Modales de Colores
@@ -77,6 +84,12 @@ export default function SettingsView() {
   const [colorNombre, setColorNombre] = useState('');
   const [colorHex, setColorHex] = useState('#6366f1');
   const [colorError, setColorError] = useState('');
+
+  // Modales de Lugares de Entrega
+  const [isLugarModalOpen, setIsLugarModalOpen] = useState(false);
+  const [editingLugar, setEditingLugar] = useState(null); // null para nuevo, string para editar
+  const [lugarNombre, setLugarNombre] = useState('');
+  const [lugarError, setLugarError] = useState('');
 
   // Modales de Usuarios
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
@@ -125,6 +138,36 @@ export default function SettingsView() {
   const handleSelectPreset = (p) => {
     setColorNombre(p.nombre);
     setColorHex(p.hex);
+  };
+
+  // --- CONTROL DE LUGARES DE ENTREGA ---
+  const handleOpenNewLugar = () => {
+    setEditingLugar(null);
+    setLugarNombre('');
+    setLugarError('');
+    setIsLugarModalOpen(true);
+  };
+
+  const handleOpenEditLugar = (lugar) => {
+    setEditingLugar(lugar);
+    setLugarNombre(lugar);
+    setLugarError('');
+    setIsLugarModalOpen(true);
+  };
+
+  const handleSaveLugar = (e) => {
+    e.preventDefault();
+    setLugarError('');
+    try {
+      if (editingLugar) {
+        actualizarLugarEntrega(editingLugar, lugarNombre);
+      } else {
+        agregarLugarEntrega(lugarNombre);
+      }
+      setIsLugarModalOpen(false);
+    } catch (err) {
+      setLugarError(err.message || 'Error al guardar el lugar.');
+    }
   };
 
   // --- CONTROL DE USUARIOS ---
@@ -186,6 +229,11 @@ export default function SettingsView() {
     (c.nombre || '').toLowerCase().includes(searchColor.toLowerCase().trim())
   );
 
+  // Filtrado de lugares de entrega
+  const lugaresFiltrados = (lugaresEntrega || []).filter(l =>
+    (l || '').toLowerCase().includes(searchLugar.toLowerCase().trim())
+  );
+
   // Filtrado de usuarios
   const usuariosFiltrados = (usuarios || []).filter(u =>
     (u.nombre || '').toLowerCase().includes(searchUser.toLowerCase().trim()) ||
@@ -225,6 +273,21 @@ export default function SettingsView() {
             <span>Colores de Camisas</span>
             <span className="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-indigo-50 text-indigo-700">
               {colores?.length || 0}
+            </span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('lugares')}
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer select-none ${
+              activeTab === 'lugares'
+                ? 'bg-white text-slate-900 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+            }`}
+          >
+            <MapPin className="w-3.5 h-3.5 text-indigo-600" />
+            <span>Lugares de Entrega</span>
+            <span className="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-indigo-50 text-indigo-700">
+              {lugaresEntrega?.length || 0}
             </span>
           </button>
 
@@ -380,7 +443,112 @@ export default function SettingsView() {
         </motion.div>
       )}
 
-      {/* PESTAÑA 2: GESTIÓN DE USUARIOS */}
+      {/* PESTAÑA 2: CATÁLOGO DE LUGARES DE ENTREGA */}
+      {activeTab === 'lugares' && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          className="space-y-4"
+        >
+          {/* Barra de herramientas de lugares de entrega */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
+            <div className="relative flex-1 max-w-md">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Buscar lugar de entrega..."
+                value={searchLugar}
+                onChange={(e) => setSearchLugar(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:border-indigo-500 transition-colors"
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={restablecerLugaresEntrega}
+                title="Volver a los lugares predeterminados"
+                className="px-3 py-2 rounded-xl border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Restablecer</span>
+              </button>
+
+              <button
+                onClick={handleOpenNewLugar}
+                className="theme-btn-primary px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Agregar Lugar</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Grid de lugares de entrega */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
+            {lugaresFiltrados.map((lugar) => {
+              const isOtro = (lugar || '').toLowerCase() === 'otro';
+
+              return (
+                <motion.div
+                  key={lugar}
+                  layout
+                  whileHover={{ y: -2 }}
+                  className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-2xs hover:shadow-xs transition-all flex items-center justify-between gap-3"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0 text-indigo-600">
+                      <MapPin className="w-5 h-5" />
+                    </div>
+
+                    <div className="min-w-0">
+                      <h4 className="font-extrabold text-slate-900 text-sm truncate" title={lugar}>
+                        {lugar}
+                      </h4>
+                      <span className="text-[11px] text-slate-400 font-semibold block">
+                        {isOtro ? 'Opción especial' : 'Lugar activo'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Acciones de edición y eliminación */}
+                  {!isOtro ? (
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={() => handleOpenEditLugar(lugar)}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors cursor-pointer"
+                        title="Editar lugar de entrega"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+
+                      <InlineDeleteConfirm
+                        title={`¿Quitar "${lugar}"?`}
+                        confirmLabel="Quitar"
+                        onDelete={() => eliminarLugarEntrega(lugar)}
+                      />
+                    </div>
+                  ) : (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-100 text-slate-500 uppercase tracking-wider">
+                      Fijo
+                    </span>
+                  )}
+                </motion.div>
+              );
+            })}
+          </div>
+
+          {lugaresFiltrados.length === 0 && (
+            <div className="bg-white rounded-2xl border border-slate-200/80 p-12 text-center text-slate-400">
+              <MapPin className="w-10 h-10 mx-auto mb-2 text-slate-300" />
+              <p className="font-bold text-sm text-slate-600">No se encontraron lugares de entrega</p>
+              <p className="text-xs mt-1">Prueba con otro término de búsqueda o agrega un nuevo lugar.</p>
+            </div>
+          )}
+        </motion.div>
+      )}
+
+      {/* PESTAÑA 3: GESTIÓN DE USUARIOS */}
       {activeTab === 'usuarios' && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
@@ -722,6 +890,102 @@ export default function SettingsView() {
                     className="theme-btn-primary px-5 py-2 rounded-xl text-xs font-bold shadow-sm"
                   >
                     {editingColor ? 'Guardar Cambios' : 'Agregar al Catálogo'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* --- MODAL PARA AGREGAR O EDITAR LUGAR DE ENTREGA --- */}
+      <AnimatePresence>
+        {isLugarModalOpen && (
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200/80 space-y-4"
+            >
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                    <MapPin className="w-4 h-4" />
+                  </div>
+                  <h3 className="font-extrabold text-slate-900 text-base">
+                    {editingLugar ? 'Editar Lugar de Entrega' : 'Agregar Lugar de Entrega'}
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setIsLugarModalOpen(false)}
+                  className="text-slate-400 hover:text-slate-600 text-sm font-bold p-1 cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {lugarError && (
+                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold">
+                  {lugarError}
+                </div>
+              )}
+
+              <form onSubmit={handleSaveLugar} className="space-y-4">
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Nombre del Lugar / Sede</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ej: Sede Prado - Cafetería, Domicilio Soledad..."
+                    value={lugarNombre}
+                    onChange={(e) => setLugarNombre(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+
+                {/* Sugerencias Rápidas */}
+                <div>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-2">
+                    Sugerencias Rápidas:
+                  </label>
+                  <div className="flex flex-wrap gap-1.5 p-1 bg-slate-50 rounded-xl border border-slate-100 max-h-32 overflow-y-auto">
+                    {[
+                      'Sede Principal (IUB)',
+                      'Sede Prado',
+                      'Sede Soledad',
+                      'Domicilio Barranquilla',
+                      'Domicilio Soledad',
+                      'Punto Clave',
+                      'Centro Comercial Portal del Prado',
+                      'Centro Comercial Villa Country'
+                    ].map((sug) => (
+                      <button
+                        type="button"
+                        key={sug}
+                        onClick={() => setLugarNombre(sug)}
+                        className="px-2.5 py-1 rounded-lg bg-white border border-slate-200/80 hover:border-indigo-400 text-[11px] font-semibold text-slate-700 flex items-center gap-1 transition-all cursor-pointer"
+                      >
+                        <Plus className="w-2.5 h-2.5 text-indigo-500" />
+                        <span>{sug}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setIsLugarModalOpen(false)}
+                    className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="theme-btn-primary px-5 py-2 rounded-xl text-xs font-bold shadow-sm cursor-pointer"
+                  >
+                    {editingLugar ? 'Guardar Cambios' : 'Agregar Lugar'}
                   </button>
                 </div>
               </form>

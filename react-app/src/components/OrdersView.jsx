@@ -15,7 +15,9 @@ import {
   Shirt,
   MessageCircle,
   Copy,
-  Check
+  Check,
+  Eye,
+  ChevronRight
 } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import {
@@ -35,6 +37,7 @@ import {
 import InlineDeleteConfirm from './InlineDeleteConfirm';
 import Pagination from './Pagination';
 import StatusDropdown from './StatusDropdown';
+import OrderDetailModal from './OrderDetailModal';
 import { useAuth } from '../context/AuthContext';
 
 export default function OrdersView({ onOpenNewSale, onEditOrder }) {
@@ -49,6 +52,13 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedId, setExpandedId] = useState(null);
   const [copiadoPedidoId, setCopiadoPedidoId] = useState(null);
+  const [selectedOrderDetail, setSelectedOrderDetail] = useState(null);
+
+  // Mantener actualizado el pedido abierto en el modal
+  const activeOrderForModal = useMemo(() => {
+    if (!selectedOrderDetail) return null;
+    return ventas.find(v => v.id === selectedOrderDetail.id) || selectedOrderDetail;
+  }, [ventas, selectedOrderDetail]);
 
   const handleCopiarPedido = (v) => {
     const texto = generarTextoResumenPedido(v);
@@ -293,19 +303,19 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
                         <Shirt className="w-3.5 h-3.5 text-indigo-500" />
                         Prendas ({items.length || 1})
                       </span>
-                      {items.length > 2 && (
-                        <button
-                          onClick={() => toggleExpand(v.id)}
-                          className="text-indigo-600 hover:text-indigo-800 flex items-center gap-0.5 text-[11px] font-bold cursor-pointer"
-                        >
-                          {isExpanded ? 'Ver menos' : `Ver todas (${items.length})`}
-                          {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => setSelectedOrderDetail(v)}
+                        className="text-indigo-600 hover:text-indigo-800 flex items-center gap-1 text-[11px] font-bold cursor-pointer"
+                        title="Ver detalle de todas las prendas"
+                      >
+                        <Eye className="w-3 h-3" />
+                        <span>Ver detalle</span>
+                      </button>
                     </div>
 
                     <div className="space-y-1.5">
-                      {(isExpanded ? items : items.slice(0, 2)).map((it, idx) => {
+                      {items.slice(0, 1).map((it, idx) => {
                         const estadoItem = normalizarEstado(it.estado || v.estado);
                         return (
                           <div
@@ -337,6 +347,23 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
                           </div>
                         );
                       })}
+
+                      {items.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedOrderDetail(v)}
+                          className="w-full mt-1.5 py-2 px-3 rounded-2xl bg-indigo-50/80 hover:bg-indigo-100 text-indigo-700 text-xs font-black border border-indigo-200/80 flex items-center justify-between transition-all cursor-pointer group"
+                        >
+                          <div className="flex items-center gap-1.5">
+                            <Shirt className="w-3.5 h-3.5 text-indigo-600 group-hover:scale-110 transition-transform" />
+                            <span>+{items.length - 1} prenda{items.length - 1 > 1 ? 's' : ''} más</span>
+                          </div>
+                          <div className="flex items-center gap-0.5 text-[11px] font-bold text-indigo-600 group-hover:translate-x-0.5 transition-transform">
+                            <span>Ver las {items.length} prendas</span>
+                            <ChevronRight className="w-3.5 h-3.5" />
+                          </div>
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -472,6 +499,14 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
         pageSize={pageSize}
         onPageChange={setCurrentPage}
         itemName="pedidos"
+      />
+
+      {/* 5. VENTANA MODAL DE DETALLE DE TODAS LAS PRENDAS */}
+      <OrderDetailModal
+        isOpen={!!selectedOrderDetail}
+        onClose={() => setSelectedOrderDetail(null)}
+        order={activeOrderForModal}
+        onEditOrder={onEditOrder}
       />
     </div>
   );

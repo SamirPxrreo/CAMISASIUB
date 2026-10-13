@@ -13,7 +13,8 @@ import {
   triggerConfetti,
   itemsCrudosVenta,
   fmt,
-  COLORES_DEFECTO_OBJETOS
+  COLORES_DEFECTO_OBJETOS,
+  LUGARES_ENTREGA
 } from '../lib/utils';
 
 const DataContext = createContext(null);
@@ -28,6 +29,25 @@ export function DataProvider({ children }) {
   const [usuarios, setUsuarios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Catálogo dinámico y editable de lugares de entrega
+  const [lugaresEntrega, setLugaresEntrega] = useState(() => {
+    try {
+      const guardados = localStorage.getItem('camisasiub_lugares');
+      if (guardados) {
+        const parsed = JSON.parse(guardados);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return LUGARES_ENTREGA;
+  });
+
+  // Persistir lugares de entrega en localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('camisasiub_lugares', JSON.stringify(lugaresEntrega));
+    } catch {}
+  }, [lugaresEntrega]);
 
   // Catálogo dinámico y editable de colores de camisas
   const [colores, setColores] = useState(() => {
@@ -388,6 +408,38 @@ export function DataProvider({ children }) {
     setColores(COLORES_DEFECTO_OBJETOS);
   };
 
+  // --- MÉTODOS PARA GESTIÓN DE LUGARES DE ENTREGA ---
+  const agregarLugarEntrega = (nuevoLugar) => {
+    const lugar = (nuevoLugar || '').trim();
+    if (!lugar) throw new Error('El nombre del lugar es obligatorio.');
+    if (lugaresEntrega.some(l => l.toLowerCase() === lugar.toLowerCase())) {
+      throw new Error(`El lugar "${lugar}" ya existe.`);
+    }
+    setLugaresEntrega(prev => {
+      const filtrado = prev.filter(l => l.toLowerCase() !== 'otro');
+      return [...filtrado, lugar, 'Otro'];
+    });
+  };
+
+  const actualizarLugarEntrega = (lugarAntiguo, lugarNuevo) => {
+    const viejo = (lugarAntiguo || '').trim();
+    const nuevo = (lugarNuevo || '').trim();
+    if (!nuevo) throw new Error('El nuevo nombre es obligatorio.');
+    if (viejo.toLowerCase() === 'otro') throw new Error('El lugar "Otro" no se puede modificar.');
+    setLugaresEntrega(prev => prev.map(l => l === viejo ? nuevo : l));
+  };
+
+  const eliminarLugarEntrega = (lugarAEliminar) => {
+    const aBorrar = (lugarAEliminar || '').trim();
+    if (aBorrar.toLowerCase() === 'otro') throw new Error('El lugar "Otro" es necesario para entregas personalizadas.');
+    if (lugaresEntrega.length <= 2) throw new Error('Debe mantenerse al menos un lugar disponible.');
+    setLugaresEntrega(prev => prev.filter(l => l !== aBorrar));
+  };
+
+  const restablecerLugaresEntrega = () => {
+    setLugaresEntrega(LUGARES_ENTREGA);
+  };
+
   // --- MÉTODOS PARA GESTIÓN DE USUARIOS ---
   const agregarUsuario = async ({ nombre, correo, rol, password }) => {
     const nom = (nombre || '').trim();
@@ -503,6 +555,11 @@ export function DataProvider({ children }) {
       actualizarColor,
       eliminarColor,
       restablecerColores,
+      lugaresEntrega,
+      agregarLugarEntrega,
+      actualizarLugarEntrega,
+      eliminarLugarEntrega,
+      restablecerLugaresEntrega,
       agregarUsuario,
       actualizarUsuario,
       eliminarUsuario,

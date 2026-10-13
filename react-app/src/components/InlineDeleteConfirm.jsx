@@ -8,7 +8,7 @@ import { Trash2, RotateCcw } from 'lucide-react';
  * con una barra de tiempo regressiva (fuse timer). Si el usuario da clic en Deshacer, cancela.
  * Si deja correr el tiempo, confirma el borrado a la papelera.
  */
-export default function InlineDeleteConfirm({ onDelete, clienteNombre, duration = 4500 }) {
+export default function InlineDeleteConfirm({ onDelete, clienteNombre, title, confirmLabel, duration = 4500 }) {
   const [phase, setPhase] = useState('idle'); // 'idle' | 'confirming'
   const timerRef = useRef(null);
 
@@ -40,26 +40,26 @@ export default function InlineDeleteConfirm({ onDelete, clienteNombre, duration 
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.96 }}
         transition={{ type: 'spring', stiffness: 450, damping: 25 }}
-        className="col-span-3 relative flex items-center justify-between px-3.5 py-1.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 text-xs font-bold overflow-hidden shadow-xs"
+        className="relative flex items-center justify-between px-3 py-1 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 text-xs font-bold overflow-hidden shadow-xs gap-2"
       >
-        <div className="flex items-center gap-1.5 min-w-0 pr-2">
+        <div className="flex items-center gap-1.5 min-w-0 pr-1">
           <Trash2 className="w-3.5 h-3.5 text-rose-600 shrink-0 animate-pulse" />
           <span className="truncate text-[11px] font-black text-rose-900">
-            A papelera ({clienteNombre || 'Pedido'})...
+            {title || `A papelera (${clienteNombre || 'Pedido'})...`}
           </span>
         </div>
 
         <button
           type="button"
           onClick={handleCancel}
-          className="inline-flex items-center gap-1 px-3 py-1 rounded-xl bg-white hover:bg-rose-100 text-rose-700 font-black text-xs shadow-xs border border-rose-200 transition-all cursor-pointer shrink-0"
+          className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-white hover:bg-rose-100 text-rose-700 font-black text-[11px] shadow-xs border border-rose-200 transition-all cursor-pointer shrink-0"
           title="Deshacer acción"
         >
           <RotateCcw className="w-3 h-3 stroke-[2.5]" />
           <span>Deshacer</span>
         </button>
 
-        {/* Barra de tiempo regresiva (say-fuse de Bencho) */}
+        {/* Barra de tiempo regresiva */}
         <div
           className="say-fuse absolute bottom-0 left-0 h-[2.5px] bg-rose-500 rounded-full"
           style={{ animationDuration: `${duration}ms` }}
@@ -72,11 +72,11 @@ export default function InlineDeleteConfirm({ onDelete, clienteNombre, duration 
     <button
       type="button"
       onClick={handleStartDelete}
-      className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-600 text-xs font-bold transition-colors cursor-pointer"
-      title="Enviar a la papelera (con opción de deshacer)"
+      className="flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-600 text-xs font-bold transition-colors cursor-pointer"
+      title="Eliminar elemento"
     >
       <Trash2 className="w-3.5 h-3.5" />
-      <span>Borrar</span>
+      <span>{confirmLabel || 'Borrar'}</span>
     </button>
   );
 }
