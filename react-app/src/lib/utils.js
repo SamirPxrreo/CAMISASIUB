@@ -23,6 +23,11 @@ export const COLORES_DISPONIBLES = [
 
 export const TALLAS_DISPONIBLES = ['S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'];
 
+// Compatibilidad
+export const COLORES = COLORES_DISPONIBLES;
+export const TALLAS = TALLAS_DISPONIBLES;
+export const TIPOS_CAMISA = ['Polo'];
+
 export const EXTRA_TALLAS_COSTO = {
   '2XL': 2000,
   '3XL': 4000,
