@@ -81,7 +81,7 @@ export default function FloatingLabelInput({
       className="lbi relative w-full pt-2.5 flex items-center justify-center font-sans"
       data-up={isUp}
       data-focus={isFocused}
-      data-filled={value.length > 0}
+      data-filled={Boolean(value && String(value).length > 0)}
     >
       <div
         ref={boxRef}
