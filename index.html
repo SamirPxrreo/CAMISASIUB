@@ -12,16 +12,10 @@
 <title>Camisas IUB — Control de ventas, compras y liquidaciones</title>
 <link rel="icon" type="image/png" href="favicon.png">
 
-<!-- Fonts: ninguna.
-
-     Se usaba Google Fonts para traer Sora (titulos) y Albert Sans. Ya no se
-     pide ninguna fuente: la app usa la del sistema, que en iPhone es SF Pro y se
-     resuelve sin descargar nada.
-
-     Por que importa mas alla del gusto: esta app se usa desde el celular, con
-     senal mala a veces. Cada peticion que se quita es una que no puede fallar ni
-     retrasar la pantalla. Con SF Pro del sistema, ademas, la letra se ve igual
-     en todos los dispositivos de Apple y no hay destello de fuente al cargar. -->
+<!-- Fuente Outfit (Moderna, animada, geométrica y con personalidad) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <!-- Supabase SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -32,7 +26,7 @@
 <!-- ExcelJS para Reporte con diseño (2 hojas con estilos) -->
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 
-<link rel="stylesheet" href="styles.v2.css?v=20261012-impeccable">
+<link rel="stylesheet" href="styles.v2.css?v=20261012-v3">
 </head>
 
 <body>
@@ -1187,10 +1181,10 @@
      ===================================================== -->
 
 
-<script src="app.v2.js?v=20261012-impeccable"></script>
-<script src="enhance.v2.js?v=20261012-impeccable"></script>
+<script src="app.v2.js?v=20261012-v3"></script>
+<script src="enhance.v2.js?v=20261012-v3"></script>
 <!-- Deslizar para cerrar los modales, estilo app de celular. Solo presentación.
      No hace nada en el computador y no toca ninguna regla de negocio. -->
-<script src="deslizar-modal.js?v=20261012-impeccable"></script>
+<script src="deslizar-modal.js?v=20261012-v3"></script>
 </body>
 </html>
