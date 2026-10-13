@@ -33,7 +33,8 @@ const NAV_ITEMS = [
   { id: 'settlements', label: 'Liquidaciones', icon: DollarSign, section: 'Socios' },
   { id: 'summaries', label: 'Resúmenes', icon: BarChart3, section: 'Datos' },
   { id: 'reports', label: 'Reportes', icon: FileSpreadsheet, section: 'Datos' },
-  { id: 'trash', label: 'Papelera', icon: Trash2, section: 'Datos' }
+  { id: 'trash', label: 'Papelera', icon: Trash2, section: 'Datos' },
+  { id: 'settings', label: 'Configuración', icon: Settings, section: 'Sistema' }
 ];
 
 export default function Sidebar({

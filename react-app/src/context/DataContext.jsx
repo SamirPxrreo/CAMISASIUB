@@ -12,7 +12,8 @@ import {
   hoyColombia,
   triggerConfetti,
   itemsCrudosVenta,
-  fmt
+  fmt,
+  COLORES_DEFECTO_OBJETOS
 } from '../lib/utils';
 
 const DataContext = createContext(null);
@@ -27,6 +28,25 @@ export function DataProvider({ children }) {
   const [usuarios, setUsuarios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Catálogo dinámico y editable de colores de camisas
+  const [colores, setColores] = useState(() => {
+    try {
+      const guardados = localStorage.getItem('camisasiub_colores');
+      if (guardados) {
+        const parsed = JSON.parse(guardados);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return COLORES_DEFECTO_OBJETOS;
+  });
+
+  // Persistir colores en localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('camisasiub_colores', JSON.stringify(colores));
+    } catch {}
+  }, [colores]);
 
   // Consulta real a todas las tablas de Supabase
   const fetchData = useCallback(async () => {
@@ -326,6 +346,146 @@ export function DataProvider({ children }) {
 
   const porCobrarTotal = ventasActivas.reduce((acc, v) => acc + saldoCliente(v), 0);
 
+  // --- MÉTODOS PARA GESTIÓN DE COLORES DE CAMISAS ---
+  const agregarColor = (nuevoColor) => {
+    const nombre = (nuevoColor?.nombre || '').trim();
+    if (!nombre) throw new Error('El nombre del color es obligatorio.');
+    const existe = colores.some(c => c.nombre.toLowerCase() === nombre.toLowerCase());
+    if (existe) throw new Error(`El color "${nombre}" ya existe en el catálogo.`);
+
+    const id = nombre.toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + Date.now().toString(36);
+    const hex = nuevoColor?.hex || '#6366f1';
+    const nuevoObj = { id, nombre, hex };
+    setColores(prev => [...prev, nuevoObj]);
+    return nuevoObj;
+  };
+
+  const actualizarColor = (id, data) => {
+    const nombre = (data?.nombre || '').trim();
+    if (!nombre) throw new Error('El nombre del color es obligatorio.');
+    const existe = colores.some(c => c.id !== id && c.nombre.toLowerCase() === nombre.toLowerCase());
+    if (existe) throw new Error(`Ya existe otro color con el nombre "${nombre}".`);
+
+    setColores(prev => prev.map(c => {
+      if (c.id === id) {
+        return { ...c, nombre, hex: data?.hex || c.hex };
+      }
+      return c;
+    }));
+  };
+
+  const eliminarColor = (id) => {
+    if (colores.length <= 1) {
+      throw new Error('Debe mantenerse al menos un color disponible.');
+    }
+    setColores(prev => prev.filter(c => c.id !== id));
+  };
+
+  const restablecerColores = () => {
+    setColores(COLORES_DEFECTO_OBJETOS);
+  };
+
+  // --- MÉTODOS PARA GESTIÓN DE USUARIOS ---
+  const agregarUsuario = async ({ nombre, correo, rol, password }) => {
+    const nom = (nombre || '').trim();
+    const email = (correo || '').trim().toLowerCase();
+    const r = rol || 'vendedor';
+
+    if (!nom || !email) throw new Error('Nombre y correo son obligatorios.');
+    if (!password || password.length < 6) throw new Error('La contraseña debe tener mínimo 6 caracteres.');
+
+    // 1. Respaldar sesión activa de administrador
+    let adminSession = null;
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      adminSession = sessionData?.session;
+    } catch {}
+
+    // 2. Crear usuario en autenticación de Supabase
+    try {
+      const { error: signUpError } = await supabase.auth.signUp({
+        email,
+        password
+      });
+      if (signUpError) {
+        console.warn('[Supabase Auth signUp warn]', signUpError.message);
+      }
+    } catch (e) {
+      console.warn('[Supabase Auth error]', e);
+    }
+
+    // 3. Restaurar sesión del administrador
+    if (adminSession) {
+      try {
+        await supabase.auth.setSession({
+          access_token: adminSession.access_token,
+          refresh_token: adminSession.refresh_token
+        });
+      } catch {}
+    }
+
+    // 4. Insertar en tabla de usuarios
+    try {
+      const { data: inserted, error: insertError } = await supabase
+        .from('usuarios')
+        .insert({
+          nombre: nom,
+          correo: email,
+          rol: r,
+          vendedor: r === 'vendedor' ? nom : null
+        })
+        .select()
+        .single();
+
+      if (!insertError && inserted) {
+        setUsuarios(prev => [inserted, ...prev]);
+        return inserted;
+      }
+    } catch (e) {
+      console.warn('[Supabase usuarios insert error]', e);
+    }
+
+    // 5. Fallback optimista local
+    const fallbackUser = {
+      id: 'usr-' + Date.now().toString(36),
+      nombre: nom,
+      correo: email,
+      rol: r,
+      created_at: new Date().toISOString()
+    };
+    setUsuarios(prev => [fallbackUser, ...prev]);
+    return fallbackUser;
+  };
+
+  const actualizarUsuario = async (id, { nombre, rol }) => {
+    const nom = (nombre || '').trim();
+    const r = rol || 'vendedor';
+
+    try {
+      await supabase
+        .from('usuarios')
+        .update({ nombre: nom, rol: r })
+        .eq('id', id);
+    } catch (e) {
+      console.warn('[Supabase update usuario warn]', e);
+    }
+
+    setUsuarios(prev => prev.map(u => u.id === id ? { ...u, nombre: nom, rol: r } : u));
+  };
+
+  const eliminarUsuario = async (id) => {
+    try {
+      await supabase
+        .from('usuarios')
+        .delete()
+        .eq('id', id);
+    } catch (e) {
+      console.warn('[Supabase delete usuario warn]', e);
+    }
+
+    setUsuarios(prev => prev.filter(u => u.id !== id));
+  };
+
   return (
     <DataContext.Provider value={{
       ventas,
@@ -334,6 +494,15 @@ export function DataProvider({ children }) {
       compraPedidos,
       liquidaciones,
       usuarios,
+      colores,
+      coloresNombres: colores.map(c => c.nombre),
+      agregarColor,
+      actualizarColor,
+      eliminarColor,
+      restablecerColores,
+      agregarUsuario,
+      actualizarUsuario,
+      eliminarUsuario,
       loading,
       error,
       refreshData: fetchData,

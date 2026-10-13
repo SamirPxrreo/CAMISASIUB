@@ -34,6 +34,7 @@ import {
 } from '../lib/utils';
 import InlineDeleteConfirm from './InlineDeleteConfirm';
 import Pagination from './Pagination';
+import StatusDropdown from './StatusDropdown';
 
 export default function OrdersView({ onOpenNewSale, onEditOrder }) {
   const { ventas, updateItemEstado, deleteVenta } = useData();
@@ -303,26 +304,27 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
                             className="p-2.5 rounded-2xl bg-slate-50/80 border border-slate-200/70 flex items-center justify-between text-xs gap-2"
                           >
                             <div className="min-w-0">
-                              <div className="font-black text-slate-800 text-xs truncate">
-                                {it.modelo === 'Nuevo' ? 'Versión 2' : 'Versión 1'} • {it.color || 'Color'} • Talla {it.talla || 'U'} ({it.genero === 'Mujer' ? 'M' : 'H'})
+                              <div className="font-black text-slate-800 text-xs truncate flex items-center gap-1.5">
+                                <span>{it.genero === 'Hombre' ? 'Hombre' : 'Mujer'} {it.color || 'Color'} Talla {it.talla || 'U'}</span>
+                                {it.modelo === 'Nuevo' && (
+                                  <span className="text-[10px] font-extrabold px-1.5 py-0.2 rounded-md bg-amber-500/15 text-amber-600 border border-amber-500/30 shrink-0">
+                                    v2
+                                  </span>
+                                )}
                               </div>
                               {it.programa && (
-                                <div className="text-[11px] text-indigo-600 font-bold truncate">
+                                <div className="text-[11px] theme-active-text font-bold truncate">
                                   Bordado: {it.programa}
                                 </div>
                               )}
                             </div>
 
-                            {/* Selector individual de estado con colores vivos */}
-                            <select
+                            {/* Selector individual de estado estilizado */}
+                            <StatusDropdown
                               value={estadoItem}
-                              onChange={(e) => updateItemEstado(v.id, idx, e.target.value)}
-                              className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border outline-none cursor-pointer shrink-0 ${getEstadoBadgeStyle(estadoItem)}`}
-                            >
-                              {ORDEN_ESTADOS.map(est => (
-                                <option key={est} value={est}>{est}</option>
-                              ))}
-                            </select>
+                              onChange={(nuevoEstado) => updateItemEstado(v.id, idx, nuevoEstado)}
+                              size="sm"
+                            />
                           </div>
                         );
                       })}

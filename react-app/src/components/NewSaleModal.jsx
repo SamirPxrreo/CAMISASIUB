@@ -32,8 +32,9 @@ import {
 } from '../lib/utils';
 
 export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
-  const { addVenta, updateVenta, ventas } = useData();
+  const { addVenta, updateVenta, ventas, coloresNombres } = useData();
   const { role } = useAuth();
+  const listaColores = (coloresNombres && coloresNombres.length > 0) ? coloresNombres : COLORES_DISPONIBLES;
 
   const [cliente, setCliente] = useState('');
   const [telefono, setTelefono] = useState('');
@@ -621,7 +622,7 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
                           onChange={(e) => updateFila(idx, 'color', e.target.value)}
                           className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold outline-none"
                         >
-                          {COLORES_DISPONIBLES.map(c => (
+                          {listaColores.map(c => (
                             <option key={c} value={c}>{c}</option>
                           ))}
                         </select>

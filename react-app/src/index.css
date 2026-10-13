@@ -283,6 +283,181 @@ html[data-theme="dark"] .border-indigo-200 {
   border-color: rgba(129, 140, 248, 0.25) !important;
 }
 
+/* --- ESTADOS SEMÁNTICOS EN MODO OSCURO (ALTA LUMINISCENCIA & CONTRASTE WCAG AAA) --- */
+/* Pedido: Ámbar cálido luminoso */
+html[data-theme="dark"] .bg-amber-50,
+html[data-theme="dark"] .bg-amber-50\/80 {
+  background-color: rgba(245, 158, 11, 0.16) !important;
+}
+html[data-theme="dark"] .text-amber-900,
+html[data-theme="dark"] .text-amber-950,
+html[data-theme="dark"] .text-amber-800 {
+  color: #fde68a !important;
+}
+html[data-theme="dark"] .border-amber-200,
+html[data-theme="dark"] [class*="border-amber-200"],
+html[data-theme="dark"] .border-amber-300 {
+  border-color: rgba(245, 158, 11, 0.35) !important;
+}
+html[data-theme="dark"] .bg-amber-100 {
+  background-color: rgba(245, 158, 11, 0.22) !important;
+}
+html[data-theme="dark"] .bg-amber-300 {
+  background-color: rgba(245, 158, 11, 0.45) !important;
+  color: #fef3c7 !important;
+}
+
+/* Comprado: Cian eléctrico */
+html[data-theme="dark"] .bg-sky-50,
+html[data-theme="dark"] .bg-sky-50\/80 {
+  background-color: rgba(14, 165, 233, 0.16) !important;
+}
+html[data-theme="dark"] .text-sky-900,
+html[data-theme="dark"] .text-sky-950,
+html[data-theme="dark"] .text-sky-800 {
+  color: #7dd3fc !important;
+}
+html[data-theme="dark"] .border-sky-200,
+html[data-theme="dark"] [class*="border-sky-200"],
+html[data-theme="dark"] .border-sky-300 {
+  border-color: rgba(14, 165, 233, 0.35) !important;
+}
+html[data-theme="dark"] .bg-sky-100 {
+  background-color: rgba(14, 165, 233, 0.22) !important;
+}
+html[data-theme="dark"] .bg-sky-300 {
+  background-color: rgba(14, 165, 233, 0.45) !important;
+  color: #e0f2fe !important;
+}
+
+/* Bordando: Violeta neón suave */
+html[data-theme="dark"] .bg-purple-50,
+html[data-theme="dark"] .bg-purple-50\/80 {
+  background-color: rgba(168, 85, 247, 0.16) !important;
+}
+html[data-theme="dark"] .text-purple-900,
+html[data-theme="dark"] .text-purple-950,
+html[data-theme="dark"] .text-purple-800 {
+  color: #d8b4fe !important;
+}
+html[data-theme="dark"] .border-purple-200,
+html[data-theme="dark"] [class*="border-purple-200"],
+html[data-theme="dark"] .border-purple-300 {
+  border-color: rgba(168, 85, 247, 0.35) !important;
+}
+html[data-theme="dark"] .bg-purple-100 {
+  background-color: rgba(168, 85, 247, 0.22) !important;
+}
+html[data-theme="dark"] .bg-purple-300 {
+  background-color: rgba(168, 85, 247, 0.45) !important;
+  color: #f3e8ff !important;
+}
+
+/* Listo para entrega: Esmeralda brillante */
+html[data-theme="dark"] .bg-emerald-50,
+html[data-theme="dark"] .bg-emerald-50\/80 {
+  background-color: rgba(16, 185, 129, 0.16) !important;
+}
+html[data-theme="dark"] .text-emerald-900,
+html[data-theme="dark"] .text-emerald-950,
+html[data-theme="dark"] .text-emerald-800 {
+  color: #6ee7b7 !important;
+}
+html[data-theme="dark"] .border-emerald-200,
+html[data-theme="dark"] [class*="border-emerald-200"],
+html[data-theme="dark"] .border-emerald-300 {
+  border-color: rgba(16, 185, 129, 0.35) !important;
+}
+html[data-theme="dark"] .bg-emerald-100 {
+  background-color: rgba(16, 185, 129, 0.22) !important;
+}
+html[data-theme="dark"] .bg-emerald-300 {
+  background-color: rgba(16, 185, 129, 0.45) !important;
+  color: #ecfdf5 !important;
+}
+
+/* Entregado: Azul cobalto pastel */
+html[data-theme="dark"] .bg-blue-50,
+html[data-theme="dark"] .bg-blue-50\/80 {
+  background-color: rgba(59, 130, 246, 0.16) !important;
+}
+html[data-theme="dark"] .text-blue-900,
+html[data-theme="dark"] .text-blue-950,
+html[data-theme="dark"] .text-blue-800 {
+  color: #93c5fd !important;
+}
+html[data-theme="dark"] .border-blue-200,
+html[data-theme="dark"] [class*="border-blue-200"],
+html[data-theme="dark"] .border-blue-300 {
+  border-color: rgba(59, 130, 246, 0.35) !important;
+}
+html[data-theme="dark"] .bg-blue-100 {
+  background-color: rgba(59, 130, 246, 0.22) !important;
+}
+html[data-theme="dark"] .bg-blue-300 {
+  background-color: rgba(59, 130, 246, 0.45) !important;
+  color: #eff6ff !important;
+}
+
+/* Liquidado: Teal menta suave */
+html[data-theme="dark"] .bg-teal-50,
+html[data-theme="dark"] .bg-teal-50\/80 {
+  background-color: rgba(20, 184, 166, 0.16) !important;
+}
+html[data-theme="dark"] .text-teal-900,
+html[data-theme="dark"] .text-teal-950,
+html[data-theme="dark"] .text-teal-800 {
+  color: #5eead4 !important;
+}
+html[data-theme="dark"] .border-teal-200,
+html[data-theme="dark"] [class*="border-teal-200"],
+html[data-theme="dark"] .border-teal-300 {
+  border-color: rgba(20, 184, 166, 0.35) !important;
+}
+html[data-theme="dark"] .bg-teal-100 {
+  background-color: rgba(20, 184, 166, 0.22) !important;
+}
+html[data-theme="dark"] .bg-teal-300 {
+  background-color: rgba(20, 184, 166, 0.45) !important;
+  color: #f0fdfa !important;
+}
+
+/* Mixto: Rosa coral */
+html[data-theme="dark"] .bg-rose-50,
+html[data-theme="dark"] .bg-rose-50\/80 {
+  background-color: rgba(244, 63, 94, 0.16) !important;
+}
+html[data-theme="dark"] .text-rose-900,
+html[data-theme="dark"] .text-rose-950 {
+  color: #fda4af !important;
+}
+html[data-theme="dark"] .border-rose-200,
+html[data-theme="dark"] [class*="border-rose-200"],
+html[data-theme="dark"] .border-rose-300 {
+  border-color: rgba(244, 63, 94, 0.35) !important;
+}
+
+/* Inputs, selects y controles de formulario en modo oscuro */
+html[data-theme="dark"] input:not(.lbi-field),
+html[data-theme="dark"] select,
+html[data-theme="dark"] textarea {
+  background-color: #0d1527 !important;
+  color: #f8fafc !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+}
+html[data-theme="dark"] input:not(.lbi-field):focus,
+html[data-theme="dark"] select:focus,
+html[data-theme="dark"] textarea:focus {
+  border-color: #818cf8 !important;
+  --tw-ring-color: rgba(129, 140, 248, 0.3) !important;
+}
+
+/* Modales y superficies flotantes con sombra profunda */
+html[data-theme="dark"] .shadow-2xl,
+html[data-theme="dark"] .shadow-xl {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.4) !important;
+}
+
 /* Variables de tema dinámico */
 :root,
 html[data-theme="pastel"] {

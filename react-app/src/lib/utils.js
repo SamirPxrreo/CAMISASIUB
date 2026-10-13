@@ -9,17 +9,19 @@ export const VERSIONES_DISPONIBLES = [
 
 export const GENEROS_DISPONIBLES = ['Hombre', 'Mujer'];
 
-export const COLORES_DISPONIBLES = [
-  'Negro',
-  'Blanco',
-  'Gris',
-  'Turquí',
-  'Azul turquesa',
-  'Camel',
-  'Vinotinto',
-  'Palo de Rosa',
-  'Mostaza'
+export const COLORES_DEFECTO_OBJETOS = [
+  { id: 'negro', nombre: 'Negro', hex: '#18181b' },
+  { id: 'blanco', nombre: 'Blanco', hex: '#ffffff' },
+  { id: 'gris', nombre: 'Gris', hex: '#94a3b8' },
+  { id: 'turqui', nombre: 'Turquí', hex: '#1e3a8a' },
+  { id: 'azul-turquesa', nombre: 'Azul turquesa', hex: '#06b6d4' },
+  { id: 'camel', nombre: 'Camel', hex: '#c29b62' },
+  { id: 'vinotinto', nombre: 'Vinotinto', hex: '#881337' },
+  { id: 'palo-de-rosa', nombre: 'Palo de Rosa', hex: '#f472b6' },
+  { id: 'mostaza', nombre: 'Mostaza', hex: '#eab308' }
 ];
+
+export const COLORES_DISPONIBLES = COLORES_DEFECTO_OBJETOS.map(c => c.nombre);
 
 export const TALLAS_DISPONIBLES = ['S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'];
 
@@ -257,14 +259,20 @@ export function calcularDeudaSocios(ventas, liquidaciones) {
   };
 }
 
-// Plantilla exacta de mensaje de recordatorio para WhatsApp
+// Plantilla de mensaje de recordatorio para el cliente por WhatsApp
 export function generarMensajeWhatsApp(v) {
   const cant = Number(v.cantidad) || 1;
   const saldo = saldoCliente(v);
   const crudos = itemsCrudosVenta(v) || [];
   const detalle = crudos.length
-    ? crudos.map(it => `• ${(it.modelo === 'Nuevo' ? 'Versión 2' : 'Versión 1')} ${it.genero || ''} ${it.color || ''} Talla ${it.talla || ''}${it.programa ? ' (' + it.programa + ')' : ''}`).join('\n     ')
-    : `• ${cant} camisa(s)`;
+    ? crudos.map(it => {
+        const genero = it.genero === 'Hombre' ? 'Hombre' : 'Mujer';
+        const color = it.color || 'Color';
+        const talla = it.talla || 'U';
+        const bordado = it.programa ? ` (Bordado: ${it.programa})` : '';
+        return `• Polo ${genero} ${color} Talla ${talla}${bordado}`;
+      }).join('\n     ')
+    : `• ${cant} camisa(s) Tipo Polo`;
 
   return `👕 *Recordatorio Camisas IUB* 👕\n\n👤 *Cliente:* ${v.cliente_nombre}\n📱 *Teléfono:* ${v.cliente_telefono || '-'}\n📋 *Detalle:*\n     ${detalle}\n📦 *Cantidad:* ${cant}\n💰 *Saldo Pendiente:* ${fmt(saldo)}\n📅 *Fecha Entrega:* ${v.fecha_entrega ? formatearFechaHumana(v.fecha_entrega) : 'Por definir'}\n📍 *Lugar:* ${v.lugar_entrega || 'Sin definir'}`;
 }
@@ -277,7 +285,13 @@ export function generarTextoResumenPedido(v) {
   const abono = abonoClienteTotal(v);
   const crudos = itemsCrudosVenta(v) || [];
   const detallePrendas = crudos.length
-    ? crudos.map(it => `  • ${(it.modelo === 'Nuevo' ? 'Versión 2' : 'Versión 1')} Polo ${it.color || 'Color'} - Talla ${it.talla || 'U'} (${it.genero === 'Mujer' ? 'Mujer' : 'Hombre'})${it.programa ? ' | Bordado: ' + it.programa : ''}`).join('\n')
+    ? crudos.map(it => {
+        const genero = it.genero === 'Hombre' ? 'Hombre' : 'Mujer';
+        const color = it.color || 'Color';
+        const talla = it.talla || 'U';
+        const bordado = it.programa ? ` | Bordado: ${it.programa}` : '';
+        return `  • Polo ${genero} ${color} Talla ${talla}${bordado}`;
+      }).join('\n')
     : `  • ${cant} camisa(s) Tipo Polo`;
 
   return `👕 *PEDIDO CAMISAS IUB*\n━━━━━━━━━━━━━━━━━━━━━━\n👤 *Cliente:* ${v.cliente_nombre || 'Cliente'}\n📱 *Teléfono:* ${v.cliente_telefono || v.telefono || 'Sin teléfono'}\n🏷️ *Vendedor:* ${v.vendedor || 'Samir'}\n🏷️ *Estado:* ${v.estado || 'Pedido'}\n\n📦 *Prendas (${cant}):*\n${detallePrendas}\n\n💰 *Total:* ${fmt(total)}\n💵 *Abono:* ${fmt(abono)}\n💳 *Saldo Pendiente:* ${saldo > 0 ? fmt(saldo) : 'Pagado ($0)'}\n\n📅 *Fecha Entrega:* ${v.fecha_entrega ? formatearFechaHumana(v.fecha_entrega) : 'Por definir'}\n📍 *Lugar Entrega:* ${v.lugar_entrega || 'Sin definir'}${v.nota ? `\n📝 *Nota:* "${v.nota}"` : ''}`;

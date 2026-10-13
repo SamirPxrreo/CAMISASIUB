@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Menu, RotateCw, Plus, User, ShieldCheck, Palette } from 'lucide-react';
+import { Menu, RotateCw, Plus, User, ShieldCheck, Palette, Settings } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 
-export default function TopBar({ onOpenMobileMenu, onOpenNewSale, onOpenThemeModal }) {
+export default function TopBar({ onOpenMobileMenu, onOpenNewSale, onOpenThemeModal, onNavigate }) {
   const { role } = useAuth();
   const { refreshData } = useData();
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -54,6 +54,17 @@ export default function TopBar({ onOpenMobileMenu, onOpenNewSale, onOpenThemeMod
           title="Personalizar tema de colores"
         >
           <Palette className="w-4 h-4" />
+        </motion.button>
+
+        {/* Botón Configuración */}
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => onNavigate && onNavigate('settings')}
+          className="p-2.5 rounded-2xl text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 border border-slate-200/80 transition-colors cursor-pointer"
+          title="Configuración del sistema (Colores y Usuarios)"
+        >
+          <Settings className="w-4 h-4" />
         </motion.button>
 
         {/* Botón Refrescar con animación de rotación */}

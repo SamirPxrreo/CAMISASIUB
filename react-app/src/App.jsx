@@ -17,6 +17,7 @@ import SettlementsView from './components/SettlementsView';
 import SummariesView from './components/SummariesView';
 import ReportsView from './components/ReportsView';
 import TrashView from './components/TrashView';
+import SettingsView from './components/SettingsView';
 import NewSaleModal from './components/NewSaleModal';
 import ThemeModal from './components/ThemeModal';
 import LoginView from './components/LoginView';
@@ -79,6 +80,7 @@ function AppContent() {
           onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
           onOpenNewSale={handleOpenNewSale}
           onOpenThemeModal={() => setIsThemeModalOpen(true)}
+          onNavigate={setCurrentSection}
         />
 
         {/* Vistas Dinámicas con Animación de Entrada */}
@@ -139,6 +141,10 @@ function AppContent() {
 
               {currentSection === 'trash' && (
                 <TrashView />
+              )}
+
+              {currentSection === 'settings' && (
+                <SettingsView />
               )}
             </motion.div>
           </AnimatePresence>
