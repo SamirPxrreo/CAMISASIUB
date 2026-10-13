@@ -173,30 +173,28 @@ export function DataProvider({ children }) {
   // Agregar una venta real en Supabase
   const addVenta = async (nuevaVenta) => {
     try {
-      const payload = {
-        ...nuevaVenta,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-      if (!payload.cliente_telefono && payload.telefono) {
-        payload.cliente_telefono = payload.telefono;
-      }
+      const payload = { ...nuevaVenta };
+      delete payload.id;
+      delete payload.created_at;
+      delete payload.updated_at;
       delete payload.telefono;
+      if (!payload.cliente_telefono && nuevaVenta.telefono) {
+        payload.cliente_telefono = nuevaVenta.telefono;
+      }
 
-      let { data, error } = await supabase.from('ventas').insert([payload]).select().single();
-      if (error && String(error.message).toLowerCase().match(/updated_at|comprado_at/)) {
+      let res = await supabase.from('ventas').insert([payload]);
+      if (res.error && String(res.error.message).toLowerCase().match(/updated_at|comprado_at|created_at/)) {
         delete payload.updated_at;
         delete payload.comprado_at;
-        const retry = await supabase.from('ventas').insert([payload]).select().single();
-        data = retry.data;
-        error = retry.error;
+        delete payload.created_at;
+        res = await supabase.from('ventas').insert([payload]);
       }
-      if (error) throw error;
+      if (res.error) throw res.error;
       
       await fetchData();
       avisarCambioRealtime('venta', `registró un pedido nuevo de ${nuevaVenta.cliente_nombre || ''}`);
       triggerConfetti();
-      return data;
+      return true;
     } catch (err) {
       console.error("[Supabase] Error al registrar venta:", err);
       throw err;
@@ -206,34 +204,29 @@ export function DataProvider({ children }) {
   // Actualizar una venta existente
   const updateVenta = async (id, cambios) => {
     try {
-      const payload = {
-        ...cambios,
-        updated_at: new Date().toISOString()
-      };
-      if (!payload.cliente_telefono && payload.telefono) {
-        payload.cliente_telefono = payload.telefono;
-      }
+      const payload = { ...cambios };
+      delete payload.id;
+      delete payload.created_at;
       delete payload.telefono;
+      if (!payload.cliente_telefono && cambios.telefono) {
+        payload.cliente_telefono = cambios.telefono;
+      }
 
-      let { data, error } = await supabase
+      let res = await supabase
         .from('ventas')
         .update(payload)
-        .eq('id', id)
-        .select()
-        .single();
+        .eq('id', id);
 
-      if (error && String(error.message).toLowerCase().match(/updated_at|comprado_at/)) {
+      if (res.error && String(res.error.message).toLowerCase().match(/updated_at|comprado_at/)) {
         delete payload.updated_at;
         delete payload.comprado_at;
-        const retry = await supabase.from('ventas').update(payload).eq('id', id).select().single();
-        data = retry.data;
-        error = retry.error;
+        res = await supabase.from('ventas').update(payload).eq('id', id);
       }
-      if (error) throw error;
+      if (res.error) throw res.error;
 
-      setVentas(prev => prev.map(v => v.id === id ? data : v));
+      await fetchData();
       avisarCambioRealtime('venta', `modificó un pedido.`);
-      return data;
+      return true;
     } catch (err) {
       console.error("[Supabase] Error al actualizar venta:", err);
       throw err;

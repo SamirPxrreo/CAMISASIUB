@@ -14,6 +14,8 @@ Sistema visual y componentes para la aplicación web interna de **Camisas IUB**.
 2. **Diseño Móvil Primero (Thumb-First & Sticky Navigation)**:
    - Barra de navegación lateral fija (`lg:sticky lg:top-0 lg:h-screen`) con área de contenido desplazable independiente (`overflow-y-auto`), evitando que el pie del sidebar se desplace hacia abajo al navegar por tablas largas.
    - Paginación dinámica por hojas numeradas (15 elementos por página) en Pedidos, Cuentas, Historial, Compras y Liquidaciones.
+   - Navegación URL mediante hash (`#dashboard`, `#orders`, `#calendar`, etc.) para compartir enlaces directos y sincronización con el historial del navegador.
+   - Experiencia móvil PWA (`manifest.json` y viewport-fit) lista para "Agregar a la pantalla de inicio" como app instalada.
    - Botones táctiles amplios y cómodos para uso en ruta.
 
 3. **Microinteracciones y Animaciones con Propósito**:

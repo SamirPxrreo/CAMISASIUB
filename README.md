@@ -35,6 +35,8 @@ Permite a los socios (**Samir y Valentina**) y su equipo de vendedores controlar
 | 📄 **Paginación Inteligente** | Navegación por hojas numeradas (15 elementos por página) en todas las secciones extensas, con barra lateral fija que nunca se desplaza hacia abajo. |
 | 🗑️ **Papelera Segura** | Borrado y restauración de pedidos con confirmación en línea y mecha fusible de seguridad (*Bencho Confirm*). |
 | 📈 **Reportes & Resúmenes** | Estadísticas por período, métricas de vendedor y exportación directa a Excel con formato. |
+| 🔗 **Navegación por Enlaces (#)** | Enrutamiento limpio mediante URL hash (`#dashboard`, `#orders`, `#calendar`, `#cuentas`, `#history`, `#purchases`, `#settlements`, `#summaries`, `#reports`, `#trash`, `#settings`) permitiendo compartir enlaces directos a cualquier pantalla y navegar con los botones atrás/adelante del navegador o celular. |
+| 🛡️ **Seguridad y Roles Estrictos** | **Administrador**: acceso total a Configuración, gestión de usuarios, catálogo dinámico de colores, visualización/filtro de todos los pedidos y vaciado permanente de papelera.<br>**Vendedor**: interfaz enfocada exclusivamente en sus propios pedidos y clientes, con selector de vendedor bloqueado a su cuenta y sin acceso a configuraciones críticas. |
 
 ---
 
@@ -104,31 +106,48 @@ Los archivos optimizados se generan en `react-app/dist/`.
 
 ---
 
-## 5. Estrategia de Despliegue en GitHub Pages (Ciclo de 3 Versiones)
+## 5. Proceso de Despliegue en GitHub Pages (Ciclo de 3 Versiones)
 
-El repositorio mantiene estrictamente una estrategia de **3 Versiones de Despliegue** para garantizar trazabilidad, alta disponibilidad y capacidad de reversión instantánea:
+GitHub Pages sirve directamente la raíz de la rama `main`. Para publicar una nueva versión:
+
+```bash
+# 1. Compilar la aplicación React optimizada
+cd react-app
+npm run build
+cd ..
+
+# 2. Sincronizar el build con la raíz del repositorio
+# (Copiar los archivos generados en react-app/dist/ a la raíz)
+
+# 3. Subir los cambios a GitHub
+git add .
+git commit -m "Deploy: nueva versión con navegación hash y roles admin"
+git push origin main
+```
+
+### El Ciclo de 3 Versiones:
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
-│                         CICLO DE 3 DESPLIEGUES                           │
+│                         CICLO DE 3 VERSIONES                             │
 ├──────────────────────────────────────────────────────────────────────────┤
-│  1. VERSIÓN FIJA (ANCLA)     : Commit 6a8ee5f (Versión Original)        │
-│     * Congelada permanentemente como punto de anclaje intocable.         │
-│     * No se elimina con nuevos pushes.                                   │
+│  1. VERSIÓN FIJA (ANCLA)     : Base original estable                     │
+│     * Congelada permanentemente como punto de anclaje de referencia.     │
+│     * No se altera con nuevos pushes.                                    │
 ├──────────────────────────────────────────────────────────────────────────┤
-│  2. VERSIÓN ANTERIOR         : Commit 6a8ee5f (Rollback de 1 paso)       │
-│     * En este despliegue coincide con la fija.                           │
-│     * En el PRÓXIMO despliegue, pasará a ser la versión que subimos hoy. │
+│  2. VERSIÓN ANTERIOR         : Commit 5238ee1 (Despliegue anterior)      │
+│     * Sirve como punto de reversión inmediata si fuera necesario.        │
+│     * En el próximo despliegue, pasará a ser la versión que subimos hoy. │
 ├──────────────────────────────────────────────────────────────────────────┤
-│  3. VERSIÓN NUEVA (VIVA)     : React 19 + Vite + Framer Motion (Actual)  │
-│     * La versión moderna en producción activa.                           │
+│  3. VERSIÓN NUEVA (PRODUCCIÓN): React 19 + URL Hash + Roles Admin        │
+│     * La versión activa en https://samirpxrreo.github.io/CAMISASIUB/     │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Regla para Despliegues Futuros:
 Cuando se suba un nuevo deployment en el futuro:
-- **La Versión Fija**: Sigue siendo el ancla `6a8ee5f`.
-- **La Versión Anterior**: Pasa a ser la versión moderna que estamos subiendo hoy.
+- **La Versión Fija**: Se mantiene intacta como ancla original.
+- **La Versión Anterior**: Pasa a ser la versión que subimos hoy.
 - **La Versión Nueva**: Será la nueva versión recién compilada.
 
 ---

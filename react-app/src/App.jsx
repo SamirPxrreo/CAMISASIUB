@@ -23,19 +23,64 @@ import ThemeModal from './components/ThemeModal';
 import LoginView from './components/LoginView';
 import ErrorBoundary from './components/ErrorBoundary';
 
+const SECCIONES_VALIDAS = [
+  'dashboard',
+  'orders',
+  'calendar',
+  'cuentas',
+  'history',
+  'purchases',
+  'settlements',
+  'summaries',
+  'reports',
+  'trash',
+  'settings'
+];
+
+function obtenerSeccionInicial() {
+  if (typeof window === 'undefined') return 'dashboard';
+  const h = window.location.hash.replace('#', '').trim().toLowerCase();
+  return SECCIONES_VALIDAS.includes(h) ? h : 'dashboard';
+}
+
 function AppContent() {
   const { user, loading, role } = useAuth();
-  const [currentSection, setCurrentSection] = useState('dashboard');
+  const [currentSection, setCurrentSection] = useState(obtenerSeccionInicial);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isNewSaleOpen, setIsNewSaleOpen] = useState(false);
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState(null);
 
+  // Sincronizar hash en la URL cuando cambia la sección
+  useEffect(() => {
+    if (user && window.location.hash !== `#${currentSection}`) {
+      window.location.hash = currentSection;
+    }
+  }, [currentSection, user]);
+
+  // Escuchar evento hashchange para botones atrás/adelante del navegador
+  useEffect(() => {
+    const onHashChange = () => {
+      const h = window.location.hash.replace('#', '').trim().toLowerCase();
+      if (SECCIONES_VALIDAS.includes(h)) {
+        if (h === 'settings' && role?.role !== 'admin') {
+          setCurrentSection('dashboard');
+          window.location.hash = 'dashboard';
+        } else {
+          setCurrentSection(h);
+        }
+      }
+    };
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, [role]);
+
   // Proteger sección de configuración para que solo el admin pueda ingresar
   useEffect(() => {
     if (currentSection === 'settings' && role?.role !== 'admin') {
       setCurrentSection('dashboard');
+      window.location.hash = 'dashboard';
     }
   }, [currentSection, role]);
 

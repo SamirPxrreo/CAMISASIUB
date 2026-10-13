@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useData } from '../context/DataContext';
+import { useAuth } from '../context/AuthContext';
 import {
   fmt,
   formatearFechaHumana,
@@ -20,6 +21,8 @@ import Pagination from './Pagination';
 
 export default function TrashView() {
   const { refreshData } = useData();
+  const { role } = useAuth();
+  const esAdmin = role?.role === 'admin';
   const [eliminados, setEliminados] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [mensaje, setMensaje] = useState('');
@@ -123,7 +126,7 @@ export default function TrashView() {
           </p>
         </div>
 
-        {eliminados.length > 0 && (
+        {esAdmin && eliminados.length > 0 && (
           <button
             onClick={handleVaciarPapelera}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs transition-colors cursor-pointer"
@@ -185,14 +188,16 @@ export default function TrashView() {
                   <span>Restaurar</span>
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => handleEliminarDefinitivo(v.id)}
-                  className="p-2 rounded-xl hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
-                  title="Borrar definitivamente"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
+                {esAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => handleEliminarDefinitivo(v.id)}
+                    className="p-2 rounded-xl hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+                    title="Borrar definitivamente (Solo Administrador)"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
             </motion.div>
           ))}

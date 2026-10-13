@@ -38,7 +38,8 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
 
   const [cliente, setCliente] = useState('');
   const [telefono, setTelefono] = useState('');
-  const [vendedor, setVendedor] = useState(role?.nombre === 'Valentina' ? 'Valentina' : 'Samir');
+  const miNombreVendedor = role?.vendedor || role?.nombre || 'Samir';
+  const [vendedor, setVendedor] = useState(miNombreVendedor);
   const [lugarEntrega, setLugarEntrega] = useState('Soledad');
   const [lugarOtro, setLugarOtro] = useState('');
   const [fecha, setFecha] = useState(hoyColombia());
@@ -119,7 +120,7 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
       // Modo Nuevo
       setCliente('');
       setTelefono('');
-      setVendedor(role?.nombre === 'Valentina' ? 'Valentina' : 'Samir');
+      setVendedor(miNombreVendedor);
       setLugarEntrega('Soledad');
       setLugarOtro('');
       setFecha(hoyColombia());
@@ -285,10 +286,16 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
         ? estados[0]
         : estados.slice().sort((a, b) => ORDEN_ESTADOS.indexOf(a) - ORDEN_ESTADOS.indexOf(b))[0] || 'Pedido';
 
+      const primerItem = itemsIndividuales[0] || {};
       const payload = {
         cliente_nombre: cliente.trim(),
         cliente_telefono: telefono.trim(),
-        vendedor: vendedor,
+        cliente_programa: primerItem.programa || '',
+        modelo: primerItem.modelo === 'Nuevo' ? 'Nuevo' : 'Viejo',
+        genero: primerItem.genero || 'Hombre',
+        color: itemsIndividuales.map(i => i.color).filter(Boolean).join(', '),
+        talla: itemsIndividuales.map(i => i.talla).filter(Boolean).join(', '),
+        vendedor: role?.role === 'admin' ? vendedor : miNombreVendedor,
         lugar_entrega: lugarEntrega === 'Otro' ? lugarOtro.trim() || 'Otro' : lugarEntrega,
         fecha: fecha,
         fecha_entrega: fechaEntregaPendiente ? null : (fechaEntrega || null),
@@ -423,11 +430,14 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-slate-700 block mb-1">Vendedor asignado</label>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1">
+                    Vendedor asignado {role?.role !== 'admin' && <span className="text-[10px] text-slate-400 font-normal">(Fijo a tu cuenta)</span>}
+                  </label>
                   <select
                     value={vendedor}
                     onChange={(e) => setVendedor(e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:bg-white text-sm outline-none transition-all font-medium"
+                    disabled={role?.role !== 'admin'}
+                    className={`w-full px-3 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:bg-white text-sm outline-none transition-all font-medium ${role?.role !== 'admin' ? 'opacity-75 cursor-not-allowed bg-slate-100' : ''}`}
                   >
                     <option value="Samir">Samir</option>
                     <option value="Valentina">Valentina</option>

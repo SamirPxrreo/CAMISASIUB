@@ -35,9 +35,14 @@ import {
 import InlineDeleteConfirm from './InlineDeleteConfirm';
 import Pagination from './Pagination';
 import StatusDropdown from './StatusDropdown';
+import { useAuth } from '../context/AuthContext';
 
 export default function OrdersView({ onOpenNewSale, onEditOrder }) {
   const { ventas, updateItemEstado, deleteVenta } = useData();
+  const { role } = useAuth();
+  const esAdmin = role?.role === 'admin';
+  const miNombreVendedor = role?.vendedor || role?.nombre;
+
   const [busqueda, setBusqueda] = useState('');
   const [estadoFiltro, setEstadoFiltro] = useState('Todos');
   const [vendedorFiltro, setVendedorFiltro] = useState('Todos');
@@ -79,8 +84,10 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
     return ventas.filter((v) => {
       if (v.finalizado) return false;
       
-      // Filtro de vendedor
-      if (vendedorFiltro !== 'Todos') {
+      // Si es vendedor, solo ve sus propios pedidos
+      if (!esAdmin && miNombreVendedor) {
+        if (v.vendedor !== miNombreVendedor) return false;
+      } else if (vendedorFiltro !== 'Todos') {
         if (v.vendedor !== vendedorFiltro) return false;
       }
 
@@ -157,17 +164,19 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
           </p>
         </div>
 
-        {/* Buscador y filtro de vendedor */}
+        {/* Buscador y filtro de vendedor (solo admin) */}
         <div className="flex items-center gap-2 w-full sm:w-auto">
-          <select
-            value={vendedorFiltro}
-            onChange={(e) => setVendedorFiltro(e.target.value)}
-            className="px-3 py-2.5 rounded-2xl bg-white border border-slate-200/80 text-xs font-bold text-slate-700 shadow-xs outline-none cursor-pointer"
-          >
-            <option value="Todos">Todos los socios</option>
-            <option value="Samir">Samir</option>
-            <option value="Valentina">Valentina</option>
-          </select>
+          {esAdmin && (
+            <select
+              value={vendedorFiltro}
+              onChange={(e) => setVendedorFiltro(e.target.value)}
+              className="px-3 py-2.5 rounded-2xl bg-white border border-slate-200/80 text-xs font-bold text-slate-700 shadow-xs outline-none cursor-pointer"
+            >
+              <option value="Todos">Todos los socios</option>
+              <option value="Samir">Samir</option>
+              <option value="Valentina">Valentina</option>
+            </select>
+          )}
 
           <div className="relative flex-1 sm:w-64">
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />

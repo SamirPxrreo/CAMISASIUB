@@ -4,7 +4,8 @@ import { supabase } from '../lib/supabase';
 const USER_ROLES_DEFAULT = {
   "admin@gmail.com": { nombre: "Administrador", role: "admin", vendedor: null },
   "samir@gmail.com": { nombre: "Samir", role: "vendedor", vendedor: "Samir" },
-  "val@gmail.com":   { nombre: "Valentina", role: "vendedor", vendedor: "Valentina" }
+  "val@gmail.com":   { nombre: "Valentina", role: "vendedor", vendedor: "Valentina" },
+  "valentina@gmail.com": { nombre: "Valentina", role: "vendedor", vendedor: "Valentina" }
 };
 
 const AuthContext = createContext(null);
@@ -15,15 +16,25 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let timer = setTimeout(() => {
+      setLoading(false);
+    }, 1500);
+
     // Verificar sesión activa
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        handleUserSession(session.user);
-      } else {
-        // En modo dev o si no hay sesión, permitir login rápido o estado inicial
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        clearTimeout(timer);
+        if (session?.user) {
+          handleUserSession(session.user);
+        } else {
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        clearTimeout(timer);
+        console.warn("Session check error:", err);
         setLoading(false);
-      }
-    });
+      });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
@@ -35,7 +46,10 @@ export function AuthProvider({ children }) {
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      clearTimeout(timer);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleUserSession = async (authUser) => {
