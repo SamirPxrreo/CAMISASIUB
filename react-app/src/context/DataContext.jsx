@@ -11,100 +11,218 @@ import {
   diasTranscurridos,
   hoyColombia,
   triggerConfetti,
-  itemsCrudosVenta
+  itemsCrudosVenta,
+  fmt
 } from '../lib/utils';
 
 const DataContext = createContext(null);
 
 export function DataProvider({ children }) {
-  const { role } = useAuth();
+  const { user, role } = useAuth();
   const [ventas, setVentas] = useState([]);
   const [compras, setCompras] = useState([]);
+  const [compraAportes, setCompraAportes] = useState([]);
+  const [compraPedidos, setCompraPedidos] = useState([]);
   const [liquidaciones, setLiquidaciones] = useState([]);
+  const [usuarios, setUsuarios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Consulta real a todas las tablas de Supabase
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      // 1. Cargar ventas
+      // 1. Cargar ventas reales
       const { data: vData, error: vErr } = await supabase
         .from('ventas')
         .select('*')
-        .order('id', { ascending: false });
+        .order('fecha', { ascending: false });
 
-      if (vErr) throw vErr;
-      setVentas(vData || []);
+      if (vErr) {
+        console.error("[Supabase] Error cargando ventas:", vErr);
+        setError(vErr.message);
+      } else {
+        // Filtrar borrados lógicos como hace la app real
+        const filtradas = (vData || []).filter(v => !v.eliminado_at);
+        setVentas(filtradas);
+      }
 
-      // 2. Cargar compras
+      // 2. Cargar compras al proveedor (tabla: compras_proveedor)
       try {
-        const { data: cData } = await supabase.from('compras').select('*').order('id', { ascending: false });
-        if (cData) setCompras(cData);
-      } catch {}
+        const { data: cData, error: cErr } = await supabase
+          .from('compras_proveedor')
+          .select('*')
+          .order('fecha', { ascending: false });
+        if (!cErr && cData) setCompras(cData);
+      } catch (e) {
+        console.warn("[Supabase] compras_proveedor:", e);
+      }
 
-      // 3. Cargar liquidaciones
+      // 3. Cargar aportes de compras
       try {
-        const { data: lData } = await supabase.from('liquidaciones').select('*').order('id', { ascending: false });
-        if (lData) setLiquidaciones(lData);
-      } catch {}
+        const { data: caData } = await supabase.from('compra_aportes').select('*');
+        if (caData) setCompraAportes(caData);
+      } catch (e) {
+        console.warn("[Supabase] compra_aportes:", e);
+      }
+
+      // 4. Cargar pedidos vinculados a compras
+      try {
+        const { data: cpData } = await supabase.from('compra_pedidos').select('*');
+        if (cpData) setCompraPedidos(cpData);
+      } catch (e) {
+        console.warn("[Supabase] compra_pedidos:", e);
+      }
+
+      // 5. Cargar liquidaciones entre socios
+      try {
+        const { data: lData, error: lErr } = await supabase
+          .from('liquidaciones')
+          .select('*')
+          .order('fecha', { ascending: false })
+          .order('hora', { ascending: false });
+        if (!lErr && lData) setLiquidaciones(lData);
+      } catch (e) {
+        console.warn("[Supabase] liquidaciones:", e);
+      }
+
+      // 6. Cargar usuarios del sistema
+      try {
+        const { data: uData } = await supabase.from('usuarios').select('*');
+        if (uData) setUsuarios(uData);
+      } catch (e) {
+        console.warn("[Supabase] usuarios:", e);
+      }
 
     } catch (err) {
-      console.error("Error al cargar datos de Supabase:", err);
+      console.error("[Supabase] Error general de carga:", err);
       setError(err.message);
     } finally {
       setLoading(false);
     }
   }, []);
 
+  // Cargar datos al montar y cada vez que cambia el usuario autenticado
   useEffect(() => {
     fetchData();
+  }, [user, fetchData]);
+
+  // Suscripción Realtime para reflejar cambios en vivo entre dispositivos
+  useEffect(() => {
+    // Canal broadcast para avisos de cambios
+    const canalAvisos = supabase.channel('avisos-camisas-iub', {
+      config: { broadcast: { self: false } }
+    })
+      .on('broadcast', { event: 'cambio' }, () => {
+        fetchData();
+      })
+      .subscribe();
+
+    // Canal postgres_changes para cambios directos en BD
+    const dbChannel = supabase.channel('schema-db-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'ventas' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'compras_proveedor' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'liquidaciones' }, () => fetchData())
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(canalAvisos);
+      supabase.removeChannel(dbChannel);
+    };
   }, [fetchData]);
 
-  // Agregar una venta
+  // Notificar cambio por Realtime
+  const avisarCambioRealtime = (tipo, texto) => {
+    try {
+      const ch = supabase.channel('avisos-camisas-iub');
+      ch.send({
+        type: 'broadcast',
+        event: 'cambio',
+        payload: {
+          tipo,
+          texto,
+          autor: user?.id || null,
+          autorEmail: user?.email || null,
+          fecha: new Date().toISOString()
+        }
+      });
+    } catch {}
+  };
+
+  // Agregar una venta real en Supabase
   const addVenta = async (nuevaVenta) => {
     try {
       const payload = {
         ...nuevaVenta,
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       };
-      const { data, error } = await supabase.from('ventas').insert([payload]).select().single();
+      let { data, error } = await supabase.from('ventas').insert([payload]).select().single();
+      if (error && String(error.message).toLowerCase().match(/updated_at|comprado_at/)) {
+        delete payload.updated_at;
+        delete payload.comprado_at;
+        const retry = await supabase.from('ventas').insert([payload]).select().single();
+        data = retry.data;
+        error = retry.error;
+      }
       if (error) throw error;
-      setVentas(prev => [data, ...prev]);
+      
+      await fetchData();
+      avisarCambioRealtime('venta', `registró un pedido nuevo de ${nuevaVenta.cliente_nombre || ''}`);
       triggerConfetti();
       return data;
     } catch (err) {
-      console.error("Error al registrar venta:", err);
+      console.error("[Supabase] Error al registrar venta:", err);
       throw err;
     }
   };
 
-  // Actualizar una venta
+  // Actualizar una venta existente
   const updateVenta = async (id, cambios) => {
     try {
-      const { data, error } = await supabase
+      const payload = {
+        ...cambios,
+        updated_at: new Date().toISOString()
+      };
+      let { data, error } = await supabase
         .from('ventas')
-        .update(cambios)
+        .update(payload)
         .eq('id', id)
         .select()
         .single();
+
+      if (error && String(error.message).toLowerCase().match(/updated_at|comprado_at/)) {
+        delete payload.updated_at;
+        delete payload.comprado_at;
+        const retry = await supabase.from('ventas').update(payload).eq('id', id).select().single();
+        data = retry.data;
+        error = retry.error;
+      }
       if (error) throw error;
+
       setVentas(prev => prev.map(v => v.id === id ? data : v));
+      avisarCambioRealtime('venta', `modificó un pedido.`);
       return data;
     } catch (err) {
-      console.error("Error al actualizar venta:", err);
+      console.error("[Supabase] Error al actualizar venta:", err);
       throw err;
     }
   };
 
-  // Eliminar venta
+  // Eliminar venta (borrado lógico seguro con eliminado_at)
   const deleteVenta = async (id) => {
     try {
-      const { error } = await supabase.from('ventas').delete().eq('id', id);
+      const { error } = await supabase
+        .from('ventas')
+        .update({ eliminado_at: new Date().toISOString() })
+        .eq('id', id);
+
       if (error) throw error;
       setVentas(prev => prev.filter(v => v.id !== id));
+      avisarCambioRealtime('venta', `envió un pedido a la papelera.`);
     } catch (err) {
-      console.error("Error al eliminar venta:", err);
+      console.error("[Supabase] Error al eliminar venta:", err);
       throw err;
     }
   };
@@ -135,7 +253,7 @@ export function DataProvider({ children }) {
 
   const ventasActivas = ventas.filter(v => {
     if (v.finalizado || estadosTodosLiquidado(v)) return false;
-    if (!esAdmin && v.vendedor !== miNombre) return false;
+    if (!esAdmin && miNombre && v.vendedor !== miNombre) return false;
     return true;
   });
 
@@ -144,7 +262,7 @@ export function DataProvider({ children }) {
     const porClave = new Map();
     ventas.forEach(v => {
       if (v.finalizado || estadosTodosLiquidado(v) || !todosItemsListosEntrega(v)) return;
-      if (!esAdmin && v.vendedor !== miNombre) return;
+      if (!esAdmin && miNombre && v.vendedor !== miNombre) return;
       const clave = `${v.cliente_nombre || ''}|${v.vendedor || ''}|${v.fecha_entrega || ''}`;
       if (!porClave.has(clave)) {
         porClave.set(clave, {
@@ -186,7 +304,7 @@ export function DataProvider({ children }) {
     const clientesDeuda = {};
     ventasActivas.forEach(v => {
       const saldo = saldoCliente(v);
-      if (saldo > 0) {
+      if (saldo > 0 && v.cliente_nombre) {
         clientesDeuda[v.cliente_nombre] = (clientesDeuda[v.cliente_nombre] || 0) + saldo;
       }
     });
@@ -212,7 +330,10 @@ export function DataProvider({ children }) {
     <DataContext.Provider value={{
       ventas,
       compras,
+      compraAportes,
+      compraPedidos,
       liquidaciones,
+      usuarios,
       loading,
       error,
       refreshData: fetchData,

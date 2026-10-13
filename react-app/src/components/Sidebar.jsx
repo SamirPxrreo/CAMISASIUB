@@ -14,7 +14,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
-  Shirt
+  Shirt,
+  LogOut
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -31,7 +32,7 @@ const NAV_ITEMS = [
 ];
 
 export default function Sidebar({ currentSection, onNavigate, isCollapsed, onToggleCollapse, isOpenMobile, onCloseMobile }) {
-  const { role } = useAuth();
+  const { role, logout } = useAuth();
 
   return (
     <>
@@ -134,9 +135,18 @@ export default function Sidebar({ currentSection, onNavigate, isCollapsed, onTog
               {(role?.nombre || 'U')[0].toUpperCase()}
             </div>
             {!isCollapsed && (
-              <div className="flex flex-col min-w-0">
-                <span className="text-xs font-bold text-slate-800 truncate">{role?.nombre || 'Usuario'}</span>
-                <span className="text-[11px] text-slate-400 capitalize">{role?.role || 'vendedor'}</span>
+              <div className="flex items-center justify-between flex-1 min-w-0">
+                <div className="flex flex-col min-w-0">
+                  <span className="text-xs font-bold text-slate-800 truncate">{role?.nombre || 'Usuario'}</span>
+                  <span className="text-[11px] text-slate-400 capitalize">{role?.role || 'vendedor'}</span>
+                </div>
+                <button
+                  onClick={logout}
+                  className="p-1.5 rounded-xl hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer ml-1"
+                  title="Cerrar sesión"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
               </div>
             )}
           </div>

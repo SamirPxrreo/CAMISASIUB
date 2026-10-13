@@ -30,8 +30,15 @@ export default function LoginView({ onLoginSuccess }) {
   };
 
   const handleQuickLogin = (role) => {
-    demoLogin(role);
-    if (onLoginSuccess) onLoginSuccess();
+    if (role === 'admin') {
+      setEmail('admin@gmail.com');
+    } else {
+      setEmail('samir@gmail.com');
+    }
+    setTimeout(() => {
+      const pwd = document.querySelector('input[type="password"]');
+      if (pwd) pwd.focus();
+    }, 50);
   };
 
   return (
@@ -182,12 +189,12 @@ export default function LoginView({ onLoginSuccess }) {
         <div className="w-full flex items-center gap-3 mb-4">
           <div className="flex-1 h-px bg-white/10" />
           <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">
-            Acceso Rápido
+            Autocompletar Correo
           </span>
           <div className="flex-1 h-px bg-white/10" />
         </div>
 
-        {/* Accesos rápidos de demostración */}
+        {/* Accesos rápidos para rellenar correo */}
         <div className="w-full grid grid-cols-2 gap-2.5">
           <motion.button
             type="button"
@@ -197,7 +204,7 @@ export default function LoginView({ onLoginSuccess }) {
             className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-[20px] bg-white/[0.04] border border-white/10 hover:border-amber-400/40 text-slate-200 text-xs font-semibold cursor-pointer transition-all duration-200 group"
           >
             <ShieldCheck className="w-3.5 h-3.5 text-amber-400 group-hover:scale-110 transition-transform" />
-            <span>Admin</span>
+            <span>admin@gmail.com</span>
           </motion.button>
 
           <motion.button
@@ -208,14 +215,15 @@ export default function LoginView({ onLoginSuccess }) {
             className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-[20px] bg-indigo-500/10 border border-indigo-500/20 hover:border-indigo-400/40 text-indigo-200 text-xs font-semibold cursor-pointer transition-all duration-200 group"
           >
             <UserCheck className="w-3.5 h-3.5 text-indigo-400 group-hover:scale-110 transition-transform" />
-            <span>Samir</span>
+            <span>samir@gmail.com</span>
           </motion.button>
         </div>
 
-        {/* Pie de tarjeta con nota de seguridad */}
-        <p className="text-[10.5px] text-slate-400 mt-6 text-center">
-          Conexión cifrada a base de datos de producción Supabase
-        </p>
+        {/* Indicador de base de datos activa */}
+        <div className="flex items-center justify-center gap-1.5 mt-5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-semibold">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span>Base de datos real Supabase conectada</span>
+        </div>
       </motion.div>
     </div>
   );
