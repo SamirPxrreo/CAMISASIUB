@@ -24,19 +24,23 @@ Permite a los socios (**Samir y Valentina**) y su equipo de vendedores controlar
 
 | Módulo | Descripción |
 |---|---|
-| 📋 **Pedidos (Vista en Tarjetas)** | Presentación moderna en cuadros organizada lógicamente con chips de filtro en colores pastel (`Pedido`, `Comprado`, `Bordando`, `Listo`, `Entregado`, `Liquidado`). Con selector flotante animado (`StatusDropdown`), desglose de prendas y enlace directo a WhatsApp. |
+| 📋 **Pedidos (Vista en Tarjetas)** | Presentación moderna en cuadros con chips pastel (`Pedido`, `Comprado`, `Bordando`, `Listo`, `Entregado`, `Liquidado`). Con selector flotante animado (`StatusDropdown`), vista compacta y botón para abrir el modal detallado de prendas. |
+| 🔍 **Detalle de Pedido (`OrderDetailModal`)** | Modal dedicado para pedidos con múltiples prendas: muestra el resumen del cliente, saldos y desglose individual de cada camisa (estado, bordado, género, color, talla, precio), con botón para copiar mensaje formateado de WhatsApp y acceso rápido a edición. |
 | 👕 **Prendas Tipo Polo** | Identificación sin ambigüedades: `[Mujer\|Hombre] [Color] Talla [Talla]` (ej. *Mujer Negro Talla S*). Distinción discreta de `v2` (Versión 2) e invisibilidad de "Versión 1" en mensajes al cliente. |
+| 🎨 **Selectores Desplegables Propios (`CustomSelect`)** | Reemplazo total de menús nativos del navegador por selectores interactivos estilizados con animaciones de resorte (*Framer Motion*), buscador integrado en tiempo real y muestras de color (*color swatches*). |
+| 📍 **Lugares de Entrega Configurables** | Catálogo administrable desde Configuración: alta de nuevas sedes o puntos con sugerencias rápidas (Sedes IUB, domicilios Barranquilla/Soledad, centros comerciales), edición de nombres, eliminación segura y restablecimiento a valores predeterminados. |
 | 📅 **Calendario de Entregas** | Vista organizada por días de lo que se debe entregar, conteo de camisas, saldos acumulados, botón de copiar mensaje personalizado para el cliente y resumen del pedido. |
 | 💳 **Cuentas por Cliente** | Monitoreo de deudas, abonos, saldos pendientes y **generador de recibos / facturas en PDF** listo para impresión o envío. |
-| 🧵 **Abonos Yesenia (Compras)** | Control riguroso de deuda y pagos a confección por pedido. Cálculo de costo sugerido automático ($30.000 v1 / $31.000 v2 + extra para tallas especiales 2XL: $2.000, 3XL: $4.000, 4XL: $6.000). |
+| 🧵 **Abonos Yesenia (Compras)** | Control simplificado y transparente de deuda y pagos a confección: desglosado estrictamente en **Deuda de Samir con Yesenia** y **Deuda de Valentina con Yesenia**, con costos sugeridos automáticos ($30.000 v1 / $31.000 v2 + extra para tallas grandes). |
 | 💰 **Liquidaciones entre Socios** | Cálculo exacto de repartición de ganancias: mitad de utilidad neta por pedido (`(Precio - Costo) / 2`). Compensación cruzada transparente entre Samir y Valentina. |
-| ⚙️ **Configuración del Sistema** | **Catálogo editable de colores de camisas**: agregar nuevos colores (con selector visual y sugerencias), editar nombres o tonos y restablecer. **Gestión de usuarios**: crear usuarios (vendedores y administradores) con credenciales y roles. |
+| ⚙️ **Configuración del Sistema** | Pestañas independientes para: **Colores de camisas**, **Lugares de entrega**, **Usuarios y accesos** (Admin / Vendedor), **Temas visuales** y **Estrategia de versionado**. |
 | 🎨 **Sistema de 5 Temas Integrales** | Cambio total de interfaz: Menta Fresh, Lavanda Soft, Atardecer Cálido, Noche Elegante (Dark Mode con alto contraste WCAG AAA) y Pastel Clásico. |
 | 📄 **Paginación Inteligente** | Navegación por hojas numeradas (15 elementos por página) en todas las secciones extensas, con barra lateral fija que nunca se desplaza hacia abajo. |
-| 🗑️ **Papelera Segura** | Borrado y restauración de pedidos con confirmación en línea y mecha fusible de seguridad (*Bencho Confirm*). |
+| 🗑️ **Papelera Segura** | Borrado y restauración de pedidos con confirmación en línea y mecha fusible de seguridad (*Bencho Confirm*). Vaciado permanente reservado exclusivamente a administradores. |
 | 📈 **Reportes & Resúmenes** | Estadísticas por período, métricas de vendedor y exportación directa a Excel con formato. |
-| 🔗 **Navegación por Enlaces (#)** | Enrutamiento limpio mediante URL hash (`#dashboard`, `#orders`, `#calendar`, `#cuentas`, `#history`, `#purchases`, `#settlements`, `#summaries`, `#reports`, `#trash`, `#settings`) permitiendo compartir enlaces directos a cualquier pantalla y navegar con los botones atrás/adelante del navegador o celular. |
-| 🛡️ **Seguridad y Roles Estrictos** | **Administrador**: acceso total a Configuración, gestión de usuarios, catálogo dinámico de colores, visualización/filtro de todos los pedidos y vaciado permanente de papelera.<br>**Vendedor**: interfaz enfocada exclusivamente en sus propios pedidos y clientes, con selector de vendedor bloqueado a su cuenta y sin acceso a configuraciones críticas. |
+| 🔗 **Navegación por Enlaces (#)** | Enrutamiento bidireccional mediante URL hash (`#dashboard`, `#orders`, `#calendar`, `#cuentas`, `#history`, `#purchases`, `#settlements`, `#summaries`, `#reports`, `#trash`, `#settings`) para compartir enlaces directos y navegar con los botones atrás/adelante del navegador o celular. |
+| 🛡️ **Seguridad y Roles Estrictos** | **Administrador**: acceso total a Configuración, gestión de usuarios, catálogos dinámicos, visualización de todos los pedidos y vaciado permanente de papelera.<br>**Vendedor**: interfaz enfocada exclusivamente en sus propios pedidos y clientes, con selector de vendedor bloqueado a su cuenta y sin acceso a configuraciones administrativas. |
+| 📱 **PWA Móvil ("Agregar al Inicio")** | Metatags `viewport-fit=cover`, manifest.json y control estricto de caché para correr como app nativa a pantalla completa en smartphones sin barras del navegador. |
 
 ---
 
@@ -53,21 +57,24 @@ La aplicación fue completamente modernizada a una arquitectura basada en compon
 react-app/
 ├── src/
 │   ├── components/
-│   │   ├── OrdersView.jsx          # Pedidos en tarjetas con chips pastel y StatusDropdown
-│   │   ├── StatusDropdown.jsx      # Selector flotante animado de estado por prenda
+│   │   ├── OrdersView.jsx          # Pedidos en tarjetas con chips pastel y botón a detalle
+│   │   ├── OrderDetailModal.jsx    # Modal de inspección detallada de prendas y copia WhatsApp
+│   │   ├── CustomSelect.jsx        # Selector flotante animado con búsqueda y muestras de color
+│   │   ├── StatusDropdown.jsx      # Selector flotante animado de estado semántico
 │   │   ├── CalendarView.jsx        # Calendario de entregas y copiado de mensajes
 │   │   ├── CuentasView.jsx         # Cuentas de clientes y generador de recibos PDF
 │   │   ├── PurchasesView.jsx       # Abonos Yesenia y compras al proveedor
 │   │   ├── SettlementsView.jsx     # Liquidaciones matemáticas exactas entre socios
-│   │   ├── SettingsView.jsx        # Configuración: Catálogo de colores y usuarios
-│   │   ├── NewSaleModal.jsx        # Modal de creación y edición de pedidos
+│   │   ├── SettingsView.jsx        # Configuración: Colores, Lugares, Usuarios y Versiones
+│   │   ├── NewSaleModal.jsx        # Modal de creación y edición de pedidos con CustomSelect
+│   │   ├── InlineDeleteConfirm.jsx # Botón con barra de mecha regresiva (Bencho Confirm)
 │   │   ├── Sidebar.jsx             # Barra lateral fija viewport-locked
 │   │   ├── Pagination.jsx          # Control de paginación por hojas (1, 2, 3...)
 │   │   ├── ThemeModal.jsx          # Selector de temas integrales
 │   │   └── FloatingLabelInput.jsx  # Input Bencho floating label para login
 │   ├── context/
 │   │   ├── AuthContext.jsx         # Autenticación, roles (Admin/Vendedor) y presets
-│   │   ├── DataContext.jsx         # Sincronización en tiempo real y CRUD
+│   │   ├── DataContext.jsx         # Sincronización en tiempo real, CRUD y catálogos
 │   │   └── ThemeContext.jsx        # Estado y persistencia de temas dinámicos
 │   ├── lib/
 │   │   ├── utils.js                # Lógica matemática, colores, formatos y WhatsApp
@@ -94,15 +101,7 @@ npm run dev
 npx vite --host --port 5173
 ```
 
-Abre en tu navegador `http://localhost:5173` (o la IP local indicada para celular).
-
-Para generar los archivos de producción:
-
-```bash
-npm run build
-```
-
-Los archivos optimizados se generan en `react-app/dist/`.
+Abre en tu navegador `http://localhost:5173` (o la IP local indicada en consola para celular).
 
 ---
 
@@ -110,19 +109,21 @@ Los archivos optimizados se generan en `react-app/dist/`.
 
 GitHub Pages sirve directamente la raíz de la rama `main`. Para publicar una nueva versión:
 
-```bash
+```powershell
 # 1. Compilar la aplicación React optimizada
 cd react-app
 npm run build
 cd ..
 
-# 2. Sincronizar el build con la raíz del repositorio
-# (Copiar los archivos generados en react-app/dist/ a la raíz)
+# 2. Sincronizar el build con la raíz del repositorio y actualizar aliases anti-caché
+Copy-Item -Path "react-app\dist\index.html" -Destination "index.html" -Force
+Copy-Item -Path "react-app\dist\assets\*" -Destination "assets\" -Force
 
 # 3. Subir los cambios a GitHub
 git add .
-git commit -m "Deploy: nueva versión con navegación hash y roles admin"
+git commit -m "Deploy: actualización del sistema"
 git push origin main
+git push origin main:redesign-impeccable
 ```
 
 ### El Ciclo de 3 Versiones:
@@ -135,20 +136,63 @@ git push origin main
 │     * Congelada permanentemente como punto de anclaje de referencia.     │
 │     * No se altera con nuevos pushes.                                    │
 ├──────────────────────────────────────────────────────────────────────────┤
-│  2. VERSIÓN ANTERIOR         : Commit 5238ee1 (Despliegue anterior)      │
+│  2. VERSIÓN ANTERIOR         : Commit 9bef987 (Despliegue anterior)      │
 │     * Sirve como punto de reversión inmediata si fuera necesario.        │
 │     * En el próximo despliegue, pasará a ser la versión que subimos hoy. │
 ├──────────────────────────────────────────────────────────────────────────┤
-│  3. VERSIÓN NUEVA (PRODUCCIÓN): React 19 + URL Hash + Roles Admin        │
+│  3. VERSIÓN NUEVA (PRODUCCIÓN): Commit 389ab90 (Lugares + Modales)       │
 │     * La versión activa en https://samirpxrreo.github.io/CAMISASIUB/     │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Regla para Despliegues Futuros:
-Cuando se suba un nuevo deployment en el futuro:
-- **La Versión Fija**: Se mantiene intacta como ancla original.
-- **La Versión Anterior**: Pasa a ser la versión que subimos hoy.
-- **La Versión Nueva**: Será la nueva versión recién compilada.
+---
+
+## 6. Guía para Continuar el Proyecto en Otro PC 💻
+
+Si vas a abrir o clonar el proyecto en otro equipo, sigue estos sencillos pasos:
+
+### Paso 1: Prerrequisitos
+- Instalar **[Node.js](https://nodejs.org/)** (versión 18 o superior, LTS recomendada).
+- Instalar **[Git](https://git-scm.com/)**.
+
+### Paso 2: Descargar el Código
+Elige una de las dos opciones:
+
+* **Opción A (Desde GitHub):**
+  ```bash
+  git clone https://github.com/SamirPxrreo/CAMISASIUB.git
+  cd CAMISASIUB
+  ```
+* **Opción B (Copia Local en Documentos):**
+  Si estás en este mismo equipo o copiaste la carpeta, el proyecto completo y listo se encuentra respaldado en:
+  `D:\User\Documents\CAMISASIUB\`
+
+### Paso 3: Instalar Dependencias y Arrancar
+```bash
+cd react-app
+npm install
+npm run dev
+```
+La aplicación arrancará de inmediato en `http://localhost:5173/`.
+
+### Paso 4: Variables y Conexión de Base de Datos
+Las credenciales de Supabase están configuradas en `react-app/src/lib/supabase.js`. No requieres configurar variables de entorno adicionales para arrancar en local, pues la clave pública (`anon-key`) y la URL del proyecto están predefinidas y protegidas mediante las políticas RLS de Postgres.
+
+### Paso 5: Buenas Prácticas al Hacer Cambios
+1. Haz tus cambios dentro de `react-app/src/`.
+2. Prueba visualmente con `npm run dev`.
+3. Cuando vayas a subir a GitHub:
+   ```powershell
+   cd react-app
+   npm run build
+   Copy-Item -Path "dist\index.html" -Destination "..\index.html" -Force
+   Copy-Item -Path "dist\assets\*" -Destination "..\assets\" -Force
+   cd ..
+   git add .
+   git commit -m "Explicación de lo que agregaste"
+   git push origin main
+   git push origin main:redesign-impeccable
+   ```
 
 ---
 
