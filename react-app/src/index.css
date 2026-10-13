@@ -35,8 +35,9 @@ html[data-theme="mint"] aside {
   background-color: #ffffff !important;
   border-color: #d1fae5 !important;
 }
-html[data-theme="mint"] header {
-  background-color: rgba(255, 255, 255, 0.92) !important;
+html[data-theme="mint"] header,
+html[data-theme="mint"] nav.bottom-nav-bar {
+  background-color: rgba(255, 255, 255, 0.95) !important;
   border-color: #d1fae5 !important;
 }
 html[data-theme="mint"] .text-indigo-600,
@@ -99,8 +100,9 @@ html[data-theme="lavender"] aside {
   background-color: #ffffff !important;
   border-color: #ede9fe !important;
 }
-html[data-theme="lavender"] header {
-  background-color: rgba(255, 255, 255, 0.92) !important;
+html[data-theme="lavender"] header,
+html[data-theme="lavender"] nav.bottom-nav-bar {
+  background-color: rgba(255, 255, 255, 0.95) !important;
   border-color: #ede9fe !important;
 }
 html[data-theme="lavender"] .text-indigo-600,
@@ -163,8 +165,9 @@ html[data-theme="sunset"] aside {
   background-color: #ffffff !important;
   border-color: #ffedd5 !important;
 }
-html[data-theme="sunset"] header {
-  background-color: rgba(255, 255, 255, 0.92) !important;
+html[data-theme="sunset"] header,
+html[data-theme="sunset"] nav.bottom-nav-bar {
+  background-color: rgba(255, 255, 255, 0.95) !important;
   border-color: #ffedd5 !important;
 }
 html[data-theme="sunset"] .text-indigo-600,
@@ -230,8 +233,11 @@ html[data-theme="dark"] aside {
   background-color: #0f172a !important;
   border-color: rgba(255, 255, 255, 0.08) !important;
 }
-html[data-theme="dark"] header {
-  background-color: rgba(15, 23, 42, 0.92) !important;
+html[data-theme="dark"] header,
+html.dark header,
+html[data-theme="dark"] nav.bottom-nav-bar,
+html.dark nav.bottom-nav-bar {
+  background-color: rgba(19, 27, 46, 0.95) !important;
   border-color: rgba(255, 255, 255, 0.08) !important;
 }
 html[data-theme="dark"] .bg-white {

@@ -233,7 +233,35 @@ export async function exportarListaCompraExcel(ventas, filtroVendedor = 'Todos')
     throw new Error('✅ No hay pedidos con camisas en estado "Pedido" pendientes por comprar.');
   }
 
-  // 3. Consolidar lista de compra agrupada (para taller)
+  // 3. Consolidar por Género, Color y Talla (sin importar bordados, para taller de confección lisa)
+  const tallasColoresMap = {};
+  prendasPorComprar.forEach(p => {
+    const g = p.genero || 'Mujer';
+    const c = p.color || 'Negro';
+    const t = p.talla || 'S';
+    const key = `${g}|${c}|${t}`;
+    if (!tallasColoresMap[key]) {
+      tallasColoresMap[key] = {
+        cantidad: 0,
+        genero: g,
+        color: c,
+        talla: t
+      };
+    }
+    tallasColoresMap[key].cantidad += 1;
+  });
+
+  const ordenTallas = { 'XS': 1, 'S': 2, 'M': 3, 'L': 4, 'XL': 5, 'XXL': 6, '2XL': 6, '3XL': 7 };
+  const tallasColoresFilas = Object.values(tallasColoresMap).sort((a, b) => {
+    if (a.genero !== b.genero) return a.genero.localeCompare(b.genero);
+    if (a.color !== b.color) return a.color.localeCompare(b.color);
+    const ordenA = ordenTallas[a.talla.toUpperCase()] || 99;
+    const ordenB = ordenTallas[b.talla.toUpperCase()] || 99;
+    if (ordenA !== ordenB) return ordenA - ordenB;
+    return a.talla.localeCompare(b.talla);
+  });
+
+  // Consolidar lista de compra agrupada con bordado y versión (para bordadora / modista)
   const consolidadoMap = {};
   prendasPorComprar.forEach(p => {
     const key = `${p.version}|${p.genero}|${p.color}|${p.talla}|${p.bordado}`;
@@ -263,9 +291,46 @@ export async function exportarListaCompraExcel(ventas, filtroVendedor = 'Todos')
   wb.created = new Date();
 
   // ==========================================
-  // HOJA 1: LISTA DE COMPRA (CONSOLIDADA TALLER)
+  // HOJA 1: RESUMEN TALLAS Y COLORES (COMBINA GÉNERO, COLOR Y TALLA SUMANDO CANTIDAD)
   // ==========================================
-  const ws1 = wb.addWorksheet('Lista de Compra');
+  const ws0 = wb.addWorksheet('Resumen Tallas y Colores');
+  ws0.views = [{ state: 'frozen', ySplit: 1 }];
+
+  const h0 = ['Cantidad', 'Género', 'Color', 'Talla'];
+  const rowH0 = ws0.addRow(h0);
+  styleHeader(rowH0);
+
+  tallasColoresFilas.forEach((tc, idx) => {
+    const r = ws0.addRow([
+      tc.cantidad,
+      tc.genero,
+      tc.color,
+      tc.talla
+    ]);
+    r.height = 22;
+    const zebra = idx % 2 === 0 ? EXCEL_THEME.zebraA : EXCEL_THEME.zebraB;
+    r.eachCell((cell, colNum) => {
+      cell.fill = zebra;
+      cell.font = colNum === 1 || colNum === 4 ? EXCEL_THEME.boldBodyFont : EXCEL_THEME.bodyFont;
+      cell.border = EXCEL_THEME.thinBorder;
+      cell.alignment = {
+        horizontal: colNum === 1 || colNum === 2 || colNum === 4 ? 'center' : 'left',
+        vertical: 'middle'
+      };
+    });
+  });
+
+  // Habilitar AutoFilter en toda la tabla
+  ws0.autoFilter = {
+    from: { row: 1, column: 1 },
+    to: { row: tallasColoresFilas.length + 1, column: h0.length }
+  };
+  autoFitColumns(ws0, 15);
+
+  // ==========================================
+  // HOJA 2: LISTA CON BORDADOS (CONSOLIDADA TALLER Y BORDADO)
+  // ==========================================
+  const ws1 = wb.addWorksheet('Lista con Bordados');
   ws1.views = [{ state: 'frozen', ySplit: 1 }];
 
   const h1 = ['Cantidad', 'Versión Polo', 'Género', 'Color', 'Talla', 'Bordado / Programa'];
@@ -599,6 +664,208 @@ export async function exportarReporteCompletoExcel(ventas, filtroTipo = 'todos')
   };
   autoFitColumns(ws, 12);
 
+  // ==========================================
+  // HOJA 2: RESUMEN TALLAS Y COLORES (COMBINA GÉNERO, COLOR Y TALLA SUMANDO CANTIDAD)
+  // ==========================================
+  const tallasColoresReporteMap = {};
+  filas.forEach(f => {
+    const g = f.genero || 'Mujer';
+    const c = f.color || 'Negro';
+    const t = f.talla || 'S';
+    const key = `${g}|${c}|${t}`;
+    if (!tallasColoresReporteMap[key]) {
+      tallasColoresReporteMap[key] = {
+        cantidad: 0,
+        genero: g,
+        color: c,
+        talla: t
+      };
+    }
+    tallasColoresReporteMap[key].cantidad += 1;
+  });
+
+  const ordenTallas = { 'XS': 1, 'S': 2, 'M': 3, 'L': 4, 'XL': 5, 'XXL': 6, '2XL': 6, '3XL': 7 };
+  const tallasColoresReporteFilas = Object.values(tallasColoresReporteMap).sort((a, b) => {
+    if (a.genero !== b.genero) return a.genero.localeCompare(b.genero);
+    if (a.color !== b.color) return a.color.localeCompare(b.color);
+    const ordenA = ordenTallas[a.talla.toUpperCase()] || 99;
+    const ordenB = ordenTallas[b.talla.toUpperCase()] || 99;
+    if (ordenA !== ordenB) return ordenA - ordenB;
+    return a.talla.localeCompare(b.talla);
+  });
+
+  const wsResumen = wb.addWorksheet('Resumen Tallas y Colores');
+  wsResumen.views = [{ state: 'frozen', ySplit: 1 }];
+  const hRes = ['Cantidad', 'Género', 'Color', 'Talla'];
+  const rowHRes = wsResumen.addRow(hRes);
+  styleHeader(rowHRes);
+
+  tallasColoresReporteFilas.forEach((tc, idx) => {
+    const r = wsResumen.addRow([tc.cantidad, tc.genero, tc.color, tc.talla]);
+    r.height = 22;
+    const zebra = idx % 2 === 0 ? EXCEL_THEME.zebraA : EXCEL_THEME.zebraB;
+    r.eachCell((cell, colNum) => {
+      cell.fill = zebra;
+      cell.font = colNum === 1 || colNum === 4 ? EXCEL_THEME.boldBodyFont : EXCEL_THEME.bodyFont;
+      cell.border = EXCEL_THEME.thinBorder;
+      cell.alignment = {
+        horizontal: colNum === 1 || colNum === 2 || colNum === 4 ? 'center' : 'left',
+        vertical: 'middle'
+      };
+    });
+  });
+
+  wsResumen.autoFilter = {
+    from: { row: 1, column: 1 },
+    to: { row: tallasColoresReporteFilas.length + 1, column: hRes.length }
+  };
+  autoFitColumns(wsResumen, 15);
+
   // Descargar archivo
   await descargarWorkbook(wb, `Reporte_Camisas_IUB_${hoyColombia()}.xlsx`);
 }
+
+/**
+ * EXPORTAR UN PEDIDO INDIVIDUAL A EXCEL CON RESUMEN DE TALLAS Y COLORES
+ */
+export async function exportarPedidoIndividualExcel(pedido) {
+  if (!pedido) {
+    throw new Error('No se especificó un pedido válido para exportar.');
+  }
+
+  const items = itemsCrudosVenta(pedido) || [];
+  const prendas = [];
+
+  if (items.length > 0) {
+    items.forEach((it, idx) => {
+      prendas.push({
+        itemIdx: idx + 1,
+        version: it.modelo === 'Nuevo' ? 'Versión 2 (Nueva)' : 'Versión 1 (Clásica)',
+        genero: it.genero || 'Mujer',
+        color: it.color || 'Negro',
+        talla: it.talla || 'S',
+        bordado: it.programa || 'Sin bordado',
+        estado: normalizarEstado(it.estado || pedido.estado)
+      });
+    });
+  } else {
+    const cant = Number(pedido.cantidad) || 1;
+    for (let i = 0; i < cant; i++) {
+      prendas.push({
+        itemIdx: i + 1,
+        version: pedido.modelo === 'Nuevo' ? 'Versión 2 (Nueva)' : 'Versión 1 (Clásica)',
+        genero: pedido.genero || 'Mujer',
+        color: pedido.color || 'Negro',
+        talla: pedido.talla || 'S',
+        bordado: pedido.cliente_programa || 'Sin bordado',
+        estado: normalizarEstado(pedido.estado)
+      });
+    }
+  }
+
+  // 1. Agrupar SOLO por Género, Color y Talla (sin bordado) sumando cantidad
+  const tallasColoresMap = {};
+  prendas.forEach(p => {
+    const g = p.genero || 'Mujer';
+    const c = p.color || 'Negro';
+    const t = p.talla || 'S';
+    const key = `${g}|${c}|${t}`;
+    if (!tallasColoresMap[key]) {
+      tallasColoresMap[key] = {
+        cantidad: 0,
+        genero: g,
+        color: c,
+        talla: t
+      };
+    }
+    tallasColoresMap[key].cantidad += 1;
+  });
+
+  const ordenTallas = { 'XS': 1, 'S': 2, 'M': 3, 'L': 4, 'XL': 5, 'XXL': 6, '2XL': 6, '3XL': 7 };
+  const tallasColoresFilas = Object.values(tallasColoresMap).sort((a, b) => {
+    if (a.genero !== b.genero) return a.genero.localeCompare(b.genero);
+    if (a.color !== b.color) return a.color.localeCompare(b.color);
+    const ordenA = ordenTallas[a.talla.toUpperCase()] || 99;
+    const ordenB = ordenTallas[b.talla.toUpperCase()] || 99;
+    if (ordenA !== ordenB) return ordenA - ordenB;
+    return a.talla.localeCompare(b.talla);
+  });
+
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'Camisas IUB';
+  wb.created = new Date();
+
+  // Hoja 1: Resumen Tallas y Colores (Agrupa Género, Color y Talla sumando cantidad)
+  const ws1 = wb.addWorksheet('Resumen Tallas y Colores');
+  ws1.views = [{ state: 'frozen', ySplit: 1 }];
+
+  const h1 = ['Cantidad', 'Género', 'Color', 'Talla'];
+  const rowH1 = ws1.addRow(h1);
+  styleHeader(rowH1);
+
+  tallasColoresFilas.forEach((tc, idx) => {
+    const r = ws1.addRow([tc.cantidad, tc.genero, tc.color, tc.talla]);
+    r.height = 22;
+    const zebra = idx % 2 === 0 ? EXCEL_THEME.zebraA : EXCEL_THEME.zebraB;
+    r.eachCell((cell, colNum) => {
+      cell.fill = zebra;
+      cell.font = colNum === 1 || colNum === 4 ? EXCEL_THEME.boldBodyFont : EXCEL_THEME.bodyFont;
+      cell.border = EXCEL_THEME.thinBorder;
+      cell.alignment = {
+        horizontal: colNum === 1 || colNum === 2 || colNum === 4 ? 'center' : 'left',
+        vertical: 'middle'
+      };
+    });
+  });
+
+  ws1.autoFilter = {
+    from: { row: 1, column: 1 },
+    to: { row: tallasColoresFilas.length + 1, column: h1.length }
+  };
+  autoFitColumns(ws1, 15);
+
+  // Hoja 2: Detalle Prendas del Pedido
+  const ws2 = wb.addWorksheet('Detalle de Prendas');
+  ws2.views = [{ state: 'frozen', ySplit: 1 }];
+
+  const h2 = ['# Prenda', 'Versión', 'Género', 'Color', 'Talla', 'Bordado / Programa', 'Estado'];
+  const rowH2 = ws2.addRow(h2);
+  styleHeader(rowH2);
+
+  prendas.forEach((p, idx) => {
+    const r = ws2.addRow([
+      `#${p.itemIdx}`,
+      p.version,
+      p.genero,
+      p.color,
+      p.talla,
+      p.bordado,
+      p.estado
+    ]);
+    r.height = 20;
+    const zebra = idx % 2 === 0 ? EXCEL_THEME.zebraA : EXCEL_THEME.zebraB;
+    r.eachCell((cell, colNum) => {
+      cell.fill = zebra;
+      cell.font = EXCEL_THEME.bodyFont;
+      cell.border = EXCEL_THEME.thinBorder;
+      cell.alignment = {
+        horizontal: colNum === 1 || colNum === 3 || colNum === 5 || colNum === 7 ? 'center' : 'left',
+        vertical: 'middle'
+      };
+      if (colNum === 7 && ESTADOS_EXCEL[p.estado]) {
+        cell.fill = ESTADOS_EXCEL[p.estado].fill;
+        cell.font = ESTADOS_EXCEL[p.estado].font;
+      }
+    });
+  });
+
+  ws2.autoFilter = {
+    from: { row: 1, column: 1 },
+    to: { row: prendas.length + 1, column: h2.length }
+  };
+  autoFitColumns(ws2, 16);
+
+  const clienteSanitizado = (pedido.cliente_nombre || 'Pedido').replace(/[^a-zA-Z0-9_-]/g, '_');
+  await descargarWorkbook(wb, `Pedido_${pedido.id}_${clienteSanitizado}.xlsx`);
+}
+

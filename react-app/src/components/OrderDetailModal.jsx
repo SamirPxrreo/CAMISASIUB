@@ -13,10 +13,12 @@ import {
   Edit,
   User,
   Sparkles,
-  Info
+  Info,
+  FileSpreadsheet
 } from 'lucide-react';
 import StatusDropdown from './StatusDropdown';
 import { useData } from '../context/DataContext';
+import { exportarPedidoIndividualExcel } from '../lib/excelExport';
 import {
   fmt,
   formatearFechaHumana,
@@ -33,6 +35,7 @@ import {
 export default function OrderDetailModal({ isOpen, onClose, order, onEditOrder }) {
   const { updateItemEstado, colores } = useData();
   const [copiado, setCopiado] = useState(false);
+  const [exportando, setExportando] = useState(false);
 
   if (!isOpen || !order) return null;
 
@@ -48,6 +51,18 @@ export default function OrderDetailModal({ isOpen, onClose, order, onEditOrder }
     navigator.clipboard.writeText(texto);
     setCopiado(true);
     setTimeout(() => setCopiado(false), 2500);
+  };
+
+  const handleExportarExcel = async () => {
+    try {
+      setExportando(true);
+      await exportarPedidoIndividualExcel(order);
+    } catch (e) {
+      console.warn('Error exportando pedido a Excel:', e);
+      alert(e.message || 'Error al exportar el pedido a Excel');
+    } finally {
+      setExportando(false);
+    }
   };
 
   const getColorHex = (nombreColor) => {
@@ -83,7 +98,7 @@ export default function OrderDetailModal({ isOpen, onClose, order, onEditOrder }
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight truncate">
+                  <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight break-words">
                     {order.cliente_nombre || 'Sin nombre'}
                   </h2>
                   <span className={`text-[11px] font-extrabold px-2.5 py-0.5 rounded-full border shadow-2xs ${getEstadoBadgeStyle(order.estado)}`}>
@@ -273,6 +288,17 @@ export default function OrderDetailModal({ isOpen, onClose, order, onEditOrder }
                   <MessageCircle className="w-4 h-4" />
                 </a>
               )}
+
+              <button
+                type="button"
+                disabled={exportando}
+                onClick={handleExportarExcel}
+                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
+                title="Descargar este pedido en Excel (.xlsx) con resumen consolidado por tallas y colores"
+              >
+                <FileSpreadsheet className="w-4 h-4 text-indigo-600" />
+                <span>{exportando ? 'Exportando...' : 'Exportar Excel'}</span>
+              </button>
             </div>
 
             <div className="flex items-center gap-2 w-full sm:w-auto">

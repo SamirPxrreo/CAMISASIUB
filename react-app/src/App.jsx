@@ -108,7 +108,7 @@ function AppContent() {
   };
 
   return (
-    <div className="h-screen w-screen overflow-hidden flex font-sans">
+    <div className="h-[100dvh] w-full overflow-hidden flex font-sans">
       {/* 1. Barra Lateral Fija (Desktop) */}
       <Sidebar
         currentSection={currentSection}
@@ -127,7 +127,7 @@ function AppContent() {
       />
 
       {/* 2. Área Principal de Contenido (Scroll independiente para que el Sidebar nunca se baje) */}
-      <div className="flex-1 h-screen overflow-y-auto flex flex-col min-w-0 pb-28 lg:pb-8">
+      <div className="flex-1 h-full overflow-y-auto flex flex-col min-w-0 pb-20 lg:pb-8">
         {/* TopBar */}
         <TopBar
           onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
