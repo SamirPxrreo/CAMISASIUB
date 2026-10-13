@@ -2084,12 +2084,15 @@
       document.getElementById(`section-${s}`).classList.add('hidden');
     });
     document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.bottom-nav-item').forEach(el => el.classList.remove('active'));
 
     const target = document.getElementById(`section-${section}`);
     if (target) target.classList.remove('hidden');
 
     const sidebarItem = document.querySelector(`.sidebar-item[data-section="${section}"]`);
     if (sidebarItem) sidebarItem.classList.add('active');
+    const bottomNavItem = document.querySelector(`.bottom-nav-item[data-section="${section}"]`);
+    if (bottomNavItem) bottomNavItem.classList.add('active');
 
     // La URL se actualiza acá y no al final: así también queda escrita en las
     // llamadas con sinRender (el arranque de la app), que cortan antes.

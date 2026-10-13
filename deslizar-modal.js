@@ -60,11 +60,12 @@
     hoja._desdeTitulo = empiezaEnTitulo(card, e.target);
   }
 
-  // ¿El punto donde empezó el toque está dentro del encabezado?
+  // ¿El punto donde empezó el toque está dentro del encabezado o el asa?
   function empiezaEnTitulo(card, nodo) {
     if (!nodo) return false;
     var head = card.querySelector('.modal-head');
-    return !!(head && head.contains(nodo));
+    var handle = card.querySelector('.modal-handle');
+    return !!((head && head.contains(nodo)) || (handle && (handle === nodo || handle.contains(nodo))));
   }
 
   function alMover(e) {
