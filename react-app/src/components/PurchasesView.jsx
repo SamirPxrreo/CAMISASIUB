@@ -155,7 +155,7 @@ export default function PurchasesView() {
 
         <div className="p-5 rounded-3xl bg-emerald-500/10 border border-emerald-500/20 shadow-xs">
           <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider block">Total Pagado a Yesenia</span>
-          <span className="text-2xl font-black text-emerald-900 mt-1 block">{fmt(totalAbononadoYesenia || totalAbonadoYesenia)}</span>
+          <span className="text-2xl font-black text-emerald-900 mt-1 block">{fmt(totalAbonadoYesenia)}</span>
           <span className="text-xs text-emerald-700 font-semibold mt-0.5 block">Suma de aportes de ambos socios</span>
         </div>
 

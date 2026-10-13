@@ -10,10 +10,7 @@ import {
   ChevronUp,
   Trash2,
   Pencil,
-  Share2,
-  Check,
   CheckCircle2,
-  Sparkles,
   ShoppingBag,
   Shirt,
   MessageCircle
@@ -29,8 +26,7 @@ import {
   itemsCrudosVenta,
   normalizarEstado,
   getEstadoBadgeStyle,
-  getWhatsAppLink,
-  generarMensajeWhatsApp
+  getWhatsAppLink
 } from '../lib/utils';
 
 export default function OrdersView({ onOpenNewSale, onEditOrder }) {
@@ -39,7 +35,6 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
   const [estadoFiltro, setEstadoFiltro] = useState('Todos');
   const [vendedorFiltro, setVendedorFiltro] = useState('Todos');
   const [expandedId, setExpandedId] = useState(null);
-  const [copiadoId, setCopiadoId] = useState(null);
 
   // Conteo por estado
   const conteoPorEstado = useMemo(() => {
@@ -110,13 +105,6 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
     setExpandedId(prev => prev === id ? null : id);
   };
 
-  const handleCopiarWhatsApp = (v) => {
-    const texto = generarMensajeWhatsApp(v);
-    navigator.clipboard.writeText(texto);
-    setCopiadoId(v.id);
-    setTimeout(() => setCopiadoId(null), 2000);
-  };
-
   const handleDelete = async (id, clienteNombre) => {
     if (window.confirm(`¿Enviar el pedido de ${clienteNombre || 'este cliente'} a la papelera? Podrás restaurarlo después.`)) {
       await deleteVenta(id);
@@ -125,17 +113,17 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* 1. CABECERA, BUSCADOR Y ACCIONES */}
+      {/* 1. CABECERA, BUSCADOR Y FILTROS */}
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
         <div>
-          <h2 className="text-xl lg:text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
+          <h2 className="text-xl lg:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
             Gestión de Pedidos
             <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
               {ventasFiltradas.length} activos
             </span>
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            Tarjetas interactivas con estados por camisa y acciones rápidas.
+            Tarjetas organizadas con estado por prenda, detalles de entrega y acceso directo a WhatsApp.
           </p>
         </div>
 
@@ -144,7 +132,7 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
           <select
             value={vendedorFiltro}
             onChange={(e) => setVendedorFiltro(e.target.value)}
-            className="px-3 py-2.5 rounded-2xl bg-white border border-slate-200/80 text-xs font-bold text-slate-700 shadow-xs outline-none"
+            className="px-3 py-2.5 rounded-2xl bg-white border border-slate-200/80 text-xs font-bold text-slate-700 shadow-xs outline-none cursor-pointer"
           >
             <option value="Todos">Todos los socios</option>
             <option value="Samir">Samir</option>
@@ -172,7 +160,7 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
         </div>
       </div>
 
-      {/* 2. CHIPS DE FILTRO DE ESTADO CON COLORES Y CONTEOS */}
+      {/* 2. CHIPS DE FILTRO DE ESTADO CON CONTEOS */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
         {filtros.map((filtro) => {
           const isActive = estadoFiltro === filtro;
@@ -200,7 +188,7 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
         })}
       </div>
 
-      {/* 3. LISTADO DE TARJETAS EN CUADROS */}
+      {/* 3. LISTADO DE TARJETAS EN CUADROS CON ORDEN LOGICO */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <AnimatePresence mode="popLayout">
           {ventasFiltradas.map((v) => {
@@ -210,7 +198,7 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
             const abono = abonoClienteTotal(v);
             const isExpanded = expandedId === v.id;
             const tel = v.cliente_telefono || v.telefono || '';
-            const waLink = getWhatsAppLink(tel, generarMensajeWhatsApp(v));
+            const waLink = getWhatsAppLink(tel);
 
             return (
               <motion.div
@@ -222,78 +210,44 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
                 transition={{ type: "spring", stiffness: 350, damping: 25 }}
                 className="bg-white rounded-[28px] border border-slate-200/80 p-5 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between"
               >
-                <div>
-                  {/* Encabezado: Cliente, Vendedor y Badge de Estado */}
-                  <div className="flex items-start justify-between gap-2 mb-3">
+                <div className="space-y-3.5">
+                  {/* SECCIÓN 1: ENCABEZADO DEL CLIENTE Y ESTADO GENERAL */}
+                  <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-700 flex items-center justify-center font-extrabold text-sm shrink-0">
+                      <div className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-700 flex items-center justify-center font-black text-sm shrink-0">
                         {(v.cliente_nombre || 'C')[0].toUpperCase()}
                       </div>
                       <div className="min-w-0">
-                        <h3 className="font-extrabold text-slate-900 text-sm truncate">
+                        <h3 className="font-black text-slate-900 text-sm truncate">
                           {v.cliente_nombre}
                         </h3>
-                        <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium">
-                          <span className="font-semibold text-indigo-600">{v.vendedor || 'Samir'}</span>
-                          <span>•</span>
-                          <span>{items.length || v.cantidad || 1} camisas</span>
+                        <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-semibold flex-wrap">
+                          <span className="text-indigo-600 font-bold">{v.vendedor || 'Samir'}</span>
+                          {tel && (
+                            <>
+                              <span>•</span>
+                              <span className="font-mono text-slate-500 flex items-center gap-0.5">
+                                <Phone className="w-3 h-3 text-slate-400" />
+                                {tel}
+                              </span>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>
 
-                    {/* Insignia de estado oficial con colores exactos */}
-                    <span className={`text-[11px] font-extrabold px-2.5 py-1 rounded-full border shadow-2xs ${getEstadoBadgeStyle(v.estado)}`}>
+                    {/* Insignia de estado general */}
+                    <span className={`text-[11px] font-extrabold px-2.5 py-1 rounded-full border shadow-2xs shrink-0 ${getEstadoBadgeStyle(v.estado)}`}>
                       {v.estado || 'Pedido'}
                     </span>
                   </div>
 
-                  {/* Datos del pedido (Teléfono, Fecha entrega, Lugar) */}
-                  <div className="space-y-1.5 text-xs text-slate-600 mb-3 bg-slate-50/70 p-3 rounded-2xl border border-slate-100">
-                    {tel && (
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5 text-slate-600">
-                          <Phone className="w-3.5 h-3.5 text-slate-400" />
-                          <span className="font-medium font-mono">{tel}</span>
-                        </div>
-                        {waLink && (
-                          <a
-                            href={waLink}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 hover:text-emerald-700 hover:underline"
-                          >
-                            <MessageCircle className="w-3 h-3" />
-                            WhatsApp
-                          </a>
-                        )}
-                      </div>
-                    )}
-
-                    <div className="flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                      <span>{v.fecha_entrega ? formatearFechaHumana(v.fecha_entrega) : 'Fecha de entrega por definir'}</span>
-                    </div>
-
-                    {v.lugar_entrega && (
-                      <div className="flex items-center gap-1.5">
-                        <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                        <span className="truncate">{v.lugar_entrega}</span>
-                      </div>
-                    )}
-
-                    {v.nota && (
-                      <p className="text-[11px] text-slate-500 italic pt-1 border-t border-slate-200/50">
-                        "{v.nota}"
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Detalle de Camisas Tipo Polo */}
-                  <div className="mb-4">
-                    <div className="flex items-center justify-between text-xs font-bold text-slate-700 mb-2">
-                      <span className="flex items-center gap-1">
+                  {/* SECCIÓN 2: PRENDAS / CAMISAS POLO DEL PEDIDO */}
+                  <div>
+                    <div className="flex items-center justify-between text-xs font-bold text-slate-700 mb-1.5">
+                      <span className="flex items-center gap-1 text-[11px] font-black text-slate-500 uppercase tracking-wider">
                         <Shirt className="w-3.5 h-3.5 text-indigo-500" />
-                        Camisas ({items.length || 1})
+                        Prendas ({items.length || 1})
                       </span>
                       {items.length > 2 && (
                         <button
@@ -312,14 +266,14 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
                         return (
                           <div
                             key={idx}
-                            className="p-2.5 rounded-2xl bg-white border border-slate-200/70 flex items-center justify-between text-xs shadow-2xs"
+                            className="p-2.5 rounded-2xl bg-slate-50/80 border border-slate-200/70 flex items-center justify-between text-xs gap-2"
                           >
-                            <div className="min-w-0 pr-2">
-                              <div className="font-bold text-slate-800 truncate">
-                                {it.modelo === 'Nuevo' ? 'Versión 2' : 'Versión 1'} • {it.color} • Talla {it.talla} ({it.genero === 'Mujer' ? 'M' : 'H'})
+                            <div className="min-w-0">
+                              <div className="font-black text-slate-800 text-xs truncate">
+                                {it.modelo === 'Nuevo' ? 'Versión 2' : 'Versión 1'} • {it.color || 'Color'} • Talla {it.talla || 'U'} ({it.genero === 'Mujer' ? 'M' : 'H'})
                               </div>
                               {it.programa && (
-                                <div className="text-[11px] text-indigo-600 font-semibold truncate">
+                                <div className="text-[11px] text-indigo-600 font-bold truncate">
                                   Bordado: {it.programa}
                                 </div>
                               )}
@@ -329,7 +283,7 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
                             <select
                               value={estadoItem}
                               onChange={(e) => updateItemEstado(v.id, idx, e.target.value)}
-                              className={`text-[10.5px] font-extrabold px-2 py-0.5 rounded-full border outline-none cursor-pointer shrink-0 ${getEstadoBadgeStyle(estadoItem)}`}
+                              className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border outline-none cursor-pointer shrink-0 ${getEstadoBadgeStyle(estadoItem)}`}
                             >
                               {ORDEN_ESTADOS.map(est => (
                                 <option key={est} value={est}>{est}</option>
@@ -340,14 +294,37 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
                       })}
                     </div>
                   </div>
+
+                  {/* SECCIÓN 3: LOGÍSTICA DE ENTREGA Y NOTAS */}
+                  <div className="space-y-1 text-xs text-slate-600 bg-slate-50/60 p-2.5 rounded-2xl border border-slate-100">
+                    <div className="flex items-center gap-1.5 text-[11px]">
+                      <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                      <span className="font-medium">
+                        {v.fecha_entrega ? `Entrega: ${formatearFechaHumana(v.fecha_entrega)}` : 'Fecha de entrega por definir'}
+                      </span>
+                    </div>
+
+                    {v.lugar_entrega && (
+                      <div className="flex items-center gap-1.5 text-[11px]">
+                        <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <span className="truncate">{v.lugar_entrega}</span>
+                      </div>
+                    )}
+
+                    {v.nota && (
+                      <p className="text-[11px] text-slate-500 italic pt-1 border-t border-slate-200/50">
+                        "{v.nota}"
+                      </p>
+                    )}
+                  </div>
                 </div>
 
-                {/* Footer de la tarjeta: Totales, Saldo y Acciones (Editar, WhatsApp, Papelera) */}
-                <div className="pt-3 border-t border-slate-100 space-y-3">
+                {/* SECCIÓN 4: TOTALES FINANCIEROS Y BOTONES DE ACCIÓN */}
+                <div className="pt-3 border-t border-slate-100 space-y-3 mt-3">
                   <div className="flex items-center justify-between">
                     <div>
                       <span className="text-[10px] text-slate-400 block font-bold uppercase tracking-wider">Saldo</span>
-                      <span className={`text-base font-extrabold ${saldo > 0 ? 'text-amber-600' : 'text-emerald-600'}`}>
+                      <span className={`text-base font-black ${saldo > 0 ? 'text-amber-600' : 'text-emerald-600'}`}>
                         {saldo > 0 ? fmt(saldo) : 'Pagado ✓'}
                       </span>
                     </div>
@@ -355,39 +332,52 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
                     <div className="text-right">
                       <span className="text-[10px] text-slate-400 block font-bold uppercase tracking-wider">Total / Abono</span>
                       <div className="text-xs font-bold text-slate-800">
-                        {fmt(total)} <span className="text-emerald-600 font-medium">({fmt(abono)})</span>
+                        {fmt(total)} <span className="text-emerald-600 font-semibold">({fmt(abono)})</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Fila de Botones de Acción */}
+                  {/* Fila de Botones: WhatsApp directo sin texto, Editar, Borrar */}
                   <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-100">
+                    {/* Botón WhatsApp directo (sin texto preestablecido) */}
+                    {waLink ? (
+                      <a
+                        href={waLink}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold transition-colors cursor-pointer"
+                        title="Abrir chat en WhatsApp"
+                      >
+                        <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>WhatsApp</span>
+                      </a>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled
+                        className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl bg-slate-50 text-slate-300 text-xs font-bold cursor-not-allowed"
+                        title="Sin teléfono registrado"
+                      >
+                        <MessageCircle className="w-3.5 h-3.5 text-slate-300" />
+                        <span>WhatsApp</span>
+                      </button>
+                    )}
+
                     {/* Botón Editar Pedido */}
                     <button
                       type="button"
                       onClick={() => onEditOrder && onEditOrder(v)}
-                      className="flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold transition-colors cursor-pointer"
+                      className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold transition-colors cursor-pointer"
                     >
                       <Pencil className="w-3.5 h-3.5" />
                       <span>Editar</span>
-                    </button>
-
-                    {/* Botón Copiar para WhatsApp */}
-                    <button
-                      type="button"
-                      onClick={() => handleCopiarWhatsApp(v)}
-                      className="flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold transition-colors cursor-pointer"
-                      title="Copiar texto de recordatorio para WhatsApp"
-                    >
-                      {copiadoId === v.id ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Share2 className="w-3.5 h-3.5" />}
-                      <span>{copiadoId === v.id ? 'Copiado' : 'WhatsApp'}</span>
                     </button>
 
                     {/* Botón Papelera */}
                     <button
                       type="button"
                       onClick={() => handleDelete(v.id, v.cliente_nombre)}
-                      className="flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+                      className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
                       title="Enviar a la papelera"
                     >
                       <Trash2 className="w-3.5 h-3.5" />

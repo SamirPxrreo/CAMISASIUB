@@ -178,13 +178,83 @@ export function claveCliente(v) {
   return String(v.cliente_nombre || '').toLowerCase().trim();
 }
 
-// Formatear enlace WhatsApp
-export function getWhatsAppLink(telefono, mensaje) {
+// Formatear enlace WhatsApp directo sin mensaje predeterminado
+export function getWhatsAppLink(telefono) {
   if (!telefono) return null;
   const numLimpio = String(telefono).replace(/\D/g, '');
   if (!numLimpio) return null;
-  const texto = encodeURIComponent(mensaje || '');
-  return `https://wa.me/57${numLimpio}?text=${texto}`;
+  return `https://wa.me/57${numLimpio}`;
+}
+
+/* ---------- Liquidación entre socios por pedido (Exacto app.v2.js) ---------- */
+export function mitadGananciaPedido(v) {
+  return Math.max((precioTotalVenta(v) - costoTotalVenta(v)) / 2, 0);
+}
+
+export function otroSocioDe(vendedor) {
+  if (vendedor === 'Samir') return 'Valentina';
+  if (vendedor === 'Valentina') return 'Samir';
+  return null;
+}
+
+export function montoLiquidadoSocioPedido(v, liquidaciones) {
+  const receptor = otroSocioDe(v.vendedor);
+  if (!receptor) return 0;
+  return (liquidaciones || [])
+    .filter(l => String(l.venta_id) === String(v.id) && l.pagador === v.vendedor && l.receptor === receptor)
+    .reduce((s, l) => s + (Number(l.monto) || 0), 0);
+}
+
+export function saldoSocioPendientePedido(v, liquidaciones) {
+  return Math.max(mitadGananciaPedido(v) - montoLiquidadoSocioPedido(v, liquidaciones), 0);
+}
+
+export function pedidoSocioLiquidado(v, liquidaciones) {
+  return saldoSocioPendientePedido(v, liquidaciones) <= 1;
+}
+
+export function pedidosPendientesLiquidacion(pagador, ventas, liquidaciones) {
+  return (ventas || []).filter(v =>
+    v.vendedor === pagador &&
+    otroSocioDe(v.vendedor) &&
+    saldoSocioPendientePedido(v, liquidaciones) > 1
+  );
+}
+
+export function calcularDeudaSocios(ventas, liquidaciones) {
+  let deudaSamirAVal = 0;
+  let deudaValASamir = 0;
+  let gananciaTotalSamir = 0;
+  let gananciaTotalVal = 0;
+
+  (ventas || []).forEach(v => {
+    if (v.vendedor !== 'Samir' && v.vendedor !== 'Valentina') return;
+    const pendiente = saldoSocioPendientePedido(v, liquidaciones);
+    const ganancia = mitadGananciaPedido(v);
+    if (v.vendedor === 'Samir') {
+      deudaSamirAVal += pendiente;
+      gananciaTotalSamir += ganancia;
+    } else if (v.vendedor === 'Valentina') {
+      deudaValASamir += pendiente;
+      gananciaTotalVal += ganancia;
+    }
+  });
+
+  const perdidasSinDescontar = Math.round(
+    (ventas || []).filter(v => v.vendedor === 'Samir' || v.vendedor === 'Valentina').reduce((s, v) => {
+      const g = precioTotalVenta(v) - costoTotalVenta(v);
+      return s + (g < 0 ? -g / 2 : 0);
+    }, 0)
+  );
+
+  return {
+    deudaSamirAVal: Math.round(deudaSamirAVal),
+    deudaValASamir: Math.round(deudaValASamir),
+    gananciaTotalSamir: Math.round(gananciaTotalSamir),
+    gananciaTotalVal: Math.round(gananciaTotalVal),
+    totalPendiente: Math.round(deudaSamirAVal + deudaValASamir),
+    perdidasSinDescontar
+  };
 }
 
 // Plantilla exacta de mensaje de recordatorio para WhatsApp
