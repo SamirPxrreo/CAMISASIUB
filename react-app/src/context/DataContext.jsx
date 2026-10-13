@@ -178,6 +178,11 @@ export function DataProvider({ children }) {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
+      if (!payload.cliente_telefono && payload.telefono) {
+        payload.cliente_telefono = payload.telefono;
+      }
+      delete payload.telefono;
+
       let { data, error } = await supabase.from('ventas').insert([payload]).select().single();
       if (error && String(error.message).toLowerCase().match(/updated_at|comprado_at/)) {
         delete payload.updated_at;
@@ -205,6 +210,11 @@ export function DataProvider({ children }) {
         ...cambios,
         updated_at: new Date().toISOString()
       };
+      if (!payload.cliente_telefono && payload.telefono) {
+        payload.cliente_telefono = payload.telefono;
+      }
+      delete payload.telefono;
+
       let { data, error } = await supabase
         .from('ventas')
         .update(payload)

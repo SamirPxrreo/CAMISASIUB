@@ -23,13 +23,20 @@ import ThemeModal from './components/ThemeModal';
 import LoginView from './components/LoginView';
 
 function AppContent() {
-  const { user, loading } = useAuth();
+  const { user, loading, role } = useAuth();
   const [currentSection, setCurrentSection] = useState('dashboard');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isNewSaleOpen, setIsNewSaleOpen] = useState(false);
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState(null);
+
+  // Proteger sección de configuración para que solo el admin pueda ingresar
+  useEffect(() => {
+    if (currentSection === 'settings' && role?.role !== 'admin') {
+      setCurrentSection('dashboard');
+    }
+  }, [currentSection, role]);
 
   if (loading) {
     return (
@@ -74,7 +81,7 @@ function AppContent() {
       />
 
       {/* 2. Área Principal de Contenido (Scroll independiente para que el Sidebar nunca se baje) */}
-      <div className="flex-1 h-screen overflow-y-auto flex flex-col min-w-0 pb-20 lg:pb-8">
+      <div className="flex-1 h-screen overflow-y-auto flex flex-col min-w-0 pb-28 lg:pb-8">
         {/* TopBar */}
         <TopBar
           onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
@@ -143,7 +150,7 @@ function AppContent() {
                 <TrashView />
               )}
 
-              {currentSection === 'settings' && (
+              {currentSection === 'settings' && role?.role === 'admin' && (
                 <SettingsView />
               )}
             </motion.div>

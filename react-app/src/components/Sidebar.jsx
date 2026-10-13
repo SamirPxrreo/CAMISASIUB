@@ -48,6 +48,11 @@ export default function Sidebar({
 }) {
   const { role, logout } = useAuth();
 
+  const filteredNavItems = NAV_ITEMS.filter(item => {
+    if (item.id === 'settings' && role?.role !== 'admin') return false;
+    return true;
+  });
+
   return (
     <>
       {/* Backdrop para móvil */}
@@ -101,7 +106,7 @@ export default function Sidebar({
 
         {/* Navegación */}
         <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-          {NAV_ITEMS.map((item, idx) => {
+          {filteredNavItems.map((item, idx) => {
             const Icon = item.icon;
             const isActive = currentSection === item.id;
 

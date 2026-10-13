@@ -288,7 +288,6 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
       const payload = {
         cliente_nombre: cliente.trim(),
         cliente_telefono: telefono.trim(),
-        telefono: telefono.trim(),
         vendedor: vendedor,
         lugar_entrega: lugarEntrega === 'Otro' ? lugarOtro.trim() || 'Otro' : lugarEntrega,
         fecha: fecha,

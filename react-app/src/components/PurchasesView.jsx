@@ -15,7 +15,10 @@ import {
   ChevronDown,
   ChevronUp,
   Search,
-  Check
+  Check,
+  Phone,
+  Shirt,
+  Users
 } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { supabase } from '../lib/supabase';
@@ -28,13 +31,14 @@ import {
   abonosProveedorPorVentaId,
   normalizarEstado,
   getEstadoBadgeStyle,
-  claveCliente
+  claveCliente,
+  getWhatsAppLink
 } from '../lib/utils';
 import InlineDeleteConfirm from './InlineDeleteConfirm';
 import Pagination from './Pagination';
 
 export default function PurchasesView() {
-  const { compras, compraAportes, ventas, refreshData } = useData();
+  const { compras, compraAportes, compraPedidos = [], ventas, refreshData } = useData();
   const [modalAbierto, setModalAbierto] = useState(false);
   const [fecha, setFecha] = useState(hoyColombia());
   const [comprador, setComprador] = useState('Samir');
@@ -205,16 +209,25 @@ export default function PurchasesView() {
     }
   };
 
-  // Filtrado de visitas
+  // Filtrado de visitas con búsqueda profunda (incluye clientes de pedidos de la visita)
   const comprasFiltradas = useMemo(() => {
     if (!busqueda.trim()) return compras;
     const q = busqueda.toLowerCase().trim();
-    return compras.filter(c =>
-      (c.comprador || '').toLowerCase().includes(q) ||
-      (c.observaciones || '').toLowerCase().includes(q) ||
-      (c.fecha || '').includes(q)
-    );
-  }, [compras, busqueda]);
+    return compras.filter(c => {
+      if ((c.comprador || '').toLowerCase().includes(q)) return true;
+      if ((c.observaciones || '').toLowerCase().includes(q)) return true;
+      if ((c.fecha || '').includes(q)) return true;
+      if (String(c.id).toLowerCase().includes(q)) return true;
+      const renglones = compraPedidos.filter(cp => cp.compra_id === c.id);
+      const pedidos = renglones.length > 0
+        ? renglones.map(r => ventas.find(v => v.id === r.venta_id)).filter(Boolean)
+        : ventas.filter(v => v.compra_id === c.id);
+      return pedidos.some(p =>
+        (p.cliente_nombre || '').toLowerCase().includes(q) ||
+        (p.cliente_telefono || '').toLowerCase().includes(q)
+      );
+    });
+  }, [compras, compraPedidos, ventas, busqueda]);
 
   const pageSize = 12;
   const totalPages = Math.ceil(comprasFiltradas.length / pageSize) || 1;
@@ -229,6 +242,64 @@ export default function PurchasesView() {
     const start = (currentPage - 1) * pageSize;
     return comprasFiltradas.slice(start, start + pageSize);
   }, [comprasFiltradas, currentPage, pageSize]);
+
+  // Obtener desglose de pedidos cubiertos en una visita (idéntico a app.v2.js)
+  const getDetalleVisita = (c) => {
+    const renglones = compraPedidos.filter(cp => cp.compra_id === c.id);
+    const pedidos = renglones.length > 0
+      ? renglones.map(r => ventas.find(v => v.id === r.venta_id)).filter(Boolean)
+      : ventas.filter(v => v.compra_id === c.id);
+
+    const cantidadCamisas = pedidos.reduce((s, v) => s + (Number(v.cantidad) || 1), 0);
+    const costoTotalConfeccion = pedidos.reduce((s, v) => s + costoTotalVenta(v), 0);
+    const aportesCompra = compraAportes.filter(a => a.compra_id === c.id);
+    const totalAportado = Math.max(
+      aportesCompra.reduce((s, a) => s + (Number(a.monto) || 0), 0),
+      Number(c.abono_total) || Number(c.costo_total) || 0
+    );
+    const saldoPendiente = Math.max(0, costoTotalConfeccion - totalAportado);
+
+    const gruposMap = new Map();
+    pedidos.forEach(p => {
+      const clave = claveCliente(p);
+      if (!gruposMap.has(clave)) {
+        gruposMap.set(clave, {
+          pedidos: [],
+          nombre: p.cliente_nombre || 'Cliente',
+          telefono: p.cliente_telefono || ''
+        });
+      }
+      gruposMap.get(clave).pedidos.push(p);
+    });
+
+    const grupos = [...gruposMap.values()].map(g => {
+      const cant = g.pedidos.reduce((s, pp) => s + (Number(pp.cantidad) || 1), 0);
+      const abonoEnVisita = g.pedidos.reduce((s, pp) => {
+        if (renglones.length === 0) return s + (Number(pp.abono_yesenia) || 0);
+        const r = renglones.find(x => x.venta_id === pp.id);
+        return s + (r ? (Number(r.monto) || 0) : 0);
+      }, 0);
+      const saldoResto = g.pedidos.reduce((s, pp) => s + abonosProveedorPorVentaId(pp.id).pendiente, 0);
+      return {
+        nombre: g.nombre,
+        telefono: g.telefono,
+        cantidad: cant,
+        pedidosCount: g.pedidos.length,
+        abono: abonoEnVisita,
+        saldo: saldoResto
+      };
+    });
+
+    return {
+      pedidos,
+      cantidadCamisas,
+      costoTotalConfeccion,
+      aportesCompra,
+      totalAportado,
+      saldoPendiente,
+      grupos
+    };
+  };
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -258,36 +329,7 @@ export default function PurchasesView() {
         </button>
       </div>
 
-      {/* 2. Tarjetas KPI Generales */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-        <div className="p-4 sm:p-5 rounded-3xl bg-white border border-slate-200/80 shadow-xs">
-          <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block">Costo Total Confección</span>
-          <span className="text-2xl font-black text-slate-900 mt-1 block">{fmt(costoTotalPedidos)}</span>
-          <span className="text-xs text-slate-400 mt-0.5 block">Costo base acumulado</span>
-        </div>
-
-        <div className="p-4 sm:p-5 rounded-3xl bg-emerald-50/70 border border-emerald-100 shadow-xs">
-          <span className="text-[10.5px] font-bold text-emerald-800 uppercase tracking-wider block">Total Pagado a Yesenia</span>
-          <span className="text-2xl font-black text-emerald-900 mt-1 block">{fmt(totalAbonadoYesenia)}</span>
-          <span className="text-xs text-emerald-700/80 font-semibold mt-0.5 block">Suma de aportes entregados</span>
-        </div>
-
-        <div className="p-4 sm:p-5 rounded-3xl bg-amber-50/70 border border-amber-100 shadow-xs">
-          <span className="text-[10.5px] font-bold text-amber-800 uppercase tracking-wider block">Saldo Pendiente Yesenia</span>
-          <span className="text-2xl font-black text-amber-900 mt-1 block">{fmt(saldoPendienteYesenia)}</span>
-          <span className="text-xs text-amber-700/80 font-semibold mt-0.5 block">Faltante por liquidar al taller</span>
-        </div>
-
-        <div className="p-4 sm:p-5 rounded-3xl bg-indigo-50/70 border border-indigo-100 shadow-xs">
-          <span className="text-[10.5px] font-bold text-indigo-700 uppercase tracking-wider block">Aportes por Socio</span>
-          <div className="text-xs font-bold text-slate-800 mt-1 space-y-0.5">
-            <div>Samir: <span className="text-indigo-600 font-black">{fmt(aportesPorSocio.samir)}</span></div>
-            <div>Valentina: <span className="text-violet-600 font-black">{fmt(aportesPorSocio.val)}</span></div>
-          </div>
-        </div>
-      </div>
-
-      {/* 3. Desglose de Deuda con Yesenia por Cada Socio (Exacto app.v2.js) */}
+      {/* 2. Desglose de Deuda con Yesenia por Cada Socio (Samir y Valentina) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Deuda Samir con Yesenia */}
         <div className="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs space-y-3">
@@ -413,8 +455,7 @@ export default function PurchasesView() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <AnimatePresence>
             {comprasPaginadas.map((c) => {
-              const aportesCompra = compraAportes.filter(a => a.compra_id === c.id);
-              const totalPagado = c.abono_total || c.costo_total || aportesCompra.reduce((s, a) => s + (Number(a.monto) || 0), 0);
+              const info = getDetalleVisita(c);
 
               return (
                 <motion.div
@@ -422,9 +463,10 @@ export default function PurchasesView() {
                   layout
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between"
+                  className="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between space-y-4 hover:shadow-md transition-shadow"
                 >
-                  <div className="space-y-3">
+                  <div className="space-y-3.5">
+                    {/* Cabecera de Visita */}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2.5">
                         <div className="w-9 h-9 rounded-2xl bg-cyan-50 border border-cyan-100 text-cyan-700 flex items-center justify-center font-bold text-xs">
@@ -443,33 +485,108 @@ export default function PurchasesView() {
                       </span>
                     </div>
 
+                    {/* Quiénes Aportaron */}
+                    {info.aportesCompra.length > 0 && (
+                      <div className="p-2.5 rounded-2xl bg-slate-50 border border-slate-100 space-y-1 text-xs">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Aportaron en esta visita:</span>
+                        <div className="flex flex-wrap gap-2">
+                          {info.aportesCompra.map((a, i) => (
+                            <span key={i} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white border border-slate-200/80 font-bold text-[11px] text-slate-800 shadow-2xs">
+                              <span className="text-slate-500">{a.socio}:</span>
+                              <span className="text-emerald-700 font-black">{fmt(a.monto)}</span>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Detalle de Pedidos Cubiertos en esta Visita (Como en app.v2.js) */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-bold text-slate-800 flex items-center gap-1.5">
+                          <Shirt className="w-3.5 h-3.5 text-indigo-600" />
+                          <span>{info.cantidadCamisas} camisa(s) cubiertas</span>
+                        </span>
+                        <span className="text-[11px] text-slate-400 font-medium">
+                          {info.grupos.length} cliente(s) · {info.pedidos.length} pedido(s)
+                        </span>
+                      </div>
+
+                      {info.grupos.length > 0 ? (
+                        <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                          {info.grupos.map((g, idx) => {
+                            const waLink = getWhatsAppLink(g.telefono);
+                            return (
+                              <div key={idx} className="p-2.5 rounded-2xl bg-slate-50/80 border border-slate-100 text-xs space-y-1">
+                                <div className="flex items-center justify-between gap-1">
+                                  <div className="flex items-center gap-1.5 min-w-0">
+                                    <span className="font-extrabold text-slate-900 truncate">{g.nombre}</span>
+                                    {waLink && (
+                                      <a
+                                        href={waLink}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="text-emerald-600 hover:text-emerald-700 p-0.5"
+                                        title={`Chatear con ${g.nombre}`}
+                                      >
+                                        <Phone className="w-3 h-3" />
+                                      </a>
+                                    )}
+                                  </div>
+                                  <span className="font-extrabold text-slate-700 text-[11px] shrink-0 bg-white px-2 py-0.5 rounded-lg border border-slate-200/60">
+                                    ×{g.cantidad} {g.cantidad === 1 ? 'camisa' : 'camisas'}
+                                  </span>
+                                </div>
+
+                                <div className="flex items-center justify-between text-[11px] pt-1 border-t border-slate-200/40">
+                                  <span className="text-emerald-700 font-bold">
+                                    Abono: {fmt(g.abono)}
+                                  </span>
+                                  <span className={`font-black px-1.5 py-0.5 rounded-md text-[10.5px] ${
+                                    g.saldo <= 0
+                                      ? 'bg-emerald-100 text-emerald-800'
+                                      : 'bg-amber-100 text-amber-800'
+                                  }`}>
+                                    {g.saldo <= 0 ? 'Liquidado ✓' : `Saldo ${fmt(g.saldo)}`}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <p className="text-[11px] text-slate-400 italic bg-slate-50 p-2 rounded-xl text-center">
+                          Abono general al taller sin pedidos específicos asignados.
+                        </p>
+                      )}
+                    </div>
+
                     {c.observaciones && (
                       <p className="text-xs text-slate-600 italic bg-slate-50 p-2.5 rounded-2xl border border-slate-100">
                         "{c.observaciones}"
                       </p>
                     )}
-
-                    {/* Aportes de socios en esta visita */}
-                    {aportesCompra.length > 0 && (
-                      <div className="space-y-1 text-xs">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Aportaron:</span>
-                        {aportesCompra.map((a, i) => (
-                          <div key={i} className="flex justify-between p-1.5 rounded-xl bg-slate-50 text-[11px]">
-                            <span className="font-bold text-slate-700">{a.socio}:</span>
-                            <span className="font-black text-slate-900">{fmt(a.monto)}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
                   </div>
 
-                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between mt-3">
-                    <div>
-                      <span className="text-[10px] font-black text-slate-400 uppercase block">Total Pagado</span>
-                      <span className="text-base font-black text-emerald-600">{fmt(totalPagado)}</span>
+                  {/* Footer de la tarjeta con Totales y Botón Eliminar */}
+                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-[10px] font-black text-slate-400 uppercase">Pagado:</span>
+                        <span className="text-base font-black text-emerald-600">{fmt(info.totalAportado)}</span>
+                      </div>
+                      {info.costoTotalConfeccion > 0 && (
+                        <div className="text-[10.5px] text-slate-400 font-medium">
+                          Costo taller: {fmt(info.costoTotalConfeccion)} · {info.saldoPendiente > 0 ? (
+                            <span className="text-amber-600 font-bold">Resta {fmt(info.saldoPendiente)}</span>
+                          ) : (
+                            <span className="text-emerald-600 font-bold">Liquidado</span>
+                          )}
+                        </div>
+                      )}
                     </div>
 
-                    <div className="w-32">
+                    <div className="w-28 shrink-0">
                       <InlineDeleteConfirm
                         onDelete={() => handleEliminarCompra(c.id)}
                         clienteNombre={`Visita #${String(c.id).slice(-4)}`}

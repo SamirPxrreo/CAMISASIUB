@@ -56,16 +56,18 @@ export default function TopBar({ onOpenMobileMenu, onOpenNewSale, onOpenThemeMod
           <Palette className="w-4 h-4" />
         </motion.button>
 
-        {/* Botón Configuración */}
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => onNavigate && onNavigate('settings')}
-          className="p-2.5 rounded-2xl text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 border border-slate-200/80 transition-colors cursor-pointer"
-          title="Configuración del sistema (Colores y Usuarios)"
-        >
-          <Settings className="w-4 h-4" />
-        </motion.button>
+        {/* Botón Configuración (Solo Administrador) */}
+        {role?.role === 'admin' && (
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => onNavigate && onNavigate('settings')}
+            className="p-2.5 rounded-2xl text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 border border-slate-200/80 transition-colors cursor-pointer"
+            title="Configuración del sistema (Colores y Usuarios)"
+          >
+            <Settings className="w-4 h-4" />
+          </motion.button>
+        )}
 
         {/* Botón Refrescar con animación de rotación */}
         <motion.button
