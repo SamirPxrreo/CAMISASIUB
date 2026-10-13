@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { DataProvider } from './context/DataContext';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
 
 import Sidebar from './components/Sidebar';
 import BottomNav from './components/BottomNav';
@@ -17,6 +18,7 @@ import SummariesView from './components/SummariesView';
 import ReportsView from './components/ReportsView';
 import TrashView from './components/TrashView';
 import NewSaleModal from './components/NewSaleModal';
+import ThemeModal from './components/ThemeModal';
 import LoginView from './components/LoginView';
 
 function AppContent() {
@@ -25,6 +27,7 @@ function AppContent() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isNewSaleOpen, setIsNewSaleOpen] = useState(false);
+  const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState(null);
 
   if (loading) {
@@ -51,8 +54,8 @@ function AppContent() {
   };
 
   return (
-    <div className="min-h-screen flex bg-slate-50/60 font-sans text-slate-900">
-      {/* 1. Barra Lateral (Desktop) */}
+    <div className="h-screen w-screen overflow-hidden flex font-sans">
+      {/* 1. Barra Lateral Fija (Desktop) */}
       <Sidebar
         currentSection={currentSection}
         onNavigate={(sec) => {
@@ -66,14 +69,16 @@ function AppContent() {
         onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
         isOpenMobile={isMobileMenuOpen}
         onCloseMobile={() => setIsMobileMenuOpen(false)}
+        onOpenThemeModal={() => setIsThemeModalOpen(true)}
       />
 
-      {/* 2. Área Principal de Contenido */}
-      <div className="flex-1 flex flex-col min-w-0 pb-20 lg:pb-8">
+      {/* 2. Área Principal de Contenido (Scroll independiente para que el Sidebar nunca se baje) */}
+      <div className="flex-1 h-screen overflow-y-auto flex flex-col min-w-0 pb-20 lg:pb-8">
         {/* TopBar */}
         <TopBar
           onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
           onOpenNewSale={handleOpenNewSale}
+          onOpenThemeModal={() => setIsThemeModalOpen(true)}
         />
 
         {/* Vistas Dinámicas con Animación de Entrada */}
@@ -156,6 +161,12 @@ function AppContent() {
         }}
         editingOrder={editingOrder}
       />
+
+      {/* 5. Modal de Personalización de Tema */}
+      <ThemeModal
+        isOpen={isThemeModalOpen}
+        onClose={() => setIsThemeModalOpen(false)}
+      />
     </div>
   );
 }
@@ -163,9 +174,11 @@ function AppContent() {
 export default function App() {
   return (
     <AuthProvider>
-      <DataProvider>
-        <AppContent />
-      </DataProvider>
+      <ThemeProvider>
+        <DataProvider>
+          <AppContent />
+        </DataProvider>
+      </ThemeProvider>
     </AuthProvider>
   );
 }

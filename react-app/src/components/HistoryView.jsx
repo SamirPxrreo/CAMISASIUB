@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   History,
@@ -26,11 +26,13 @@ import {
   getWhatsAppLink,
   generarMensajeWhatsApp
 } from '../lib/utils';
+import Pagination from './Pagination';
 
 export default function HistoryView({ onEditOrder }) {
   const { ventas, updateVenta } = useData();
   const [busqueda, setBusqueda] = useState('');
   const [vendedorFiltro, setVendedorFiltro] = useState('Todos');
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Pedidos en historial (finalizados o totalmente liquidados)
   const pedidosHistorial = useMemo(() => {
@@ -53,6 +55,20 @@ export default function HistoryView({ onEditOrder }) {
       return true;
     });
   }, [pedidosHistorial, busqueda, vendedorFiltro]);
+
+  const pageSize = 15;
+  const totalPages = Math.ceil(pedidosFiltrados.length / pageSize) || 1;
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(1);
+    }
+  }, [totalPages, currentPage]);
+
+  const pedidosPaginados = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return pedidosFiltrados.slice(start, start + pageSize);
+  }, [pedidosFiltrados, currentPage, pageSize]);
 
   // KPIs
   const totalCamisasEntregadas = pedidosHistorial.reduce((s, v) => s + (Number(v.cantidad) || 1), 0);
@@ -155,7 +171,7 @@ export default function HistoryView({ onEditOrder }) {
       {/* 3. Grid de Tarjetas del Historial */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <AnimatePresence>
-          {pedidosFiltrados.map((v) => {
+          {pedidosPaginados.map((v) => {
             const items = itemsCrudosVenta(v) || [];
             const total = precioTotalVenta(v);
             const abono = abonoClienteTotal(v);
@@ -274,6 +290,16 @@ export default function HistoryView({ onEditOrder }) {
           </div>
         )}
       </div>
+
+      {/* 4. Controles de Paginación */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={pedidosFiltrados.length}
+        pageSize={pageSize}
+        onPageChange={setCurrentPage}
+        itemName="pedidos finalizados"
+      />
     </div>
   );
 }

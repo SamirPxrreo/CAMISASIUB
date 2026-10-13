@@ -32,6 +32,8 @@ export default function LoginView({ onLoginSuccess }) {
   const handleQuickLogin = (role) => {
     if (role === 'admin') {
       setEmail('admin@gmail.com');
+    } else if (role === 'val') {
+      setEmail('val@gmail.com');
     } else {
       setEmail('samir@gmail.com');
     }
@@ -195,16 +197,17 @@ export default function LoginView({ onLoginSuccess }) {
         </div>
 
         {/* Accesos rápidos para rellenar correo */}
-        <div className="w-full grid grid-cols-2 gap-2.5">
+        <div className="w-full grid grid-cols-3 gap-2">
           <motion.button
             type="button"
             whileHover={{ scale: 1.03, backgroundColor: 'rgba(255, 255, 255, 0.08)' }}
             whileTap={{ scale: 0.96 }}
             onClick={() => handleQuickLogin('admin')}
-            className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-[20px] bg-white/[0.04] border border-white/10 hover:border-amber-400/40 text-slate-200 text-xs font-semibold cursor-pointer transition-all duration-200 group"
+            className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-[18px] bg-white/[0.04] border border-white/10 hover:border-amber-400/40 text-slate-200 text-[11px] font-semibold cursor-pointer transition-all duration-200 group"
+            title="admin@gmail.com"
           >
-            <ShieldCheck className="w-3.5 h-3.5 text-amber-400 group-hover:scale-110 transition-transform" />
-            <span>admin@gmail.com</span>
+            <ShieldCheck className="w-3.5 h-3.5 text-amber-400 shrink-0 group-hover:scale-110 transition-transform" />
+            <span className="truncate">admin</span>
           </motion.button>
 
           <motion.button
@@ -212,10 +215,23 @@ export default function LoginView({ onLoginSuccess }) {
             whileHover={{ scale: 1.03, backgroundColor: 'rgba(99, 102, 241, 0.15)' }}
             whileTap={{ scale: 0.96 }}
             onClick={() => handleQuickLogin('samir')}
-            className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-[20px] bg-indigo-500/10 border border-indigo-500/20 hover:border-indigo-400/40 text-indigo-200 text-xs font-semibold cursor-pointer transition-all duration-200 group"
+            className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-[18px] bg-indigo-500/10 border border-indigo-500/20 hover:border-indigo-400/40 text-indigo-200 text-[11px] font-semibold cursor-pointer transition-all duration-200 group"
+            title="samir@gmail.com"
           >
-            <UserCheck className="w-3.5 h-3.5 text-indigo-400 group-hover:scale-110 transition-transform" />
-            <span>samir@gmail.com</span>
+            <UserCheck className="w-3.5 h-3.5 text-indigo-400 shrink-0 group-hover:scale-110 transition-transform" />
+            <span className="truncate">samir</span>
+          </motion.button>
+
+          <motion.button
+            type="button"
+            whileHover={{ scale: 1.03, backgroundColor: 'rgba(236, 72, 153, 0.15)' }}
+            whileTap={{ scale: 0.96 }}
+            onClick={() => handleQuickLogin('val')}
+            className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-[18px] bg-pink-500/10 border border-pink-500/20 hover:border-pink-400/40 text-pink-200 text-[11px] font-semibold cursor-pointer transition-all duration-200 group"
+            title="val@gmail.com"
+          >
+            <UserCheck className="w-3.5 h-3.5 text-pink-400 shrink-0 group-hover:scale-110 transition-transform" />
+            <span className="truncate">val (Valentina)</span>
           </motion.button>
         </div>
 

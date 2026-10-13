@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   CreditCard,
@@ -29,10 +29,12 @@ import {
   itemsCrudosVenta,
   precioDeItem
 } from '../lib/utils';
+import Pagination from './Pagination';
 
 export default function CuentasView() {
   const { ventas } = useData();
   const [busqueda, setBusqueda] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const [expandedClave, setExpandedClave] = useState(null);
 
   // Agrupar pedidos activos por cliente
@@ -90,6 +92,20 @@ export default function CuentasView() {
       c.vendedoresStr.toLowerCase().includes(q)
     );
   }, [cuentasAgrupadas, busqueda]);
+
+  const pageSize = 12;
+  const totalPages = Math.ceil(cuentasFiltradas.length / pageSize) || 1;
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(1);
+    }
+  }, [totalPages, currentPage]);
+
+  const cuentasPaginadas = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return cuentasFiltradas.slice(start, start + pageSize);
+  }, [cuentasFiltradas, currentPage, pageSize]);
 
   // KPIs
   const totalPorCobrar = cuentasAgrupadas.reduce((s, c) => s + c.saldo, 0);
@@ -347,7 +363,7 @@ export default function CuentasView() {
       {/* 3. Lista de Cuentas */}
       <div className="space-y-3">
         <AnimatePresence>
-          {cuentasFiltradas.map((c) => {
+          {cuentasPaginadas.map((c) => {
             const isExpanded = expandedClave === c.clave;
             const waLink = getClientWhatsAppLink(c);
 
@@ -493,6 +509,16 @@ export default function CuentasView() {
           </div>
         )}
       </div>
+
+      {/* 4. Controles de Paginación */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={cuentasFiltradas.length}
+        pageSize={pageSize}
+        onPageChange={setCurrentPage}
+        itemName="cuentas de clientes"
+      />
     </div>
   );
 }

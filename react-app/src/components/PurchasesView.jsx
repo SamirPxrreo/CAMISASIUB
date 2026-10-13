@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Tag,
@@ -31,6 +31,7 @@ import {
   claveCliente
 } from '../lib/utils';
 import InlineDeleteConfirm from './InlineDeleteConfirm';
+import Pagination from './Pagination';
 
 export default function PurchasesView() {
   const { compras, compraAportes, ventas, refreshData } = useData();
@@ -44,6 +45,7 @@ export default function PurchasesView() {
   const [guardando, setGuardando] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [busqueda, setBusqueda] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const [expandirDeudaSamir, setExpandirDeudaSamir] = useState(false);
   const [expandirDeudaVal, setExpandirDeudaVal] = useState(false);
 
@@ -213,6 +215,20 @@ export default function PurchasesView() {
       (c.fecha || '').includes(q)
     );
   }, [compras, busqueda]);
+
+  const pageSize = 12;
+  const totalPages = Math.ceil(comprasFiltradas.length / pageSize) || 1;
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(1);
+    }
+  }, [totalPages, currentPage]);
+
+  const comprasPaginadas = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return comprasFiltradas.slice(start, start + pageSize);
+  }, [comprasFiltradas, currentPage, pageSize]);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -396,7 +412,7 @@ export default function PurchasesView() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <AnimatePresence>
-            {comprasFiltradas.map((c) => {
+            {comprasPaginadas.map((c) => {
               const aportesCompra = compraAportes.filter(a => a.compra_id === c.id);
               const totalPagado = c.abono_total || c.costo_total || aportesCompra.reduce((s, a) => s + (Number(a.monto) || 0), 0);
 
@@ -474,6 +490,16 @@ export default function PurchasesView() {
             </div>
           )}
         </div>
+
+        {/* Controles de Paginación */}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={comprasFiltradas.length}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          itemName="visitas y pagos a Yesenia"
+        />
       </div>
 
       {/* Modal Registrar Nuevo Abono a Yesenia */}

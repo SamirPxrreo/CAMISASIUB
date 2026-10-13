@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Trash2,
@@ -16,12 +16,14 @@ import {
   formatearFechaHumana,
   precioTotalVenta
 } from '../lib/utils';
+import Pagination from './Pagination';
 
 export default function TrashView() {
   const { refreshData } = useData();
   const [eliminados, setEliminados] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [mensaje, setMensaje] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const cargarPapelera = async () => {
     setCargando(true);
@@ -77,6 +79,20 @@ export default function TrashView() {
     }
   };
 
+  const pageSize = 12;
+  const totalPages = Math.ceil(eliminados.length / pageSize) || 1;
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(1);
+    }
+  }, [totalPages, currentPage]);
+
+  const eliminadosPaginados = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return eliminados.slice(start, start + pageSize);
+  }, [eliminados, currentPage, pageSize]);
+
   const handleVaciarPapelera = async () => {
     if (eliminados.length === 0) return;
     if (window.confirm(`¿Estás seguro de vaciar la papelera y borrar los ${eliminados.length} pedidos definitivamente?`)) {
@@ -128,7 +144,7 @@ export default function TrashView() {
       {/* 2. Grid de Pedidos en Papelera */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <AnimatePresence>
-          {eliminados.map(v => (
+          {eliminadosPaginados.map(v => (
             <motion.div
               key={v.id}
               layout
@@ -190,6 +206,16 @@ export default function TrashView() {
           </div>
         )}
       </div>
+
+      {/* Controles de Paginación */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={eliminados.length}
+        pageSize={pageSize}
+        onPageChange={setCurrentPage}
+        itemName="pedidos en papelera"
+      />
     </div>
   );
 }

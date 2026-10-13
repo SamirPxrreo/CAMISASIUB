@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
@@ -33,12 +33,14 @@ import {
   generarTextoResumenPedido
 } from '../lib/utils';
 import InlineDeleteConfirm from './InlineDeleteConfirm';
+import Pagination from './Pagination';
 
 export default function OrdersView({ onOpenNewSale, onEditOrder }) {
   const { ventas, updateItemEstado, deleteVenta } = useData();
   const [busqueda, setBusqueda] = useState('');
   const [estadoFiltro, setEstadoFiltro] = useState('Todos');
   const [vendedorFiltro, setVendedorFiltro] = useState('Todos');
+  const [currentPage, setCurrentPage] = useState(1);
   const [expandedId, setExpandedId] = useState(null);
   const [copiadoPedidoId, setCopiadoPedidoId] = useState(null);
 
@@ -113,6 +115,20 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
       return true;
     });
   }, [ventas, busqueda, estadoFiltro, vendedorFiltro]);
+
+  const pageSize = 12;
+  const totalPages = Math.ceil(ventasFiltradas.length / pageSize) || 1;
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(1);
+    }
+  }, [totalPages, currentPage]);
+
+  const ventasPaginadas = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return ventasFiltradas.slice(start, start + pageSize);
+  }, [ventasFiltradas, currentPage, pageSize]);
 
   const toggleExpand = (id) => {
     setExpandedId(prev => prev === id ? null : id);
@@ -209,7 +225,7 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
       {/* 3. LISTADO DE TARJETAS EN CUADROS CON ORDEN LOGICO */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <AnimatePresence mode="popLayout">
-          {ventasFiltradas.map((v) => {
+          {ventasPaginadas.map((v) => {
             const items = itemsCrudosVenta(v) || [];
             const saldo = saldoCliente(v);
             const total = precioTotalVenta(v);
@@ -436,6 +452,16 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
           </div>
         )}
       </div>
+
+      {/* 4. CONTROLES DE PAGINACIÓN */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={ventasFiltradas.length}
+        pageSize={pageSize}
+        onPageChange={setCurrentPage}
+        itemName="pedidos"
+      />
     </div>
   );
 }

@@ -99,7 +99,7 @@ export default function DashboardView({ onNavigate, onOpenNewSale }) {
       <motion.section variants={itemVariants} className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-indigo-600" />
+            <Sparkles className="w-4 h-4 theme-active-text" />
             <h2 className="text-base font-bold text-slate-900">Accesos Rápidos</h2>
           </div>
         </div>
@@ -174,7 +174,7 @@ export default function DashboardView({ onNavigate, onOpenNewSale }) {
           <h2 className="text-base font-bold text-slate-900">Últimos Pedidos Registrados</h2>
           <button
             onClick={() => onNavigate('orders')}
-            className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer"
+            className="text-xs font-bold theme-active-text hover:underline flex items-center gap-1 cursor-pointer"
           >
             Ver todos los pedidos <ArrowRight className="w-3.5 h-3.5" />
           </button>
@@ -185,7 +185,7 @@ export default function DashboardView({ onNavigate, onOpenNewSale }) {
             {ventas.slice(0, 5).map((v) => (
               <div key={v.id} className="p-4 flex items-center justify-between hover:bg-slate-50/80 transition-colors">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-sm shrink-0">
+                  <div className="w-10 h-10 rounded-2xl theme-badge-subtle flex items-center justify-center font-bold text-sm shrink-0">
                     {(v.cliente_nombre || 'C')[0].toUpperCase()}
                   </div>
                   <div className="min-w-0">
@@ -200,7 +200,7 @@ export default function DashboardView({ onNavigate, onOpenNewSale }) {
                   <span className="text-sm font-bold text-slate-900 block">
                     {fmt(v.precio_total || v.precio_unitario || 0)}
                   </span>
-                  <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full inline-block mt-0.5">
+                  <span className="text-xs font-semibold theme-badge-subtle px-2 py-0.5 rounded-full inline-block mt-0.5">
                     {v.estado || 'Pedido'}
                   </span>
                 </div>

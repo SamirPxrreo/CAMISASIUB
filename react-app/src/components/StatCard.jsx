@@ -75,19 +75,19 @@ export function ShortcutCard({ title, subtitle, actionText, icon: Icon, onClick,
       whileTap={{ scale: 0.96 }}
       transition={{ type: "spring", stiffness: 400, damping: 22 }}
       onClick={onClick}
-      className="p-5 rounded-3xl bg-gradient-to-b from-white to-slate-50 border border-slate-200/80 hover:border-indigo-400 shadow-sm hover:shadow-md hover:shadow-indigo-500/10 cursor-pointer flex flex-col justify-between transition-colors group"
+      className="p-5 rounded-3xl bg-white border border-slate-200/80 shadow-sm hover:shadow-md cursor-pointer flex flex-col justify-between transition-colors group"
     >
       <div className="flex items-center justify-between mb-4">
-        <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white flex items-center justify-center transition-all duration-200 group-hover:rotate-6">
+        <div className="w-10 h-10 rounded-2xl theme-badge-subtle group-hover:theme-btn-primary flex items-center justify-center transition-all duration-200 group-hover:rotate-6">
           <Icon className="w-5 h-5" />
         </div>
-        <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full group-hover:bg-indigo-100 transition-colors">
+        <span className="text-xs font-bold theme-badge-subtle px-2.5 py-1 rounded-full transition-colors">
           {actionText}
         </span>
       </div>
 
       <div>
-        <h3 className="text-base font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
+        <h3 className="text-base font-bold text-slate-900 group-hover:theme-active-text transition-colors">
           {title}
         </h3>
         <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">

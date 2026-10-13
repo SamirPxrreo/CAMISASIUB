@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Menu, RotateCw, Plus, User, ShieldCheck } from 'lucide-react';
+import { Menu, RotateCw, Plus, User, ShieldCheck, Palette } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 
-export default function TopBar({ onOpenMobileMenu, onOpenNewSale }) {
+export default function TopBar({ onOpenMobileMenu, onOpenNewSale, onOpenThemeModal }) {
   const { role } = useAuth();
   const { refreshData } = useData();
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -45,6 +45,17 @@ export default function TopBar({ onOpenMobileMenu, onOpenNewSale }) {
 
       {/* Acciones Rápidas */}
       <div className="flex items-center gap-2 sm:gap-3">
+        {/* Botón Personalizar Tema */}
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={onOpenThemeModal}
+          className="p-2.5 rounded-2xl text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 border border-slate-200/80 transition-colors cursor-pointer"
+          title="Personalizar tema de colores"
+        >
+          <Palette className="w-4 h-4" />
+        </motion.button>
+
         {/* Botón Refrescar con animación de rotación */}
         <motion.button
           whileHover={{ scale: 1.05 }}
@@ -63,7 +74,7 @@ export default function TopBar({ onOpenMobileMenu, onOpenNewSale }) {
           whileHover={{ scale: 1.03, y: -1 }}
           whileTap={{ scale: 0.95 }}
           onClick={onOpenNewSale}
-          className="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm shadow-md shadow-indigo-500/20 transition-all cursor-pointer"
+          className="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-2xl theme-btn-primary text-white font-semibold text-sm shadow-md transition-all cursor-pointer"
         >
           <Plus className="w-4 h-4 stroke-[2.5]" />
           <span>Nueva Venta</span>

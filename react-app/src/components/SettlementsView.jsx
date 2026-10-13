@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   DollarSign,
@@ -28,6 +28,7 @@ import {
   pedidosPendientesLiquidacion,
   otroSocioDe
 } from '../lib/utils';
+import Pagination from './Pagination';
 
 export default function SettlementsView() {
   const { liquidaciones, ventas, refreshData } = useData();
@@ -39,6 +40,7 @@ export default function SettlementsView() {
   const [fecha, setFecha] = useState(hoyColombia());
   const [nota, setNota] = useState('');
   const [busqueda, setBusqueda] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const [guardando, setGuardando] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -184,6 +186,20 @@ export default function SettlementsView() {
       return cliente.includes(q) || pag.includes(q) || rec.includes(q) || not.includes(q) || fec.includes(q);
     });
   }, [liquidaciones, ventas, busqueda]);
+
+  const pageSize = 12;
+  const totalPages = Math.ceil(liquidacionesFiltradas.length / pageSize) || 1;
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(1);
+    }
+  }, [totalPages, currentPage]);
+
+  const liquidacionesPaginadas = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return liquidacionesFiltradas.slice(start, start + pageSize);
+  }, [liquidacionesFiltradas, currentPage, pageSize]);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -331,7 +347,7 @@ export default function SettlementsView() {
         </div>
 
         <div className="divide-y divide-slate-100">
-          {liquidacionesFiltradas.map((l) => {
+          {liquidacionesPaginadas.map((l) => {
             const venta = ventas.find(v => String(v.id) === String(l.venta_id));
             const clienteLabel = venta
               ? `${venta.cliente_nombre || 'Cliente'} (${venta.fecha || 'Sin fecha'})`
@@ -382,6 +398,16 @@ export default function SettlementsView() {
             </div>
           )}
         </div>
+
+        {/* Controles de Paginación */}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={liquidacionesFiltradas.length}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          itemName="transferencias de liquidación"
+        />
       </div>
 
       {/* Modal Registrar Liquidación de Pedido */}

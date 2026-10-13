@@ -17,7 +17,8 @@ import {
   Shirt,
   LogOut,
   Trash2,
-  Calendar
+  Calendar,
+  Palette
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -35,7 +36,15 @@ const NAV_ITEMS = [
   { id: 'trash', label: 'Papelera', icon: Trash2, section: 'Datos' }
 ];
 
-export default function Sidebar({ currentSection, onNavigate, isCollapsed, onToggleCollapse, isOpenMobile, onCloseMobile }) {
+export default function Sidebar({
+  currentSection,
+  onNavigate,
+  isCollapsed,
+  onToggleCollapse,
+  isOpenMobile,
+  onCloseMobile,
+  onOpenThemeModal
+}) {
   const { role, logout } = useAuth();
 
   return (
@@ -53,7 +62,7 @@ export default function Sidebar({ currentSection, onNavigate, isCollapsed, onTog
 
       {/* Barra lateral */}
       <motion.aside
-        className={`fixed lg:static top-0 bottom-0 left-0 z-50 flex flex-col bg-white border-r border-slate-200/80 shadow-sm transition-all duration-300 ease-out ${
+        className={`fixed lg:sticky lg:top-0 lg:h-screen lg:self-start top-0 bottom-0 left-0 z-50 flex flex-col bg-white border-r border-slate-200/80 shadow-sm transition-all duration-300 ease-out shrink-0 ${
           isCollapsed ? 'w-20' : 'w-64'
         } ${isOpenMobile ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
       >
@@ -65,7 +74,7 @@ export default function Sidebar({ currentSection, onNavigate, isCollapsed, onTog
             onClick={() => onNavigate('dashboard')}
             className="flex items-center gap-3 cursor-pointer overflow-hidden"
           >
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 to-indigo-500 text-white flex items-center justify-center shadow-md shadow-indigo-500/20">
+            <div className="w-10 h-10 rounded-2xl theme-brand-badge text-white flex items-center justify-center shadow-md">
               <Shirt className="w-5 h-5" />
             </div>
             {!isCollapsed && (
@@ -106,20 +115,20 @@ export default function Sidebar({ currentSection, onNavigate, isCollapsed, onTog
                 }}
                 className={`relative w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl font-medium text-sm transition-colors text-left ${
                   isActive
-                    ? 'text-indigo-600 font-semibold'
+                    ? 'theme-active-text font-bold'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                } ${item.highlight ? 'bg-indigo-50/60 text-indigo-700' : ''}`}
+                } ${item.highlight ? 'theme-active-pill theme-active-text font-semibold' : ''}`}
               >
                 {isActive && (
                   <motion.div
                     layoutId="sidebar-active-pill"
-                    className="absolute inset-0 bg-indigo-50 rounded-2xl border border-indigo-100"
+                    className="absolute inset-0 rounded-2xl theme-active-pill shadow-xs"
                     transition={{ type: "spring", stiffness: 450, damping: 30 }}
                   />
                 )}
 
                 <div className={`relative z-10 w-6 h-6 flex items-center justify-center ${
-                  isActive ? 'text-indigo-600' : 'text-slate-400'
+                  isActive ? 'theme-active-text' : 'text-slate-400'
                 }`}>
                   <Icon className="w-5 h-5" />
                 </div>
@@ -132,10 +141,24 @@ export default function Sidebar({ currentSection, onNavigate, isCollapsed, onTog
           })}
         </nav>
 
-        {/* Footer / Usuario */}
-        <div className="p-3 border-t border-slate-100 bg-slate-50/50">
+        {/* Footer / Tema & Usuario */}
+        <div className="p-3 border-t border-slate-100 bg-slate-50/50 space-y-2 shrink-0">
+          {/* Botón Personalizar Tema */}
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={onOpenThemeModal}
+            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-2xl text-xs font-semibold text-slate-600 hover:theme-active-text hover:bg-white border border-transparent hover:border-slate-200/80 transition-all cursor-pointer ${
+              isCollapsed ? 'justify-center' : ''
+            }`}
+            title="Personalizar tema de colores"
+          >
+            <Palette className="w-4 h-4 theme-active-text shrink-0" />
+            {!isCollapsed && <span>Cambiar Tema</span>}
+          </motion.button>
+
           <div className="flex items-center gap-3 p-2 rounded-2xl bg-white border border-slate-200/60 shadow-xs">
-            <div className="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center text-xs">
+            <div className="w-8 h-8 rounded-xl theme-user-avatar font-bold flex items-center justify-center text-xs">
               {(role?.nombre || 'U')[0].toUpperCase()}
             </div>
             {!isCollapsed && (
