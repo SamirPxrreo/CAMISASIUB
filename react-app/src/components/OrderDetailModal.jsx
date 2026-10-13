@@ -195,7 +195,7 @@ export default function OrderDetailModal({ isOpen, onClose, order, onEditOrder }
                       layout
                       className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs hover:shadow-xs transition-shadow flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                     >
-                      <div className="flex items-start sm:items-center gap-3 min-w-0">
+                      <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
                         {/* Insignia con número de prenda */}
                         <div className="w-7 h-7 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center font-black text-xs shrink-0">
                           #{idx + 1}
@@ -209,7 +209,7 @@ export default function OrderDetailModal({ isOpen, onClose, order, onEditOrder }
                         />
 
                         {/* Descripción clara y sin ambigüedades */}
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <div className="font-black text-slate-900 text-xs sm:text-sm flex items-center gap-2 flex-wrap">
                             <span>{it.genero === 'Hombre' ? 'Hombre' : 'Mujer'} {it.color || 'Negro'} Talla {it.talla || 'S'}</span>
                             {it.modelo === 'Nuevo' && (
@@ -220,7 +220,7 @@ export default function OrderDetailModal({ isOpen, onClose, order, onEditOrder }
                           </div>
 
                           {it.programa ? (
-                            <div className="text-[11px] font-bold text-indigo-600 mt-0.5">
+                            <div className="text-[11px] font-bold text-indigo-600 mt-0.5 break-words">
                               Bordado: {it.programa}
                             </div>
                           ) : (

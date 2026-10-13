@@ -10,7 +10,7 @@ import {
   CheckCircle,
   Share2
 } from 'lucide-react';
-import * as XLSX from 'xlsx';
+import { exportarReporteCompletoExcel } from '../lib/excelExport';
 import { useData } from '../context/DataContext';
 import {
   fmt,
@@ -36,81 +36,17 @@ export default function ReportsView() {
     return true; // todos
   });
 
-  const exportarExcel = () => {
+  const exportarExcel = async () => {
     setExportando(true);
     setExito(false);
 
     try {
-      // Filas para la hoja de cálculo
-      const filasExcel = [];
-
-      dataset.forEach(v => {
-        const items = itemsCrudosVenta(v) || [];
-        const cant = Number(v.cantidad) || 1;
-        const total = precioTotalVenta(v);
-        const costo = costoTotalVenta(v);
-        const abono = abonoClienteTotal(v);
-        const saldo = saldoCliente(v);
-
-        if (items.length > 0) {
-          items.forEach((it, idx) => {
-            filasExcel.push({
-              'ID Pedido': v.id,
-              'Fecha': v.fecha || '',
-              'Cliente': v.cliente_nombre || '',
-              'Teléfono': v.cliente_telefono || v.telefono || '',
-              'Vendedor': v.vendedor || '',
-              'Versión': it.modelo === 'Nuevo' ? 'Versión 2' : 'Versión 1',
-              'Género': it.genero || 'Hombre',
-              'Color': it.color || '',
-              'Talla': it.talla || '',
-              'Bordado': it.programa || '',
-              'Estado Camisa': it.estado || v.estado || 'Pedido',
-              'Precio Prenda': Number(it.precio) || Number(v.precio_unitario) || 39000,
-              'Costo Prenda': Number(it.costo) || Number(v.costo_unitario) || 30000,
-              'Abono Prenda': Number(it.abono) || 0,
-              'Lugar Entrega': v.lugar_entrega || '',
-              'Fecha Entrega': v.fecha_entrega || 'Por definir',
-              'Nota': v.nota || ''
-            });
-          });
-        } else {
-          filasExcel.push({
-            'ID Pedido': v.id,
-            'Fecha': v.fecha || '',
-            'Cliente': v.cliente_nombre || '',
-            'Teléfono': v.cliente_telefono || v.telefono || '',
-            'Vendedor': v.vendedor || '',
-            'Versión': v.modelo === 'Nuevo' ? 'Versión 2' : 'Versión 1',
-            'Género': v.genero || 'Hombre',
-            'Color': v.color || '',
-            'Talla': v.talla || '',
-            'Bordado': v.cliente_programa || '',
-            'Estado Camisa': v.estado || 'Pedido',
-            'Precio Prenda': Number(v.precio_unitario) || 39000,
-            'Costo Prenda': Number(v.costo_unitario) || 30000,
-            'Abono Prenda': Number(v.abono) || 0,
-            'Lugar Entrega': v.lugar_entrega || '',
-            'Fecha Entrega': v.fecha_entrega || 'Por definir',
-            'Nota': v.nota || ''
-          });
-        }
-      });
-
-      // Crear Libro de Trabajo
-      const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.json_to_sheet(filasExcel);
-      XLSX.utils.book_append_sheet(wb, ws, 'Reporte Ventas');
-
-      // Descargar archivo
-      const nombreArchivo = `Reporte_Camisas_IUB_${hoyColombia()}.xlsx`;
-      XLSX.writeFile(wb, nombreArchivo);
-
+      await exportarReporteCompletoExcel(ventas, filtroTipo);
       setExito(true);
       setTimeout(() => setExito(false), 4000);
     } catch (err) {
       console.error("Error exportando Excel:", err);
-      alert("Hubo un error al generar el archivo Excel: " + err.message);
+      alert(err.message || "Hubo un error al generar el archivo Excel.");
     } finally {
       setExportando(false);
     }

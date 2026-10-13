@@ -677,9 +677,16 @@ export default function PurchasesView() {
                     type="number"
                     min="0"
                     step="1000"
-                    value={aporteSamir}
-                    onChange={(e) => setAporteSamir(parseFloat(e.target.value) || 0)}
-                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-black text-indigo-700 outline-none"
+                    value={aporteSamir === '' ? '' : aporteSamir}
+                    onFocus={(e) => e.target.select()}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setAporteSamir(val === '' ? '' : (isNaN(Number(val)) ? '' : Number(val)));
+                    }}
+                    onBlur={() => {
+                      if (aporteSamir === '' || isNaN(aporteSamir)) setAporteSamir(0);
+                    }}
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-black text-indigo-700 outline-none focus:border-indigo-500"
                   />
                 </div>
                 <div>
@@ -688,9 +695,16 @@ export default function PurchasesView() {
                     type="number"
                     min="0"
                     step="1000"
-                    value={aporteVal}
-                    onChange={(e) => setAporteVal(parseFloat(e.target.value) || 0)}
-                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-black text-violet-700 outline-none"
+                    value={aporteVal === '' ? '' : aporteVal}
+                    onFocus={(e) => e.target.select()}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setAporteVal(val === '' ? '' : (isNaN(Number(val)) ? '' : Number(val)));
+                    }}
+                    onBlur={() => {
+                      if (aporteVal === '' || isNaN(aporteVal)) setAporteVal(0);
+                    }}
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-black text-violet-700 outline-none focus:border-violet-500"
                   />
                 </div>
                 <div className="col-span-2 pt-1 border-t border-slate-200/60 flex justify-between text-xs font-black text-slate-800">

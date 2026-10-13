@@ -663,9 +663,20 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
                         <label className="text-[10.5px] font-semibold text-slate-500 block mb-0.5">Precio Venta ($)</label>
                         <input
                           type="number"
-                          value={f.precio}
-                          onChange={(e) => updateFila(idx, 'precio', parseFloat(e.target.value) || 0)}
-                          className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-800 outline-none"
+                          min="0"
+                          step="1000"
+                          value={f.precio === '' ? '' : f.precio}
+                          onFocus={(e) => e.target.select()}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            updateFila(idx, 'precio', val === '' ? '' : (isNaN(Number(val)) ? '' : Number(val)));
+                          }}
+                          onBlur={() => {
+                            if (f.precio === '' || isNaN(f.precio)) {
+                              updateFila(idx, 'precio', PRECIO_VENTA_DEFECTO);
+                            }
+                          }}
+                          className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-800 outline-none focus:border-indigo-500"
                         />
                       </div>
 
@@ -673,9 +684,20 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
                         <label className="text-[10.5px] font-semibold text-slate-500 block mb-0.5">Costo Yesenia ($)</label>
                         <input
                           type="number"
-                          value={f.costo}
-                          onChange={(e) => updateFila(idx, 'costo', parseFloat(e.target.value) || 0)}
-                          className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-amber-700 outline-none"
+                          min="0"
+                          step="1000"
+                          value={f.costo === '' ? '' : f.costo}
+                          onFocus={(e) => e.target.select()}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            updateFila(idx, 'costo', val === '' ? '' : (isNaN(Number(val)) ? '' : Number(val)));
+                          }}
+                          onBlur={() => {
+                            if (f.costo === '' || isNaN(f.costo)) {
+                              updateFila(idx, 'costo', 0);
+                            }
+                          }}
+                          className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-amber-700 outline-none focus:border-amber-500"
                         />
                       </div>
 
@@ -683,9 +705,21 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
                         <label className="text-[10.5px] font-semibold text-slate-500 block mb-0.5">Abono ($)</label>
                         <input
                           type="number"
-                          value={f.abono}
-                          onChange={(e) => updateFila(idx, 'abono', parseFloat(e.target.value) || 0)}
-                          className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-emerald-700 outline-none"
+                          min="0"
+                          step="1000"
+                          value={f.abono === '' ? '' : f.abono}
+                          onFocus={(e) => e.target.select()}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            updateFila(idx, 'abono', val === '' ? '' : (isNaN(Number(val)) ? '' : Number(val)));
+                          }}
+                          onBlur={() => {
+                            if (f.abono === '' || isNaN(f.abono)) {
+                              updateFila(idx, 'abono', 0);
+                            }
+                          }}
+                          placeholder="0"
+                          className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-emerald-700 outline-none focus:border-emerald-500"
                         />
                       </div>
 

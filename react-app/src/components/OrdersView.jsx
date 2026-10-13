@@ -17,15 +17,21 @@ import {
   Copy,
   Check,
   Eye,
-  ChevronRight
+  ChevronRight,
+  FileSpreadsheet
 } from 'lucide-react';
+import { exportarListaCompraExcel } from '../lib/excelExport';
 import { useData } from '../context/DataContext';
 import {
   ORDEN_ESTADOS,
   fmt,
   formatearFechaHumana,
+  hoyColombia,
   saldoCliente,
   precioTotalVenta,
+  costoTotalVenta,
+  precioDeItem,
+  costoDeItem,
   abonoClienteTotal,
   itemsCrudosVenta,
   normalizarEstado,
@@ -158,6 +164,21 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
     }
   };
 
+  const [exportandoCompra, setExportandoCompra] = useState(false);
+
+  // Exportar a Excel con diseño profesional, tabla y filtros únicamente las prendas en estado 'Pedido'
+  const handleExportarCompra = async () => {
+    setExportandoCompra(true);
+    try {
+      await exportarListaCompraExcel(ventas, vendedorFiltro);
+    } catch (err) {
+      console.warn('Exportar lista de compra:', err);
+      alert(err.message || 'Error al exportar la lista de compra.');
+    } finally {
+      setExportandoCompra(false);
+    }
+  };
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* 1. CABECERA, BUSCADOR Y FILTROS */}
@@ -174,8 +195,8 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
           </p>
         </div>
 
-        {/* Buscador y filtro de vendedor (solo admin) */}
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+        {/* Buscador, filtro de vendedor y botón Exportar Lista de Compra */}
+        <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap sm:flex-nowrap">
           {esAdmin && (
             <select
               value={vendedorFiltro}
@@ -200,12 +221,33 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
             {busqueda && (
               <button
                 onClick={() => setBusqueda('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-slate-100 text-slate-400"
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-slate-100 text-slate-400 cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
+
+          <button
+            type="button"
+            onClick={handleExportarCompra}
+            disabled={exportandoCompra}
+            className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-bold text-xs shadow-xs hover:shadow-sm transition-all cursor-pointer shrink-0 disabled:opacity-60"
+            title="Exportar a Excel (.xlsx) con tablas y filtros las camisas en estado 'Pedido' para confeccionar/comprar"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-emerald-100" />
+            <span className="hidden sm:inline">
+              {exportandoCompra ? 'Generando Excel...' : 'Exportar por Comprar'}
+            </span>
+            <span className="sm:hidden">
+              {exportandoCompra ? 'Excel...' : 'Por Comprar'}
+            </span>
+            {conteoPorEstado['Pedido'] > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full bg-emerald-800 text-emerald-100 text-[10px] font-black shrink-0">
+                {conteoPorEstado['Pedido']}
+              </span>
+            )}
+          </button>
         </div>
       </div>
 
@@ -272,7 +314,7 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
                         {(v.cliente_nombre || 'C')[0].toUpperCase()}
                       </div>
                       <div className="min-w-0">
-                        <h3 className="font-black text-slate-900 text-sm truncate">
+                        <h3 className="font-black text-slate-900 text-sm leading-snug break-words">
                           {v.cliente_nombre}
                         </h3>
                         <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-semibold flex-wrap">
@@ -320,30 +362,32 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
                         return (
                           <div
                             key={idx}
-                            className="p-2.5 rounded-2xl bg-slate-50/80 border border-slate-200/70 flex items-center justify-between text-xs gap-2"
+                            className="p-3 rounded-2xl bg-slate-50/80 border border-slate-200/70 flex flex-col sm:flex-row sm:items-center justify-between text-xs gap-2.5"
                           >
-                            <div className="min-w-0">
-                              <div className="font-black text-slate-800 text-xs truncate flex items-center gap-1.5">
+                            <div className="min-w-0 flex-1 space-y-1">
+                              <div className="font-black text-slate-800 text-xs leading-snug flex items-center gap-1.5 flex-wrap">
                                 <span>{it.genero === 'Hombre' ? 'Hombre' : 'Mujer'} {it.color || 'Color'} Talla {it.talla || 'U'}</span>
                                 {it.modelo === 'Nuevo' && (
-                                  <span className="text-[10px] font-extrabold px-1.5 py-0.2 rounded-md bg-amber-500/15 text-amber-600 border border-amber-500/30 shrink-0">
+                                  <span className="text-[10px] font-black px-1.5 py-0.2 rounded-md bg-amber-500/15 text-amber-600 border border-amber-500/30 shrink-0">
                                     v2
                                   </span>
                                 )}
                               </div>
                               {it.programa && (
-                                <div className="text-[11px] theme-active-text font-bold truncate">
-                                  Bordado: {it.programa}
+                                <div className="text-[11px] theme-active-text font-bold leading-snug break-words">
+                                  Bordado: <span className="font-black">{it.programa}</span>
                                 </div>
                               )}
                             </div>
 
                             {/* Selector individual de estado estilizado */}
-                            <StatusDropdown
-                              value={estadoItem}
-                              onChange={(nuevoEstado) => updateItemEstado(v.id, idx, nuevoEstado)}
-                              size="sm"
-                            />
+                            <div className="shrink-0 self-start sm:self-center">
+                              <StatusDropdown
+                                value={estadoItem}
+                                onChange={(nuevoEstado) => updateItemEstado(v.id, idx, nuevoEstado)}
+                                size="sm"
+                              />
+                            </div>
                           </div>
                         );
                       })}
@@ -379,7 +423,7 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
                     {v.lugar_entrega && (
                       <div className="flex items-center gap-1.5 text-[11px]">
                         <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                        <span className="truncate">{v.lugar_entrega}</span>
+                        <span className="break-words leading-tight">{v.lugar_entrega}</span>
                       </div>
                     )}
 
