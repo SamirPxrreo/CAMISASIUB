@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { DataProvider } from './context/DataContext';
@@ -21,6 +21,7 @@ import SettingsView from './components/SettingsView';
 import NewSaleModal from './components/NewSaleModal';
 import ThemeModal from './components/ThemeModal';
 import LoginView from './components/LoginView';
+import ErrorBoundary from './components/ErrorBoundary';
 
 function AppContent() {
   const { user, loading, role } = useAuth();
@@ -186,12 +187,14 @@ function AppContent() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <ThemeProvider>
-        <DataProvider>
-          <AppContent />
-        </DataProvider>
-      </ThemeProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <ThemeProvider>
+          <DataProvider>
+            <AppContent />
+          </DataProvider>
+        </ThemeProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
