@@ -198,7 +198,7 @@ La aplicación está completamente adaptada para usarse como una app instalada e
 
 ---
 
-## 9. Sistema de Estados de Pedidos y Filtros por Fecha de Entrega
+## 9. Sistema de Estados de Pedidos y Notificador de Actualizaciones
 
 ### Actualización de Estados Multicamisa:
 - **Respeto a Restricciones de Supabase**: La base de datos tiene una restricción `ventas_estado_check` que restringe `estado` a `['Pedido', 'Comprado', 'Bordando', 'Listo para entrega', 'Entregado', 'Liquidado']`.
@@ -208,14 +208,11 @@ La aplicación está completamente adaptada para usarse como una app instalada e
   - Al cambiar el estado en la cabecera del pedido, se actualizan todas las prendas del pedido simultáneamente (`updateOrderEstadoCompleto`).
   - Al cambiar el estado de una prenda individual, se actualiza solo esa prenda y se recalcula el estado general del pedido (`updateItemEstado`).
 - **Actualización Optimista**: La interfaz refleja el cambio de estado de inmediato en memoria local sin esperar la respuesta de la red, brindando respuesta instantánea al usuario.
+- **Tablero de Pedidos Limpio y Directo**: Se mantiene la vista de pedidos simple y despejada, con los chips clásicos de estado en tonos pastel y sin filtros complejos de fecha para asegurar que ningún pedido se oculte involuntariamente.
 
-### Filtros por Fecha de Entrega ("Pronto a entregar"):
-- **Sección dedicada en el Tablero de Pedidos**: Justo debajo de los filtros de estado se encuentra una barra independiente con chips para filtrar por fecha de entrega:
-  - `Cualquier fecha`: Muestra todos los pedidos activos.
-  - `⚡ Pronto a entregar`: Pedidos pendientes de entrega cuya fecha límite está a 3 días o menos (incluyendo pedidos atrasados).
-  - `📍 Entregas Hoy`: Pedidos cuya fecha de entrega coincide exactamente con la fecha actual de Colombia (`America/Bogota`).
-  - `📅 Esta semana`: Pedidos a entregar dentro de los próximos 7 días.
-  - `⚠️ Atrasados`: Pedidos aún no entregados cuya fecha agendada ya pasó.
-  - `❓ Sin fecha agendada`: Pedidos que aún no tienen fecha de entrega asignada.
-- **Insignias de Urgencia en Tarjetas**: Cada tarjeta de pedido muestra un distintivo en tiempo real al lado de su fecha de entrega (`⚡ ¡Hoy!`, `⚡ Mañana`, `⚡ En X días` o `⚠️ Atrasado X días`).
+### Notificador de Actualización de la App (`UpdateNotifier.jsx`):
+- **Detección Automática de Nuevas Versiones**: Cada 90 segundos y cada vez que el usuario vuelve a la app (evento `visibilitychange`), la aplicación consulta silenciosamente si hay un nuevo bundle de producción desplegado en el servidor.
+- **Aviso Flotante Elegante**: Si se detecta una nueva compilación, aparece un banner flotante en la parte superior:
+  `⚡ Nueva versión disponible — Hay cambios recientes en la app. [Actualizar]`
+- **Actualización con un Toque**: Al pulsar el botón, se vacían las cachés de la PWA / navegador (`caches.delete`) y se recarga la página de inmediato con la versión más reciente.
 

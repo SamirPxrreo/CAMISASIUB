@@ -22,6 +22,7 @@ import NewSaleModal from './components/NewSaleModal';
 import ThemeModal from './components/ThemeModal';
 import LoginView from './components/LoginView';
 import ErrorBoundary from './components/ErrorBoundary';
+import UpdateNotifier from './components/UpdateNotifier';
 
 const SECCIONES_VALIDAS = [
   'dashboard',
@@ -109,6 +110,9 @@ function AppContent() {
 
   return (
     <div className="h-[100dvh] w-full overflow-hidden flex font-sans">
+      {/* Notificador de actualización de la app */}
+      <UpdateNotifier />
+
       {/* 1. Barra Lateral Fija (Desktop) */}
       <Sidebar
         currentSection={currentSection}

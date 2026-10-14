@@ -58,8 +58,9 @@ La aplicación fue completamente modernizada a una arquitectura basada en compon
 react-app/
 ├── src/
 │   ├── components/
-│   │   ├── OrdersView.jsx          # Pedidos en tarjetas con chips de estado, filtros por fecha de entrega y selector de estado interactivo
+│   │   ├── OrdersView.jsx          # Pedidos en tarjetas con chips de estado en tonos pastel y selector interactivo
 │   │   ├── OrderDetailModal.jsx    # Modal de inspección detallada de prendas con selector de estado individual y exportación Excel
+│   │   ├── UpdateNotifier.jsx      # Aviso flotante que detecta automáticamente nuevas versiones de la app para actualizar con un clic
 │   │   ├── CustomSelect.jsx        # Selector flotante animado con búsqueda y muestras de color
 │   │   ├── StatusDropdown.jsx      # Selector flotante animado de estado semántico con actualización individual o de pedido completo
 │   │   ├── CalendarView.jsx        # Calendario de entregas y copiado de mensajes
