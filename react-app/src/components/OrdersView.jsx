@@ -73,12 +73,26 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
     setTimeout(() => setCopiadoPedidoId(null), 2500);
   };
 
-  // Conteo por estado
+  // Helper para filtrar por vendedor según el rol del usuario o el selector de admin
+  const matchVendedor = (vendedorVenta) => {
+    if (!esAdmin && miNombreVendedor) {
+      return (vendedorVenta || '').trim().toLowerCase() === (miNombreVendedor || '').trim().toLowerCase();
+    }
+    if (vendedorFiltro !== 'Todos') {
+      return (vendedorVenta || '').trim().toLowerCase() === (vendedorFiltro || '').trim().toLowerCase();
+    }
+    return true;
+  };
+
+  // Conteo por estado respetando el vendedor del usuario en sesión o el filtro de admin
   const conteoPorEstado = useMemo(() => {
     const counts = { Todos: 0 };
     ORDEN_ESTADOS.forEach(e => counts[e] = 0);
+
     ventas.forEach(v => {
       if (v.finalizado) return;
+      if (!matchVendedor(v.vendedor)) return;
+
       counts.Todos += 1;
       const items = itemsCrudosVenta(v);
       if (items && items.length) {
@@ -88,11 +102,12 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
         });
       } else {
         const e = normalizarEstado(v.estado);
-        if (counts[e] !== undefined) counts[e] += 1;
+        const cant = Math.max(1, Number(v.cantidad) || 1);
+        if (counts[e] !== undefined) counts[e] += cant;
       }
     });
     return counts;
-  }, [ventas]);
+  }, [ventas, esAdmin, miNombreVendedor, vendedorFiltro]);
 
   const filtros = ['Todos', ...ORDEN_ESTADOS];
 
@@ -100,12 +115,8 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
     return ventas.filter((v) => {
       if (v.finalizado) return false;
       
-      // Si es vendedor, solo ve sus propios pedidos
-      if (!esAdmin && miNombreVendedor) {
-        if (v.vendedor !== miNombreVendedor) return false;
-      } else if (vendedorFiltro !== 'Todos') {
-        if (v.vendedor !== vendedorFiltro) return false;
-      }
+      // Filtrar por vendedor según rol o filtro de admin
+      if (!matchVendedor(v.vendedor)) return false;
 
       // Filtro de texto
       if (busqueda.trim()) {
@@ -138,7 +149,7 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
 
       return true;
     });
-  }, [ventas, busqueda, estadoFiltro, vendedorFiltro]);
+  }, [ventas, busqueda, estadoFiltro, esAdmin, miNombreVendedor, vendedorFiltro]);
 
   const pageSize = 12;
   const totalPages = Math.ceil(ventasFiltradas.length / pageSize) || 1;
@@ -170,7 +181,8 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
   const handleExportarCompra = async () => {
     setExportandoCompra(true);
     try {
-      await exportarListaCompraExcel(ventas, vendedorFiltro);
+      const vendedorParaExportar = !esAdmin ? miNombreVendedor : vendedorFiltro;
+      await exportarListaCompraExcel(ventas, vendedorParaExportar);
     } catch (err) {
       console.warn('Exportar lista de compra:', err);
       alert(err.message || 'Error al exportar la lista de compra.');

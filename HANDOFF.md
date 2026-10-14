@@ -209,6 +209,10 @@ La aplicación está completamente adaptada para usarse como una app instalada e
   - Al cambiar el estado de una prenda individual, se actualiza solo esa prenda y se recalcula el estado general del pedido (`updateItemEstado`).
 - **Actualización Optimista**: La interfaz refleja el cambio de estado de inmediato en memoria local sin esperar la respuesta de la red, brindando respuesta instantánea al usuario.
 - **Tablero de Pedidos Limpio y Directo**: Se mantiene la vista de pedidos simple y despejada, con los chips clásicos de estado en tonos pastel y sin filtros complejos de fecha para asegurar que ningún pedido se oculte involuntariamente.
+- **Contadores de Estado Sensibles al Usuario y Filtro**: Los minicontadores numéricos de cada chip de estado (`Todos`, `Pedido`, `Comprado`, etc.) se calculan estrictamente filtrando por el vendedor activo:
+  - Cuando inicia sesión **Samir**, los contadores reflejan únicamente los pedidos y prendas pertenecientes a Samir.
+  - Cuando inicia sesión **Valentina**, los contadores reflejan únicamente sus propios pedidos.
+  - Cuando inicia sesión el **Administrador**, los contadores reflejan el consolidado general de todos los socios (o del socio seleccionado en el selector de filtro). Esto previene que se muestren cifras engañosas de pedidos que el usuario no tiene permisos de ver en su pantalla.
 
 ### Notificador de Actualización de la App (`UpdateNotifier.jsx`):
 - **Detección Automática de Nuevas Versiones**: Cada 90 segundos y cada vez que el usuario vuelve a la app (evento `visibilitychange`), la aplicación consulta silenciosamente si hay un nuevo bundle de producción desplegado en el servidor.
