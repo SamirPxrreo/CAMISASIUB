@@ -18,6 +18,13 @@ import {
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
 import {
+  btnDinero,
+  btnEditar,
+  btnNeutro,
+  btnIconoSutil,
+  btnIconoSutilDestructivo
+} from '../lib/buttonStyles';
+import {
   LUGARES_ENTREGA,
   VERSIONES_DISPONIBLES,
   GENEROS_DISPONIBLES,
@@ -410,7 +417,7 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
 
             <button
               onClick={onClose}
-              className="p-2 rounded-2xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+              className={btnIconoSutil}
             >
               <X className="w-5 h-5" />
             </button>
@@ -571,7 +578,7 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
                 <button
                   type="button"
                   onClick={addFila}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold transition-colors cursor-pointer"
+                  className={btnEditar}
                 >
                   <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
                   <span>Agregar Fila</span>
@@ -603,7 +610,7 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
                             type="button"
                             onClick={() => cambiarCantidad(idx, -1)}
                             disabled={f.cantidad <= 1}
-                            className="w-6 h-6 rounded-lg flex items-center justify-center text-slate-500 hover:bg-slate-100 disabled:opacity-30 cursor-pointer"
+                            className={btnIconoSutil + ' w-6 h-6 disabled:opacity-30'}
                           >
                             <Minus className="w-3 h-3" />
                           </button>
@@ -611,7 +618,7 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
                           <button
                             type="button"
                             onClick={() => cambiarCantidad(idx, 1)}
-                            className="w-6 h-6 rounded-lg flex items-center justify-center text-slate-500 hover:bg-slate-100 cursor-pointer"
+                            className={btnIconoSutil + ' w-6 h-6'}
                           >
                             <Plus className="w-3 h-3" />
                           </button>
@@ -622,7 +629,7 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
                           type="button"
                           onClick={() => duplicateFila(idx)}
                           title="Duplicar esta fila"
-                          className="p-1.5 rounded-xl hover:bg-white text-slate-400 hover:text-indigo-600 border border-transparent hover:border-slate-200 transition-all cursor-pointer"
+                          className={btnIconoSutil}
                         >
                           <Copy className="w-3.5 h-3.5" />
                         </button>
@@ -633,7 +640,7 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
                             type="button"
                             onClick={() => removeFila(idx)}
                             title="Quitar fila"
-                            className="p-1.5 rounded-xl hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+                            className={btnIconoSutilDestructivo}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -825,7 +832,7 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 sm:flex-none px-4 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors cursor-pointer"
+                className={btnNeutro + ' flex-1 sm:flex-none'}
               >
                 Cancelar
               </button>
@@ -833,7 +840,7 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
                 type="button"
                 onClick={handleSubmit}
                 disabled={guardando}
-                className="flex-1 sm:flex-none px-6 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-500/20 transition-all cursor-pointer disabled:opacity-50"
+                className={btnDinero + ' flex-1 sm:flex-none disabled:opacity-50'}
               >
                 {guardando ? 'Guardando...' : editingOrder ? 'Actualizar Pedido' : 'Guardar Pedido'}
               </button>

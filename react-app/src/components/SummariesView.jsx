@@ -17,6 +17,7 @@ import {
   ShoppingBag
 } from 'lucide-react';
 import { useData } from '../context/DataContext';
+import { btnPestanaActiva, btnPestanaInactiva } from '../lib/buttonStyles';
 import {
   fmt,
   precioTotalVenta,
@@ -294,11 +295,7 @@ export default function SummariesView() {
             <button
               key={p.id}
               onClick={() => setPeriodo(p.id)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-                periodo === p.id
-                  ? 'bg-white text-indigo-700 shadow-xs'
-                  : 'text-slate-500 hover:text-slate-900'
-              }`}
+              className={periodo === p.id ? btnPestanaActiva : btnPestanaInactiva}
             >
               {p.label}
             </button>

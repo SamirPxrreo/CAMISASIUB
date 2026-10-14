@@ -2,6 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Palette, Check, X, Sparkles, Moon, Sun } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { btnPrimario, btnNeutroIcono } from '../lib/buttonStyles';
 
 export default function ThemeModal({ isOpen, onClose }) {
   const { theme, setTheme, themes } = useTheme();
@@ -47,7 +48,7 @@ export default function ThemeModal({ isOpen, onClose }) {
 
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+              className={btnNeutroIcono + ' w-8 h-8'}
             >
               <X className="w-4 h-4" />
             </button>
@@ -108,7 +109,7 @@ export default function ThemeModal({ isOpen, onClose }) {
             </span>
             <button
               onClick={onClose}
-              className="px-5 py-2 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-md shadow-indigo-500/20 cursor-pointer"
+              className={btnPrimario}
             >
               Listo
             </button>

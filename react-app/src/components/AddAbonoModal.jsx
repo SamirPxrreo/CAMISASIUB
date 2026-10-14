@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
+import { btnDinero, btnDineroInactivo, btnNeutro, btnNeutroIcono } from '../lib/buttonStyles';
 import {
   fmt,
   formatMiles,
@@ -110,10 +111,13 @@ export default function AddAbonoModal({ isOpen, onClose, order }) {
     setMontoGeneralStr(formatted);
     setError(null);
 
-    // Distribuir el monto entre las prendas de forma secuencial
-    let restantePorRepartir = montoLimitado;
-    setItemsAbonos(prev =>
-      prev.map(it => {
+    // El acumulado se declara DENTRO del updater a propósito.
+    // React ejecuta los updater dos veces en StrictMode; si 'restantePorRepartir'
+    // se viviera fuera, la segunda pasada encontraría el resto en cero y dejaría
+    // todos los abonos en 0, ignorando lo que el usuario escribió a mano.
+    setItemsAbonos(prev => {
+      let restantePorRepartir = montoLimitado;
+      return prev.map(it => {
         if (restantePorRepartir <= 0 || it.saldoItem <= 0) {
           return { ...it, abonoNuevo: 0, abonoNuevoStr: '' };
         }
@@ -124,8 +128,8 @@ export default function AddAbonoModal({ isOpen, onClose, order }) {
           abonoNuevo: asignado,
           abonoNuevoStr: asignado > 0 ? formatMiles(asignado) : ''
         };
-      })
-    );
+      });
+    });
   };
 
   // Manejar cambio individual por prenda
@@ -133,24 +137,26 @@ export default function AddAbonoModal({ isOpen, onClose, order }) {
     const num = parseMiles(rawVal);
     setError(null);
 
-    setItemsAbonos(prev => {
-      const next = [...prev];
-      const it = next[idx];
-      const maxPermitido = it.saldoItem;
-      const limitado = Math.min(num, maxPermitido);
+    const saldoItem = itemsAbonos[idx]?.saldoItem || 0;
+    const limitado = Math.min(num, saldoItem);
 
-      next[idx] = {
-        ...it,
-        abonoNuevo: limitado,
-        abonoNuevoStr: limitado > 0 ? formatMiles(limitado) : (rawVal === '' ? '' : '0')
-      };
+    // Updater puro: sin efectos secundarios ni setState anidado.
+    setItemsAbonos(prev => prev.map((x, i) => (
+      i === idx
+        ? {
+            ...x,
+            abonoNuevo: limitado,
+            abonoNuevoStr: limitado > 0 ? formatMiles(limitado) : (rawVal === '' ? '' : '0')
+          }
+        : x
+    )));
 
-      // Actualizar el monto general como suma de los individuales
-      const totalNuevos = next.reduce((s, x) => s + (Number(x.abonoNuevo) || 0), 0);
-      setMontoGeneralStr(totalNuevos > 0 ? formatMiles(totalNuevos) : '');
-
-      return next;
-    });
+    // El total se calcula desde el estado ya conocido, no dentro del updater.
+    const totalNuevos = itemsAbonos.reduce(
+      (s, x, i) => s + (i === idx ? (limitado || 0) : (Number(x.abonoNuevo) || 0)),
+      0
+    );
+    setMontoGeneralStr(totalNuevos > 0 ? formatMiles(totalNuevos) : '');
   };
 
   // Botón rápido: Pagar saldo completo
@@ -289,7 +295,7 @@ export default function AddAbonoModal({ isOpen, onClose, order }) {
             <button
               type="button"
               onClick={onClose}
-              className="p-1.5 rounded-xl hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+              className={btnNeutroIcono}
             >
               <X className="w-5 h-5" />
             </button>
@@ -481,7 +487,7 @@ export default function AddAbonoModal({ isOpen, onClose, order }) {
               type="button"
               onClick={onClose}
               disabled={guardando}
-              className="px-4 py-2.5 rounded-2xl bg-white border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-100 transition-colors cursor-pointer"
+              className={btnNeutro}
             >
               Cancelar
             </button>
@@ -490,11 +496,11 @@ export default function AddAbonoModal({ isOpen, onClose, order }) {
               type="button"
               onClick={handleGuardarAbono}
               disabled={guardando || sumaAbonosNuevos <= 0}
-              className={`px-5 py-2.5 rounded-2xl text-xs font-black flex items-center gap-2 transition-all cursor-pointer shadow-xs ${
+              className={
                 sumaAbonosNuevos > 0 && !guardando
-                  ? 'bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white'
-                  : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-              }`}
+                  ? btnDinero
+                  : btnDineroInactivo + ' cursor-not-allowed'
+              }
             >
               <Check className="w-4 h-4" />
               <span>{guardando ? 'Guardando...' : `Registrar Abono (${fmt(sumaAbonosNuevos)})`}</span>

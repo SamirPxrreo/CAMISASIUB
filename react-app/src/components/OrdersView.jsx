@@ -15,7 +15,6 @@ import {
   MessageCircle,
   Copy,
   Check,
-  Eye,
   ChevronRight,
   FileSpreadsheet,
   Clock,
@@ -37,8 +36,6 @@ import {
   abonoClienteTotal,
   itemsCrudosVenta,
   normalizarEstado,
-  estadoGeneralVenta,
-  getEstadoBadgeStyle,
   getWhatsAppLink,
   ESTADOS_PASTEL_CHIP,
   generarTextoResumenPedido,
@@ -48,6 +45,7 @@ import {
   descripcionPrendaHumana
 } from '../lib/utils';
 import InlineDeleteConfirm from './InlineDeleteConfirm';
+import { btnDinero, btnWhatsappIcono, btnNeutroIcono, grupoAcciones } from '../lib/buttonStyles';
 import Pagination from './Pagination';
 import StatusDropdown from './StatusDropdown';
 import OrderDetailModal from './OrderDetailModal';
@@ -319,7 +317,6 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
             const tel = v.cliente_telefono || v.telefono || '';
             const waLink = getWhatsAppLink(tel);
             const vCol = getVendedorColor(v.vendedor);
-            const estadoGral = estadoGeneralVenta(v);
             const todasLiquidadas = estadosTodosLiquidado(v);
 
             return (
@@ -330,43 +327,45 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.2 }}
-                className="bg-white rounded-3xl border-2 border-slate-200/90 hover:border-indigo-400 p-5 shadow-xs hover:shadow-lg transition-all flex flex-col justify-between group"
+                onClick={() => setSelectedOrderDetail(v)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setSelectedOrderDetail(v);
+                  }
+                }}
+                className="bg-white rounded-3xl border-2 border-slate-200/90 hover:border-indigo-400 p-5 shadow-xs hover:shadow-lg transition-all flex flex-col justify-between group cursor-pointer"
               >
                 <div className="space-y-3">
-                  {/* 1. ENCABEZADO: CLIENTE, VENDEDOR Y ESTADO GENERAL */}
-                  <div className="flex items-start justify-between gap-2.5 border-b border-slate-100 pb-3">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-black text-sm shrink-0 border ${vCol.bg} ${vCol.border} ${vCol.text}`}>
-                        {(v.cliente_nombre || 'C')[0].toUpperCase()}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-mono text-xs font-black text-indigo-700 bg-indigo-50/90 px-1.5 py-0.5 rounded-md border border-indigo-100 shrink-0">
-                            {codigoCortoPedido(v)}
-                          </span>
-                          <h3 className="font-black text-slate-900 text-sm leading-tight truncate" title={v.cliente_nombre}>
-                            {v.cliente_nombre}
-                          </h3>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-[11px] font-semibold mt-1 flex-wrap">
-                          <span className={`px-2 py-0.5 rounded-lg font-black text-[10.5px] border ${vCol.badge}`}>
-                            {v.vendedor || 'Samir'}
-                          </span>
-                          {tel && (
-                            <span className="font-mono text-slate-500 flex items-center gap-1 text-[11px]">
-                              <Phone className="w-3 h-3 text-slate-400" />
-                              {tel}
-                            </span>
-                          )}
-                        </div>
-                      </div>
+                  {/* 1. ENCABEZADO: CLIENTE Y VENDEDOR
+                      El estado ya no va aquí: cada prenda trae su propio
+                      selector y el general se deduce de ellas. */}
+                  <div className="flex items-center gap-2.5 min-w-0 border-b border-slate-100 pb-3">
+                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-black text-sm shrink-0 border ${vCol.bg} ${vCol.border} ${vCol.text}`}>
+                      {(v.cliente_nombre || 'C')[0].toUpperCase()}
                     </div>
-
-                    {/* Estado General Fijo (Mixto o el estado unánime) */}
-                    <div className="shrink-0">
-                      <span className={`text-[11px] font-black px-3 py-1 rounded-full border shadow-2xs ${getEstadoBadgeStyle(estadoGral)}`}>
-                        {estadoGral}
-                      </span>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-mono text-xs font-black text-indigo-700 bg-indigo-50/90 px-1.5 py-0.5 rounded-md border border-indigo-100 shrink-0">
+                          {codigoCortoPedido(v)}
+                        </span>
+                        <h3 className="font-black text-slate-900 text-sm leading-tight truncate" title={v.cliente_nombre}>
+                          {v.cliente_nombre}
+                        </h3>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-[11px] font-semibold mt-1 flex-wrap">
+                        <span className={`px-2 py-0.5 rounded-lg font-black text-[10.5px] border ${vCol.badge}`}>
+                          {v.vendedor || 'Samir'}
+                        </span>
+                        {tel && (
+                          <span className="font-mono text-slate-500 flex items-center gap-1 text-[11px]">
+                            <Phone className="w-3 h-3 text-slate-400" />
+                            {tel}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -413,25 +412,41 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
                       {items.map((it, idx) => (
                         <div
                           key={idx}
-                          className="flex items-center justify-between p-2 rounded-xl bg-slate-50/70 border border-slate-100 text-xs hover:bg-slate-50 transition-colors"
+                          className="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-50/70 border border-slate-100 text-xs hover:bg-slate-50 transition-colors"
                         >
-                          <div className="flex items-center gap-2 min-w-0 flex-1">
-                            <span className="w-5 h-5 rounded-lg bg-white border border-slate-200/80 text-slate-600 font-black text-[10px] flex items-center justify-center shrink-0">
+                          <div className="flex items-start gap-2 min-w-0 flex-1">
+                            <span className="w-5 h-5 rounded-lg bg-white border border-slate-200/80 text-slate-600 font-black text-[10px] flex items-center justify-center shrink-0 mt-px">
                               #{idx + 1}
                             </span>
-                            <span className="font-bold text-slate-800 text-[11.5px] truncate" title={descripcionPrendaHumana(it)}>
-                              {descripcionPrendaHumana(it)}
-                            </span>
-                            {it.programa && (
-                              <span className="hidden sm:inline-block text-[10px] font-bold text-indigo-600 bg-indigo-50/80 px-1.5 py-0.2 rounded border border-indigo-100/80 truncate max-w-[110px]" title={it.programa}>
-                                {it.programa}
+
+                            {/* Descripción y bordado en dos líneas: en línea se
+                                cortaban y el programa quedaba oculto en móvil. */}
+                            <div className="min-w-0 flex-1">
+                              <span className="block font-bold text-slate-800 text-[11.5px] truncate" title={descripcionPrendaHumana(it)}>
+                                {descripcionPrendaHumana(it)}
                               </span>
-                            )}
+                              {it.programa && (
+                                <span
+                                  className="inline-block max-w-full align-middle text-[10px] font-bold text-indigo-600 bg-indigo-50/80 px-1.5 py-0.2 rounded border border-indigo-100/80 truncate"
+                                  title={it.programa}
+                                >
+                                  {it.programa}
+                                </span>
+                              )}
+                            </div>
                           </div>
 
-                          <span className={`text-[9.5px] font-black px-2 py-0.5 rounded-md border shrink-0 ${getEstadoBadgeStyle(it.estado || v.estado)}`}>
-                            {it.estado || v.estado || 'Pedido'}
-                          </span>
+                          {/* Estado de esta prenda: desplegable editable sin abrir la tarjeta */}
+                          <div
+                            className="shrink-0 mt-px"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <StatusDropdown
+                              value={normalizarEstado(it.estado || v.estado)}
+                              onChange={(nuevo) => updateItemEstado(v.id, idx, nuevo)}
+                              size="sm"
+                            />
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -462,25 +477,14 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
                     </div>
                   </div>
 
-                  {/* BOTONES DE ACCIÓN: "Ver", "Abonar", "Finalizar" + Accesos rápidos */}
-                  <div className="flex items-center gap-1.5 pt-1">
-                    {/* Botón Principal: Ver */}
-                    <button
-                      type="button"
-                      onClick={() => setSelectedOrderDetail(v)}
-                      className="flex-1 py-2 px-3 rounded-2xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-black border border-indigo-200/80 flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs hover:shadow-xs group"
-                      title="Ver detalle completo del pedido"
-                    >
-                      <Eye className="w-3.5 h-3.5 text-indigo-600 group-hover:scale-110 transition-transform" />
-                      <span>Ver</span>
-                    </button>
-
+                  {/* FILA 1: ACCIONES SECUNDARIAS (WhatsApp, Copiar, Borrar y Abonar) */}
+                  <div className={grupoAcciones + ' pt-1'}>
                     {/* Botón Abonar (si tiene saldo pendiente) */}
                     {saldo > 0 && (
                       <button
                         type="button"
-                        onClick={() => setPedidoAbono(v)}
-                        className="py-2 px-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-black flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs shrink-0"
+                        onClick={(e) => { e.stopPropagation(); setPedidoAbono(v); }}
+                        className={btnDinero}
                         title={`Registrar abono de ${v.cliente_nombre}`}
                       >
                         <DollarSign className="w-3.5 h-3.5" />
@@ -488,32 +492,14 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
                       </button>
                     )}
 
-                    {/* Botón Finalizar Pedido */}
-                    <button
-                      type="button"
-                      onClick={() => finalizarPedido(v.id)}
-                      className={`py-2 px-2.5 rounded-2xl text-xs font-black transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
-                        todasLiquidadas
-                          ? 'bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white shadow-xs'
-                          : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200/80'
-                      }`}
-                      title={
-                        todasLiquidadas
-                          ? '¡Todas las prendas liquidadas! Finalizar pedido y mover a Historial'
-                          : 'Finalizar pedido (validará que esté cobrado, pagado a Yesenia y liquidado)'
-                      }
-                    >
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      <span>Finalizar</span>
-                    </button>
-
                     {/* Botón Rápido: WhatsApp */}
                     {waLink && (
                       <a
                         href={waLink}
                         target="_blank"
                         rel="noreferrer"
-                        className="p-2 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition-colors cursor-pointer shrink-0"
+                        onClick={(e) => e.stopPropagation()}
+                        className={btnWhatsappIcono}
                         title="Abrir WhatsApp"
                       >
                         <MessageCircle className="w-4 h-4" />
@@ -523,24 +509,44 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
                     {/* Botón Rápido: Copiar Pedido */}
                     <button
                       type="button"
-                      onClick={() => handleCopiarPedido(v)}
+                      onClick={(e) => { e.stopPropagation(); handleCopiarPedido(v); }}
                       className={`p-2 rounded-2xl border transition-all cursor-pointer shrink-0 ${
                         copiadoPedidoId === v.id
-                          ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs scale-105'
-                          : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200'
+                          ? 'bg-[#25D366] text-white border-[#25D366] shadow-xs scale-105'
+                          : btnNeutroIcono
                       }`}
                       title={copiadoPedidoId === v.id ? '¡Copiado!' : 'Copiar resumen para WhatsApp'}
                     >
                       {copiadoPedidoId === v.id ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                     </button>
 
-                    {/* Botón Rápido: Borrar / Papelera */}
+                    {/* Botón Rápido: Borrar / Papelera.
+                        InlineDeleteConfirm ya hace stopPropagation en su click. */}
                     <InlineDeleteConfirm
                       onDelete={() => deleteVenta(v.id)}
                       clienteNombre={v.cliente_nombre}
                       duration={4500}
                     />
                   </div>
+
+                  {/* FILA 2: FINALIZAR CENTRADO */}
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); finalizarPedido(v.id); }}
+                    className={`mx-auto w-full max-w-[17rem] py-2.5 px-4 rounded-2xl text-xs font-black transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                      todasLiquidadas
+                        ? 'bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white shadow-xs'
+                        : 'bg-slate-100 hover:bg-slate-200 text-slate-500 border border-slate-200/80'
+                    }`}
+                    title={
+                      todasLiquidadas
+                        ? '¡Todas las prendas liquidadas! Finalizar pedido y mover a Historial'
+                        : 'Finalizar pedido (validará que esté cobrado, pagado a Yesenia y liquidado)'
+                    }
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Finalizar</span>
+                  </button>
                 </div>
               </motion.div>
             );

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 import {
@@ -157,6 +157,11 @@ export function DataProvider({ children }) {
     fetchData();
   }, [user, fetchData]);
 
+  // Canal de avisos compartido: se suscribe UNA vez y se reutiliza para enviar.
+  // Antes se creaba un canal nuevo por cada aviso y se hacía send() sin subscribe(),
+  // por lo que los broadcast nunca llegaban al resto de dispositivos.
+  const canalAvisosRef = useRef(null);
+
   // Suscripción Realtime para reflejar cambios en vivo entre dispositivos
   useEffect(() => {
     // Canal broadcast para avisos de cambios
@@ -168,6 +173,8 @@ export function DataProvider({ children }) {
       })
       .subscribe();
 
+    canalAvisosRef.current = canalAvisos;
+
     // Canal postgres_changes para cambios directos en BD
     const dbChannel = supabase.channel('schema-db-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'ventas' }, () => fetchData())
@@ -176,6 +183,7 @@ export function DataProvider({ children }) {
       .subscribe();
 
     return () => {
+      canalAvisosRef.current = null;
       supabase.removeChannel(canalAvisos);
       supabase.removeChannel(dbChannel);
     };
@@ -184,8 +192,7 @@ export function DataProvider({ children }) {
   // Notificar cambio por Realtime
   const avisarCambioRealtime = (tipo, texto) => {
     try {
-      const ch = supabase.channel('avisos-camisas-iub');
-      ch.send({
+      canalAvisosRef.current?.send({
         type: 'broadcast',
         event: 'cambio',
         payload: {
@@ -249,9 +256,10 @@ export function DataProvider({ children }) {
         .update(payload)
         .eq('id', id);
 
-      if (res.error && String(res.error.message).toLowerCase().match(/updated_at|comprado_at/)) {
+      if (res.error && String(res.error.message).toLowerCase().match(/updated_at|comprado_at|finalizado_at/)) {
         delete payload.updated_at;
         delete payload.comprado_at;
+        delete payload.finalizado_at;
         res = await supabase.from('ventas').update(payload).eq('id', id);
       }
       if (res.error) {
@@ -477,6 +485,7 @@ export function DataProvider({ children }) {
 
       await updateVenta(venta.id, {
         finalizado: true,
+        finalizado_at: nowIso,
         updated_at: nowIso,
         ...(jsonStr ? { items_camisa: jsonStr } : {})
       });

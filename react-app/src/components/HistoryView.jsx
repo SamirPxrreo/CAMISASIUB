@@ -16,6 +16,7 @@ import {
   FileText
 } from 'lucide-react';
 import { useData } from '../context/DataContext';
+import { btnPrimario, btnEditar, btnNeutro } from '../lib/buttonStyles';
 import {
   fmt,
   estadosTodosLiquidado,
@@ -92,6 +93,7 @@ export default function HistoryView({ onEditOrder }) {
     if (window.confirm(`¿Reabrir el pedido #${v.id} de ${v.cliente_nombre}? Volverá a la lista de pedidos activos.`)) {
       await updateVenta(v.id, {
         finalizado: false,
+        finalizado_at: null,
         estado: 'Listo para entrega'
       });
     }
@@ -239,7 +241,7 @@ export default function HistoryView({ onEditOrder }) {
             {busqueda && (
               <button
                 onClick={() => setBusqueda('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-slate-100 text-slate-400"
+                className={btnNeutroIcono + ' absolute right-3 top-1/2 -translate-y-1/2'}
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -408,7 +410,7 @@ export default function HistoryView({ onEditOrder }) {
                     <button
                       type="button"
                       onClick={() => handleImprimirRecibo(v)}
-                      className="flex items-center gap-1 py-1.5 px-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold transition-colors cursor-pointer"
+                      className={btnPrimario}
                       title="Imprimir o guardar recibo PDF"
                     >
                       <FileText className="w-3.5 h-3.5" />
@@ -418,7 +420,7 @@ export default function HistoryView({ onEditOrder }) {
                     <button
                       type="button"
                       onClick={() => handleRestaurar(v)}
-                      className="flex items-center gap-1 py-1.5 px-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors cursor-pointer"
+                      className={btnNeutro}
                       title="Reabrir pedido a activo"
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
@@ -428,7 +430,7 @@ export default function HistoryView({ onEditOrder }) {
                     <button
                       type="button"
                       onClick={() => onEditOrder && onEditOrder(v)}
-                      className="p-1.5 rounded-xl hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 transition-colors cursor-pointer"
+                      className={btnEditar}
                       title="Ver / Editar"
                     >
                       <Pencil className="w-3.5 h-3.5" />

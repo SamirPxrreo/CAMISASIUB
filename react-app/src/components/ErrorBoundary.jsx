@@ -1,5 +1,6 @@
 import React from 'react';
 import { AlertCircle, RotateCcw } from 'lucide-react';
+import { btnPrimario } from '../lib/buttonStyles';
 
 export default class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -41,7 +42,7 @@ export default class ErrorBoundary extends React.Component {
             )}
             <button
               onClick={this.handleReload}
-              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-500/20 transition-all cursor-pointer"
+              className={btnPrimario + ' w-full'}
             >
               <RotateCcw className="w-4 h-4" />
               <span>Recargar Aplicación</span>

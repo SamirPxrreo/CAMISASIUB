@@ -21,6 +21,7 @@ import {
   Palette
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { btnNeutroIcono, btnDestructivo } from '../lib/buttonStyles';
 
 const NAV_ITEMS = [
   { id: 'dashboard', label: 'Inicio', icon: LayoutDashboard, section: 'Principal' },
@@ -97,7 +98,7 @@ export default function Sidebar({
           {/* Botón Plegar en Escritorio */}
           <button
             onClick={onToggleCollapse}
-            className="hidden lg:flex w-7 h-7 rounded-xl items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+            className={btnNeutroIcono + ' hidden lg:flex w-7 h-7'}
             title={isCollapsed ? "Expandir menú" : "Plegar menú"}
           >
             {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
@@ -175,7 +176,7 @@ export default function Sidebar({
                 </div>
                 <button
                   onClick={logout}
-                  className="p-1.5 rounded-xl hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer ml-1"
+                  className={btnDestructivo + ' ml-1'}
                   title="Cerrar sesión"
                 >
                   <LogOut className="w-4 h-4" />

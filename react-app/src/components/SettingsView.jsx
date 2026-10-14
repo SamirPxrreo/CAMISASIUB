@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Palette,
@@ -27,20 +27,21 @@ import {
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { btnNeutro, btnIconoSutil, btnPestanaActiva, btnPestanaInactiva } from '../lib/buttonStyles';
 import InlineDeleteConfirm from './InlineDeleteConfirm';
 
-// Paleta de muestras rápidas para sugerir al agregar colores
+// Paleta de muestras rÃ¡pidas para sugerir al agregar colores
 const PRESET_COLORES = [
   { nombre: 'Negro', hex: '#18181b' },
   { nombre: 'Blanco', hex: '#ffffff' },
   { nombre: 'Gris Perla', hex: '#94a3b8' },
-  { nombre: 'Turquí (Azul Marino)', hex: '#1e3a8a' },
+  { nombre: 'TurquÃ­ (Azul Marino)', hex: '#1e3a8a' },
   { nombre: 'Azul Turquesa', hex: '#06b6d4' },
   { nombre: 'Azul Rey', hex: '#2563eb' },
   { nombre: 'Verde Militar', hex: '#4d5b40' },
   { nombre: 'Verde Esmeralda', hex: '#059669' },
   { nombre: 'Vinotinto', hex: '#881337' },
-  { nombre: 'Rojo Carmín', hex: '#dc2626' },
+  { nombre: 'Rojo CarmÃ­n', hex: '#dc2626' },
   { nombre: 'Palo de Rosa', hex: '#f472b6' },
   { nombre: 'Coral', hex: '#f97316' },
   { nombre: 'Camel', hex: '#c29b62' },
@@ -73,7 +74,7 @@ export default function SettingsView() {
   // Tab activo: 'colores' | 'lugares' | 'usuarios' | 'temas' | 'versiones'
   const [activeTab, setActiveTab] = useState('colores');
 
-  // Filtros de búsqueda
+  // Filtros de bÃºsqueda
   const [searchColor, setSearchColor] = useState('');
   const [searchLugar, setSearchLugar] = useState('');
   const [searchUser, setSearchUser] = useState('');
@@ -211,7 +212,7 @@ export default function SettingsView() {
           rol: userRole,
           password: userPassword
         });
-        setUserSuccess('Usuario creado con éxito.');
+        setUserSuccess('Usuario creado con Ã©xito.');
       }
       setTimeout(() => {
         setIsUserModalOpen(false);
@@ -243,31 +244,27 @@ export default function SettingsView() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* 1. ENCABEZADO PRINCIPAL DE CONFIGURACIÓN */}
+      {/* 1. ENCABEZADO PRINCIPAL DE CONFIGURACIÃ“N */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="w-2.5 h-2.5 rounded-full bg-indigo-600 animate-pulse" />
-            <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">Ajustes & Catálogos</span>
+            <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">Ajustes & CatÃ¡logos</span>
           </div>
           <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-            Configuración del Sistema
+            ConfiguraciÃ³n del Sistema
             <Sliders className="w-5 h-5 text-slate-400 inline" />
           </h1>
           <p className="text-xs text-slate-500 font-medium mt-0.5">
-            Personaliza el catálogo de colores de camisas, administra usuarios con acceso y ajusta preferencias visuales.
+            Personaliza el catÃ¡logo de colores de camisas, administra usuarios con acceso y ajusta preferencias visuales.
           </p>
         </div>
 
-        {/* Píldoras de navegación de pestañas */}
+        {/* PÃ­ldoras de navegaciÃ³n de pestaÃ±as */}
         <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-slate-100 border border-slate-200/60 overflow-x-auto scrollbar-none shrink-0">
           <button
             onClick={() => setActiveTab('colores')}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer select-none ${
-              activeTab === 'colores'
-                ? 'bg-white text-slate-900 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
-            }`}
+            className={activeTab === 'colores' ? btnPestanaActiva : btnPestanaInactiva}
           >
             <Palette className="w-3.5 h-3.5 text-indigo-600" />
             <span>Colores de Camisas</span>
@@ -278,11 +275,7 @@ export default function SettingsView() {
 
           <button
             onClick={() => setActiveTab('lugares')}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer select-none ${
-              activeTab === 'lugares'
-                ? 'bg-white text-slate-900 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
-            }`}
+            className={activeTab === 'lugares' ? btnPestanaActiva : btnPestanaInactiva}
           >
             <MapPin className="w-3.5 h-3.5 text-indigo-600" />
             <span>Lugares de Entrega</span>
@@ -293,11 +286,7 @@ export default function SettingsView() {
 
           <button
             onClick={() => setActiveTab('usuarios')}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer select-none ${
-              activeTab === 'usuarios'
-                ? 'bg-white text-slate-900 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
-            }`}
+            className={activeTab === 'usuarios' ? btnPestanaActiva : btnPestanaInactiva}
           >
             <Users className="w-3.5 h-3.5 text-indigo-600" />
             <span>Usuarios & Acceso</span>
@@ -308,11 +297,7 @@ export default function SettingsView() {
 
           <button
             onClick={() => setActiveTab('temas')}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer select-none ${
-              activeTab === 'temas'
-                ? 'bg-white text-slate-900 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
-            }`}
+            className={activeTab === 'temas' ? btnPestanaActiva : btnPestanaInactiva}
           >
             <Sparkles className="w-3.5 h-3.5 text-amber-500" />
             <span>Temas Visuales</span>
@@ -320,11 +305,7 @@ export default function SettingsView() {
 
           <button
             onClick={() => setActiveTab('versiones')}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer select-none ${
-              activeTab === 'versiones'
-                ? 'bg-white text-slate-900 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
-            }`}
+            className={activeTab === 'versiones' ? btnPestanaActiva : btnPestanaInactiva}
           >
             <GitBranch className="w-3.5 h-3.5 text-emerald-600" />
             <span>Despliegues (3 Versiones)</span>
@@ -332,9 +313,9 @@ export default function SettingsView() {
         </div>
       </div>
 
-      {/* 2. CONTENIDO SEGÚN PESTAÑA */}
+      {/* 2. CONTENIDO SEGÃšN PESTAÃ‘A */}
 
-      {/* PESTAÑA 1: CATÁLOGO DE COLORES DE CAMISAS */}
+      {/* PESTAÃ‘A 1: CATÃLOGO DE COLORES DE CAMISAS */}
       {activeTab === 'colores' && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
@@ -359,7 +340,7 @@ export default function SettingsView() {
               <button
                 onClick={restablecerColores}
                 title="Volver a los 9 colores predeterminados"
-                className="px-3 py-2 rounded-xl border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                className={btnNeutro}
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Restablecer</span>
@@ -398,7 +379,7 @@ export default function SettingsView() {
                       title={`Tono: ${hexVal}`}
                     >
                       {isWhiteOrLight && (
-                        <span className="text-[10px] text-slate-400 font-bold">•</span>
+                        <span className="text-[10px] text-slate-400 font-bold">â€¢</span>
                       )}
                     </div>
 
@@ -412,18 +393,18 @@ export default function SettingsView() {
                     </div>
                   </div>
 
-                  {/* Acciones de edición y eliminación */}
-                  <div className="flex items-center gap-1 shrink-0">
+                  {/* Acciones de ediciÃ³n y eliminaciÃ³n */}
+                  <div className="flex flex-wrap items-center gap-1 shrink-0">
                     <button
                       onClick={() => handleOpenEditColor(col)}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors cursor-pointer"
+                      className={btnIconoSutil}
                       title="Editar color"
                     >
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
 
                     <InlineDeleteConfirm
-                      title={`¿Quitar color "${col.nombre}"?`}
+                      title={`Â¿Quitar color "${col.nombre}"?`}
                       confirmLabel="Quitar"
                       onDelete={() => eliminarColor(col.id)}
                     />
@@ -437,13 +418,13 @@ export default function SettingsView() {
             <div className="bg-white rounded-2xl border border-slate-200/80 p-12 text-center text-slate-400">
               <Palette className="w-10 h-10 mx-auto mb-2 text-slate-300" />
               <p className="font-bold text-sm text-slate-600">No se encontraron colores</p>
-              <p className="text-xs mt-1">Prueba con otro término de búsqueda o agrega un nuevo color.</p>
+              <p className="text-xs mt-1">Prueba con otro tÃ©rmino de bÃºsqueda o agrega un nuevo color.</p>
             </div>
           )}
         </motion.div>
       )}
 
-      {/* PESTAÑA 2: CATÁLOGO DE LUGARES DE ENTREGA */}
+      {/* PESTAÃ‘A 2: CATÃLOGO DE LUGARES DE ENTREGA */}
       {activeTab === 'lugares' && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
@@ -468,7 +449,7 @@ export default function SettingsView() {
               <button
                 onClick={restablecerLugaresEntrega}
                 title="Volver a los lugares predeterminados"
-                className="px-3 py-2 rounded-xl border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                className={btnNeutro}
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Restablecer</span>
@@ -506,24 +487,24 @@ export default function SettingsView() {
                         {lugar}
                       </h4>
                       <span className="text-[11px] text-slate-400 font-semibold block">
-                        {isOtro ? 'Opción especial' : 'Lugar activo'}
+                        {isOtro ? 'OpciÃ³n especial' : 'Lugar activo'}
                       </span>
                     </div>
                   </div>
 
-                  {/* Acciones de edición y eliminación */}
+                  {/* Acciones de ediciÃ³n y eliminaciÃ³n */}
                   {!isOtro ? (
-                    <div className="flex items-center gap-1 shrink-0">
+                    <div className="flex flex-wrap items-center gap-1 shrink-0">
                       <button
                         onClick={() => handleOpenEditLugar(lugar)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors cursor-pointer"
+                        className={btnIconoSutil}
                         title="Editar lugar de entrega"
                       >
                         <Pencil className="w-3.5 h-3.5" />
                       </button>
 
                       <InlineDeleteConfirm
-                        title={`¿Quitar "${lugar}"?`}
+                        title={`Â¿Quitar "${lugar}"?`}
                         confirmLabel="Quitar"
                         onDelete={() => eliminarLugarEntrega(lugar)}
                       />
@@ -542,13 +523,13 @@ export default function SettingsView() {
             <div className="bg-white rounded-2xl border border-slate-200/80 p-12 text-center text-slate-400">
               <MapPin className="w-10 h-10 mx-auto mb-2 text-slate-300" />
               <p className="font-bold text-sm text-slate-600">No se encontraron lugares de entrega</p>
-              <p className="text-xs mt-1">Prueba con otro término de búsqueda o agrega un nuevo lugar.</p>
+              <p className="text-xs mt-1">Prueba con otro tÃ©rmino de bÃºsqueda o agrega un nuevo lugar.</p>
             </div>
           )}
         </motion.div>
       )}
 
-      {/* PESTAÑA 3: GESTIÓN DE USUARIOS */}
+      {/* PESTAÃ‘A 3: GESTIÃ“N DE USUARIOS */}
       {activeTab === 'usuarios' && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
@@ -621,17 +602,17 @@ export default function SettingsView() {
                       {u.created_at ? new Date(u.created_at).toLocaleDateString('es-CO') : 'Activo'}
                     </span>
 
-                    <div className="flex items-center gap-1">
+                    <div className="flex flex-wrap items-center gap-1">
                       <button
                         onClick={() => handleOpenEditUser(u)}
-                        className="px-2.5 py-1 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-bold text-xs transition-colors cursor-pointer flex items-center gap-1"
+                        className={btnIconoSutil}
                       >
                         <Pencil className="w-3 h-3" />
                         <span>Editar</span>
                       </button>
 
                       <InlineDeleteConfirm
-                        title={`¿Eliminar usuario "${u.nombre}"?`}
+                        title={`Â¿Eliminar usuario "${u.nombre}"?`}
                         confirmLabel="Borrar"
                         onDelete={() => eliminarUsuario(u.id)}
                       />
@@ -652,7 +633,7 @@ export default function SettingsView() {
         </motion.div>
       )}
 
-      {/* PESTAÑA 3: APARIENCIA & TEMAS */}
+      {/* PESTAÃ‘A 3: APARIENCIA & TEMAS */}
       {activeTab === 'temas' && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
@@ -661,9 +642,9 @@ export default function SettingsView() {
           className="space-y-4"
         >
           <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-4">
-            <h3 className="font-black text-slate-900 text-base">Selecciona el tema de la aplicación</h3>
+            <h3 className="font-black text-slate-900 text-base">Selecciona el tema de la aplicaciÃ³n</h3>
             <p className="text-xs text-slate-500">
-              Los temas cambian el 100% de la interfaz de forma armónica: fondo, paneles laterales, tipografía, insignias y botones.
+              Los temas cambian el 100% de la interfaz de forma armÃ³nica: fondo, paneles laterales, tipografÃ­a, insignias y botones.
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5 pt-2">
@@ -713,7 +694,7 @@ export default function SettingsView() {
         </motion.div>
       )}
 
-      {/* PESTAÑA 4: ESTRATEGIA DE DESPLIEGUES (3 VERSIONES) */}
+      {/* PESTAÃ‘A 4: ESTRATEGIA DE DESPLIEGUES (3 VERSIONES) */}
       {activeTab === 'versiones' && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
@@ -727,20 +708,20 @@ export default function SettingsView() {
               Estrategia de Versionado en GitHub Pages
             </h3>
             <p className="text-xs text-slate-500 mt-1">
-              Camisas IUB maneja estrictamente un ciclo de 3 despliegues para garantizar rollback instantáneo y persistencia.
+              Camisas IUB maneja estrictamente un ciclo de 3 despliegues para garantizar rollback instantÃ¡neo y persistencia.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* 1. Versión Fija */}
+            {/* 1. VersiÃ³n Fija */}
             <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col justify-between">
               <div>
                 <span className="text-[10px] font-black uppercase tracking-wider text-amber-600 px-2 py-0.5 rounded-full bg-amber-500/20 inline-block mb-2">
-                  1. Versión Fija (Ancla)
+                  1. VersiÃ³n Fija (Ancla)
                 </span>
                 <h4 className="font-bold text-slate-900 text-sm">Commit 6a8ee5f</h4>
                 <p className="text-xs text-slate-600 mt-1">
-                  La última versión original desplegada en producción. Queda permanentemente congelada como ancla de respaldo y no se borra con nuevos despliegues.
+                  La Ãºltima versiÃ³n original desplegada en producciÃ³n. Queda permanentemente congelada como ancla de respaldo y no se borra con nuevos despliegues.
                 </p>
               </div>
               <div className="mt-4 pt-3 border-t border-amber-500/20 text-[11px] font-mono text-amber-700 font-bold">
@@ -748,15 +729,15 @@ export default function SettingsView() {
               </div>
             </div>
 
-            {/* 2. Versión Anterior */}
+            {/* 2. VersiÃ³n Anterior */}
             <div className="p-4 rounded-2xl bg-sky-500/10 border border-sky-500/30 flex flex-col justify-between">
               <div>
                 <span className="text-[10px] font-black uppercase tracking-wider text-sky-600 px-2 py-0.5 rounded-full bg-sky-500/20 inline-block mb-2">
-                  2. Versión Anterior
+                  2. VersiÃ³n Anterior
                 </span>
                 <h4 className="font-bold text-slate-900 text-sm">Punto de Rollback</h4>
                 <p className="text-xs text-slate-600 mt-1">
-                  En este momento coincide con la versión fija. En futuros despliegues, la versión actual pasará a ocupar este espacio para reversión de 1 paso.
+                  En este momento coincide con la versiÃ³n fija. En futuros despliegues, la versiÃ³n actual pasarÃ¡ a ocupar este espacio para reversiÃ³n de 1 paso.
                 </p>
               </div>
               <div className="mt-4 pt-3 border-t border-sky-500/20 text-[11px] font-mono text-sky-700 font-bold">
@@ -764,19 +745,19 @@ export default function SettingsView() {
               </div>
             </div>
 
-            {/* 3. Versión Nueva */}
+            {/* 3. VersiÃ³n Nueva */}
             <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex flex-col justify-between">
               <div>
                 <span className="text-[10px] font-black uppercase tracking-wider text-emerald-600 px-2 py-0.5 rounded-full bg-emerald-500/20 inline-block mb-2">
-                  3. Versión Nueva (Viva)
+                  3. VersiÃ³n Nueva (Viva)
                 </span>
                 <h4 className="font-bold text-slate-900 text-sm">React + Vite + Tailwind</h4>
                 <p className="text-xs text-slate-600 mt-1">
-                  La versión moderna que se publica hoy con interfaz Impeccable, selector dinámico de colores, cálculo exacto de socios y navegación fija.
+                  La versiÃ³n moderna que se publica hoy con interfaz Impeccable, selector dinÃ¡mico de colores, cÃ¡lculo exacto de socios y navegaciÃ³n fija.
                 </p>
               </div>
               <div className="mt-4 pt-3 border-t border-emerald-500/20 text-[11px] font-mono text-emerald-700 font-bold">
-                ESTADO: VIVA EN PRODUCCIÓN
+                ESTADO: VIVA EN PRODUCCIÃ“N
               </div>
             </div>
           </div>
@@ -801,7 +782,7 @@ export default function SettingsView() {
                   onClick={() => setIsColorModalOpen(false)}
                   className="text-slate-400 hover:text-slate-600 text-sm font-bold p-1"
                 >
-                  ✕
+                  âœ•
                 </button>
               </div>
 
@@ -842,10 +823,10 @@ export default function SettingsView() {
                   </div>
                 </div>
 
-                {/* Paleta de sugerencias rápidas */}
+                {/* Paleta de sugerencias rÃ¡pidas */}
                 <div>
                   <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-2">
-                    Sugerencias Rápidas:
+                    Sugerencias RÃ¡pidas:
                   </label>
                   <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto p-1 bg-slate-50 rounded-xl border border-slate-100">
                     {PRESET_COLORES.map((p) => (
@@ -853,7 +834,7 @@ export default function SettingsView() {
                         type="button"
                         key={p.nombre}
                         onClick={() => handleSelectPreset(p)}
-                        className="px-2 py-1 rounded-lg bg-white border border-slate-200/80 hover:border-indigo-400 text-[11px] font-semibold text-slate-700 flex items-center gap-1.5 transition-all cursor-pointer"
+                        className={btnNeutro}
                       >
                         <span
                           className="w-2.5 h-2.5 rounded-full border border-black/10 shrink-0"
@@ -881,7 +862,7 @@ export default function SettingsView() {
                   <button
                     type="button"
                     onClick={() => setIsColorModalOpen(false)}
-                    className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors"
+                    className={btnNeutro}
                   >
                     Cancelar
                   </button>
@@ -889,7 +870,7 @@ export default function SettingsView() {
                     type="submit"
                     className="theme-btn-primary px-5 py-2 rounded-xl text-xs font-bold shadow-sm"
                   >
-                    {editingColor ? 'Guardar Cambios' : 'Agregar al Catálogo'}
+                    {editingColor ? 'Guardar Cambios' : 'Agregar al CatÃ¡logo'}
                   </button>
                 </div>
               </form>
@@ -921,7 +902,7 @@ export default function SettingsView() {
                   onClick={() => setIsLugarModalOpen(false)}
                   className="text-slate-400 hover:text-slate-600 text-sm font-bold p-1 cursor-pointer"
                 >
-                  ✕
+                  âœ•
                 </button>
               </div>
 
@@ -937,17 +918,17 @@ export default function SettingsView() {
                   <input
                     type="text"
                     required
-                    placeholder="Ej: Sede Prado - Cafetería, Domicilio Soledad..."
+                    placeholder="Ej: Sede Prado - CafeterÃ­a, Domicilio Soledad..."
                     value={lugarNombre}
                     onChange={(e) => setLugarNombre(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold focus:outline-none focus:border-indigo-500"
                   />
                 </div>
 
-                {/* Sugerencias Rápidas */}
+                {/* Sugerencias RÃ¡pidas */}
                 <div>
                   <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-2">
-                    Sugerencias Rápidas:
+                    Sugerencias RÃ¡pidas:
                   </label>
                   <div className="flex flex-wrap gap-1.5 p-1 bg-slate-50 rounded-xl border border-slate-100 max-h-32 overflow-y-auto">
                     {[
@@ -964,7 +945,7 @@ export default function SettingsView() {
                         type="button"
                         key={sug}
                         onClick={() => setLugarNombre(sug)}
-                        className="px-2.5 py-1 rounded-lg bg-white border border-slate-200/80 hover:border-indigo-400 text-[11px] font-semibold text-slate-700 flex items-center gap-1 transition-all cursor-pointer"
+                        className={btnNeutro}
                       >
                         <Plus className="w-2.5 h-2.5 text-indigo-500" />
                         <span>{sug}</span>
@@ -977,7 +958,7 @@ export default function SettingsView() {
                   <button
                     type="button"
                     onClick={() => setIsLugarModalOpen(false)}
-                    className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                    className={btnNeutro}
                   >
                     Cancelar
                   </button>
@@ -1012,7 +993,7 @@ export default function SettingsView() {
                   onClick={() => setIsUserModalOpen(false)}
                   className="text-slate-400 hover:text-slate-600 text-sm font-bold p-1"
                 >
-                  ✕
+                  âœ•
                 </button>
               </div>
 
@@ -1043,7 +1024,7 @@ export default function SettingsView() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Correo Electrónico (Login)</label>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Correo ElectrÃ³nico (Login)</label>
                   <input
                     type="email"
                     required
@@ -1074,12 +1055,12 @@ export default function SettingsView() {
 
                 {!editingUser && (
                   <div>
-                    <label className="text-xs font-bold text-slate-700 block mb-1">Contraseña Inicial</label>
+                    <label className="text-xs font-bold text-slate-700 block mb-1">ContraseÃ±a Inicial</label>
                     <div className="relative">
                       <input
                         type={showPassword ? 'text' : 'password'}
                         required
-                        placeholder="Mínimo 6 caracteres"
+                        placeholder="MÃ­nimo 6 caracteres"
                         value={userPassword}
                         onChange={(e) => setUserPassword(e.target.value)}
                         className="w-full pl-3.5 pr-10 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold focus:outline-none focus:border-indigo-500"
@@ -1099,7 +1080,7 @@ export default function SettingsView() {
                   <button
                     type="button"
                     onClick={() => setIsUserModalOpen(false)}
-                    className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors"
+                    className={btnNeutro}
                   >
                     Cancelar
                   </button>

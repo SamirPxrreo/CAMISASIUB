@@ -20,6 +20,13 @@ import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import {
+  btnDinero,
+  btnDineroInactivo,
+  btnDestructivo,
+  btnNeutro,
+  btnNeutroIcono
+} from '../lib/buttonStyles';
+import {
   fmt,
   hoyColombia,
   formatearFechaHumana,
@@ -222,7 +229,7 @@ export default function SettlementsView() {
 
         <button
           onClick={() => abrirModalLiquidacion(deudaData.deudaSamirAVal > 0 ? 'Samir' : 'Valentina')}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-500/20 transition-all cursor-pointer"
+          className={btnDinero}
         >
           <Plus className="w-4 h-4 stroke-[2.5]" />
           <span>Registrar Liquidación de Pedido</span>
@@ -250,7 +257,7 @@ export default function SettlementsView() {
             {deudaData.deudaSamirAVal > 0 && (
               <button
                 onClick={() => abrirModalLiquidacion('Samir')}
-                className="text-xs font-bold px-3 py-1 rounded-xl bg-amber-500 hover:bg-amber-600 text-white transition-all cursor-pointer"
+                className={btnDinero}
               >
                 Liquidar
               </button>
@@ -284,7 +291,7 @@ export default function SettlementsView() {
             {deudaData.deudaValASamir > 0 && (
               <button
                 onClick={() => abrirModalLiquidacion('Valentina')}
-                className="text-xs font-bold px-3 py-1 rounded-xl bg-violet-600 hover:bg-violet-700 text-white transition-all cursor-pointer"
+                className={btnDinero}
               >
                 Liquidar
               </button>
@@ -385,7 +392,7 @@ export default function SettlementsView() {
                   </span>
                   <button
                     onClick={() => handleEliminarLiquidacion(l.id, l.pagador, l.receptor, l.monto)}
-                    className="p-1.5 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+                    className={btnDestructivo}
                     title="Eliminar liquidación"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -426,7 +433,7 @@ export default function SettlementsView() {
                 <h3 className="font-black text-slate-900 text-base">Registrar Pago de Liquidación</h3>
                 <p className="text-[11px] text-slate-400">Transfiere la ganancia correspondiente de un pedido</p>
               </div>
-              <button onClick={() => setModalAbierto(false)} className="p-1 rounded-xl hover:bg-slate-100 text-slate-400">
+              <button onClick={() => setModalAbierto(false)} className={btnNeutroIcono}>
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -534,14 +541,18 @@ export default function SettlementsView() {
                 <button
                   type="button"
                   onClick={() => setModalAbierto(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-100 text-slate-600 font-bold"
+                  className={btnNeutro}
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={guardando || !ventaId}
-                  className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold disabled:opacity-50"
+                  className={
+                    guardando || !ventaId
+                      ? btnDineroInactivo + ' disabled:opacity-50'
+                      : btnDinero + ' disabled:opacity-50'
+                  }
                 >
                   {guardando ? 'Guardando...' : 'Registrar Pago'}
                 </button>

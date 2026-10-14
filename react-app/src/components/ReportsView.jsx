@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { exportarReporteCompletoExcel } from '../lib/excelExport';
 import { useData } from '../context/DataContext';
+import { btnPrimario, btnNeutro } from '../lib/buttonStyles';
 import {
   fmt,
   precioTotalVenta,
@@ -96,7 +97,11 @@ export default function ReportsView() {
           <button
             onClick={exportarExcel}
             disabled={exportando || dataset.length === 0}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-xs shadow-md shadow-emerald-500/20 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className={
+              exportando || dataset.length === 0
+                ? btnNeutro + ' w-full sm:w-auto py-3 px-6 disabled:opacity-50 disabled:cursor-not-allowed'
+                : btnPrimario + ' w-full sm:w-auto py-3 px-6 disabled:opacity-50 disabled:cursor-not-allowed'
+            }
           >
             {exportando ? (
               <span>Generando Excel...</span>

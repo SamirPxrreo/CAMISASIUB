@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { StatCard, ShortcutCard } from './StatCard';
-import { fmt } from '../lib/utils';
+import { fmt, precioTotalVenta } from '../lib/utils';
 
 export default function DashboardView({ onNavigate, onOpenNewSale }) {
   const {
@@ -198,7 +198,7 @@ export default function DashboardView({ onNavigate, onOpenNewSale }) {
 
                 <div className="text-right shrink-0">
                   <span className="text-sm font-bold text-slate-900 block">
-                    {fmt(v.precio_total || v.precio_unitario || 0)}
+                    {fmt(precioTotalVenta(v))}
                   </span>
                   <span className="text-xs font-semibold theme-badge-subtle px-2 py-0.5 rounded-full inline-block mt-0.5">
                     {v.estado || 'Pedido'}

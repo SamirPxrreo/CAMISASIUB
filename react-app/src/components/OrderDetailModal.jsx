@@ -21,6 +21,14 @@ import {
 } from 'lucide-react';
 import StatusDropdown from './StatusDropdown';
 import AddAbonoModal from './AddAbonoModal';
+import {
+  btnDinero,
+  btnWhatsapp,
+  btnWhatsappIcono,
+  btnEditar,
+  btnNeutro,
+  grupoAcciones
+} from '../lib/buttonStyles';
 import { useData } from '../context/DataContext';
 import {
   fmt,
@@ -141,8 +149,11 @@ export default function OrderDetailModal({ isOpen, onClose, order, onEditOrder }
             </button>
           </div>
 
-          {/* 2. CONTENIDO DESPLAZABLE */}
-          <div className="flex-1 overflow-y-auto py-4 space-y-4 pr-1">
+          {/* 2. CONTENIDO DESPLAZABLE
+              min-h-0 es imprescindible: sin él, el flex item conserva
+              min-height:auto y no puede encogerse, empuja el pie hacia abajo y
+              el overflow-hidden del modal recorta los botones. */}
+          <div className="flex-1 min-h-0 overflow-y-auto py-4 space-y-4 pr-1">
             {/* Tarjeta de Resumen Financiero y Logística */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70">
@@ -338,16 +349,18 @@ export default function OrderDetailModal({ isOpen, onClose, order, onEditOrder }
             </div>
           </div>
 
-          {/* 3. PIE CON ACCIONES RÁPIDAS */}
-          <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-2.5 shrink-0">
-            <div className="flex items-center gap-2 w-full sm:w-auto">
+          {/* 3. PIE CON ACCIONES RÁPIDAS
+              Dos filas centradas con flex-wrap: los botones nunca se salen del
+              modal ni se pisan entre sí en pantallas angostas. */}
+          <div className="pt-4 border-t border-slate-100 flex flex-col items-center gap-2.5 shrink-0">
+            <div className={grupoAcciones + ' w-full'}>
               <button
                 type="button"
                 onClick={handleCopiarWhatsApp}
-                className={`p-2.5 rounded-2xl border transition-all cursor-pointer ${
+                className={`p-2.5 rounded-2xl border transition-all cursor-pointer shrink-0 ${
                   copiado
-                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs scale-105'
-                    : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200'
+                    ? 'bg-[#25D366] text-white border-[#25D366] shadow-xs scale-105'
+                    : btnWhatsappIcono
                 }`}
                 title={copiado ? '¡Copiado para WhatsApp!' : 'Copiar detalle para WhatsApp'}
               >
@@ -359,21 +372,19 @@ export default function OrderDetailModal({ isOpen, onClose, order, onEditOrder }
                   href={waLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+                  className={btnWhatsapp}
                   title="Abrir WhatsApp"
                 >
                   <MessageCircle className="w-4 h-4" />
                   <span>WhatsApp</span>
                 </a>
               )}
-            </div>
 
-            <div className="flex items-center gap-2 w-full sm:w-auto">
               {saldo > 0 && (
                 <button
                   type="button"
                   onClick={() => setAbrirAbono(true)}
-                  className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-black transition-all cursor-pointer shadow-xs"
+                  className={btnDinero}
                   title="Registrar abono del cliente a este pedido"
                 >
                   <DollarSign className="w-4 h-4" />
@@ -388,44 +399,44 @@ export default function OrderDetailModal({ isOpen, onClose, order, onEditOrder }
                     onClose();
                     onEditOrder(order);
                   }}
-                  className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-2xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-bold transition-colors cursor-pointer"
+                  className={btnEditar}
                 >
                   <Edit className="w-4 h-4" />
                   <span>Editar Pedido</span>
                 </button>
               )}
 
-              {finalizarPedido && !order.finalizado && (
-                <button
-                  type="button"
-                  onClick={async () => {
-                    const ok = await finalizarPedido(order.id);
-                    if (ok) onClose();
-                  }}
-                  className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-2xl text-xs font-black transition-all cursor-pointer ${
-                    estadosTodosLiquidado(order)
-                      ? 'bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white shadow-xs'
-                      : 'bg-slate-100 hover:bg-slate-200 text-slate-500'
-                  }`}
-                  title={
-                    estadosTodosLiquidado(order)
-                      ? 'Finalizar pedido y mover a Historial'
-                      : 'Requiere que todas las camisas estén en estado Liquidado'
-                  }
-                >
-                  <CheckCircle2 className={`w-4 h-4 ${estadosTodosLiquidado(order) ? 'text-white' : 'text-slate-400'}`} />
-                  <span>Finalizar</span>
-                </button>
-              )}
-
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 sm:flex-initial px-4 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors cursor-pointer"
+                className={btnNeutro}
               >
                 Cerrar
               </button>
             </div>
+
+            {finalizarPedido && !order.finalizado && (
+              <button
+                type="button"
+                onClick={async () => {
+                  const ok = await finalizarPedido(order.id);
+                  if (ok) onClose();
+                }}
+                className={`mx-auto w-full max-w-[17rem] inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-2xl text-xs font-black transition-all cursor-pointer ${
+                  estadosTodosLiquidado(order)
+                    ? 'bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white shadow-xs'
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-500 border border-slate-200/80'
+                }`}
+                title={
+                  estadosTodosLiquidado(order)
+                    ? 'Finalizar pedido y mover a Historial'
+                    : 'Requiere que todas las camisas estén en estado Liquidado'
+                }
+              >
+                <CheckCircle2 className={`w-4 h-4 ${estadosTodosLiquidado(order) ? 'text-white' : 'text-slate-400'}`} />
+                <span>Finalizar</span>
+              </button>
+            )}
           </div>
         </motion.div>
       </div>

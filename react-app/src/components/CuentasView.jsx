@@ -33,6 +33,7 @@ import {
   itemsCrudosVenta,
   precioDeItem
 } from '../lib/utils';
+import { btnWhatsappIcono, btnDinero, btnDineroInactivo, btnPrimario, btnNeutro, btnNeutroIcono, btnEditar } from '../lib/buttonStyles';
 import Pagination from './Pagination';
 import StatusDropdown from './StatusDropdown';
 import OrderDetailModal from './OrderDetailModal';
@@ -338,7 +339,7 @@ export default function CuentasView({ targetOrder, onClearTargetOrder, onEditOrd
           {busqueda && (
             <button
               onClick={() => setBusqueda('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-slate-100 text-slate-400"
+              className={btnNeutroIcono + ' absolute right-3 top-1/2 -translate-y-1/2'}
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -450,7 +451,7 @@ export default function CuentasView({ targetOrder, onClearTargetOrder, onEditOrd
                       <button
                         type="button"
                         onClick={() => generarReciboFacturaPDF(c)}
-                        className="p-2 px-2.5 rounded-2xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition-colors cursor-pointer flex items-center gap-1 text-xs font-bold"
+                        className={btnPrimario}
                         title="Generar Factura / Recibo PDF"
                       >
                         <FileText className="w-4 h-4 text-indigo-600" />
@@ -462,7 +463,7 @@ export default function CuentasView({ targetOrder, onClearTargetOrder, onEditOrd
                           href={waLink}
                           target="_blank"
                           rel="noreferrer"
-                          className="p-2 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition-colors"
+                          className={btnWhatsappIcono}
                           title="Abrir chat en WhatsApp"
                         >
                           <MessageCircle className="w-4 h-4" />
@@ -472,7 +473,7 @@ export default function CuentasView({ targetOrder, onClearTargetOrder, onEditOrd
                       <button
                         type="button"
                         onClick={() => toggleExpand(c.clave)}
-                        className="p-2 rounded-2xl bg-slate-50 hover:bg-slate-100 text-slate-500 border border-slate-200 transition-colors cursor-pointer"
+                        className={btnNeutroIcono}
                         title={isExpanded ? "Ocultar pedidos" : "Ver pedidos del cliente"}
                       >
                         {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -533,7 +534,7 @@ export default function CuentasView({ targetOrder, onClearTargetOrder, onEditOrd
                             <button
                               type="button"
                               onClick={() => setSelectedOrderDetail(p)}
-                              className="py-1.5 px-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 font-bold text-xs flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
+                              className={btnNeutro}
                               title="Ver prendas y estados de este pedido"
                             >
                               <Eye className="w-3.5 h-3.5 text-indigo-600" />
@@ -545,7 +546,7 @@ export default function CuentasView({ targetOrder, onClearTargetOrder, onEditOrd
                               <button
                                 type="button"
                                 onClick={() => onEditOrder(p)}
-                                className="py-1.5 px-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 font-bold text-xs flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
+                                className={btnEditar}
                                 title="Editar pedido"
                               >
                                 <Pencil className="w-3.5 h-3.5 text-slate-500" />
@@ -557,11 +558,11 @@ export default function CuentasView({ targetOrder, onClearTargetOrder, onEditOrd
                             <button
                               type="button"
                               onClick={() => finalizarPedido(p.id)}
-                              className={`py-1.5 px-2.5 rounded-xl text-xs font-black flex items-center gap-1 cursor-pointer transition-all ${
+                              className={
                                 estadosTodosLiquidado(p)
-                                  ? 'bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white shadow-xs'
-                                  : 'bg-slate-200 hover:bg-slate-300 text-slate-600'
-                              }`}
+                                  ? btnDinero
+                                  : btnDineroInactivo
+                              }
                               title={
                                 estadosTodosLiquidado(p)
                                   ? 'Finalizar pedido y mover a Historial'

@@ -10,6 +10,7 @@ import {
   Check
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { btnDestructivo, btnEditar } from '../lib/buttonStyles';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -129,7 +130,7 @@ export default function TrashView() {
         {esAdmin && eliminados.length > 0 && (
           <button
             onClick={handleVaciarPapelera}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs transition-colors cursor-pointer"
+            className={btnDestructivo}
           >
             <Trash2 className="w-4 h-4" />
             <span>Vaciar Papelera</span>
@@ -182,7 +183,7 @@ export default function TrashView() {
                 <button
                   type="button"
                   onClick={() => handleRestaurar(v.id, v.cliente_nombre)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold transition-colors cursor-pointer"
+                  className={btnEditar}
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                   <span>Restaurar</span>
@@ -192,7 +193,7 @@ export default function TrashView() {
                   <button
                     type="button"
                     onClick={() => handleEliminarDefinitivo(v.id)}
-                    className="p-2 rounded-xl hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+                    className={btnDestructivo}
                     title="Borrar definitivamente (Solo Administrador)"
                   >
                     <Trash2 className="w-3.5 h-3.5" />

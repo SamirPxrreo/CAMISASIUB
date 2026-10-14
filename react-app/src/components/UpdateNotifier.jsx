@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RefreshCw, Sparkles, X } from 'lucide-react';
+import { btnPrimario, btnNeutroIcono } from '../lib/buttonStyles';
 
 export default function UpdateNotifier() {
   const [hasUpdate, setHasUpdate] = useState(false);
@@ -93,15 +94,15 @@ export default function UpdateNotifier() {
           <button
             type="button"
             onClick={handleReload}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white text-indigo-900 font-extrabold text-xs shadow-md hover:bg-indigo-50 active:scale-95 transition-all cursor-pointer"
+            className={btnPrimario}
           >
-            <RefreshCw className="w-3.5 h-3.5 text-indigo-600" />
+            <RefreshCw className="w-3.5 h-3.5 text-white" />
             <span>Actualizar</span>
           </button>
           <button
             type="button"
             onClick={() => setDismissed(true)}
-            className="p-1 rounded-lg text-indigo-300 hover:text-white hover:bg-indigo-800/50 transition-colors cursor-pointer"
+            className={btnNeutroIcono}
             title="Cerrar aviso"
           >
             <X className="w-4 h-4" />

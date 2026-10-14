@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Trash2, RotateCcw } from 'lucide-react';
+import { btnDestructivo } from '../lib/buttonStyles';
 
 /**
  * Componente de confirmación inline inspirado en Bencho.dev (https://bencho.dev/?c=confirm&theme=dark)
@@ -40,7 +41,7 @@ export default function InlineDeleteConfirm({ onDelete, clienteNombre, title, co
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.96 }}
         transition={{ type: 'spring', stiffness: 450, damping: 25 }}
-        className="relative flex items-center justify-between px-3 py-1 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 text-xs font-bold overflow-hidden shadow-xs gap-2"
+        className="relative flex w-full min-w-[15rem] items-center justify-between px-3 py-1.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 text-xs font-bold overflow-hidden shadow-xs gap-2"
       >
         <div className="flex items-center gap-1.5 min-w-0 pr-1">
           <Trash2 className="w-3.5 h-3.5 text-rose-600 shrink-0 animate-pulse" />
@@ -72,7 +73,7 @@ export default function InlineDeleteConfirm({ onDelete, clienteNombre, title, co
     <button
       type="button"
       onClick={handleStartDelete}
-      className="flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-xl bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200/90 hover:border-rose-600 text-xs font-bold transition-all shadow-2xs hover:shadow-xs cursor-pointer active:scale-95"
+      className={btnDestructivo}
       title="Eliminar elemento"
     >
       <Trash2 className="w-3.5 h-3.5" />

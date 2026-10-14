@@ -24,6 +24,7 @@ import {
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
+import { btnDinero, btnNeutro, btnNeutroIcono } from '../lib/buttonStyles';
 import {
   fmt,
   formatearFechaHumana,
@@ -130,17 +131,20 @@ export default function PurchasesView() {
   }, [ventas, comprador]);
 
   const toggleSeleccionPedido = (id, pendiente) => {
-    setPedidosSeleccionados(prev => {
-      if (prev.includes(id)) {
-        return prev.filter(x => x !== id);
-      } else {
-        setAbonosPorPedido(curr => ({
-          ...curr,
-          [id]: curr[id] !== undefined ? curr[id] : pendiente
-        }));
-        return [...prev, id];
-      }
-    });
+    const yaEstaSeleccionado = pedidosSeleccionados.includes(id);
+
+    // Updater puro: el setState del abono va fuera, anidarlo lo ejecutaba dos
+    // veces en StrictMode y el segundo pase podía duplicar la escritura.
+    setPedidosSeleccionados(prev => (
+      yaEstaSeleccionado ? prev.filter(x => x !== id) : [...prev, id]
+    ));
+
+    if (!yaEstaSeleccionado) {
+      setAbonosPorPedido(curr => ({
+        ...curr,
+        [id]: curr[id] !== undefined ? curr[id] : pendiente
+      }));
+    }
   };
 
   const handleCambioAbonoPedido = (id, val) => {
@@ -445,7 +449,7 @@ export default function PurchasesView() {
             setErrorMsg('');
             setModalAbierto(true);
           }}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-500/20 transition-all cursor-pointer"
+          className={btnDinero}
         >
           <Plus className="w-4 h-4 stroke-[2.5]" />
           <span>Registrar Nuevo Abono a Yesenia</span>
@@ -696,7 +700,7 @@ export default function PurchasesView() {
                   </div>
 
                   {/* Footer de la tarjeta con Totales y Botón Eliminar */}
-                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
+                  <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex items-baseline gap-2">
                         <span className="text-[10px] font-black text-slate-400 uppercase">Pagado:</span>
@@ -759,7 +763,7 @@ export default function PurchasesView() {
                 <h3 className="font-black text-slate-900 text-base">Nuevo Abono a Yesenia</h3>
                 <p className="text-[11px] text-slate-400">Registra el pago de confección en taller</p>
               </div>
-              <button onClick={() => setModalAbierto(false)} className="p-1 rounded-xl hover:bg-slate-100 text-slate-400">
+              <button onClick={() => setModalAbierto(false)} className={btnNeutroIcono}>
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -1057,20 +1061,14 @@ export default function PurchasesView() {
                 <button
                   type="button"
                   onClick={() => setModalAbierto(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-100 text-slate-600 font-bold"
+                  className={btnNeutro}
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={guardando}
-                  className={`px-5 py-2 rounded-xl text-white font-bold disabled:opacity-50 transition-colors shadow-xs cursor-pointer ${
-                    comprador === 'Valentina'
-                      ? 'bg-fuchsia-600 hover:bg-fuchsia-700'
-                      : comprador === 'Ambos'
-                      ? 'bg-amber-600 hover:bg-amber-700'
-                      : 'bg-indigo-600 hover:bg-indigo-700'
-                  }`}
+                  className={btnDinero + ' disabled:opacity-50'}
                 >
                   {guardando ? 'Guardando...' : 'Registrar Abono'}
                 </button>

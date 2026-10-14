@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { DataProvider } from './context/DataContext';
+import { DataProvider, useData } from './context/DataContext';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 
 import Sidebar from './components/Sidebar';
@@ -42,6 +42,47 @@ function obtenerSeccionInicial() {
   if (typeof window === 'undefined') return 'dashboard';
   const h = window.location.hash.replace('#', '').trim().toLowerCase();
   return SECCIONES_VALIDAS.includes(h) ? h : 'dashboard';
+}
+
+// Aviso global de error de conexión con Supabase.
+// Antes DataContext exponía `error` pero ningún componente lo renderizaba, así que
+// una caída de la base de datos se veía como un dashboard simplemente vacío.
+function ConexionErrorBanner() {
+  const { error, refreshData } = useData();
+  const [reintentando, setReintentando] = useState(false);
+
+  if (!error) return null;
+
+  const handleReintentar = async () => {
+    setReintentando(true);
+    try {
+      await refreshData();
+    } finally {
+      setReintentando(false);
+    }
+  };
+
+  return (
+    <div className="sticky top-0 z-[60] shrink-0 px-4 py-2.5 bg-rose-600 text-white shadow-lg flex items-center gap-3">
+      <span className="text-sm">⚠️</span>
+      <div className="min-w-0 flex-1">
+        <p className="text-xs font-black leading-tight">
+          No se pudieron cargar los datos de Supabase
+        </p>
+        <p className="text-[11px] leading-tight text-rose-100 truncate" title={String(error)}>
+          {String(error)}
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={handleReintentar}
+        disabled={reintentando}
+        className="px-2.5 py-1 rounded-lg bg-white/20 hover:bg-white/30 text-white text-[11px] font-black transition-colors cursor-pointer shrink-0 disabled:opacity-60"
+      >
+        {reintentando ? 'Reintentando...' : 'Reintentar'}
+      </button>
+    </div>
+  );
 }
 
 function AppContent() {
@@ -147,6 +188,9 @@ function AppContent() {
 
       {/* 2. Área Principal de Contenido (Scroll independiente para que el Sidebar nunca se baje) */}
       <div ref={mainContentRef} className="flex-1 h-full overflow-y-auto flex flex-col min-w-0 pb-20 lg:pb-8">
+        {/* Aviso de error de conexión con Supabase */}
+        <ConexionErrorBanner />
+
         {/* TopBar */}
         <TopBar
           onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
