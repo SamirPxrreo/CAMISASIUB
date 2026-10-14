@@ -19,7 +19,8 @@ import {
   Eye,
   ChevronRight,
   FileSpreadsheet,
-  Clock
+  Clock,
+  DollarSign
 } from 'lucide-react';
 import { exportarListaCompraExcel } from '../lib/excelExport';
 import { useData } from '../context/DataContext';
