@@ -26,7 +26,8 @@ import {
   getEstadoBadgeStyle,
   getWhatsAppLink,
   generarMensajeWhatsApp,
-  getVendedorColor
+  getVendedorColor,
+  fechaFinalizacionPedido
 } from '../lib/utils';
 import Pagination from './Pagination';
 import { useAuth } from '../context/AuthContext';
@@ -42,8 +43,11 @@ export default function HistoryView({ onEditOrder }) {
   const [currentPage, setCurrentPage] = useState(1);
 
   // Pedidos en historial (finalizados o totalmente liquidados)
+  // Orden: El pedido finalizado más recientemente aparece primero
   const pedidosHistorial = useMemo(() => {
-    return ventas.filter(v => v.finalizado || estadosTodosLiquidado(v));
+    return ventas
+      .filter(v => v.finalizado || estadosTodosLiquidado(v))
+      .sort((a, b) => fechaFinalizacionPedido(b) - fechaFinalizacionPedido(a));
   }, [ventas]);
 
   // Filtrado
@@ -106,14 +110,15 @@ export default function HistoryView({ onEditOrder }) {
     const filasHtml = items.map((it) => {
       const p = Number(it.precio) || Number(v.precio_unitario) || 30000;
       const ab = Number(it.abono) || 0;
-      const modeloTxt = it.modelo === 'Nuevo' ? 'Versión 2' : 'Versión 1';
-      const desc = `Polo · ${it.genero === 'Mujer' ? 'Mujer' : 'Hombre'} · ${it.color || 'Color'} · Talla ${it.talla || 'U'}`;
+      const modeloBadge = it.modelo === 'Nuevo'
+        ? `<span style="display:inline-block;margin-left:6px;padding:2px 6px;border-radius:4px;background:#fef3c7;color:#92400e;font-size:10px;font-weight:800;">v2</span>`
+        : '';
+      const desc = `${it.color || 'Negro'} · Talla ${it.talla || 'U'} para ${it.genero === 'Mujer' ? 'Mujer' : 'Hombre'}`;
       const prog = it.programa ? `<div style="font-size:10px;color:#4f46e5;font-weight:700;margin-top:2px;">Bordado: ${it.programa}</div>` : '';
       return `
         <tr>
           <td style="padding:10px;border-bottom:1px solid #f1f5f9;">
-            <div style="font-weight:700;color:#1e293b;">${desc}</div>
-            <div style="font-size:11px;color:#64748b;">${modeloTxt}</div>
+            <div style="font-weight:700;color:#1e293b;">${desc} ${modeloBadge}</div>
             ${prog}
           </td>
           <td style="padding:10px;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:600;">${fmt(p)}</td>
@@ -358,17 +363,34 @@ export default function HistoryView({ onEditOrder }) {
                   </div>
 
                   {/* Resumen de Prendas */}
-                  <div className="mb-4 space-y-1">
+                  <div className="mb-4 space-y-1.5 bg-slate-50/70 p-2.5 rounded-2xl border border-slate-100 text-xs">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">
+                      Prendas ({items.length || v.cantidad || 1}):
+                    </span>
                     {items.slice(0, 3).map((it, idx) => (
-                      <div key={idx} className="p-2 rounded-xl bg-slate-50 border border-slate-100 text-xs flex justify-between items-center">
-                        <span className="font-semibold text-slate-700 truncate">
-                          {it.genero === 'Mujer' ? 'Mujer' : 'Hombre'} • {it.color} • Talla {it.talla} {it.modelo === 'Nuevo' ? '(V2)' : ''}
-                        </span>
-                        {it.programa && <span className="text-indigo-600 font-bold ml-1 text-[11px]">{it.programa}</span>}
+                      <div key={idx} className="flex items-center justify-between text-xs py-0.5">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="w-4 h-4 rounded-md bg-white border border-slate-200 text-slate-600 font-black text-[9px] flex items-center justify-center shrink-0">
+                            #{idx + 1}
+                          </span>
+                          <span className="font-bold text-slate-800 text-[11.5px] truncate">
+                            {it.color || 'Negro'} · Talla {it.talla || 'U'} para {it.genero === 'Mujer' ? 'Mujer' : 'Hombre'}
+                          </span>
+                          {it.modelo === 'Nuevo' && (
+                            <span className="text-[10px] font-black px-1.5 py-0.2 rounded-md bg-amber-500/15 text-amber-700 border border-amber-500/30 shrink-0">
+                              v2
+                            </span>
+                          )}
+                        </div>
+                        {it.programa && (
+                          <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.2 rounded border border-indigo-100 truncate max-w-[110px]" title={it.programa}>
+                            {it.programa}
+                          </span>
+                        )}
                       </div>
                     ))}
                     {items.length > 3 && (
-                      <span className="text-[11px] text-slate-400 italic block text-center">
+                      <span className="text-[11px] text-slate-400 italic block text-center pt-1 border-t border-slate-200/50">
                         +{items.length - 3} prenda(s) más
                       </span>
                     )}

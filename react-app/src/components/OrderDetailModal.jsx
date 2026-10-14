@@ -231,7 +231,7 @@ export default function OrderDetailModal({ isOpen, onClose, order, onEditOrder }
                         {/* Descripción clara y sin ambigüedades */}
                         <div className="min-w-0 flex-1">
                           <div className="font-black text-slate-900 text-xs sm:text-sm flex items-center gap-2 flex-wrap">
-                            <span>{it.genero === 'Hombre' ? 'Hombre' : 'Mujer'} {it.color || 'Negro'} Talla {it.talla || 'S'}</span>
+                            <span>{it.color || 'Negro'} · Talla {it.talla || 'S'} para {it.genero === 'Mujer' ? 'Mujer' : 'Hombre'}</span>
                             {it.modelo === 'Nuevo' && (
                               <span className="text-[10px] font-black px-1.5 py-0.2 rounded-md bg-amber-500/15 text-amber-600 border border-amber-500/30">
                                 v2

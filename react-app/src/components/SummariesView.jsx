@@ -364,7 +364,7 @@ export default function SummariesView() {
           <div>
             <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block">Versión Más Popular</span>
             <span className="text-base font-black text-slate-900 block">
-              {metricas.v2Count >= metricas.v1Count ? 'Versión 2 (Nueva)' : 'Versión 1 (Clásica)'}
+              {metricas.v2Count >= metricas.v1Count ? 'Versión 2 (Nueva)' : 'Clásica'}
             </span>
             <span className="text-[10px] text-slate-400">
               {Math.max(metricas.v1Count, metricas.v2Count)} prendas vendidas
@@ -449,7 +449,7 @@ export default function SummariesView() {
                     </div>
 
                     <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-white border border-slate-200/80 text-slate-700 shrink-0">
-                      {combo.modelo === 'v2' ? 'v2 Nueva' : 'v1 Clásica'}
+                      {combo.modelo === 'v2' ? 'v2 Nueva' : 'Clásica'}
                     </span>
                   </div>
 
@@ -748,7 +748,7 @@ export default function SummariesView() {
 
           <div className="grid grid-cols-2 gap-3 pt-2">
             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 text-center">
-              <span className="text-[11px] font-bold text-slate-400 uppercase block mb-1">Versión 1 (Clásica)</span>
+              <span className="text-[11px] font-bold text-slate-400 uppercase block mb-1">Clásica</span>
               <span className="text-3xl font-black text-slate-800">{metricas.v1Count}</span>
               <span className="text-[11px] text-slate-400 block mt-1">Costo base $30.000</span>
             </div>

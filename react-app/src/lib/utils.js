@@ -299,10 +299,11 @@ export function generarMensajeWhatsApp(v) {
   const detalle = crudos.length
     ? crudos.map(it => {
         const genero = it.genero === 'Hombre' ? 'Hombre' : 'Mujer';
-        const color = it.color || 'Color';
+        const color = it.color || 'Negro';
         const talla = it.talla || 'U';
+        const modelo = it.modelo === 'Nuevo' ? ' [v2]' : '';
         const bordado = it.programa ? ` (Bordado: ${it.programa})` : '';
-        return `• Polo ${genero} ${color} Talla ${talla}${bordado}`;
+        return `• ${color} · Talla ${talla} para ${genero}${modelo}${bordado}`;
       }).join('\n     ')
     : `• ${cant} camisa(s) Tipo Polo`;
 
@@ -317,12 +318,13 @@ export function generarTextoResumenPedido(v) {
   const abono = abonoClienteTotal(v);
   const crudos = itemsCrudosVenta(v) || [];
   const detallePrendas = crudos.length
-    ? crudos.map(it => {
+    ? crudos.map((it, idx) => {
         const genero = it.genero === 'Hombre' ? 'Hombre' : 'Mujer';
-        const color = it.color || 'Color';
+        const color = it.color || 'Negro';
         const talla = it.talla || 'U';
+        const modelo = it.modelo === 'Nuevo' ? ' [v2]' : '';
         const bordado = it.programa ? ` | Bordado: ${it.programa}` : '';
-        return `  • Polo ${genero} ${color} Talla ${talla}${bordado}`;
+        return `  • #${idx + 1} ${color} · Talla ${talla} para ${genero}${modelo}${bordado}`;
       }).join('\n')
     : `  • ${cant} camisa(s) Tipo Polo`;
 
@@ -579,5 +581,42 @@ export function historialVenta(v) {
   } catch {}
 
   return list.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+}
+
+// Obtener marca de tiempo de finalización del pedido (para ordenar el historial por más reciente)
+export function fechaFinalizacionPedido(v) {
+  if (!v) return 0;
+  // 1. Buscar evento de finalización en el historial estructurado de items_camisa
+  try {
+    const hist = historialVenta(v);
+    const evFinalizado = hist.find(ev => ev.tipo === 'finalizado' || (ev.titulo && String(ev.titulo).toLowerCase().includes('finaliz')));
+    if (evFinalizado && evFinalizado.fecha) {
+      const t = new Date(evFinalizado.fecha).getTime();
+      if (!isNaN(t)) return t;
+    }
+  } catch {}
+
+  // 2. Columna finalizado_at o updated_at si está finalizado
+  if (v.finalizado_at) {
+    const t = new Date(v.finalizado_at).getTime();
+    if (!isNaN(t)) return t;
+  }
+  if (v.updated_at) {
+    const t = new Date(v.updated_at).getTime();
+    if (!isNaN(t)) return t;
+  }
+  if (v.fecha_entrega) {
+    const t = new Date(v.fecha_entrega).getTime();
+    if (!isNaN(t)) return t;
+  }
+  if (v.created_at) {
+    const t = new Date(v.created_at).getTime();
+    if (!isNaN(t)) return t;
+  }
+  if (v.fecha) {
+    const t = new Date(v.fecha).getTime();
+    if (!isNaN(t)) return t;
+  }
+  return 0;
 }
 

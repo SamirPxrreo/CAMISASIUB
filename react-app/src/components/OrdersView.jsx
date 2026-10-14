@@ -411,9 +411,13 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
                               #{idx + 1}
                             </span>
                             <span className="font-bold text-slate-800 text-[11.5px] truncate">
-                              {it.genero === 'Hombre' ? 'Hombre' : 'Mujer'} · {it.color || 'Color'} · Talla {it.talla || 'U'}
-                              {it.modelo === 'Nuevo' && ' · v2'}
+                              {it.color || 'Negro'} · Talla {it.talla || 'U'} para {it.genero === 'Mujer' ? 'Mujer' : 'Hombre'}
                             </span>
+                            {it.modelo === 'Nuevo' && (
+                              <span className="text-[10px] font-black px-1.5 py-0.2 rounded-md bg-amber-500/15 text-amber-700 border border-amber-500/30 shrink-0">
+                                v2
+                              </span>
+                            )}
                             {it.programa && (
                               <span className="hidden sm:inline-block text-[10px] font-bold text-indigo-600 bg-indigo-50/80 px-1.5 py-0.2 rounded border border-indigo-100/80 truncate max-w-[110px]" title={it.programa}>
                                 {it.programa}

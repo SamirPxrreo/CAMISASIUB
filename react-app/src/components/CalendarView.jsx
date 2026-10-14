@@ -376,18 +376,34 @@ export default function CalendarView({ onEditOrder, onNavigateToCuentas }) {
                             </div>
 
                           {/* Prendas */}
-                          <div className="space-y-1 bg-slate-50/70 p-2.5 rounded-2xl border border-slate-100 text-xs">
+                          <div className="space-y-1.5 bg-slate-50/70 p-2.5 rounded-2xl border border-slate-100 text-xs">
                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">
                               Prendas ({items.length || v.cantidad || 1}):
                             </span>
                             {items.slice(0, 3).map((it, idx) => (
-                              <div key={idx} className="font-bold text-slate-800 text-[11.5px] truncate">
-                                • {it.modelo === 'Nuevo' ? 'V2' : 'V1'} {it.color} Talla {it.talla} ({it.genero === 'Mujer' ? 'M' : 'H'})
-                                {it.programa && <span className="text-indigo-600 font-normal"> · {it.programa}</span>}
+                              <div key={idx} className="flex items-center justify-between text-xs py-0.5">
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                  <span className="w-4 h-4 rounded-md bg-white border border-slate-200 text-slate-600 font-black text-[9px] flex items-center justify-center shrink-0">
+                                    #{idx + 1}
+                                  </span>
+                                  <span className="font-bold text-slate-800 text-[11.5px] truncate">
+                                    {it.color || 'Negro'} · Talla {it.talla || 'U'} para {it.genero === 'Mujer' ? 'Mujer' : 'Hombre'}
+                                  </span>
+                                  {it.modelo === 'Nuevo' && (
+                                    <span className="text-[10px] font-black px-1.5 py-0.2 rounded-md bg-amber-500/15 text-amber-700 border border-amber-500/30 shrink-0">
+                                      v2
+                                    </span>
+                                  )}
+                                </div>
+                                {it.programa && (
+                                  <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.2 rounded border border-indigo-100 truncate max-w-[110px]" title={it.programa}>
+                                    {it.programa}
+                                  </span>
+                                )}
                               </div>
                             ))}
                             {items.length > 3 && (
-                              <span className="text-[10px] text-slate-400 font-semibold">
+                              <span className="text-[10px] text-slate-400 font-semibold block pt-0.5">
                                 + {items.length - 3} prenda(s) más
                               </span>
                             )}

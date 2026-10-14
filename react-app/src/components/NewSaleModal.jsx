@@ -565,7 +565,7 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
                     2. Camisas Tipo Polo ({totalCamisas} prenda{totalCamisas !== 1 ? 's' : ''})
                   </span>
                   <span className="text-[11px] text-slate-400">
-                    Manejamos tipo Polo en Versión 1 ($30.000 costo) y Versión 2 ($31.000 costo).
+                    Manejamos tipo Polo Clásica ($30.000 costo) y Versión 2 ($31.000 costo).
                   </span>
                 </div>
                 <button
@@ -649,7 +649,7 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
                           value={f.modelo}
                           onChange={(val) => updateFila(idx, 'modelo', val)}
                           options={[
-                            { value: 'Viejo', label: 'Versión 1' },
+                            { value: 'Viejo', label: 'Estándar' },
                             { value: 'Nuevo', label: 'Versión 2', badge: 'v2' }
                           ]}
                           size="sm"

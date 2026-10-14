@@ -318,6 +318,14 @@ export function DataProvider({ children }) {
     }
 
     if (items[itemIdx]) {
+      if (nuevoEstado === 'Liquidado') {
+        const check = validarPasoALiquidado(venta, liquidaciones);
+        if (!check.ok) {
+          alert(`⚠️ No se puede marcar la prenda como Liquidado:\n\n• ${check.faltas.join('\n• ')}`);
+          return false;
+        }
+      }
+
       const estadoAnterior = items[itemIdx].estado || venta.estado || 'Pedido';
       items[itemIdx].estado = nuevoEstado;
 
@@ -422,19 +430,56 @@ export function DataProvider({ children }) {
     const venta = ventas.find(v => String(v.id) === String(ventaId));
     if (!venta) return false;
 
+    // 1. Debe estar 100% cobrado al cliente, 100% pagado a Yesenia y 100% liquidado con el socio
+    const check = validarPasoALiquidado(venta, liquidaciones);
+    if (!check.ok) {
+      alert(`⚠️ No se puede finalizar este pedido ni enviarlo al historial:\n\n• ${check.faltas.join('\n• ')}`);
+      return false;
+    }
+
+    // 2. Todas las prendas deben estar en estado Liquidado
     if (!estadosTodosLiquidado(venta)) {
-      alert(`⚠️ Para finalizar el pedido de ${venta.cliente_nombre || 'este cliente'}, todas sus prendas deben estar en estado "Liquidado" (100% pagado a Yesenia y liquidado entre socios).`);
+      alert(`⚠️ Para finalizar el pedido de ${venta.cliente_nombre || 'este cliente'}, todas sus prendas deben estar en estado "Liquidado".`);
       return false;
     }
 
     const conf = window.confirm(
       `¿Finalizar el pedido de ${venta.cliente_nombre || 'este cliente'}?\n\n` +
-      `Pasará al Historial de pedidos y dejará de aparecer en la lista de pedidos activos.`
+      `Pasará al Historial de pedidos como finalizado.`
     );
     if (!conf) return false;
 
     try {
-      await updateVenta(venta.id, { finalizado: true });
+      const nowIso = new Date().toISOString();
+      let items = itemsCrudosVenta(venta) || [];
+      let prevHistorial = [];
+      try {
+        if (venta.items_camisa) {
+          const p = typeof venta.items_camisa === 'string' ? JSON.parse(venta.items_camisa) : venta.items_camisa;
+          if (p && Array.isArray(p.historial)) prevHistorial = p.historial;
+        }
+      } catch {}
+
+      const eventoFinalizado = {
+        fecha: nowIso,
+        tipo: 'finalizado',
+        titulo: 'Pedido finalizado y archivado',
+        detalle: 'Pedido completado, 100% pagado al taller, 100% liquidado entre socios y archivado en historial',
+        usuario: role?.vendedor || role?.nombre || 'Usuario'
+      };
+      const updatedHistorial = [eventoFinalizado, ...prevHistorial];
+
+      try {
+        localStorage.setItem(`historial_venta_${ventaId}`, JSON.stringify(updatedHistorial));
+      } catch {}
+
+      const jsonStr = items.length ? JSON.stringify({ items, historial: updatedHistorial }) : undefined;
+
+      await updateVenta(venta.id, {
+        finalizado: true,
+        updated_at: nowIso,
+        ...(jsonStr ? { items_camisa: jsonStr } : {})
+      });
       triggerConfetti();
       return true;
     } catch (err) {

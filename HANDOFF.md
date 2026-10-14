@@ -299,3 +299,29 @@ La aplicación está completamente adaptada para usarse como una app instalada e
   - Historial de pedidos finalizados (`HistoryView`).
   - Gestión de compras y pagos al taller (`PurchasesView`).
 
+---
+
+## 12. Estandarización de Prendas, Orden del Historial y Bloqueo de Liquidación
+
+### 1. Formato Universal de Prendas (Sin menciones a V1):
+- **Cero referencias a V1**: Bajo ninguna circunstancia se muestra el texto `V1` o `Versión 1`. En prendas clásicas o estándar, no se agrega ninguna etiqueta de versión para mantener la interfaz limpia.
+- **Distinción Exclusiva de V2**: Únicamente cuando la prenda es de nueva versión (`modelo === 'Nuevo'`), se muestra la insignia `v2` en tono ámbar suave (`bg-amber-500/15 text-amber-700`).
+- **Descripción Completa y Limpia**: Estandarizada en todas las tarjetas (`OrdersView`, `CalendarView`, `HistoryView`), modales (`OrderDetailModal`, `NewSaleModal`), recibos PDF y resúmenes de WhatsApp bajo la estructura:
+  `[Color] · Talla [Talla] para [Mujer/Hombre]` (ejemplo: `Negro · Talla XL para Mujer`).
+- **Numeración de Prendas**: Cada prenda en un pedido múltiple se identifica claramente con su índice (`#1`, `#2`, `#3`) y su programa/bordado destacado en badge índigo.
+
+### 2. Historial de Pedidos Ordenado por Finalización Reciente (`HistoryView.jsx`):
+- Los pedidos archivados en el historial se ordenan automáticamente mediante la función `fechaFinalizacionPedido(v)`.
+- El pedido que se acaba de finalizar se ubica inmediatamente en la **primera posición (arriba del todo)** del historial.
+- El timestamp de finalización se toma del evento `{ tipo: 'finalizado' }` registrado en el historial de auditoría de `items_camisa`, con fallback seguro a `updated_at` o `fecha`.
+
+### 3. Bloqueo Inviolable de Liquidación y Finalización (`finalizarPedido` y `updateItemEstado`):
+- Ningún pedido puede pasar a finalizado (ni trasladarse al historial) a menos que cumpla con los 4 pilares:
+  1. **100% cobrado al cliente** (`saldoCliente <= 1`).
+  2. **100% pagado/abonado a Yesenia** (`abonosProveedorPorVentaId.pendiente <= 1`).
+  3. **100% liquidado con el otro socio** (`saldoSocioPendientePedido <= 1`).
+  4. **Todas sus camisas en estado Liquidado** (`estadosTodosLiquidado(v)`).
+- Si alguna condición no se cumple, el sistema bloquea la acción y le indica al usuario exactamente cuánto falta pagar a Yesenia, cuánto cobrar al cliente o cuánto liquidar al socio.
+- Al confirmarse, se sella el evento `finalizado` en Supabase con fecha, hora y autor, asegurando trazabilidad contable total.
+
+

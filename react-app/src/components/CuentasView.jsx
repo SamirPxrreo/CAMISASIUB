@@ -178,8 +178,10 @@ export default function CuentasView({ targetOrder, onClearTargetOrder, onEditOrd
       const v = x.venta;
       const p = precioDeItem(it, v);
       const ab = Number(it.abono) || 0;
-      const modeloTxt = it.modelo === 'Nuevo' ? 'Versión 2' : 'Versión 1';
-      const desc = `${modeloTxt} Polo · ${it.color || 'Color'} · Talla ${it.talla || 'U'} (${it.genero === 'Mujer' ? 'M' : 'H'})`;
+      const modeloBadge = it.modelo === 'Nuevo'
+        ? `<span style="display:inline-block;margin-left:6px;padding:2px 6px;border-radius:4px;background:#fef3c7;color:#92400e;font-size:10px;font-weight:800;">v2</span>`
+        : '';
+      const desc = `${it.color || 'Negro'} · Talla ${it.talla || 'U'} para ${it.genero === 'Mujer' ? 'Mujer' : 'Hombre'}`;
       const prog = it.programa ? `<div style="font-size:10px;color:#4f46e5;font-weight:700;margin-top:2px;">Bordado: ${it.programa}</div>` : '';
       const rest = Math.max(p - ab, 0);
       const restBadge = rest === 0
@@ -190,7 +192,7 @@ export default function CuentasView({ targetOrder, onClearTargetOrder, onEditOrd
         <tr>
           <td style="text-align:center;padding:9px;border-bottom:1px solid #f1f5f9;font-weight:700;">${i + 1}</td>
           <td style="padding:9px;border-bottom:1px solid #f1f5f9;">
-            <div style="font-weight:800;color:#0f172a;">${desc}</div>
+            <div style="font-weight:800;color:#0f172a;">${desc} ${modeloBadge}</div>
             ${prog}
             <div style="font-size:10px;color:#64748b;margin-top:2px;">Pedido: ${v.fecha || ''} · ${v.estado || 'Pedido'}</div>
           </td>
