@@ -33,7 +33,7 @@ import {
 } from '../lib/utils';
 
 export default function OrderDetailModal({ isOpen, onClose, order, onEditOrder }) {
-  const { updateItemEstado, colores } = useData();
+  const { updateItemEstado, updateOrderEstadoCompleto, colores } = useData();
   const [copiado, setCopiado] = useState(false);
   const [exportando, setExportando] = useState(false);
 
@@ -101,9 +101,11 @@ export default function OrderDetailModal({ isOpen, onClose, order, onEditOrder }
                   <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight break-words">
                     {order.cliente_nombre || 'Sin nombre'}
                   </h2>
-                  <span className={`text-[11px] font-extrabold px-2.5 py-0.5 rounded-full border shadow-2xs ${getEstadoBadgeStyle(order.estado)}`}>
-                    {order.estado || 'Pedido'}
-                  </span>
+                  <StatusDropdown
+                    value={normalizarEstado(order.estado)}
+                    onChange={(nuevoEstado) => updateOrderEstadoCompleto && updateOrderEstadoCompleto(order.id, nuevoEstado)}
+                    size="sm"
+                  />
                 </div>
                 <div className="flex items-center gap-2 text-xs text-slate-500 font-medium mt-0.5 flex-wrap">
                   <span className="font-bold text-indigo-600 flex items-center gap-1">

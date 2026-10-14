@@ -47,7 +47,10 @@ export default function StatusDropdown({ value, onChange, disabled = false, size
         disabled={disabled}
         whileHover={{ scale: disabled ? 1 : 1.03 }}
         whileTap={{ scale: disabled ? 1 : 0.96 }}
-        onClick={() => !disabled && setIsOpen(!isOpen)}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (!disabled) setIsOpen(!isOpen);
+        }}
         className={`inline-flex items-center gap-1.5 rounded-full border font-extrabold transition-all cursor-pointer select-none shadow-2xs ${
           getEstadoBadgeStyle(estadoActual)
         } ${
@@ -76,7 +79,8 @@ export default function StatusDropdown({ value, onChange, disabled = false, size
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: 4 }}
             transition={{ type: "spring", stiffness: 450, damping: 28 }}
-            className="absolute right-0 mt-1.5 w-48 rounded-2xl bg-white shadow-xl border border-slate-200/90 py-1.5 z-40 overflow-hidden"
+            className="absolute right-0 mt-1.5 w-48 rounded-2xl bg-white shadow-xl border border-slate-200/90 py-1.5 z-50 overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="px-3 py-1 text-[10px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-100 mb-1">
               Seleccionar Estado
@@ -93,7 +97,10 @@ export default function StatusDropdown({ value, onChange, disabled = false, size
                     type="button"
                     whileHover={{ x: 2 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={() => handleSelect(est)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSelect(est);
+                    }}
                     className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
                       isSelected
                         ? `${getEstadoBadgeStyle(est)} font-extrabold`

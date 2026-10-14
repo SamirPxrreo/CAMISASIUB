@@ -14,7 +14,8 @@ import {
   itemsCrudosVenta,
   fmt,
   COLORES_DEFECTO_OBJETOS,
-  LUGARES_ENTREGA
+  LUGARES_ENTREGA,
+  ORDEN_ESTADOS
 } from '../lib/utils';
 
 const DataContext = createContext(null);
@@ -232,6 +233,9 @@ export function DataProvider({ children }) {
         payload.cliente_telefono = cambios.telefono;
       }
 
+      // Actualización optimista instantánea en memoria local
+      setVentas(prev => prev.map(v => (String(v.id) === String(id) ? { ...v, ...cambios } : v)));
+
       let res = await supabase
         .from('ventas')
         .update(payload)
@@ -242,7 +246,11 @@ export function DataProvider({ children }) {
         delete payload.comprado_at;
         res = await supabase.from('ventas').update(payload).eq('id', id);
       }
-      if (res.error) throw res.error;
+      if (res.error) {
+        console.error("[Supabase updateVenta error]", res.error);
+        await fetchData();
+        throw res.error;
+      }
 
       await fetchData();
       avisarCambioRealtime('venta', `modificó un pedido.`);
@@ -272,21 +280,67 @@ export function DataProvider({ children }) {
 
   // Cambiar estado de una camisa individual
   const updateItemEstado = async (ventaId, itemIdx, nuevoEstado) => {
-    const venta = ventas.find(v => v.id === ventaId);
+    const venta = ventas.find(v => String(v.id) === String(ventaId));
     if (!venta) return;
-    const items = itemsCrudosVenta(venta) || [];
+
+    let items = itemsCrudosVenta(venta);
+    if (!items || !items.length) {
+      const cant = Math.max(1, Number(venta.cantidad) || 1);
+      items = Array.from({ length: cant }, () => ({
+        modelo: venta.modelo || 'Viejo',
+        genero: venta.genero || 'Hombre',
+        color: venta.color || 'Negro',
+        talla: venta.talla || 'M',
+        programa: venta.cliente_programa || '',
+        precio: Number(venta.precio_unitario) || 50000,
+        costo: Number(venta.costo_unitario) || 30000,
+        abono: Math.round((Number(venta.abono) || 0) / cant),
+        estado: venta.estado || 'Pedido'
+      }));
+    } else {
+      items = items.map(it => ({ ...it }));
+    }
+
     if (items[itemIdx]) {
       items[itemIdx].estado = nuevoEstado;
       const jsonStr = JSON.stringify(items);
-      const todosIguales = items.every(it => normalizarEstado(it.estado) === normalizarEstado(nuevoEstado));
+
+      // El estado general de la venta es el estado más retrasado entre todas las camisas
+      const estadosOrdenados = items
+        .map(it => normalizarEstado(it.estado || 'Pedido'))
+        .sort((a, b) => ORDEN_ESTADOS.indexOf(a) - ORDEN_ESTADOS.indexOf(b));
+      const estadoGeneral = estadosOrdenados[0] || 'Pedido';
+
       const cambios = {
         items_camisa: jsonStr,
-        estado: todosIguales ? nuevoEstado : 'Mixto'
+        estado: estadoGeneral
       };
+
       await updateVenta(ventaId, cambios);
       if (nuevoEstado === 'Listo para entrega' || nuevoEstado === 'Liquidado') {
         triggerConfetti();
       }
+    }
+  };
+
+  // Cambiar estado de todo el pedido completo
+  const updateOrderEstadoCompleto = async (ventaId, nuevoEstado) => {
+    const venta = ventas.find(v => String(v.id) === String(ventaId));
+    if (!venta) return;
+
+    let items = itemsCrudosVenta(venta);
+    if (items && items.length) {
+      items = items.map(it => ({ ...it, estado: nuevoEstado }));
+    }
+
+    const cambios = {
+      estado: nuevoEstado,
+      ...(items ? { items_camisa: JSON.stringify(items) } : {})
+    };
+
+    await updateVenta(ventaId, cambios);
+    if (nuevoEstado === 'Listo para entrega' || nuevoEstado === 'Liquidado') {
+      triggerConfetti();
     }
   };
 
@@ -570,6 +624,7 @@ export function DataProvider({ children }) {
       updateVenta,
       deleteVenta,
       updateItemEstado,
+      updateOrderEstadoCompleto,
       alertasListosSinEntrega: alertasListosSinEntrega(),
       clientesConDeudaAlta: clientesConDeudaAlta(),
       porComprar,

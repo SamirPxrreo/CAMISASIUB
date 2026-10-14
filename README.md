@@ -58,10 +58,10 @@ La aplicación fue completamente modernizada a una arquitectura basada en compon
 react-app/
 ├── src/
 │   ├── components/
-│   │   ├── OrdersView.jsx          # Pedidos en tarjetas con chips pastel y botón a detalle
-│   │   ├── OrderDetailModal.jsx    # Modal de inspección detallada de prendas y exportación Excel
+│   │   ├── OrdersView.jsx          # Pedidos en tarjetas con chips de estado, filtros por fecha de entrega y selector de estado interactivo
+│   │   ├── OrderDetailModal.jsx    # Modal de inspección detallada de prendas con selector de estado individual y exportación Excel
 │   │   ├── CustomSelect.jsx        # Selector flotante animado con búsqueda y muestras de color
-│   │   ├── StatusDropdown.jsx      # Selector flotante animado de estado semántico
+│   │   ├── StatusDropdown.jsx      # Selector flotante animado de estado semántico con actualización individual o de pedido completo
 │   │   ├── CalendarView.jsx        # Calendario de entregas y copiado de mensajes
 │   │   ├── CuentasView.jsx         # Cuentas de clientes y generador de recibos PDF
 │   │   ├── PurchasesView.jsx       # Abonos Yesenia y compras al proveedor

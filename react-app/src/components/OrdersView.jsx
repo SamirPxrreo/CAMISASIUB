@@ -47,23 +47,34 @@ import OrderDetailModal from './OrderDetailModal';
 import { useAuth } from '../context/AuthContext';
 
 export default function OrdersView({ onOpenNewSale, onEditOrder }) {
-  const { ventas, updateItemEstado, deleteVenta } = useData();
+  const { ventas, updateItemEstado, updateOrderEstadoCompleto, deleteVenta } = useData();
   const { role } = useAuth();
   const esAdmin = role?.role === 'admin';
   const miNombreVendedor = role?.vendedor || role?.nombre;
 
   const [busqueda, setBusqueda] = useState('');
   const [estadoFiltro, setEstadoFiltro] = useState('Todos');
+  const [fechaFiltro, setFechaFiltro] = useState('todas');
   const [vendedorFiltro, setVendedorFiltro] = useState('Todos');
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedId, setExpandedId] = useState(null);
   const [copiadoPedidoId, setCopiadoPedidoId] = useState(null);
   const [selectedOrderDetail, setSelectedOrderDetail] = useState(null);
 
+  // Helper para calcular días hasta la entrega respecto a la fecha actual en Colombia
+  const diasParaEntrega = (fechaEntregaStr) => {
+    if (!fechaEntregaStr || !String(fechaEntregaStr).trim()) return null;
+    const hoyStr = hoyColombia();
+    const dHoy = new Date(hoyStr + 'T00:00:00');
+    const dEntrega = new Date(String(fechaEntregaStr).slice(0, 10) + 'T00:00:00');
+    if (isNaN(dEntrega.getTime())) return null;
+    return Math.round((dEntrega - dHoy) / 86400000);
+  };
+
   // Mantener actualizado el pedido abierto en el modal
   const activeOrderForModal = useMemo(() => {
     if (!selectedOrderDetail) return null;
-    return ventas.find(v => v.id === selectedOrderDetail.id) || selectedOrderDetail;
+    return ventas.find(v => String(v.id) === String(selectedOrderDetail.id)) || selectedOrderDetail;
   }, [ventas, selectedOrderDetail]);
 
   const handleCopiarPedido = (v) => {
@@ -95,6 +106,74 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
   }, [ventas]);
 
   const filtros = ['Todos', ...ORDEN_ESTADOS];
+
+  // Configuración de filtros por fecha de entrega
+  const FILTROS_FECHA = [
+    {
+      id: 'todas',
+      label: 'Cualquier fecha',
+      activeClass: 'bg-slate-900 text-white border-slate-900 shadow-xs',
+      pillClass: 'bg-slate-700 text-slate-100'
+    },
+    {
+      id: 'pronto',
+      label: '⚡ Pronto a entregar',
+      activeClass: 'bg-amber-500 text-white border-amber-600 shadow-xs font-black',
+      pillClass: 'bg-amber-700 text-amber-100'
+    },
+    {
+      id: 'hoy',
+      label: '📍 Entregas Hoy',
+      activeClass: 'bg-emerald-600 text-white border-emerald-700 shadow-xs',
+      pillClass: 'bg-emerald-800 text-emerald-100'
+    },
+    {
+      id: 'semana',
+      label: '📅 Esta semana',
+      activeClass: 'bg-sky-600 text-white border-sky-700 shadow-xs',
+      pillClass: 'bg-sky-800 text-sky-100'
+    },
+    {
+      id: 'atrasados',
+      label: '⚠️ Atrasados',
+      activeClass: 'bg-rose-600 text-white border-rose-700 shadow-xs',
+      pillClass: 'bg-rose-800 text-rose-100'
+    },
+    {
+      id: 'sin_fecha',
+      label: '❓ Sin fecha agendada',
+      activeClass: 'bg-purple-600 text-white border-purple-700 shadow-xs',
+      pillClass: 'bg-purple-800 text-purple-100'
+    }
+  ];
+
+  // Conteo dinámico de pedidos por fecha de entrega
+  const conteoPorFecha = useMemo(() => {
+    const counts = {
+      todas: 0,
+      pronto: 0,
+      hoy: 0,
+      semana: 0,
+      atrasados: 0,
+      sin_fecha: 0
+    };
+    ventas.forEach(v => {
+      if (v.finalizado) return;
+      counts.todas += 1;
+      const esEntregado = normalizarEstado(v.estado) === 'Entregado' || normalizarEstado(v.estado) === 'Liquidado';
+      const diff = diasParaEntrega(v.fecha_entrega);
+
+      if (!v.fecha_entrega || !String(v.fecha_entrega).trim()) {
+        counts.sin_fecha += 1;
+      } else {
+        if (diff === 0) counts.hoy += 1;
+        if (diff !== null && diff >= 0 && diff <= 7) counts.semana += 1;
+        if (!esEntregado && diff !== null && diff < 0) counts.atrasados += 1;
+        if (!esEntregado && diff !== null && diff <= 3) counts.pronto += 1;
+      }
+    });
+    return counts;
+  }, [ventas]);
 
   const ventasFiltradas = useMemo(() => {
     return ventas.filter((v) => {
@@ -136,9 +215,27 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
         }
       }
 
+      // Filtro de fecha de entrega
+      if (fechaFiltro !== 'todas') {
+        const esEntregado = normalizarEstado(v.estado) === 'Entregado' || normalizarEstado(v.estado) === 'Liquidado';
+        const diff = diasParaEntrega(v.fecha_entrega);
+
+        if (fechaFiltro === 'pronto') {
+          if (!v.fecha_entrega || esEntregado || diff === null || diff > 3) return false;
+        } else if (fechaFiltro === 'hoy') {
+          if (!v.fecha_entrega || diff !== 0) return false;
+        } else if (fechaFiltro === 'semana') {
+          if (!v.fecha_entrega || diff === null || diff < 0 || diff > 7) return false;
+        } else if (fechaFiltro === 'atrasados') {
+          if (!v.fecha_entrega || esEntregado || diff === null || diff >= 0) return false;
+        } else if (fechaFiltro === 'sin_fecha') {
+          if (v.fecha_entrega && String(v.fecha_entrega).trim()) return false;
+        }
+      }
+
       return true;
     });
-  }, [ventas, busqueda, estadoFiltro, vendedorFiltro]);
+  }, [ventas, busqueda, estadoFiltro, fechaFiltro, vendedorFiltro]);
 
   const pageSize = 12;
   const totalPages = Math.ceil(ventasFiltradas.length / pageSize) || 1;
@@ -251,37 +348,73 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
         </div>
       </div>
 
-      {/* 2. CHIPS DE FILTRO DE ESTADO EN TONOS PASTEL CON CONTEOS */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-        {filtros.map((filtro) => {
-          const isActive = estadoFiltro === filtro;
-          const count = conteoPorEstado[filtro] || 0;
-          const chipStyle = ESTADOS_PASTEL_CHIP[filtro] || {
-            active: 'bg-indigo-100 text-indigo-950 border-indigo-300 shadow-xs',
-            pill: 'bg-indigo-300 text-indigo-950'
-          };
+      {/* 2. CHIPS DE FILTRO DE ESTADO Y FECHA DE ENTREGA */}
+      <div className="space-y-2">
+        {/* Filtro por Estado */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          {filtros.map((filtro) => {
+            const isActive = estadoFiltro === filtro;
+            const count = conteoPorEstado[filtro] || 0;
+            const chipStyle = ESTADOS_PASTEL_CHIP[filtro] || {
+              active: 'bg-indigo-100 text-indigo-950 border-indigo-300 shadow-xs',
+              pill: 'bg-indigo-300 text-indigo-950'
+            };
 
-          return (
-            <motion.button
-              key={filtro}
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.96 }}
-              onClick={() => setEstadoFiltro(filtro)}
-              className={`relative px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
-                isActive
-                  ? `${chipStyle.active} border`
-                  : 'text-slate-600 bg-white border border-slate-200/80 hover:bg-slate-50'
-              }`}
-            >
-              <span>{filtro}</span>
-              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
-                isActive ? chipStyle.pill : 'bg-slate-100 text-slate-500'
-              }`}>
-                {count}
-              </span>
-            </motion.button>
-          );
-        })}
+            return (
+              <motion.button
+                key={filtro}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.96 }}
+                onClick={() => setEstadoFiltro(filtro)}
+                className={`relative px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
+                  isActive
+                    ? `${chipStyle.active} border`
+                    : 'text-slate-600 bg-white border border-slate-200/80 hover:bg-slate-50'
+                }`}
+              >
+                <span>{filtro}</span>
+                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
+                  isActive ? chipStyle.pill : 'bg-slate-100 text-slate-500'
+                }`}>
+                  {count}
+                </span>
+              </motion.button>
+            );
+          })}
+        </div>
+
+        {/* Filtro por Fecha de Entrega (Pronto a entregar, Hoy, Semana, etc.) */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none pt-0.5">
+          <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 shrink-0 flex items-center gap-1 mr-1">
+            <Calendar className="w-3.5 h-3.5 text-indigo-500" />
+            Entrega:
+          </span>
+          {FILTROS_FECHA.map((f) => {
+            const isActive = fechaFiltro === f.id;
+            const count = conteoPorFecha[f.id] || 0;
+
+            return (
+              <motion.button
+                key={f.id}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.96 }}
+                onClick={() => setFechaFiltro(f.id)}
+                className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+                  isActive
+                    ? `${f.activeClass} border`
+                    : 'text-slate-600 bg-white border border-slate-200/80 hover:bg-slate-50'
+                }`}
+              >
+                <span>{f.label}</span>
+                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
+                  isActive ? f.pillClass : 'bg-slate-100 text-slate-500'
+                }`}>
+                  {count}
+                </span>
+              </motion.button>
+            );
+          })}
+        </div>
       </div>
 
       {/* 3. LISTADO DE TARJETAS EN CUADROS CON ORDEN LOGICO */}
@@ -332,10 +465,14 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
                       </div>
                     </div>
 
-                    {/* Insignia de estado general */}
-                    <span className={`text-[11px] font-extrabold px-2.5 py-1 rounded-full border shadow-2xs shrink-0 ${getEstadoBadgeStyle(v.estado)}`}>
-                      {v.estado || 'Pedido'}
-                    </span>
+                    {/* Selector de estado general interactivo */}
+                    <div className="shrink-0">
+                      <StatusDropdown
+                        value={normalizarEstado(v.estado)}
+                        onChange={(nuevoEstado) => updateOrderEstadoCompleto(v.id, nuevoEstado)}
+                        size="sm"
+                      />
+                    </div>
                   </div>
 
                   {/* SECCIÓN 2: PRENDAS / CAMISAS POLO DEL PEDIDO */}
@@ -413,11 +550,48 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
 
                   {/* SECCIÓN 3: LOGÍSTICA DE ENTREGA Y NOTAS */}
                   <div className="space-y-1 text-xs text-slate-600 bg-slate-50/60 p-2.5 rounded-2xl border border-slate-100">
-                    <div className="flex items-center gap-1.5 text-[11px]">
-                      <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                      <span className="font-medium">
-                        {v.fecha_entrega ? `Entrega: ${formatearFechaHumana(v.fecha_entrega)}` : 'Fecha de entrega por definir'}
-                      </span>
+                    <div className="flex items-center justify-between gap-1.5 text-[11px]">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <span className="font-medium truncate">
+                          {v.fecha_entrega ? `Entrega: ${formatearFechaHumana(v.fecha_entrega)}` : 'Fecha por definir'}
+                        </span>
+                      </div>
+                      {(() => {
+                        const esEntregado = normalizarEstado(v.estado) === 'Entregado' || normalizarEstado(v.estado) === 'Liquidado';
+                        if (esEntregado || !v.fecha_entrega) return null;
+                        const diff = diasParaEntrega(v.fecha_entrega);
+                        if (diff === null) return null;
+                        if (diff < 0) {
+                          return (
+                            <span className="px-2 py-0.5 rounded-md bg-rose-100 text-rose-700 font-black text-[10px] shrink-0 border border-rose-200">
+                              ⚠️ Atrasado {Math.abs(diff)}d
+                            </span>
+                          );
+                        }
+                        if (diff === 0) {
+                          return (
+                            <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-700 font-black text-[10px] shrink-0 border border-emerald-200 animate-pulse">
+                              ⚡ ¡Hoy!
+                            </span>
+                          );
+                        }
+                        if (diff === 1) {
+                          return (
+                            <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-700 font-black text-[10px] shrink-0 border border-amber-200">
+                              ⚡ Mañana
+                            </span>
+                          );
+                        }
+                        if (diff <= 3) {
+                          return (
+                            <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-700 font-black text-[10px] shrink-0 border border-amber-200">
+                              ⚡ En {diff}d
+                            </span>
+                          );
+                        }
+                        return null;
+                      })()}
                     </div>
 
                     {v.lugar_entrega && (

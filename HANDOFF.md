@@ -196,3 +196,26 @@ La aplicación está completamente adaptada para usarse como una app instalada e
 - **Barra de Navegación Docked (`BottomNav.jsx`)**: Anclaje inferior limpio a 64px (`h-16`) con `env(safe-area-inset-bottom, 0px)` y adaptación automática a todos los temas (modo oscuro `#131b2e` y temas claros).
 - **Prendas sin Truncamiento (`break-words`)**: Descripciones completas en tarjetas y modales que fluyen naturalmente a múltiples líneas en pantallas pequeñas o zoom alto.
 
+---
+
+## 9. Sistema de Estados de Pedidos y Filtros por Fecha de Entrega
+
+### Actualización de Estados Multicamisa:
+- **Respeto a Restricciones de Supabase**: La base de datos tiene una restricción `ventas_estado_check` que restringe `estado` a `['Pedido', 'Comprado', 'Bordando', 'Listo para entrega', 'Entregado', 'Liquidado']`.
+- **Cálculo de Estado General**: Cuando un pedido contiene camisas con diferentes estados, el estado general de la venta se calcula dinámicamente según el estado más retrasado entre sus prendas (en lugar de valores no permitidos como 'Mixto'), garantizando que Supabase acepte la actualización sin errores.
+- **Selectores de Estado Interactivos**:
+  - Tanto la tarjeta principal del pedido como el modal de detalle (`OrderDetailModal`) cuentan con `StatusDropdown` interactivo con `e.stopPropagation()` y `z-50`.
+  - Al cambiar el estado en la cabecera del pedido, se actualizan todas las prendas del pedido simultáneamente (`updateOrderEstadoCompleto`).
+  - Al cambiar el estado de una prenda individual, se actualiza solo esa prenda y se recalcula el estado general del pedido (`updateItemEstado`).
+- **Actualización Optimista**: La interfaz refleja el cambio de estado de inmediato en memoria local sin esperar la respuesta de la red, brindando respuesta instantánea al usuario.
+
+### Filtros por Fecha de Entrega ("Pronto a entregar"):
+- **Sección dedicada en el Tablero de Pedidos**: Justo debajo de los filtros de estado se encuentra una barra independiente con chips para filtrar por fecha de entrega:
+  - `Cualquier fecha`: Muestra todos los pedidos activos.
+  - `⚡ Pronto a entregar`: Pedidos pendientes de entrega cuya fecha límite está a 3 días o menos (incluyendo pedidos atrasados).
+  - `📍 Entregas Hoy`: Pedidos cuya fecha de entrega coincide exactamente con la fecha actual de Colombia (`America/Bogota`).
+  - `📅 Esta semana`: Pedidos a entregar dentro de los próximos 7 días.
+  - `⚠️ Atrasados`: Pedidos aún no entregados cuya fecha agendada ya pasó.
+  - `❓ Sin fecha agendada`: Pedidos que aún no tienen fecha de entrega asignada.
+- **Insignias de Urgencia en Tarjetas**: Cada tarjeta de pedido muestra un distintivo en tiempo real al lado de su fecha de entrega (`⚡ ¡Hoy!`, `⚡ Mañana`, `⚡ En X días` o `⚠️ Atrasado X días`).
+
