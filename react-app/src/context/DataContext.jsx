@@ -84,6 +84,7 @@ export function DataProvider({ children }) {
       if (vErr) {
         console.error("[Supabase] Error cargando ventas:", vErr);
         setError(vErr.message);
+      } else {
         // Filtrar borrados lógicos y ordenar con los más recientes primero
         const filtradas = (vData || [])
           .filter(v => !v.eliminado_at)
