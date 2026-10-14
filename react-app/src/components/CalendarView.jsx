@@ -2,22 +2,18 @@ import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Calendar as CalendarIcon,
-  Clock,
-  MapPin,
-  Phone,
-  MessageCircle,
-  Copy,
-  Check,
   ChevronLeft,
   ChevronRight,
-  Filter,
   Search,
-  Shirt,
+  Filter,
   AlertCircle,
-  Pencil,
-  Sparkles,
   ShoppingBag,
-  CreditCard
+  Sparkles,
+  MapPin,
+  Clock,
+  Phone,
+  Shirt,
+  DollarSign
 } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import {
@@ -30,26 +26,41 @@ import {
   normalizarEstado,
   estadoGeneralVenta,
   getEstadoBadgeStyle,
-  getWhatsAppLink,
-  generarMensajeWhatsApp,
-  generarTextoResumenPedido,
   hoyColombia,
   getVendedorColor
 } from '../lib/utils';
+import OrderDetailModal from './OrderDetailModal';
+
+// Obtener el lunes de la semana correspondiente a una fecha YYYY-MM-DD
+function getLunesDeSemana(fechaIso) {
+  if (!fechaIso) return new Date();
+  const partes = fechaIso.split('-').map(Number);
+  const date = new Date(partes[0], partes[1] - 1, partes[2]);
+  const day = date.getDay(); // 0 es domingo, 1 es lunes...
+  const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+  return new Date(partes[0], partes[1] - 1, diff);
+}
+
+// Convertir fecha a string YYYY-MM-DD
+function fechaAStringIso(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
 
 export default function CalendarView({ onEditOrder, onNavigateToCuentas }) {
   const { ventas } = useData();
-  const [vista, setVista] = useState('proximos'); // 'proximos' | 'mes' | 'sin-fecha'
+
+  // Fecha de referencia para la semana (por defecto, hoy en Colombia)
+  const hoyStr = hoyColombia();
+  const [fechaSemana, setFechaSemana] = useState(hoyStr);
   const [vendedorFiltro, setVendedorFiltro] = useState('Todos');
   const [busqueda, setBusqueda] = useState('');
-  const [diaSeleccionado, setDiaSeleccionado] = useState(hoyColombia());
-  const [copiadoId, setCopiadoId] = useState(null);
-  const [copiadoPedidoId, setCopiadoPedidoId] = useState(null);
+  const [vista, setVista] = useState('calendario'); // 'calendario' | 'sin-fecha'
+  const [orderModal, setOrderModal] = useState(null);
 
-  // Fecha actual en Colombia
-  const hoyStr = hoyColombia();
-
-  // Filtrar pedidos no finalizados
+  // Filtrar pedidos activos (no finalizados)
   const pedidosActivos = useMemo(() => {
     return ventas.filter(v => !v.finalizado);
   }, [ventas]);
@@ -57,14 +68,9 @@ export default function CalendarView({ onEditOrder, onNavigateToCuentas }) {
   // Contadores para métricas rápidas
   const metricas = useMemo(() => {
     let entregasHoy = 0;
-    let entregasSemana = 0;
     let sinFecha = 0;
     let totalCamisasHoy = 0;
     let saldoHoy = 0;
-
-    const hoyDate = new Date(hoyStr + 'T00:00:00');
-    const finSemanaDate = new Date(hoyDate);
-    finSemanaDate.setDate(finSemanaDate.getDate() + 7);
 
     pedidosActivos.forEach(v => {
       const f = v.fecha_entrega;
@@ -75,43 +81,66 @@ export default function CalendarView({ onEditOrder, onNavigateToCuentas }) {
         sinFecha += 1;
         return;
       }
-
       if (f === hoyStr) {
         entregasHoy += 1;
         totalCamisasHoy += cant;
         saldoHoy += saldo;
       }
-
-      const fDate = new Date(f + 'T00:00:00');
-      if (fDate >= hoyDate && fDate <= finSemanaDate) {
-        entregasSemana += 1;
-      }
     });
 
-    return { entregasHoy, entregasSemana, sinFecha, totalCamisasHoy, saldoHoy };
+    return { entregasHoy, sinFecha, totalCamisasHoy, saldoHoy };
   }, [pedidosActivos, hoyStr]);
 
-  // Manejar copiado de mensaje recordatorio de WhatsApp
-  const handleCopiarMensaje = (v) => {
-    const texto = generarMensajeWhatsApp(v);
-    navigator.clipboard.writeText(texto);
-    setCopiadoId(v.id);
-    setTimeout(() => setCopiadoId(null), 2500);
+  // Navegación de semanas
+  const cambiarSemana = (deltaDias) => {
+    const partes = fechaSemana.split('-').map(Number);
+    const date = new Date(partes[0], partes[1] - 1, partes[2] + deltaDias);
+    setFechaSemana(fechaAStringIso(date));
+    setVista('calendario');
   };
 
-  // Manejar copiado de resumen completo del pedido
-  const handleCopiarPedido = (v) => {
-    const texto = generarTextoResumenPedido(v);
-    navigator.clipboard.writeText(texto);
-    setCopiadoPedidoId(v.id);
-    setTimeout(() => setCopiadoPedidoId(null), 2500);
+  const irAHoy = () => {
+    setFechaSemana(hoyStr);
+    setVista('calendario');
   };
 
-  // Agrupar pedidos por fecha de entrega
-  const pedidosAgrupadosPorFecha = useMemo(() => {
-    const grupos = new Map();
+  // Generar los 7 días de la semana (Lunes a Domingo)
+  const diasSemana = useMemo(() => {
+    const lunes = getLunesDeSemana(fechaSemana);
+    const nombres = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'];
+    const dias = [];
 
-    const filtrados = pedidosActivos.filter(v => {
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() + i);
+      const iso = fechaAStringIso(d);
+      dias.push({
+        iso,
+        nombreDia: nombres[i],
+        numeroDia: d.getDate(),
+        mesNombre: d.toLocaleString('es-CO', { month: 'long' }),
+        anio: d.getFullYear(),
+        esHoy: iso === hoyStr
+      });
+    }
+    return dias;
+  }, [fechaSemana, hoyStr]);
+
+  // Título del mes y año (ej. "Octubre De 2026")
+  const tituloMesAno = useMemo(() => {
+    if (!diasSemana.length) return '';
+    const d0 = diasSemana[0];
+    const d6 = diasSemana[6];
+    const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '');
+
+    if (d0.mesNombre === d6.mesNombre) {
+      return `${cap(d0.mesNombre)} De ${d0.anio}`;
+    }
+    return `${cap(d0.mesNombre)} - ${cap(d6.mesNombre)} De ${d6.anio}`;
+  }, [diasSemana]);
+
+  // Filtrado de pedidos según vendedor y búsqueda
+  const pedidosFiltrados = useMemo(() => {
+    return pedidosActivos.filter(v => {
       if (vendedorFiltro !== 'Todos' && v.vendedor !== vendedorFiltro) return false;
       if (busqueda.trim()) {
         const q = busqueda.toLowerCase().trim();
@@ -120,446 +149,316 @@ export default function CalendarView({ onEditOrder, onNavigateToCuentas }) {
         const lug = (v.lugar_entrega || '').toLowerCase();
         if (!cli.includes(q) && !tel.includes(q) && !lug.includes(q)) return false;
       }
-
-      if (vista === 'sin-fecha') {
-        return !v.fecha_entrega;
-      } else if (vista === 'mes') {
-        return v.fecha_entrega === diaSeleccionado;
-      }
-      return Boolean(v.fecha_entrega);
+      return true;
     });
+  }, [pedidosActivos, vendedorFiltro, busqueda]);
 
-    filtrados.forEach(v => {
-      const f = v.fecha_entrega || 'Sin fecha asignada';
-      if (!grupos.has(f)) {
-        grupos.set(f, []);
-      }
-      grupos.get(f).push(v);
-    });
-
-    // Ordenar fechas cronológicamente
-    const fechasOrdenadas = [...grupos.keys()].sort((a, b) => {
-      if (a === 'Sin fecha asignada') return 1;
-      if (b === 'Sin fecha asignada') return -1;
-      return a.localeCompare(b);
-    });
-
-    return fechasOrdenadas.map(f => ({
-      fecha: f,
-      pedidos: grupos.get(f)
-    }));
-  }, [pedidosActivos, vendedorFiltro, busqueda, vista, diaSeleccionado]);
+  // Pedidos sin fecha asignada
+  const pedidosSinFecha = useMemo(() => {
+    return pedidosFiltrados.filter(v => !v.fecha_entrega);
+  }, [pedidosFiltrados]);
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      {/* 1. Cabecera */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+    <div className="space-y-5 max-w-7xl mx-auto">
+      {/* 1. Barra Superior con Filtros Rápidos y Buscador */}
+      <div className="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">
         <div>
           <h2 className="text-xl lg:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
             Calendario de Entregas
-            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
-              {metricas.entregasHoy} para hoy
-            </span>
+            {metricas.entregasHoy > 0 && (
+              <span className="text-xs font-black px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700 animate-pulse">
+                {metricas.entregasHoy} para hoy
+              </span>
+            )}
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            Organización diaria de entregas, recordatorios para clientes y acceso directo a WhatsApp.
+            Vista semanal de entregas. Toca cualquier pedido para ver su detalle completo y opciones.
           </p>
         </div>
 
-        {/* Selector de Vendedor y Buscador */}
+        {/* Controles de Filtro */}
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <select
             value={vendedorFiltro}
             onChange={(e) => setVendedorFiltro(e.target.value)}
-            className="px-3 py-2.5 rounded-2xl bg-white border border-slate-200/80 text-xs font-bold text-slate-700 shadow-xs outline-none cursor-pointer"
+            className="px-3 py-2 rounded-2xl bg-white border border-slate-200 text-xs font-bold text-slate-700 shadow-2xs outline-none cursor-pointer"
           >
             <option value="Todos">Todos los socios</option>
             <option value="Samir">Samir</option>
             <option value="Valentina">Valentina</option>
           </select>
 
-          <div className="relative flex-1 sm:w-60">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <div className="relative flex-1 sm:w-56">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               placeholder="Buscar cliente, lugar..."
-              className="w-full pl-9 pr-3 py-2.5 rounded-2xl bg-white border border-slate-200/80 text-xs font-medium outline-none shadow-xs"
+              className="w-full pl-8 pr-3 py-2 rounded-2xl bg-white border border-slate-200 text-xs font-medium outline-none shadow-2xs"
             />
           </div>
         </div>
       </div>
 
-      {/* 2. Tarjetas KPI del Calendario */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-        <div className="p-4 sm:p-5 rounded-3xl bg-indigo-50/70 border border-indigo-100 shadow-xs">
-          <span className="text-[10.5px] font-bold text-indigo-800 uppercase tracking-wider block">Entregas de Hoy</span>
-          <span className="text-2xl font-black text-indigo-900 mt-1 block">{metricas.entregasHoy}</span>
-          <span className="text-xs text-indigo-700/80 font-semibold mt-0.5 block">{metricas.totalCamisasHoy} camisas · Saldo: {fmt(metricas.saldoHoy)}</span>
-        </div>
+      {/* 2. Barra de Navegación del Calendario (Estilo de la imagen de referencia) */}
+      <div className="bg-white rounded-3xl border border-slate-200/90 p-4 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+        {/* Controles de Semana: < Hoy > y Mes */}
+        <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
+          <div className="flex items-center gap-1.5 bg-slate-50 p-1 rounded-2xl border border-slate-200/70">
+            <button
+              type="button"
+              onClick={() => cambiarSemana(-7)}
+              className="w-8 h-8 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 flex items-center justify-center transition-colors cursor-pointer shadow-2xs"
+              title="Semana anterior"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
 
-        <div className="p-4 sm:p-5 rounded-3xl bg-emerald-50/70 border border-emerald-100 shadow-xs">
-          <span className="text-[10.5px] font-bold text-emerald-800 uppercase tracking-wider block">Próximos 7 Días</span>
-          <span className="text-2xl font-black text-emerald-900 mt-1 block">{metricas.entregasSemana}</span>
-          <span className="text-xs text-emerald-700/80 font-semibold mt-0.5 block">Entregas programadas</span>
-        </div>
+            <button
+              type="button"
+              onClick={irAHoy}
+              className="px-3.5 h-8 rounded-xl bg-white hover:bg-slate-100 text-slate-800 font-extrabold text-xs border border-slate-200 flex items-center justify-center transition-colors cursor-pointer shadow-2xs"
+              title="Ir a la fecha de hoy"
+            >
+              Hoy
+            </button>
 
-        <div className="p-4 sm:p-5 rounded-3xl bg-amber-50/70 border border-amber-100 shadow-xs">
-          <span className="text-[10.5px] font-bold text-amber-800 uppercase tracking-wider block">Sin Fecha Definida</span>
-          <span className="text-2xl font-black text-amber-900 mt-1 block">{metricas.sinFecha}</span>
-          <span className="text-xs text-amber-700/80 font-semibold mt-0.5 block">Pendientes por agendar</span>
-        </div>
-
-        <div className="p-4 sm:p-5 rounded-3xl bg-white border border-slate-200/80 shadow-xs">
-          <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block">Total Activos</span>
-          <span className="text-2xl font-black text-slate-900 mt-1 block">{pedidosActivos.length}</span>
-          <span className="text-xs text-slate-400 font-semibold mt-0.5 block">En proceso de entrega</span>
-        </div>
-      </div>
-
-      {/* 3. Selector de Pestañas de Vista */}
-      <div className="flex items-center gap-2 border-b border-slate-200/80 pb-3">
-        <button
-          onClick={() => setVista('proximos')}
-          className={`px-4 py-2 rounded-2xl text-xs font-black transition-all cursor-pointer ${
-            vista === 'proximos'
-              ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20'
-              : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-          }`}
-        >
-          Próximas Entregas (Cronológico)
-        </button>
-
-        <button
-          onClick={() => setVista('mes')}
-          className={`px-4 py-2 rounded-2xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
-            vista === 'mes'
-              ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20'
-              : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-          }`}
-        >
-          <CalendarIcon className="w-3.5 h-3.5" />
-          <span>Por Día Específico</span>
-        </button>
-
-        <button
-          onClick={() => setVista('sin-fecha')}
-          className={`px-4 py-2 rounded-2xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
-            vista === 'sin-fecha'
-              ? 'bg-amber-600 text-white shadow-md shadow-amber-500/20'
-              : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-          }`}
-        >
-          <AlertCircle className="w-3.5 h-3.5" />
-          <span>Sin Fecha ({metricas.sinFecha})</span>
-        </button>
-      </div>
-
-      {/* Selector de Día Específico si vista === 'mes' */}
-      {vista === 'mes' && (
-        <div className="flex items-center gap-3 p-4 bg-white rounded-3xl border border-slate-200 shadow-xs">
-          <CalendarIcon className="w-5 h-5 text-indigo-600" />
-          <div className="flex-1">
-            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-              Selecciona el día a consultar:
-            </label>
-            <input
-              type="date"
-              value={diaSeleccionado}
-              onChange={(e) => setDiaSeleccionado(e.target.value)}
-              className="mt-1 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-black outline-none"
-            />
+            <button
+              type="button"
+              onClick={() => cambiarSemana(7)}
+              className="w-8 h-8 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 flex items-center justify-center transition-colors cursor-pointer shadow-2xs"
+              title="Semana siguiente"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
           </div>
-          <button
-            onClick={() => setDiaSeleccionado(hoyStr)}
-            className="px-3.5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold transition-all cursor-pointer"
-          >
-            Ir a Hoy
-          </button>
+
+          <h3 className="text-base sm:text-lg font-black text-slate-900 capitalize tracking-tight ml-1">
+            {tituloMesAno}
+          </h3>
+        </div>
+
+        {/* Leyenda y Acceso a Pedidos Sin Fecha */}
+        <div className="flex items-center gap-4 text-xs font-bold text-slate-600">
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1.5 text-xs text-slate-600">
+              <span className="w-2.5 h-2.5 rounded-full bg-indigo-600" />
+              Samir
+            </span>
+            <span className="flex items-center gap-1.5 text-xs text-slate-600">
+              <span className="w-2.5 h-2.5 rounded-full bg-fuchsia-500" />
+              Valentina
+            </span>
+          </div>
+
+          {metricas.sinFecha > 0 && (
+            <button
+              type="button"
+              onClick={() => setVista(vista === 'sin-fecha' ? 'calendario' : 'sin-fecha')}
+              className={`px-3 py-1.5 rounded-xl font-black text-xs transition-all cursor-pointer flex items-center gap-1.5 ${
+                vista === 'sin-fecha'
+                  ? 'bg-amber-500 text-white shadow-xs'
+                  : 'bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200'
+              }`}
+            >
+              <AlertCircle className="w-3.5 h-3.5" />
+              <span>Sin fecha ({metricas.sinFecha})</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* 3. VISTA PRINCIPAL: Cuadrícula Semanal de 7 Columnas */}
+      {vista === 'calendario' ? (
+        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xs overflow-hidden">
+          <div className="overflow-x-auto">
+            <div className="min-w-[840px] grid grid-cols-7 border-b border-slate-100">
+              {/* Encabezados de Columna (LUN 5, MAR 6, etc.) */}
+              {diasSemana.map((dia) => (
+                <div
+                  key={dia.iso}
+                  className={`py-3.5 px-3 text-center border-r border-slate-100 last:border-r-0 ${
+                    dia.esHoy ? 'bg-indigo-50/30' : 'bg-slate-50/40'
+                  }`}
+                >
+                  <span
+                    className={`text-[11px] font-black uppercase tracking-wider block ${
+                      dia.esHoy ? 'text-indigo-600' : 'text-slate-400'
+                    }`}
+                  >
+                    {dia.nombreDia}
+                  </span>
+                  <span
+                    className={`text-lg sm:text-xl font-black block mt-0.5 ${
+                      dia.esHoy ? 'text-indigo-600' : 'text-slate-800'
+                    }`}
+                  >
+                    {dia.numeroDia}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* Cuerpo de las 7 Columnas con las Tarjetas de Pedidos */}
+            <div className="min-w-[840px] grid grid-cols-7 min-h-[460px] divide-x divide-slate-100">
+              {diasSemana.map((dia) => {
+                const pedidosDia = pedidosFiltrados.filter(v => v.fecha_entrega === dia.iso);
+
+                return (
+                  <div
+                    key={dia.iso}
+                    className={`p-2.5 flex flex-col justify-between transition-colors ${
+                      dia.esHoy ? 'bg-indigo-50/15' : 'bg-white'
+                    }`}
+                  >
+                    {pedidosDia.length > 0 ? (
+                      <div className="space-y-2.5">
+                        {pedidosDia.map((v) => {
+                          const items = itemsCrudosVenta(v) || [];
+                          const cant = items.length || Number(v.cantidad) || 1;
+                          const saldo = saldoCliente(v);
+                          const vCol = getVendedorColor(v.vendedor);
+                          const estGral = estadoGeneralVenta(v);
+                          const horaStr = v.hora || (v.created_at ? v.created_at.slice(11, 16) : null) || '10:00';
+
+                          return (
+                            <motion.div
+                              key={v.id}
+                              whileHover={{ y: -2 }}
+                              onClick={() => setOrderModal(v)}
+                              className="bg-white rounded-2xl border border-slate-200/90 hover:border-indigo-400 p-3 shadow-2xs hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between relative"
+                            >
+                              {/* Fila Superior: Hora/ID y Badge de Vendedor */}
+                              <div>
+                                <div className="flex items-center justify-between gap-1 mb-1.5">
+                                  <span className="font-mono text-[11px] font-black text-slate-800 flex items-center gap-1">
+                                    <Clock className="w-3 h-3 text-slate-400" />
+                                    {horaStr}
+                                  </span>
+
+                                  {/* Badge Circular del Vendedor (Estilo 'IA' de la referencia) */}
+                                  <span
+                                    className={`w-5 h-5 rounded-full flex items-center justify-center font-black text-[9px] border shrink-0 ${vCol.bg} ${vCol.text} ${vCol.border}`}
+                                    title={`Vendedor: ${v.vendedor || 'Samir'}`}
+                                  >
+                                    {(v.vendedor || 'S')[0].toUpperCase()}
+                                  </span>
+                                </div>
+
+                                {/* Nombre del Cliente */}
+                                <h4
+                                  className="font-black text-slate-900 text-xs sm:text-[12.5px] leading-tight truncate group-hover:text-indigo-600 transition-colors"
+                                  title={v.cliente_nombre}
+                                >
+                                  {v.cliente_nombre}
+                                </h4>
+
+                                {/* Pill de Lugar o Conteo */}
+                                {v.lugar_entrega ? (
+                                  <span
+                                    className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 mt-1 truncate max-w-full"
+                                    title={v.lugar_entrega}
+                                  >
+                                    {v.lugar_entrega}
+                                  </span>
+                                ) : (
+                                  <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 mt-1">
+                                    {cant} prenda{cant !== 1 ? 's' : ''}
+                                  </span>
+                                )}
+
+                                {/* Detalle Breve de Prendas */}
+                                <p className="text-[10.5px] text-slate-500 truncate mt-1 leading-tight">
+                                  {items.length > 0
+                                    ? `${items[0].color || 'Negro'} Talla ${items[0].talla || 'U'}${
+                                        items.length > 1 ? ` (+${items.length - 1} más)` : ''
+                                      }`
+                                    : `${cant} camisa(s) Tipo Polo`}
+                                </p>
+                              </div>
+
+                              {/* Fila Inferior: Estado y Saldo */}
+                              <div className="pt-2 mt-2 border-t border-slate-100 flex items-center justify-between text-[10px]">
+                                <span className={`px-2 py-0.5 rounded-md font-black border text-[9.5px] shrink-0 ${getEstadoBadgeStyle(estGral)}`}>
+                                  {estGral}
+                                </span>
+
+                                <span className={`font-black ${saldo === 0 ? 'text-emerald-600' : 'text-amber-600'}`}>
+                                  {saldo === 0 ? 'Pagado ✓' : fmt(saldo)}
+                                </span>
+                              </div>
+                            </motion.div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="my-auto py-12 text-center select-none">
+                        <span className="text-xs font-bold text-slate-300">Libre</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* VISTA ALTERNATIVA: Pedidos Sin Fecha Definida */
+        <div className="bg-white rounded-3xl border border-slate-200/90 p-5 shadow-xs space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-black text-slate-900 text-sm flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-amber-500" />
+              Pedidos Pendientes por Agendar Fecha ({pedidosSinFecha.length})
+            </h3>
+            <button
+              type="button"
+              onClick={() => setVista('calendario')}
+              className="text-xs font-bold text-indigo-600 hover:underline cursor-pointer"
+            >
+              Volver a la vista semanal
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {pedidosSinFecha.map((v) => (
+              <div
+                key={v.id}
+                onClick={() => setOrderModal(v)}
+                className="p-4 rounded-2xl bg-amber-50/40 border border-amber-200/70 hover:border-amber-400 transition-all cursor-pointer shadow-2xs hover:shadow-xs flex flex-col justify-between space-y-2"
+              >
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="font-extrabold text-slate-900 text-xs">#{v.id} {v.cliente_nombre}</span>
+                    <span className="text-[10px] font-black px-2 py-0.5 rounded bg-amber-100 text-amber-800">Sin Fecha</span>
+                  </div>
+                  <span className="text-[11px] text-slate-500 block mt-1">
+                    {v.cantidad || 1} prenda(s) · {v.lugar_entrega || 'Lugar por definir'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs pt-2 border-t border-amber-200/50">
+                  <span className="text-slate-500">Toca para agendar o ver detalle</span>
+                  <span className="font-bold text-indigo-600">Ver →</span>
+                </div>
+              </div>
+            ))}
+
+            {pedidosSinFecha.length === 0 && (
+              <div className="col-span-full py-10 text-center text-slate-400 text-xs">
+                ¡Todos los pedidos tienen fecha asignada!
+              </div>
+            )}
+          </div>
         </div>
       )}
 
-      {/* 4. Lista Agrupada de Entregas por Fecha */}
-      <div className="space-y-6">
-        <AnimatePresence>
-          {pedidosAgrupadosPorFecha.map((grupo) => {
-            const esHoy = grupo.fecha === hoyStr;
-            const esSinFecha = grupo.fecha === 'Sin fecha asignada';
-
-            return (
-              <motion.div
-                key={grupo.fecha}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-3"
-              >
-                {/* Cabecera de la Fecha */}
-                <div className="flex items-center justify-between gap-3 pb-2 border-b border-slate-200/80">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs ${
-                      esHoy
-                        ? 'bg-indigo-600 text-white shadow-xs'
-                        : esSinFecha
-                        ? 'bg-amber-100 text-amber-800'
-                        : 'bg-slate-100 text-slate-700'
-                    }`}>
-                      <CalendarIcon className="w-4 h-4" />
-                    </div>
-
-                    <div>
-                      <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
-                        {esSinFecha
-                          ? 'Pedidos sin fecha asignada'
-                          : formatearFechaHumana(grupo.fecha)}
-                        {esHoy && (
-                          <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-indigo-600 text-white">
-                            ¡HOY!
-                          </span>
-                        )}
-                      </h3>
-                      <span className="text-[11px] text-slate-400 font-medium">
-                        {grupo.pedidos.length} pedido(s) programados
-                      </span>
-                    </div>
-                  </div>
-
-                  <span className="text-xs font-black text-slate-500">
-                    Total: {fmt(grupo.pedidos.reduce((s, p) => s + precioTotalVenta(p), 0))}
-                  </span>
-                </div>
-
-                {/* Tarjetas de Pedidos de ese día */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {grupo.pedidos.map((v) => {
-                    const items = itemsCrudosVenta(v) || [];
-                    const saldo = saldoCliente(v);
-                    const total = precioTotalVenta(v);
-                    const abono = abonoClienteTotal(v);
-                    const tel = v.cliente_telefono || v.telefono || '';
-                    const waLink = getWhatsAppLink(tel);
-
-                    return (
-                      <div
-                        key={v.id}
-                        className="bg-white rounded-[26px] border border-slate-200/80 p-5 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between"
-                      >
-                        <div className="space-y-3">
-                          {/* Cliente y Estado */}
-                          <div className="flex items-start justify-between gap-2">
-                            <div>
-                              <h4 className="font-black text-slate-900 text-sm truncate">
-                                {v.cliente_nombre}
-                              </h4>
-                              <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-semibold mt-0.5">
-                                <span className={`px-2 py-0.2 rounded-md font-bold text-[10.5px] border ${getVendedorColor(v.vendedor).badge}`}>
-                                  {v.vendedor || 'Samir'}
-                                </span>
-                                {tel && (
-                                  <>
-                                    <span>•</span>
-                                    <span className="font-mono text-slate-600 flex items-center gap-0.5">
-                                      <Phone className="w-3 h-3 text-slate-400" />
-                                      {tel}
-                                    </span>
-                                  </>
-                                )}
-                              </div>
-                            </div>
-
-                              {/* Estado general fijo (Mixto o el estado unánime) */}
-                              <div className="shrink-0">
-                                <span className={`text-[10.5px] font-black px-2.5 py-0.5 rounded-full border shadow-2xs ${getEstadoBadgeStyle(estadoGeneralVenta(v))}`}>
-                                  {estadoGeneralVenta(v)}
-                                </span>
-                              </div>
-                            </div>
-
-                          {/* Prendas */}
-                          <div className="space-y-1.5 bg-slate-50/70 p-2.5 rounded-2xl border border-slate-100 text-xs">
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">
-                              Prendas ({items.length || v.cantidad || 1}):
-                            </span>
-                            {items.slice(0, 3).map((it, idx) => (
-                              <div key={idx} className="flex items-center justify-between text-xs py-0.5">
-                                <div className="flex items-center gap-1.5 min-w-0">
-                                  <span className="w-4 h-4 rounded-md bg-white border border-slate-200 text-slate-600 font-black text-[9px] flex items-center justify-center shrink-0">
-                                    #{idx + 1}
-                                  </span>
-                                  <span className="font-bold text-slate-800 text-[11.5px] truncate">
-                                    {it.color || 'Negro'} · Talla {it.talla || 'U'} para {it.genero === 'Mujer' ? 'Mujer' : 'Hombre'}
-                                  </span>
-                                  {it.modelo === 'Nuevo' && (
-                                    <span className="text-[10px] font-black px-1.5 py-0.2 rounded-md bg-amber-500/15 text-amber-700 border border-amber-500/30 shrink-0">
-                                      v2
-                                    </span>
-                                  )}
-                                </div>
-                                {it.programa && (
-                                  <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.2 rounded border border-indigo-100 truncate max-w-[110px]" title={it.programa}>
-                                    {it.programa}
-                                  </span>
-                                )}
-                              </div>
-                            ))}
-                            {items.length > 3 && (
-                              <span className="text-[10px] text-slate-400 font-semibold block pt-0.5">
-                                + {items.length - 3} prenda(s) más
-                              </span>
-                            )}
-                          </div>
-
-                          {/* Lugar de entrega */}
-                          {v.lugar_entrega && (
-                            <div className="flex items-center gap-1.5 text-xs text-slate-600">
-                              <MapPin className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-                              <span className="font-semibold truncate">{v.lugar_entrega}</span>
-                            </div>
-                          )}
-
-                          {v.nota && (
-                            <p className="text-[11px] text-slate-500 italic bg-slate-50 p-2 rounded-xl border border-slate-100">
-                              "{v.nota}"
-                            </p>
-                          )}
-                        </div>
-
-                        {/* Footer con Saldo y Botones de Copiar / WhatsApp */}
-                        <div className="pt-3 border-t border-slate-100 space-y-2.5 mt-3">
-                          <div className="flex items-center justify-between text-xs">
-                            <div>
-                              <span className="text-[10px] text-slate-400 block font-bold uppercase">Saldo</span>
-                              <span className={`text-base font-black ${saldo > 0 ? 'text-amber-600' : 'text-emerald-600'}`}>
-                                {saldo > 0 ? fmt(saldo) : 'Pagado ✓'}
-                              </span>
-                            </div>
-
-                            <div className="text-right">
-                              <span className="text-[10px] text-slate-400 block font-bold uppercase">Total / Abono</span>
-                              <span className="font-bold text-slate-800">
-                                {fmt(total)} <span className="text-emerald-600 font-semibold">({fmt(abono)})</span>
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Botones de Acción */}
-                          <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-100">
-                            {/* Botón Copiar Mensaje Recordatorio WhatsApp */}
-                            <button
-                              type="button"
-                              onClick={() => handleCopiarMensaje(v)}
-                              className={`flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                                copiadoId === v.id
-                                  ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                                  : 'bg-indigo-50/80 hover:bg-indigo-100 text-indigo-700'
-                              }`}
-                              title="Copiar mensaje de recordatorio para enviarlo al cliente"
-                            >
-                              {copiadoId === v.id ? (
-                                <>
-                                  <Check className="w-3.5 h-3.5 text-emerald-600" />
-                                  <span>¡Mensaje Copiado!</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Copy className="w-3.5 h-3.5 text-indigo-600" />
-                                  <span>Copiar Mensaje</span>
-                                </>
-                              )}
-                            </button>
-
-                            {/* Botón WhatsApp directo al chat */}
-                            {waLink ? (
-                              <a
-                                href={waLink}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold transition-colors cursor-pointer"
-                                title="Abrir chat en WhatsApp"
-                              >
-                                <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
-                                <span>WhatsApp</span>
-                              </a>
-                            ) : (
-                              <button
-                                disabled
-                                className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl bg-slate-50 text-slate-300 text-xs font-bold cursor-not-allowed"
-                              >
-                                <MessageCircle className="w-3.5 h-3.5 text-slate-300" />
-                                <span>WhatsApp</span>
-                              </button>
-                            )}
-
-                            {/* Botón Copiar Pedido */}
-                            <button
-                              type="button"
-                              onClick={() => handleCopiarPedido(v)}
-                              className={`flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                                copiadoPedidoId === v.id
-                                  ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                                  : 'bg-slate-50 hover:bg-slate-100 text-slate-700'
-                              }`}
-                              title="Copiar resumen del pedido"
-                            >
-                              {copiadoPedidoId === v.id ? (
-                                <>
-                                  <Check className="w-3.5 h-3.5 text-emerald-600" />
-                                  <span>¡Pedido Copiado!</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Shirt className="w-3.5 h-3.5 text-slate-600" />
-                                  <span>Copiar Pedido</span>
-                                </>
-                              )}
-                            </button>
-
-                            {/* Botón Editar Pedido */}
-                            <button
-                              type="button"
-                              onClick={() => onEditOrder && onEditOrder(v)}
-                              className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold transition-colors cursor-pointer"
-                              title="Editar pedido o cambiar fecha de entrega"
-                            >
-                              <Pencil className="w-3.5 h-3.5" />
-                              <span>Editar</span>
-                            </button>
-
-                            {/* Botón Ver en Cuentas */}
-                            {onNavigateToCuentas && (
-                              <button
-                                type="button"
-                                onClick={() => onNavigateToCuentas(v)}
-                                className="col-span-2 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-98 text-white text-xs font-black transition-all cursor-pointer shadow-xs hover:shadow-sm"
-                                title="Abrir este pedido en el apartado de cuentas para gestionar saldo, abono, estado o finalizarlo"
-                              >
-                                <CreditCard className="w-4 h-4 text-indigo-200" />
-                                <span>Ver en Cuentas</span>
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </motion.div>
-            );
-          })}
-        </AnimatePresence>
-
-        {pedidosAgrupadosPorFecha.length === 0 && (
-          <div className="p-12 text-center bg-white rounded-3xl border border-slate-200/80">
-            <ShoppingBag className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-            <h3 className="font-bold text-slate-800 text-sm">No hay entregas programadas</h3>
-            <p className="text-xs text-slate-400 mt-1">
-              {vista === 'sin-fecha'
-                ? '¡Excelente! Todos los pedidos tienen fecha de entrega asignada.'
-                : 'Prueba cambiando los filtros o seleccionando otra fecha.'}
-            </p>
-          </div>
-        )}
-      </div>
+      {/* 4. MODAL DETALLADO DE PEDIDO (Abre en ventana con todas las opciones comunes) */}
+      <OrderDetailModal
+        isOpen={!!orderModal}
+        onClose={() => setOrderModal(null)}
+        order={orderModal}
+        onEditOrder={onEditOrder}
+      />
     </div>
   );
 }

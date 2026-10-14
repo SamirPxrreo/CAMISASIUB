@@ -49,6 +49,7 @@ import InlineDeleteConfirm from './InlineDeleteConfirm';
 import Pagination from './Pagination';
 import StatusDropdown from './StatusDropdown';
 import OrderDetailModal from './OrderDetailModal';
+import AddAbonoModal from './AddAbonoModal';
 import { useAuth } from '../context/AuthContext';
 
 export default function OrdersView({ onOpenNewSale, onEditOrder }) {
@@ -64,6 +65,7 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
   const [expandedId, setExpandedId] = useState(null);
   const [copiadoPedidoId, setCopiadoPedidoId] = useState(null);
   const [selectedOrderDetail, setSelectedOrderDetail] = useState(null);
+  const [pedidoAbono, setPedidoAbono] = useState(null);
   const [exportandoCompra, setExportandoCompra] = useState(false);
 
   // Mantener actualizado el pedido abierto en el modal
@@ -326,11 +328,11 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.2 }}
-                className="bg-white rounded-3xl border border-slate-200/90 p-4 sm:p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group"
+                className="bg-white rounded-3xl border-2 border-slate-200/90 hover:border-indigo-400 p-5 shadow-xs hover:shadow-lg transition-all flex flex-col justify-between group"
               >
                 <div className="space-y-3">
                   {/* 1. ENCABEZADO: CLIENTE, VENDEDOR Y ESTADO GENERAL */}
-                  <div className="flex items-start justify-between gap-2.5">
+                  <div className="flex items-start justify-between gap-2.5 border-b border-slate-100 pb-3">
                     <div className="flex items-center gap-2.5 min-w-0">
                       <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-black text-sm shrink-0 border ${vCol.bg} ${vCol.border} ${vCol.text}`}>
                         {(v.cliente_nombre || 'C')[0].toUpperCase()}
@@ -441,7 +443,7 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
                 </div>
 
                 {/* 4. PIE DE TARJETA: SALDOS Y BOTONES COMPACTOS */}
-                <div className="pt-3 border-t border-slate-100 space-y-2.5 mt-3">
+                <div className="pt-3.5 border-t-2 border-slate-100 space-y-2.5 mt-3">
                   <div className="flex items-center justify-between text-xs">
                     <div>
                       <span className="text-[9.5px] text-slate-400 font-black block uppercase tracking-wider">Saldo</span>
@@ -458,7 +460,7 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
                     </div>
                   </div>
 
-                  {/* BOTONES DE ACCIÓN: Botón principal "Ver detalle" + Accesos rápidos */}
+                  {/* BOTONES DE ACCIÓN: Botón principal "Ver detalle", "Abonar" + Accesos rápidos */}
                   <div className="flex items-center gap-1.5 pt-1">
                     {/* Botón Principal: Ver Detalle */}
                     <button
@@ -469,6 +471,19 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
                       <Eye className="w-3.5 h-3.5 text-indigo-600 group-hover:scale-110 transition-transform" />
                       <span>Ver detalle</span>
                     </button>
+
+                    {/* Botón Abonar (si tiene saldo pendiente) */}
+                    {saldo > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setPedidoAbono(v)}
+                        className="py-2 px-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-black flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs shrink-0"
+                        title={`Registrar abono de ${v.cliente_nombre}`}
+                      >
+                        <DollarSign className="w-3.5 h-3.5" />
+                        <span>Abonar</span>
+                      </button>
+                    )}
 
                     {/* Si está 100% liquidado, acceso directo a Finalizar */}
                     {todasLiquidadas && (
@@ -559,6 +574,13 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
         onClose={() => setSelectedOrderDetail(null)}
         order={activeOrderForModal}
         onEditOrder={onEditOrder}
+      />
+
+      {/* 6. VENTANA MODAL PARA REGISTRAR ABONO DEL CLIENTE */}
+      <AddAbonoModal
+        isOpen={!!pedidoAbono}
+        onClose={() => setPedidoAbono(null)}
+        order={pedidoAbono}
       />
     </div>
   );

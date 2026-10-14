@@ -324,4 +324,42 @@ La aplicación está completamente adaptada para usarse como una app instalada e
 - Si alguna condición no se cumple, el sistema bloquea la acción y le indica al usuario exactamente cuánto falta pagar a Yesenia, cuánto cobrar al cliente o cuánto liquidar al socio.
 - Al confirmarse, se sella el evento `finalizado` en Supabase con fecha, hora y autor, asegurando trazabilidad contable total.
 
+---
+
+## 13. Calendario Semanal por Columnas, Modal de Abonos y Tarjetas Reforzadas
+
+### 1. Calendario Semanal por Columnas (`CalendarView.jsx`):
+- **Estructura tipo Agenda/Citas**: Diseñado con cuadrícula semanal de 7 columnas (`LUN` a `DOM`), con cabeceras que muestran el día abreviado y el número en grande. El día de hoy (`esHoy`) se resalta con texto índigo y fondo ligeramente tintado.
+- **Navegación Intuitiva**: Botones `<` (semana anterior), `Hoy` (regreso inmediato) y `>` (semana siguiente), acompañados del título dinámico del mes (ej. `Octubre De 2026`).
+- **Tarjetas de Citas/Pedidos Compactas**:
+  - Hora/ID en la parte superior y badge circular del vendedor (`S` o `V`).
+  - Nombre del cliente en negrita legible.
+  - Tag redondeado de lugar o cantidad de prendas.
+  - Resumen de prendas y chip pastel de estado.
+  - Saldo en tiempo real (`Pagado ✓` o `Resta $XX.XXX`).
+  - Columnas vacías identificadas con la etiqueta limpia `Libre`.
+- **Apertura de Ventana Modal (`OrderDetailModal`)**: Al hacer clic en cualquier tarjeta del calendario, se abre el modal interactivo con todas las opciones comunes (WhatsApp directo, copiar para WhatsApp, editar, cambiar estados de cada camisa, registrar abono y finalizar).
+
+### 2. Eliminación de Animaciones Defectuosas en Cuentas (`CuentasView.jsx`):
+- Se removió la propiedad `layout` de Framer Motion en las tarjetas de cliente y se reemplazó el contenedor del desplegable por un elemento estructural limpio.
+- La apertura y el cierre de los pedidos de cada cliente ocurren de forma instantánea y natural, sin deformaciones visuales, saltos o estiramientos en pantalla.
+
+### 3. Registro de Abonos del Cliente (`AddAbonoModal.jsx`):
+- **Botón `Abonar` en Pedidos y Detalle**: Disponible tanto en cada tarjeta de `OrdersView` como dentro de `OrderDetailModal` para pedidos con saldo pendiente.
+- **Soporte Multicamisa con Topes Máximos**:
+  - En pedidos de varias camisas, permite distribuir el abono por prenda sin permitir superar el saldo individual de cada una.
+  - Cuenta con un campo general que distribuye automáticamente el monto recibido entre las prendas que tengan saldo pendiente.
+  - Botón de 1 clic: **"Pagar Saldo Completo"**.
+  - Validación estricta que impide abonar más del saldo restante total.
+- **Persistencia y Auditoría**:
+  - Autoformateo de miles colombiano (bloqueo de punto manual).
+  - Actualización atómica en Supabase (`ventas.abono` y desglose en `items_camisa`).
+  - Registro de auditoría `{ tipo: 'abono_cliente' }` con método de pago y fecha exacta en la trazabilidad.
+  - Disparo de confeti al quedar en saldo $0.
+
+### 4. Tarjetas de Pedidos con Bordes Nítidos de 2px (`OrdersView.jsx`):
+- Se reforzó el contorno con `border-2 border-slate-200/90 hover:border-indigo-400` y sombra suave, logrando una delimitación visual nítida que separa claramente cada pedido en la pantalla.
+- División interna estructurada: encabezado del cliente separado con `border-b` y pie de tarjeta separado con `border-t-2`, brindando orden y jerarquía visual inmediata.
+
+
 

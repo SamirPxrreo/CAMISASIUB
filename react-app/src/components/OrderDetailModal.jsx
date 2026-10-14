@@ -20,6 +20,7 @@ import {
   ChevronUp
 } from 'lucide-react';
 import StatusDropdown from './StatusDropdown';
+import AddAbonoModal from './AddAbonoModal';
 import { useData } from '../context/DataContext';
 import {
   fmt,
@@ -44,6 +45,7 @@ export default function OrderDetailModal({ isOpen, onClose, order, onEditOrder }
   const { updateItemEstado, updateOrderEstadoCompleto, finalizarPedido, colores } = useData();
   const [copiado, setCopiado] = useState(false);
   const [mostrarHistorial, setMostrarHistorial] = useState(false);
+  const [abrirAbono, setAbrirAbono] = useState(false);
   const historial = useMemo(() => (order ? historialVenta(order) : []), [order]);
 
   if (!isOpen || !order) return null;
@@ -154,9 +156,22 @@ export default function OrderDetailModal({ isOpen, onClose, order, onEditOrder }
               <div className={`p-3.5 rounded-2xl border ${
                 saldo > 0 ? 'bg-amber-50/60 border-amber-200/70' : 'bg-emerald-50/60 border-emerald-200/70'
               }`}>
-                <span className={`text-[10px] font-bold uppercase tracking-wider block ${saldo > 0 ? 'text-amber-700' : 'text-emerald-700'}`}>
-                  Saldo Pendiente
-                </span>
+                <div className="flex items-center justify-between">
+                  <span className={`text-[10px] font-bold uppercase tracking-wider block ${saldo > 0 ? 'text-amber-700' : 'text-emerald-700'}`}>
+                    Saldo Pendiente
+                  </span>
+                  {saldo > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setAbrirAbono(true)}
+                      className="px-2 py-0.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-[10px] flex items-center gap-1 shadow-2xs cursor-pointer"
+                      title="Registrar abono a este pedido"
+                    >
+                      <DollarSign className="w-3 h-3" />
+                      + Abono
+                    </button>
+                  )}
+                </div>
                 <span className={`text-base font-black block mt-0.5 ${saldo > 0 ? 'text-amber-700' : 'text-emerald-700'}`}>
                   {saldo > 0 ? fmt(saldo) : 'Al día (Liquidado)'}
                 </span>
@@ -361,6 +376,18 @@ export default function OrderDetailModal({ isOpen, onClose, order, onEditOrder }
             </div>
 
             <div className="flex items-center gap-2 w-full sm:w-auto">
+              {saldo > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setAbrirAbono(true)}
+                  className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-black transition-all cursor-pointer shadow-xs"
+                  title="Registrar abono del cliente a este pedido"
+                >
+                  <DollarSign className="w-4 h-4" />
+                  <span>Abonar</span>
+                </button>
+              )}
+
               {onEditOrder && (
                 <button
                   type="button"
@@ -409,6 +436,13 @@ export default function OrderDetailModal({ isOpen, onClose, order, onEditOrder }
           </div>
         </motion.div>
       </div>
+
+      {/* Modal para Registrar Abono del Cliente */}
+      <AddAbonoModal
+        isOpen={abrirAbono}
+        onClose={() => setAbrirAbono(false)}
+        order={order}
+      />
     </AnimatePresence>
   );
 }

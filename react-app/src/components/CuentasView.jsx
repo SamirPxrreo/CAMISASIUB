@@ -392,7 +392,6 @@ export default function CuentasView({ targetOrder, onClearTargetOrder, onEditOrd
             return (
               <motion.div
                 key={c.clave}
-                layout
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.98 }}
@@ -482,14 +481,9 @@ export default function CuentasView({ targetOrder, onClearTargetOrder, onEditOrd
                   </div>
                 </div>
 
-                {/* Desglose de Pedidos del Cliente Expandible */}
+                {/* Desglose de Pedidos del Cliente Expandible (Apertura y Cierre Limpio sin animaciones raras) */}
                 {isExpanded && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="mt-4 pt-4 border-t border-slate-100 space-y-2 overflow-hidden"
-                  >
+                  <div className="mt-4 pt-4 border-t border-slate-100 space-y-2">
                     <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
                       Pedidos de {c.cliente}:
                     </span>
@@ -581,7 +575,7 @@ export default function CuentasView({ targetOrder, onClearTargetOrder, onEditOrd
                         </div>
                       );
                     })}
-                  </motion.div>
+                  </div>
                 )}
               </motion.div>
             );
