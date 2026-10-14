@@ -220,3 +220,42 @@ La aplicación está completamente adaptada para usarse como una app instalada e
   `⚡ Nueva versión disponible — Hay cambios recientes en la app. [Actualizar]`
 - **Actualización con un Toque**: Al pulsar el botón, se vacían las cachés de la PWA / navegador (`caches.delete`) y se recarga la página de inmediato con la versión más reciente.
 
+---
+
+## 10. Navegación Fluida, Reglas de 'Liquidado' y Gestión de Abonos Yesenia
+
+### 1. Navegación Calendario ➔ Cuentas y Reset de Scroll:
+- **Botón "Ver en Cuentas" en Calendario**: Cada tarjeta de pedido en `CalendarView` cuenta con un botón directo para abrir dicho pedido en la sección de **Cuentas**.
+- **Auto-Búsqueda y Auto-Expansión**: Al saltar de Calendario a Cuentas, la vista filtra automáticamente por el nombre del cliente, expande la tarjeta de su cuenta y resalta el pedido con la insignia `🎯 Desde Calendario`.
+- **Gestión Completa en Cuentas**: Cada pedido dentro de la cuenta del cliente cuenta con:
+  - Selector interactivo `StatusDropdown` para cambiar el estado.
+  - Botón **"Prendas"** para inspeccionar las camisas y sus estados individuales en `OrderDetailModal`.
+  - Botón **"Editar"** para modificar detalles del pedido.
+  - Botón **"Finalizar"** para moverlo al historial una vez completado.
+- **Scroll Reset Inmediato**: Cada vez que el usuario cambia de menú/sección (`currentSection`), el contenedor principal de la aplicación reinicia su posición al inicio (`scrollTop = 0` y `window.scrollTo(0, 0)`), evitando que se abra a la altura donde se encontraba la vista previa.
+
+### 2. Reglas de Validación de 'Liquidado' y 'Finalizar Pedido':
+- **Bloqueo de Estado 'Liquidado'**:
+  - Ningún pedido (ni camisa individual) puede marcarse como `'Liquidado'` a menos que cumpla con los 3 requisitos:
+    1. Estar 100% cobrado al cliente (`saldoCliente <= 1`).
+    2. Estar 100% pagado a Yesenia (`abonosProveedorPorVentaId.pendiente <= 1`).
+    3. Estar 100% liquidado con el otro socio (`saldoSocioPendientePedido <= 1`).
+  - Si el usuario intenta pasarlo a `'Liquidado'` sin cumplir alguna condición, el sistema bloquea el cambio y muestra una alerta clara con los pasos pendientes exactos.
+- **Botón "Finalizar Pedido"**:
+  - Disponible tanto en la tarjeta de `OrdersView`, en `CuentasView`, como en `OrderDetailModal`.
+  - Solo permite finalizar si **todas las prendas están en estado 'Liquidado'** (`estadosTodosLiquidado(v)`).
+  - Al confirmarse, marca `{ finalizado: true }` en Supabase, lanza confeti y traslada el pedido de inmediato al **Historial de pedidos**.
+
+### 3. Lógica de Abonos a Yesenia (Abono y Seña):
+- **Comprador Protegido por Rol**:
+  - Cuando inicia sesión un vendedor estándar (**Samir** o **Valentina**), el selector de la persona que entrega el dinero queda fijado y deshabilitado (`disabled`) con un icono de candado.
+  - El usuario **Administrador** puede seleccionar libremente entre `Samir`, `Valentina` o `Ambos`.
+- **Filtro de Pedidos por Comprador**: El listado de pedidos pendientes del taller muestra únicamente los pedidos pertenecientes al socio que está realizando el pago.
+- **Aporte y Seña por Pedido Específico**:
+  - Al marcar cualquier pedido pendiente en la lista, se habilita un campo numérico: `Aporte / Seña a este pedido ($)`.
+  - Permite ingresar pagos parciales (señas) o el costo completo, mostrando en tiempo real cuánto restará por pagar de esa prenda.
+  - Incluye botón de 1 clic para copiar la suma total asignada a los pedidos directamente al campo de aporte del socio.
+- **Persistencia Exacta en Supabase**:
+  - Se registra el desglose en `compra_pedidos` con el monto puntual pagado a cada pedido.
+  - Se actualiza el acumulado `abono_yesenia` y la repartición proporcional en `items_camisa` en la tabla `ventas`, liberando la deuda del pedido en el taller.
+

@@ -18,9 +18,11 @@ import {
   Check,
   Phone,
   Shirt,
-  Users
+  Users,
+  Lock
 } from 'lucide-react';
 import { useData } from '../context/DataContext';
+import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import {
   fmt,
@@ -32,26 +34,39 @@ import {
   normalizarEstado,
   getEstadoBadgeStyle,
   claveCliente,
-  getWhatsAppLink
+  getWhatsAppLink,
+  itemsCrudosVenta
 } from '../lib/utils';
 import InlineDeleteConfirm from './InlineDeleteConfirm';
 import Pagination from './Pagination';
 
 export default function PurchasesView() {
   const { compras, compraAportes, compraPedidos = [], ventas, refreshData } = useData();
+  const { role } = useAuth();
+  const esAdmin = role?.role === 'admin';
+  const miVendedor = role?.vendedor || (role?.nombre === 'Samir' ? 'Samir' : role?.nombre === 'Valentina' ? 'Valentina' : null);
+
   const [modalAbierto, setModalAbierto] = useState(false);
   const [fecha, setFecha] = useState(hoyColombia());
-  const [comprador, setComprador] = useState('Samir');
+  const [comprador, setComprador] = useState(miVendedor || 'Samir');
   const [observaciones, setObservaciones] = useState('');
   const [aporteSamir, setAporteSamir] = useState(0);
   const [aporteVal, setAporteVal] = useState(0);
   const [pedidosSeleccionados, setPedidosSeleccionados] = useState([]);
+  const [abonosPorPedido, setAbonosPorPedido] = useState({});
   const [guardando, setGuardando] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [busqueda, setBusqueda] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [expandirDeudaSamir, setExpandirDeudaSamir] = useState(false);
   const [expandirDeudaVal, setExpandirDeudaVal] = useState(false);
+
+  // Si no es admin, fijar obligatoriamente el comprador al vendedor en sesión
+  useEffect(() => {
+    if (!esAdmin && miVendedor) {
+      setComprador(miVendedor);
+    }
+  }, [esAdmin, miVendedor, modalAbierto]);
 
   // 1. Costo total de confección en el sistema
   const costoTotalPedidos = useMemo(() => {
@@ -95,21 +110,41 @@ export default function PurchasesView() {
     return deudaDetalleVal.reduce((s, d) => s + d.pendiente, 0);
   }, [deudaDetalleVal]);
 
-  // Pedidos disponibles que faltan por pagar al proveedor
+  // Pedidos disponibles que faltan por pagar al proveedor (filtrados por el socio que paga)
   const pedidosPendientesProveedor = useMemo(() => {
     return ventas
       .filter(v => !v.finalizado && normalizarEstado(v.estado) !== 'Liquidado')
+      .filter(v => {
+        if (comprador === 'Samir') return v.vendedor === 'Samir';
+        if (comprador === 'Valentina') return v.vendedor === 'Valentina';
+        return true;
+      })
       .map(v => {
         const pagos = abonosProveedorPorVentaId(v);
         return { ...v, pendienteProveedor: pagos.pendiente, costoTotal: pagos.costoTotal };
       })
       .filter(v => v.pendienteProveedor > 0);
-  }, [ventas]);
+  }, [ventas, comprador]);
 
-  const toggleSeleccionPedido = (id) => {
-    setPedidosSeleccionados(prev =>
-      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
-    );
+  const toggleSeleccionPedido = (id, pendiente) => {
+    setPedidosSeleccionados(prev => {
+      if (prev.includes(id)) {
+        return prev.filter(x => x !== id);
+      } else {
+        setAbonosPorPedido(curr => ({
+          ...curr,
+          [id]: curr[id] !== undefined ? curr[id] : pendiente
+        }));
+        return [...prev, id];
+      }
+    });
+  };
+
+  const handleCambioAbonoPedido = (id, val) => {
+    setAbonosPorPedido(prev => ({
+      ...prev,
+      [id]: val
+    }));
   };
 
   const handleGuardarCompra = async (e) => {
@@ -172,17 +207,49 @@ export default function PurchasesView() {
         await supabase.from('compra_aportes').insert(aportesInserts);
       }
 
-      // 3. Vincular pedidos cubiertos en compra_pedidos si se seleccionaron
+      // 3. Vincular pedidos cubiertos en compra_pedidos y actualizar abono_yesenia en cada venta
       if (pedidosSeleccionados.length > 0) {
         const detalleInserts = pedidosSeleccionados.map(vId => {
           const vObj = pedidosPendientesProveedor.find(p => p.id === vId);
+          const montoPed = abonosPorPedido[vId] !== undefined ? Number(abonosPorPedido[vId]) : (vObj ? vObj.pendienteProveedor : 0);
           return {
             compra_id: cData.id,
             venta_id: vId,
-            monto: vObj ? vObj.pendienteProveedor : 0
+            monto: montoPed
           };
         });
         await supabase.from('compra_pedidos').insert(detalleInserts);
+
+        // Actualizar abono_yesenia e items_camisa en cada pedido afectado en ventas
+        for (const vId of pedidosSeleccionados) {
+          const vObj = ventas.find(v => v.id === vId);
+          if (!vObj) continue;
+          const montoPed = abonosPorPedido[vId] !== undefined ? Number(abonosPorPedido[vId]) : (vObj.pendienteProveedor || 0);
+          const abonoAnterior = Number(vObj.abono_yesenia) || 0;
+          const nuevoAbonoYesenia = abonoAnterior + montoPed;
+
+          let items = itemsCrudosVenta(vObj);
+          if (items && items.length) {
+            const costos = items.map(it => Number(it.costo) || Number(vObj.costo_unitario) || 0);
+            const sumCostos = costos.reduce((a, b) => a + b, 0);
+            let asignado = 0;
+            items = items.map((it, idx) => {
+              const parte = sumCostos > 0
+                ? (idx === items.length - 1 ? nuevoAbonoYesenia - asignado : Math.floor(nuevoAbonoYesenia * costos[idx] / sumCostos))
+                : Math.floor(nuevoAbonoYesenia / items.length);
+              asignado += parte;
+              return { ...it, abono_yesenia: parte };
+            });
+          }
+
+          const upd = {
+            compra_id: cData.id,
+            abono_yesenia: nuevoAbonoYesenia,
+            ...(items ? { items_camisa: JSON.stringify(items) } : {})
+          };
+
+          await supabase.from('ventas').update(upd).eq('id', vId);
+        }
       }
 
       await refreshData();
@@ -191,6 +258,7 @@ export default function PurchasesView() {
       setAporteVal(0);
       setObservaciones('');
       setPedidosSeleccionados([]);
+      setAbonosPorPedido({});
     } catch (err) {
       setErrorMsg(err.message || 'Error al guardar el abono a Yesenia.');
     } finally {
@@ -656,11 +724,24 @@ export default function PurchasesView() {
                 </div>
 
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Persona que entregó el dinero</label>
+                  <label className="font-bold text-slate-700 block mb-1 flex items-center justify-between">
+                    <span>Persona que entregó el dinero</span>
+                    {!esAdmin && (
+                      <span className="text-[10px] text-slate-400 font-semibold flex items-center gap-1">
+                        <Lock className="w-3 h-3 text-slate-400" />
+                        Fijado para tu usuario ({comprador})
+                      </span>
+                    )}
+                  </label>
                   <select
                     value={comprador}
+                    disabled={!esAdmin}
                     onChange={(e) => setComprador(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold outline-none"
+                    className={`w-full px-3 py-2 rounded-xl text-xs font-bold outline-none border transition-colors ${
+                      !esAdmin
+                        ? 'bg-slate-100 text-slate-600 border-slate-200 cursor-not-allowed'
+                        : 'bg-slate-50 border-slate-200 text-slate-800'
+                    }`}
                   >
                     <option value="Samir">Samir</option>
                     <option value="Valentina">Valentina</option>
@@ -715,40 +796,132 @@ export default function PurchasesView() {
 
               {/* Selector de pedidos cubiertos en este abono */}
               <div>
-                <label className="font-bold text-slate-700 block mb-1">
-                  Pedidos que se están pagando en esta visita ({pedidosSeleccionados.length} seleccionados):
-                </label>
-                <div className="max-h-40 overflow-y-auto space-y-1 bg-slate-50 p-2 rounded-2xl border border-slate-200 text-[11px]">
+                <div className="flex items-center justify-between mb-1">
+                  <label className="font-bold text-slate-700 block">
+                    Pedidos que se pagan en esta visita ({pedidosSeleccionados.length} seleccionados):
+                  </label>
+                  {pedidosSeleccionados.length > 0 && (
+                    <span className="text-[11px] font-black text-indigo-700">
+                      Total pedidos: {fmt(
+                        pedidosSeleccionados.reduce((s, id) => {
+                          const val = abonosPorPedido[id] !== undefined
+                            ? Number(abonosPorPedido[id]) || 0
+                            : (pedidosPendientesProveedor.find(p => p.id === id)?.pendienteProveedor || 0);
+                          return s + val;
+                        }, 0)
+                      )}
+                    </span>
+                  )}
+                </div>
+
+                {/* Botón rápido para igualar el aporte al total asignado a pedidos */}
+                {pedidosSeleccionados.length > 0 && (
+                  <div className="mb-2 flex items-center justify-end">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const sum = pedidosSeleccionados.reduce((s, id) => {
+                          const val = abonosPorPedido[id] !== undefined
+                            ? Number(abonosPorPedido[id]) || 0
+                            : (pedidosPendientesProveedor.find(p => p.id === id)?.pendienteProveedor || 0);
+                          return s + val;
+                        }, 0);
+                        if (comprador === 'Valentina') {
+                          setAporteVal(sum);
+                        } else {
+                          setAporteSamir(sum);
+                        }
+                      }}
+                      className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer underline"
+                    >
+                      <span>Copiar suma al aporte de {comprador === 'Valentina' ? 'Valentina' : 'Samir'}</span>
+                    </button>
+                  </div>
+                )}
+
+                <div className="max-h-60 overflow-y-auto space-y-2 bg-slate-50 p-2.5 rounded-2xl border border-slate-200 text-[11px]">
                   {pedidosPendientesProveedor.map((p) => {
                     const isChecked = pedidosSeleccionados.includes(p.id);
+                    const abonoIngresado = abonosPorPedido[p.id] !== undefined ? abonosPorPedido[p.id] : p.pendienteProveedor;
+                    const restante = Math.max(p.pendienteProveedor - (Number(abonoIngresado) || 0), 0);
+
                     return (
                       <div
                         key={p.id}
-                        onClick={() => toggleSeleccionPedido(p.id)}
-                        className={`flex items-center justify-between p-2 rounded-xl transition-colors cursor-pointer ${
-                          isChecked ? 'bg-indigo-50 border border-indigo-200' : 'hover:bg-slate-100 bg-white border border-slate-100'
+                        className={`p-2.5 rounded-2xl border transition-all ${
+                          isChecked
+                            ? 'bg-indigo-50/80 border-indigo-200 ring-1 ring-indigo-300/50'
+                            : 'hover:bg-slate-100 bg-white border-slate-200/70'
                         }`}
                       >
-                        <div className="flex items-center gap-2 min-w-0">
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={() => {}}
-                            className="rounded text-indigo-600"
-                          />
-                          <span className="font-bold text-slate-800 truncate">
-                            {p.cliente_nombre || 'Cliente'} ({p.vendedor || 'Samir'})
-                          </span>
+                        <div
+                          onClick={() => toggleSeleccionPedido(p.id, p.pendienteProveedor)}
+                          className="flex items-center justify-between cursor-pointer"
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => {}}
+                              className="w-4 h-4 rounded text-indigo-600 cursor-pointer shrink-0"
+                            />
+                            <div className="min-w-0">
+                              <span className="font-extrabold text-slate-800 text-xs block truncate">
+                                {p.cliente_nombre || 'Cliente'} <span className="text-slate-400 font-semibold">({p.vendedor || 'Samir'})</span>
+                              </span>
+                              <span className="text-[10px] text-slate-500 block">
+                                {p.cantidad} camisa(s) · {p.fecha ? formatearFechaHumana(p.fecha) : ''}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <span className="text-[10px] font-bold text-slate-400 block uppercase">Falta Yesenia</span>
+                            <span className="font-black text-amber-600 text-xs">
+                              {fmt(p.pendienteProveedor)}
+                            </span>
+                          </div>
                         </div>
-                        <span className="font-black text-amber-600 shrink-0">
-                          Falta: {fmt(p.pendienteProveedor)}
-                        </span>
+
+                        {/* Campo editable de cuánto se le aporta a este pedido específico */}
+                        {isChecked && (
+                          <div className="mt-2 pt-2 border-t border-indigo-100 flex items-center justify-between gap-3">
+                            <div className="flex-1">
+                              <label className="text-[10px] font-bold text-indigo-900 block mb-0.5">
+                                Aporte / Seña a este pedido ($):
+                              </label>
+                              <input
+                                type="number"
+                                min="0"
+                                step="1000"
+                                value={abonoIngresado === '' ? '' : abonoIngresado}
+                                onFocus={(e) => e.target.select()}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  handleCambioAbonoPedido(p.id, val === '' ? '' : (isNaN(Number(val)) ? '' : Number(val)));
+                                }}
+                                onBlur={() => {
+                                  if (abonoIngresado === '' || isNaN(abonoIngresado)) {
+                                    handleCambioAbonoPedido(p.id, 0);
+                                  }
+                                }}
+                                className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-indigo-200 text-xs font-black text-indigo-700 outline-none focus:border-indigo-500 shadow-2xs"
+                                placeholder={`$ Abono (máx ${fmt(p.pendienteProveedor)})`}
+                              />
+                            </div>
+                            <div className="text-right shrink-0">
+                              <span className="text-[10px] font-bold text-slate-400 block uppercase">Restará</span>
+                              <span className={`text-xs font-black ${restante <= 0 ? 'text-emerald-600' : 'text-slate-600'}`}>
+                                {restante <= 0 ? '$0 (Cubierto ✓)' : fmt(restante)}
+                              </span>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
                   {pedidosPendientesProveedor.length === 0 && (
-                    <div className="text-center py-3 text-slate-400">
-                      ✓ Todos los pedidos están al día con el taller de Yesenia.
+                    <div className="text-center py-4 text-slate-400 text-xs">
+                      ✓ No hay pedidos pendientes de pago a Yesenia para {comprador}.
                     </div>
                   )}
                 </div>

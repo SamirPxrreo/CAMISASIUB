@@ -8,6 +8,7 @@ import {
   normalizarEstado,
   todosItemsListosEntrega,
   estadosTodosLiquidado,
+  validarPasoALiquidado,
   diasTranscurridos,
   hoyColombia,
   triggerConfetti,
@@ -281,7 +282,15 @@ export function DataProvider({ children }) {
   // Cambiar estado de una camisa individual
   const updateItemEstado = async (ventaId, itemIdx, nuevoEstado) => {
     const venta = ventas.find(v => String(v.id) === String(ventaId));
-    if (!venta) return;
+    if (!venta) return false;
+
+    if (nuevoEstado === 'Liquidado') {
+      const check = validarPasoALiquidado(venta, liquidaciones);
+      if (!check.ok) {
+        alert(`⚠️ No se puede marcar como Liquidado:\n\n• ${check.faltas.join('\n• ')}`);
+        return false;
+      }
+    }
 
     let items = itemsCrudosVenta(venta);
     if (!items || !items.length) {
@@ -320,13 +329,22 @@ export function DataProvider({ children }) {
       if (nuevoEstado === 'Listo para entrega' || nuevoEstado === 'Liquidado') {
         triggerConfetti();
       }
+      return true;
     }
   };
 
   // Cambiar estado de todo el pedido completo
   const updateOrderEstadoCompleto = async (ventaId, nuevoEstado) => {
     const venta = ventas.find(v => String(v.id) === String(ventaId));
-    if (!venta) return;
+    if (!venta) return false;
+
+    if (nuevoEstado === 'Liquidado') {
+      const check = validarPasoALiquidado(venta, liquidaciones);
+      if (!check.ok) {
+        alert(`⚠️ No se puede marcar como Liquidado:\n\n• ${check.faltas.join('\n• ')}`);
+        return false;
+      }
+    }
 
     let items = itemsCrudosVenta(venta);
     if (items && items.length) {
@@ -341,6 +359,34 @@ export function DataProvider({ children }) {
     await updateVenta(ventaId, cambios);
     if (nuevoEstado === 'Listo para entrega' || nuevoEstado === 'Liquidado') {
       triggerConfetti();
+    }
+    return true;
+  };
+
+  // Finalizar un pedido (moverlo al historial permanentemente)
+  const finalizarPedido = async (ventaId) => {
+    const venta = ventas.find(v => String(v.id) === String(ventaId));
+    if (!venta) return false;
+
+    if (!estadosTodosLiquidado(venta)) {
+      alert(`⚠️ Para finalizar el pedido de ${venta.cliente_nombre || 'este cliente'}, todas sus prendas deben estar en estado "Liquidado" (100% pagado a Yesenia y liquidado entre socios).`);
+      return false;
+    }
+
+    const conf = window.confirm(
+      `¿Finalizar el pedido de ${venta.cliente_nombre || 'este cliente'}?\n\n` +
+      `Pasará al Historial de pedidos y dejará de aparecer en la lista de pedidos activos.`
+    );
+    if (!conf) return false;
+
+    try {
+      await updateVenta(venta.id, { finalizado: true });
+      triggerConfetti();
+      return true;
+    } catch (err) {
+      console.error("Error al finalizar pedido:", err);
+      alert("Error al finalizar el pedido: " + (err.message || err));
+      return false;
     }
   };
 
@@ -625,6 +671,8 @@ export function DataProvider({ children }) {
       deleteVenta,
       updateItemEstado,
       updateOrderEstadoCompleto,
+      finalizarPedido,
+      validarPasoALiquidado: (v) => validarPasoALiquidado(v, liquidaciones),
       alertasListosSinEntrega: alertasListosSinEntrega(),
       clientesConDeudaAlta: clientesConDeudaAlta(),
       porComprar,

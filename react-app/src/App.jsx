@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { DataProvider } from './context/DataContext';
@@ -52,6 +52,21 @@ function AppContent() {
   const [isNewSaleOpen, setIsNewSaleOpen] = useState(false);
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState(null);
+  const [targetOrderForCuentas, setTargetOrderForCuentas] = useState(null);
+  const mainContentRef = useRef(null);
+
+  // Al cambiar de sección, volver siempre al inicio (arriba del todo)
+  useEffect(() => {
+    if (mainContentRef.current) {
+      mainContentRef.current.scrollTop = 0;
+    }
+    window.scrollTo(0, 0);
+  }, [currentSection]);
+
+  const handleNavigateToCuentas = (order) => {
+    setTargetOrderForCuentas(order);
+    setCurrentSection('cuentas');
+  };
 
   // Sincronizar hash en la URL cuando cambia la sección
   useEffect(() => {
@@ -131,7 +146,7 @@ function AppContent() {
       />
 
       {/* 2. Área Principal de Contenido (Scroll independiente para que el Sidebar nunca se baje) */}
-      <div className="flex-1 h-full overflow-y-auto flex flex-col min-w-0 pb-20 lg:pb-8">
+      <div ref={mainContentRef} className="flex-1 h-full overflow-y-auto flex flex-col min-w-0 pb-20 lg:pb-8">
         {/* TopBar */}
         <TopBar
           onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
@@ -167,11 +182,16 @@ function AppContent() {
               {currentSection === 'calendar' && (
                 <CalendarView
                   onEditOrder={handleEditOrder}
+                  onNavigateToCuentas={handleNavigateToCuentas}
                 />
               )}
 
               {currentSection === 'cuentas' && (
-                <CuentasView />
+                <CuentasView
+                  targetOrder={targetOrderForCuentas}
+                  onClearTargetOrder={() => setTargetOrderForCuentas(null)}
+                  onEditOrder={handleEditOrder}
+                />
               )}
 
               {currentSection === 'history' && (

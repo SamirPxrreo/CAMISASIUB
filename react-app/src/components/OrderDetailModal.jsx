@@ -14,7 +14,8 @@ import {
   User,
   Sparkles,
   Info,
-  FileSpreadsheet
+  FileSpreadsheet,
+  CheckCircle2
 } from 'lucide-react';
 import StatusDropdown from './StatusDropdown';
 import { useData } from '../context/DataContext';
@@ -29,11 +30,12 @@ import {
   itemsCrudosVenta,
   generarMensajeWhatsApp,
   getEstadoBadgeStyle,
-  normalizarEstado
+  normalizarEstado,
+  estadosTodosLiquidado
 } from '../lib/utils';
 
 export default function OrderDetailModal({ isOpen, onClose, order, onEditOrder }) {
-  const { updateItemEstado, updateOrderEstadoCompleto, colores } = useData();
+  const { updateItemEstado, updateOrderEstadoCompleto, finalizarPedido, colores } = useData();
   const [copiado, setCopiado] = useState(false);
   const [exportando, setExportando] = useState(false);
 
@@ -315,6 +317,29 @@ export default function OrderDetailModal({ isOpen, onClose, order, onEditOrder }
                 >
                   <Edit className="w-4 h-4" />
                   <span>Editar Pedido</span>
+                </button>
+              )}
+
+              {finalizarPedido && !order.finalizado && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const ok = await finalizarPedido(order.id);
+                    if (ok) onClose();
+                  }}
+                  className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-2xl text-xs font-black transition-all cursor-pointer ${
+                    estadosTodosLiquidado(order)
+                      ? 'bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white shadow-xs'
+                      : 'bg-slate-100 hover:bg-slate-200 text-slate-500'
+                  }`}
+                  title={
+                    estadosTodosLiquidado(order)
+                      ? 'Finalizar pedido y mover a Historial'
+                      : 'Requiere que todas las camisas estén en estado Liquidado'
+                  }
+                >
+                  <CheckCircle2 className={`w-4 h-4 ${estadosTodosLiquidado(order) ? 'text-white' : 'text-slate-400'}`} />
+                  <span>Finalizar</span>
                 </button>
               )}
 

@@ -13,7 +13,10 @@ import {
   X,
   Share2,
   Calendar,
-  Sparkles
+  Sparkles,
+  Eye,
+  Pencil,
+  CheckCircle2
 } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import {
@@ -24,25 +27,42 @@ import {
   claveCliente,
   getWhatsAppLink,
   estadosTodosLiquidado,
+  normalizarEstado,
   formatearFechaHumana,
   getEstadoBadgeStyle,
   itemsCrudosVenta,
   precioDeItem
 } from '../lib/utils';
 import Pagination from './Pagination';
+import StatusDropdown from './StatusDropdown';
+import OrderDetailModal from './OrderDetailModal';
 
-export default function CuentasView() {
-  const { ventas } = useData();
+export default function CuentasView({ targetOrder, onClearTargetOrder, onEditOrder }) {
+  const { ventas, updateOrderEstadoCompleto, finalizarPedido } = useData();
   const [busqueda, setBusqueda] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedClave, setExpandedClave] = useState(null);
+  const [selectedOrderDetail, setSelectedOrderDetail] = useState(null);
 
-  // Agrupar pedidos activos por cliente
+  // Auto-filtrar y auto-expandir si venimos con targetOrder desde Calendario
+  useEffect(() => {
+    if (targetOrder) {
+      setBusqueda(targetOrder.cliente_nombre || '');
+      setExpandedClave(claveCliente(targetOrder));
+    }
+  }, [targetOrder]);
+
+  const activeOrderForModal = useMemo(() => {
+    if (!selectedOrderDetail) return null;
+    return ventas.find(v => String(v.id) === String(selectedOrderDetail.id)) || selectedOrderDetail;
+  }, [ventas, selectedOrderDetail]);
+
+  // Agrupar pedidos activos por cliente (pedidos no finalizados)
   const cuentasAgrupadas = useMemo(() => {
     const grupos = new Map();
 
     ventas.forEach(v => {
-      if (v.finalizado || estadosTodosLiquidado(v)) return;
+      if (v.finalizado) return;
 
       const clave = claveCliente(v);
       if (!grupos.has(clave)) {
@@ -469,31 +489,96 @@ export default function CuentasView() {
                     className="mt-4 pt-4 border-t border-slate-100 space-y-2 overflow-hidden"
                   >
                     <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
-                      Pedidos activos de {c.cliente}:
+                      Pedidos de {c.cliente}:
                     </span>
-                    {c.pedidos.map((p, idx) => (
-                      <div
-                        key={p.id || idx}
-                        className="p-3 rounded-2xl bg-slate-50/70 border border-slate-200/60 flex items-center justify-between text-xs"
-                      >
-                        <div className="flex items-center gap-3">
-                          <span className="font-extrabold text-slate-800">Pedido #{p.id}</span>
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${getEstadoBadgeStyle(p.estado)}`}>
-                            {p.estado}
-                          </span>
-                          <span className="text-slate-500">{formatearFechaHumana(p.fecha)}</span>
-                          <span className="text-slate-400">• {p.cantidad} camisa(s)</span>
-                        </div>
+                    {c.pedidos.map((p, idx) => {
+                      const esSeleccionado = targetOrder && String(targetOrder.id) === String(p.id);
+                      return (
+                        <div
+                          key={p.id || idx}
+                          className={`p-3.5 rounded-2xl border transition-all ${
+                            esSeleccionado
+                              ? 'bg-indigo-50/80 border-indigo-300 ring-2 ring-indigo-400/40 shadow-xs'
+                              : 'bg-slate-50/70 border-slate-200/60'
+                          } flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs`}
+                        >
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-extrabold text-slate-800">Pedido #{p.id}</span>
+                              {esSeleccionado && (
+                                <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-indigo-600 text-white animate-pulse">
+                                  🎯 Desde Calendario
+                                </span>
+                              )}
+                              <StatusDropdown
+                                value={normalizarEstado(p.estado)}
+                                onChange={(nuevoEstado) => updateOrderEstadoCompleto && updateOrderEstadoCompleto(p.id, nuevoEstado)}
+                                size="sm"
+                              />
+                            </div>
+                            <div className="flex items-center gap-2 text-slate-500 font-medium text-[11px] flex-wrap">
+                              <span>{formatearFechaHumana(p.fecha)}</span>
+                              <span>•</span>
+                              <span>{p.cantidad} camisa(s)</span>
+                              <span>•</span>
+                              <span>Total: <b className="text-slate-800">{fmt(precioTotalVenta(p))}</b></span>
+                              <span>•</span>
+                              <span className="text-emerald-700">Abono: <b>{fmt(abonoClienteTotal(p))}</b></span>
+                              <span>•</span>
+                              <span className={`font-bold ${saldoCliente(p) > 0 ? 'text-amber-700' : 'text-emerald-600'}`}>
+                                Saldo: {saldoCliente(p) > 0 ? fmt(saldoCliente(p)) : 'Pagado ✓'}
+                              </span>
+                            </div>
+                          </div>
 
-                        <div className="flex items-center gap-3 font-semibold">
-                          <span>Total: {fmt(precioTotalVenta(p))}</span>
-                          <span className="text-emerald-700">Abono: {fmt(abonoClienteTotal(p))}</span>
-                          <span className={`font-bold ${saldoCliente(p) > 0 ? 'text-amber-700' : 'text-slate-400'}`}>
-                            Saldo: {fmt(saldoCliente(p))}
-                          </span>
+                          {/* Acciones interactivas del pedido */}
+                          <div className="flex items-center gap-1.5 shrink-0 self-end md:self-center flex-wrap">
+                            {/* Ver detalle de prendas y cambiar estados individuales */}
+                            <button
+                              type="button"
+                              onClick={() => setSelectedOrderDetail(p)}
+                              className="py-1.5 px-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 font-bold text-xs flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
+                              title="Ver prendas y estados de este pedido"
+                            >
+                              <Eye className="w-3.5 h-3.5 text-indigo-600" />
+                              <span>Prendas</span>
+                            </button>
+
+                            {/* Editar pedido */}
+                            {onEditOrder && (
+                              <button
+                                type="button"
+                                onClick={() => onEditOrder(p)}
+                                className="py-1.5 px-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 font-bold text-xs flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
+                                title="Editar pedido"
+                              >
+                                <Pencil className="w-3.5 h-3.5 text-slate-500" />
+                                <span>Editar</span>
+                              </button>
+                            )}
+
+                            {/* Finalizar pedido */}
+                            <button
+                              type="button"
+                              onClick={() => finalizarPedido(p.id)}
+                              className={`py-1.5 px-2.5 rounded-xl text-xs font-black flex items-center gap-1 cursor-pointer transition-all ${
+                                estadosTodosLiquidado(p)
+                                  ? 'bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white shadow-xs'
+                                  : 'bg-slate-200 hover:bg-slate-300 text-slate-600'
+                              }`}
+                              title={
+                                estadosTodosLiquidado(p)
+                                  ? 'Finalizar pedido y mover a Historial'
+                                  : 'Requiere que todas las prendas estén en estado Liquidado (pagado a Yesenia y liquidado entre socios)'
+                              }
+                            >
+                              <CheckCircle2 className={`w-3.5 h-3.5 ${estadosTodosLiquidado(p) ? 'text-white' : 'text-slate-500'}`} />
+                              <span>Finalizar</span>
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </motion.div>
                 )}
               </motion.div>
@@ -518,6 +603,14 @@ export default function CuentasView() {
         pageSize={pageSize}
         onPageChange={setCurrentPage}
         itemName="cuentas de clientes"
+      />
+
+      {/* 5. Modal de detalle de prendas para inspeccionar y cambiar estados */}
+      <OrderDetailModal
+        isOpen={!!selectedOrderDetail}
+        onClose={() => setSelectedOrderDetail(null)}
+        order={activeOrderForModal}
+        onEditOrder={onEditOrder}
       />
     </div>
   );

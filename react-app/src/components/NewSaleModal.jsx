@@ -34,7 +34,7 @@ import CustomSelect from './CustomSelect';
 import StatusDropdown from './StatusDropdown';
 
 export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
-  const { addVenta, updateVenta, ventas, colores, coloresNombres, lugaresEntrega } = useData();
+  const { addVenta, updateVenta, ventas, colores, coloresNombres, lugaresEntrega, validarPasoALiquidado } = useData();
   const { role } = useAuth();
   const listaColores = (coloresNombres && coloresNombres.length > 0) ? coloresNombres : COLORES_DISPONIBLES;
   const opcionesColores = (colores && colores.length > 0)
@@ -314,6 +314,20 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
         nota: nota.trim(),
         items_camisa: JSON.stringify(itemsIndividuales)
       };
+
+      if (estadoPrincipal === 'Liquidado' || itemsIndividuales.some(it => it.estado === 'Liquidado')) {
+        const dummy = {
+          ...(editingOrder || {}),
+          ...payload,
+          id: editingOrder?.id || null
+        };
+        const check = validarPasoALiquidado ? validarPasoALiquidado(dummy) : { ok: true };
+        if (!check.ok) {
+          setErrorMsg('No se puede guardar como Liquidado:\n• ' + check.faltas.join('\n• '));
+          setGuardando(false);
+          return;
+        }
+      }
 
       if (editingOrder) {
         await updateVenta(editingOrder.id, payload);

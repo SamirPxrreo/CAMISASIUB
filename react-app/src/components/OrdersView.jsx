@@ -32,6 +32,7 @@ import {
   costoTotalVenta,
   precioDeItem,
   costoDeItem,
+  estadosTodosLiquidado,
   abonoClienteTotal,
   itemsCrudosVenta,
   normalizarEstado,
@@ -47,7 +48,7 @@ import OrderDetailModal from './OrderDetailModal';
 import { useAuth } from '../context/AuthContext';
 
 export default function OrdersView({ onOpenNewSale, onEditOrder }) {
-  const { ventas, updateItemEstado, updateOrderEstadoCompleto, deleteVenta } = useData();
+  const { ventas, updateItemEstado, updateOrderEstadoCompleto, deleteVenta, finalizarPedido } = useData();
   const { role } = useAuth();
   const esAdmin = role?.role === 'admin';
   const miNombreVendedor = role?.vendedor || role?.nombre;
@@ -535,6 +536,25 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
                       clienteNombre={v.cliente_nombre}
                       duration={4500}
                     />
+
+                    {/* Botón Finalizar Pedido */}
+                    <button
+                      type="button"
+                      onClick={() => finalizarPedido(v.id)}
+                      className={`col-span-2 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                        estadosTodosLiquidado(v)
+                          ? 'bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white shadow-xs'
+                          : 'bg-slate-100 hover:bg-slate-200 text-slate-500'
+                      }`}
+                      title={
+                        estadosTodosLiquidado(v)
+                          ? 'Finalizar pedido y mover a Historial'
+                          : 'Solo se puede finalizar cuando todas las camisas estén en estado Liquidado (proveedor y socios al día)'
+                      }
+                    >
+                      <CheckCircle2 className={`w-4 h-4 ${estadosTodosLiquidado(v) ? 'text-white' : 'text-slate-400'}`} />
+                      <span>{estadosTodosLiquidado(v) ? 'Finalizar Pedido (Listo ✓)' : 'Finalizar Pedido'}</span>
+                    </button>
                   </div>
                 </div>
               </motion.div>

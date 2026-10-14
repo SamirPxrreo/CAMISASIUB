@@ -215,6 +215,37 @@ export function pedidoSocioLiquidado(v, liquidaciones) {
   return saldoSocioPendientePedido(v, liquidaciones) <= 1;
 }
 
+export function validarPasoALiquidado(venta, liquidaciones) {
+  if (!venta) return { ok: false, faltas: ['Pedido no encontrado.'] };
+  const faltas = [];
+
+  // 1. Debe estar 100% cobrado al cliente
+  const saldoCli = saldoCliente(venta);
+  if (saldoCli > 1) {
+    faltas.push(`Falta cobrar ${fmt(saldoCli)} al cliente antes de liquidar.`);
+  }
+
+  // 2. Debe estar 100% pagado al proveedor Yesenia
+  const pagos = abonosProveedorPorVentaId(venta);
+  if (pagos.pendiente > 1) {
+    faltas.push(`Falta pagar ${fmt(pagos.pendiente)} a Yesenia (registra el pago en Abonos Yesenia).`);
+  }
+
+  // 3. Debe estar 100% liquidado con el socio (Liquidaciones)
+  if (otroSocioDe(venta.vendedor)) {
+    const saldoSocio = saldoSocioPendientePedido(venta, liquidaciones);
+    if (saldoSocio > 1) {
+      const socioReceptor = otroSocioDe(venta.vendedor);
+      faltas.push(`Falta liquidar ${fmt(saldoSocio)} a ${socioReceptor} (registra el pago en Liquidaciones).`);
+    }
+  }
+
+  return {
+    ok: faltas.length === 0,
+    faltas
+  };
+}
+
 export function pedidosPendientesLiquidacion(pagador, ventas, liquidaciones) {
   return (ventas || []).filter(v =>
     v.vendedor === pagador &&
@@ -298,15 +329,24 @@ export function generarTextoResumenPedido(v) {
 }
 
 // Cálculos de deuda con el proveedor de confección (Yesenia)
-export function abonosProveedorPorVentaId(venta) {
+export function abonosProveedorPorVentaId(venta, ventasCache = null) {
   if (!venta) return { abonado: 0, costoTotal: 0, pendiente: 0 };
-  const costoVenta = costoTotalVenta(venta);
-  const crudos = itemsCrudosVenta(venta);
+  let vObj = venta;
+  if (typeof venta === 'number' || typeof venta === 'string') {
+    if (Array.isArray(ventasCache)) {
+      vObj = ventasCache.find(x => String(x.id) === String(venta)) || null;
+    } else {
+      vObj = null;
+    }
+  }
+  if (!vObj) return { abonado: 0, costoTotal: 0, pendiente: 0 };
+  const costoVenta = costoTotalVenta(vObj);
+  const crudos = itemsCrudosVenta(vObj);
   let abonado = 0;
   if (crudos && crudos.some(it => it.abono_yesenia != null && it.abono_yesenia !== '')) {
     abonado = crudos.reduce((s, it) => s + (Number(it.abono_yesenia) || 0), 0);
   } else {
-    abonado = Number(venta.abono_yesenia) || 0;
+    abonado = Number(vObj.abono_yesenia) || 0;
   }
   return {
     abonado: Math.round(abonado),

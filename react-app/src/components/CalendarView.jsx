@@ -16,9 +16,11 @@ import {
   AlertCircle,
   Pencil,
   Sparkles,
-  ShoppingBag
+  ShoppingBag,
+  CreditCard
 } from 'lucide-react';
 import { useData } from '../context/DataContext';
+import StatusDropdown from './StatusDropdown';
 import {
   fmt,
   formatearFechaHumana,
@@ -34,8 +36,8 @@ import {
   hoyColombia
 } from '../lib/utils';
 
-export default function CalendarView({ onEditOrder }) {
-  const { ventas } = useData();
+export default function CalendarView({ onEditOrder, onNavigateToCuentas }) {
+  const { ventas, updateOrderEstadoCompleto } = useData();
   const [vista, setVista] = useState('proximos'); // 'proximos' | 'mes' | 'sin-fecha'
   const [vendedorFiltro, setVendedorFiltro] = useState('Todos');
   const [busqueda, setBusqueda] = useState('');
@@ -362,10 +364,15 @@ export default function CalendarView({ onEditOrder }) {
                               </div>
                             </div>
 
-                            <span className={`text-[10.5px] font-extrabold px-2.5 py-0.5 rounded-full border ${getEstadoBadgeStyle(v.estado)}`}>
-                              {v.estado || 'Pedido'}
-                            </span>
-                          </div>
+                              {/* Selector interactivo de estado */}
+                              <div className="shrink-0">
+                                <StatusDropdown
+                                  value={normalizarEstado(v.estado)}
+                                  onChange={(nuevoEstado) => updateOrderEstadoCompleto && updateOrderEstadoCompleto(v.id, nuevoEstado)}
+                                  size="sm"
+                                />
+                              </div>
+                            </div>
 
                           {/* Prendas */}
                           <div className="space-y-1 bg-slate-50/70 p-2.5 rounded-2xl border border-slate-100 text-xs">
@@ -500,6 +507,19 @@ export default function CalendarView({ onEditOrder }) {
                               <Pencil className="w-3.5 h-3.5" />
                               <span>Editar</span>
                             </button>
+
+                            {/* Botón Ver en Cuentas */}
+                            {onNavigateToCuentas && (
+                              <button
+                                type="button"
+                                onClick={() => onNavigateToCuentas(v)}
+                                className="col-span-2 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-98 text-white text-xs font-black transition-all cursor-pointer shadow-xs hover:shadow-sm"
+                                title="Abrir este pedido en el apartado de cuentas para gestionar saldo, abono, estado o finalizarlo"
+                              >
+                                <CreditCard className="w-4 h-4 text-indigo-200" />
+                                <span>Ver en Cuentas</span>
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>
