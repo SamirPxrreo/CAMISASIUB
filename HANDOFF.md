@@ -259,3 +259,43 @@ La aplicación está completamente adaptada para usarse como una app instalada e
   - Se registra el desglose en `compra_pedidos` con el monto puntual pagado a cada pedido.
   - Se actualiza el acumulado `abono_yesenia` y la repartición proporcional en `items_camisa` en la tabla `ventas`, liberando la deuda del pedido en el taller.
 
+---
+
+## 11. Rediseño Impecable de Pedidos, Trazabilidad y Formateo Monetario
+
+### 1. Rediseño Limpio y Balanceado de Pedidos (`OrdersView.jsx`):
+- **Eliminación del Ruido Visual**: Se sustituyó el diseño abrumador con múltiples cajas anidadas por una tarjeta moderna, ventilada y equilibrada.
+- **Estructura de la Tarjeta**:
+  1. *Encabezado*: Avatar del cliente con color del vendedor, nombre claro, insignia de vendedor con color diferenciado, teléfono y estado general fijo (ej. "Mixto" o estado unánime).
+  2. *Fila de Fechas*:
+     - **Registro**: Fecha y hora legible en que se creó la venta (ej. `13 oct, 09:42 pm`).
+     - **Entrega**: Fecha programada para el cliente (`formatearFechaHumana`).
+  3. *Resumen Limpio de Prendas*: Lista estilizada con número de camisa (`#1`, `#2`), género, color, talla, versión y bordado, junto con su estado individual y lugar de entrega si aplica.
+  4. *Pie Financiero y Acciones Rápidas*:
+     - Saldo grande y destacado (`Pagado ✓` en esmeralda o `Resta $XX.XXX` en ámbar).
+     - Botón principal **"Ver detalle"** que abre `OrderDetailModal`.
+     - Accesos rápidos compactos: WhatsApp directo, Copiar resumen (con animación de check), Editar y Papelera (`InlineDeleteConfirm`).
+     - Si todas las prendas están liquidadas, aparece un botón directo para finalizar en 1 clic.
+- **Orden de Pedidos Más Recientes Primero**: Los pedidos se ordenan cronológicamente de forma descendente por `created_at` o `fecha` en todas las consultas y filtros.
+
+### 2. Trazabilidad y Auditoría de Cambios de Estado:
+- **Resguardo Lejos de la Vista Principal**: Para no sobrecargar la tarjeta, el historial no se muestra en el tablero general.
+- **Visualizador Colapsable en `OrderDetailModal`**:
+  - Botón desplegable *"Historial y Trazabilidad de Estados"* con contador de eventos registrados.
+  - Al abrirse, muestra la línea de tiempo con fecha y hora exacta (`formatearFechaYHora`), detalle del cambio (ej. "Creación del pedido", "Camisa #1 pasó a Comprado") y usuario que ejecutó la acción.
+- **Persistencia en Supabase**: Los eventos de auditoría se empaquetan en el campo `items_camisa` como `{ items: [...], historial: [...] }`, permitiendo sincronización en la nube entre dispositivos sin alterar el esquema de PostgreSQL.
+
+### 3. Autoformateo de Miles Colombiano (`formatMiles` y `parseMiles`):
+- **Bloqueo de Puntos Manuales**: En todos los inputs de dinero (`NewSaleModal`, `PurchasesView`, `SettlementsView`), se bloquea la tecla punto (`.`) y coma (`,`) para evitar ingresos erróneos de decimales.
+- **Formateo Dinámico en Vivo**: Al escribir números, el sistema inserta automáticamente los puntos de miles colombianos (ej. `2500` ➔ `2.500`, `30000` ➔ `30.000`, `150000` ➔ `150.000`).
+
+### 4. Diferenciación de Vendedores por Colores en Todo el Sistema:
+- **Samir**: Esquema azul / índigo (`text-indigo-700`, `bg-indigo-50`, `border-indigo-200`).
+- **Valentina**: Esquema rosa / fucsia (`text-fuchsia-700`, `bg-fuchsia-50`, `border-fuchsia-200`).
+- Aplicado consistentemente en:
+  - Tarjetas de pedidos (`OrdersView`).
+  - Modal de detalle de pedidos (`OrderDetailModal`).
+  - Calendario de entregas (`CalendarView`).
+  - Historial de pedidos finalizados (`HistoryView`).
+  - Gestión de compras y pagos al taller (`PurchasesView`).
+
