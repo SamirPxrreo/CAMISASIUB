@@ -10,7 +10,8 @@ import {
   precioTotalVenta,
   costoTotalVenta,
   abonoClienteTotal,
-  saldoCliente
+  saldoCliente,
+  codigoCortoPedido
 } from './utils';
 
 // Paleta corporativa elegante para Excel
@@ -496,11 +497,19 @@ export async function exportarListaCompraExcel(ventas, filtroVendedor = 'Todos')
  * EXPORTAR REPORTE COMPLETO DE VENTAS CON TABLA Y FILTROS
  * Usado en ReportsView con diseño real y AutoFilter en todas las columnas
  */
-export async function exportarReporteCompletoExcel(ventas, filtroTipo = 'todos') {
+export async function exportarReporteCompletoExcel(ventas, filtroTipo = 'por-comprar') {
   const dataset = (ventas || []).filter(v => {
-    if (filtroTipo === 'activos') return !v.finalizado && v.estado !== 'Liquidado';
-    if (filtroTipo === 'historial') return v.finalizado || v.estado === 'Liquidado';
-    return true;
+    if (filtroTipo === 'por-comprar') {
+      const items = itemsCrudosVenta(v) || [];
+      return !v.finalizado && (
+        normalizarEstado(v.estado) === 'Pedido' ||
+        items.some(it => normalizarEstado(it.estado) === 'Pedido')
+      );
+    }
+    if (filtroTipo === 'activos') {
+      return !v.finalizado;
+    }
+    return !v.finalizado;
   });
 
   if (dataset.length === 0) {
@@ -530,7 +539,7 @@ export async function exportarReporteCompletoExcel(ventas, filtroTipo = 'todos')
         const estPrenda = normalizarEstado(it.estado || v.estado);
 
         filas.push({
-          pedidoId: v.id,
+          pedidoId: codigoCortoPedido(v),
           fechaPedido: v.fecha || '',
           fechaEntrega: v.fecha_entrega || 'Por definir',
           diaSemana,
@@ -561,7 +570,7 @@ export async function exportarReporteCompletoExcel(ventas, filtroTipo = 'todos')
       const gananciaTotal = Math.max(precio * cant - costo * cant, 0);
 
       filas.push({
-        pedidoId: v.id,
+        pedidoId: codigoCortoPedido(v),
         fechaPedido: v.fecha || '',
         fechaEntrega: v.fecha_entrega || 'Por definir',
         diaSemana,
@@ -609,7 +618,7 @@ export async function exportarReporteCompletoExcel(ventas, filtroTipo = 'todos')
 
   filas.forEach((f, idx) => {
     const r = ws.addRow([
-      `#${f.pedidoId}`,
+      f.pedidoId,
       f.fechaPedido,
       f.fechaEntrega,
       f.diaSemana,

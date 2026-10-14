@@ -620,3 +620,29 @@ export function fechaFinalizacionPedido(v) {
   return 0;
 }
 
+// Genera un código de pedido corto y legible (ej: #S04, #V12, #15, #A1)
+export function codigoCortoPedido(v) {
+  if (!v) return '#';
+  const idRaw = v.id != null ? String(v.id).trim() : '';
+  if (!idRaw) return '#';
+  // Si es un número corto (1 a 4 dígitos)
+  if (/^\d{1,4}$/.test(idRaw)) return `#${idRaw}`;
+  const clean = idRaw.replace(/[^a-zA-Z0-9]/g, '');
+  if (clean.length <= 3) return `#${clean.toUpperCase()}`;
+  const fin = clean.slice(-2).toUpperCase() || '01';
+  const vLetra = (v.vendedor || 'P')[0].toUpperCase();
+  return `#${vLetra}${fin}`;
+}
+
+// Formateo humano y consistente de prendas (ej: "Negro Talla XL para Mujer · V2")
+export function descripcionPrendaHumana(it) {
+  if (!it) return '1 prenda';
+  const color = it.color || 'Negro';
+  const talla = it.talla ? `Talla ${it.talla}` : '';
+  const gen = it.genero ? `para ${it.genero === 'Mujer' ? 'Mujer' : 'Hombre'}` : '';
+  const esV2 = it.modelo === 'Nuevo' || it.modelo === 'Versión 2' || it.version === 'Nuevo' || it.version === 'Versión 2' || it.tipo === 'Nuevo';
+  const v2Tag = esV2 ? ' (V2)' : '';
+  const partes = [color, talla, gen].filter(Boolean).join(' ');
+  return `${partes}${v2Tag}`.trim();
+}
+

@@ -38,7 +38,8 @@ import {
   getVendedorColor,
   fechaHoraRegistroVenta,
   formatearFechaYHora,
-  historialVenta
+  historialVenta,
+  codigoCortoPedido
 } from '../lib/utils';
 
 export default function OrderDetailModal({ isOpen, onClose, order, onEditOrder }) {
@@ -97,6 +98,9 @@ export default function OrderDetailModal({ isOpen, onClose, order, onEditOrder }
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-mono text-xs font-black text-indigo-700 bg-indigo-50/90 px-2 py-0.5 rounded-lg border border-indigo-100 shrink-0">
+                    {codigoCortoPedido(order)}
+                  </span>
                   <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight break-words">
                     {order.cliente_nombre || 'Sin nombre'}
                   </h2>
@@ -156,21 +160,10 @@ export default function OrderDetailModal({ isOpen, onClose, order, onEditOrder }
               <div className={`p-3.5 rounded-2xl border ${
                 saldo > 0 ? 'bg-amber-50/60 border-amber-200/70' : 'bg-emerald-50/60 border-emerald-200/70'
               }`}>
-                <div className="flex items-center justify-between">
+                <div>
                   <span className={`text-[10px] font-bold uppercase tracking-wider block ${saldo > 0 ? 'text-amber-700' : 'text-emerald-700'}`}>
                     Saldo Pendiente
                   </span>
-                  {saldo > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setAbrirAbono(true)}
-                      className="px-2 py-0.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-[10px] flex items-center gap-1 shadow-2xs cursor-pointer"
-                      title="Registrar abono a este pedido"
-                    >
-                      <DollarSign className="w-3 h-3" />
-                      + Abono
-                    </button>
-                  )}
                 </div>
                 <span className={`text-base font-black block mt-0.5 ${saldo > 0 ? 'text-amber-700' : 'text-emerald-700'}`}>
                   {saldo > 0 ? fmt(saldo) : 'Al día (Liquidado)'}

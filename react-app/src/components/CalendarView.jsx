@@ -10,7 +10,6 @@ import {
   ShoppingBag,
   Sparkles,
   MapPin,
-  Clock,
   Phone,
   Shirt,
   DollarSign
@@ -27,7 +26,9 @@ import {
   estadoGeneralVenta,
   getEstadoBadgeStyle,
   hoyColombia,
-  getVendedorColor
+  getVendedorColor,
+  codigoCortoPedido,
+  descripcionPrendaHumana
 } from '../lib/utils';
 import OrderDetailModal from './OrderDetailModal';
 
@@ -320,21 +321,19 @@ export default function CalendarView({ onEditOrder, onNavigateToCuentas }) {
                           const saldo = saldoCliente(v);
                           const vCol = getVendedorColor(v.vendedor);
                           const estGral = estadoGeneralVenta(v);
-                          const horaStr = v.hora || (v.created_at ? v.created_at.slice(11, 16) : null) || '10:00';
 
                           return (
                             <motion.div
                               key={v.id}
                               whileHover={{ y: -2 }}
                               onClick={() => setOrderModal(v)}
-                              className="bg-white rounded-2xl border border-slate-200/90 hover:border-indigo-400 p-3 shadow-2xs hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between relative"
+                              className="bg-white rounded-2xl border-2 border-slate-200/90 hover:border-indigo-400 p-3 shadow-2xs hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between relative"
                             >
-                              {/* Fila Superior: Hora/ID y Badge de Vendedor */}
+                              {/* Fila Superior: Código Corto y Badge de Vendedor */}
                               <div>
                                 <div className="flex items-center justify-between gap-1 mb-1.5">
-                                  <span className="font-mono text-[11px] font-black text-slate-800 flex items-center gap-1">
-                                    <Clock className="w-3 h-3 text-slate-400" />
-                                    {horaStr}
+                                  <span className="font-mono text-[11px] font-black text-indigo-700 bg-indigo-50/90 px-1.5 py-0.5 rounded-md border border-indigo-100 flex items-center">
+                                    {codigoCortoPedido(v)}
                                   </span>
 
                                   {/* Badge Circular del Vendedor (Estilo 'IA' de la referencia) */}
@@ -368,10 +367,10 @@ export default function CalendarView({ onEditOrder, onNavigateToCuentas }) {
                                   </span>
                                 )}
 
-                                {/* Detalle Breve de Prendas */}
-                                <p className="text-[10.5px] text-slate-500 truncate mt-1 leading-tight">
+                                {/* Detalle Breve y Limpio de Prendas */}
+                                <p className="text-[10.5px] text-slate-500 truncate mt-1 leading-tight" title={items.length > 0 ? descripcionPrendaHumana(items[0]) : `${cant} camisa(s)`}>
                                   {items.length > 0
-                                    ? `${items[0].color || 'Negro'} Talla ${items[0].talla || 'U'}${
+                                    ? `${descripcionPrendaHumana(items[0])}${
                                         items.length > 1 ? ` (+${items.length - 1} más)` : ''
                                       }`
                                     : `${cant} camisa(s) Tipo Polo`}
@@ -429,7 +428,7 @@ export default function CalendarView({ onEditOrder, onNavigateToCuentas }) {
               >
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="font-extrabold text-slate-900 text-xs">#{v.id} {v.cliente_nombre}</span>
+                    <span className="font-extrabold text-slate-900 text-xs">{codigoCortoPedido(v)} {v.cliente_nombre}</span>
                     <span className="text-[10px] font-black px-2 py-0.5 rounded bg-amber-100 text-amber-800">Sin Fecha</span>
                   </div>
                   <span className="text-[11px] text-slate-500 block mt-1">

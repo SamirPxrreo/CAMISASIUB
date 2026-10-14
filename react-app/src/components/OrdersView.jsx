@@ -9,7 +9,6 @@ import {
   ChevronDown,
   ChevronUp,
   Trash2,
-  Pencil,
   CheckCircle2,
   ShoppingBag,
   Shirt,
@@ -44,7 +43,9 @@ import {
   ESTADOS_PASTEL_CHIP,
   generarTextoResumenPedido,
   getVendedorColor,
-  fechaHoraRegistroVenta
+  fechaHoraRegistroVenta,
+  codigoCortoPedido,
+  descripcionPrendaHumana
 } from '../lib/utils';
 import InlineDeleteConfirm from './InlineDeleteConfirm';
 import Pagination from './Pagination';
@@ -339,9 +340,14 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
                         {(v.cliente_nombre || 'C')[0].toUpperCase()}
                       </div>
                       <div className="min-w-0">
-                        <h3 className="font-black text-slate-900 text-sm leading-tight truncate" title={v.cliente_nombre}>
-                          {v.cliente_nombre}
-                        </h3>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-mono text-xs font-black text-indigo-700 bg-indigo-50/90 px-1.5 py-0.5 rounded-md border border-indigo-100 shrink-0">
+                            {codigoCortoPedido(v)}
+                          </span>
+                          <h3 className="font-black text-slate-900 text-sm leading-tight truncate" title={v.cliente_nombre}>
+                            {v.cliente_nombre}
+                          </h3>
+                        </div>
                         <div className="flex items-center gap-1.5 text-[11px] font-semibold mt-1 flex-wrap">
                           <span className={`px-2 py-0.5 rounded-lg font-black text-[10.5px] border ${vCol.badge}`}>
                             {v.vendedor || 'Samir'}
@@ -413,14 +419,9 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
                             <span className="w-5 h-5 rounded-lg bg-white border border-slate-200/80 text-slate-600 font-black text-[10px] flex items-center justify-center shrink-0">
                               #{idx + 1}
                             </span>
-                            <span className="font-bold text-slate-800 text-[11.5px] truncate">
-                              {it.color || 'Negro'} · Talla {it.talla || 'U'} para {it.genero === 'Mujer' ? 'Mujer' : 'Hombre'}
+                            <span className="font-bold text-slate-800 text-[11.5px] truncate" title={descripcionPrendaHumana(it)}>
+                              {descripcionPrendaHumana(it)}
                             </span>
-                            {it.modelo === 'Nuevo' && (
-                              <span className="text-[10px] font-black px-1.5 py-0.2 rounded-md bg-amber-500/15 text-amber-700 border border-amber-500/30 shrink-0">
-                                v2
-                              </span>
-                            )}
                             {it.programa && (
                               <span className="hidden sm:inline-block text-[10px] font-bold text-indigo-600 bg-indigo-50/80 px-1.5 py-0.2 rounded border border-indigo-100/80 truncate max-w-[110px]" title={it.programa}>
                                 {it.programa}
@@ -461,16 +462,17 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
                     </div>
                   </div>
 
-                  {/* BOTONES DE ACCIÓN: Botón principal "Ver detalle", "Abonar" + Accesos rápidos */}
+                  {/* BOTONES DE ACCIÓN: "Ver", "Abonar", "Finalizar" + Accesos rápidos */}
                   <div className="flex items-center gap-1.5 pt-1">
-                    {/* Botón Principal: Ver Detalle */}
+                    {/* Botón Principal: Ver */}
                     <button
                       type="button"
                       onClick={() => setSelectedOrderDetail(v)}
                       className="flex-1 py-2 px-3 rounded-2xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-black border border-indigo-200/80 flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs hover:shadow-xs group"
+                      title="Ver detalle completo del pedido"
                     >
                       <Eye className="w-3.5 h-3.5 text-indigo-600 group-hover:scale-110 transition-transform" />
-                      <span>Ver detalle</span>
+                      <span>Ver</span>
                     </button>
 
                     {/* Botón Abonar (si tiene saldo pendiente) */}
@@ -486,17 +488,24 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
                       </button>
                     )}
 
-                    {/* Si está 100% liquidado, acceso directo a Finalizar */}
-                    {todasLiquidadas && (
-                      <button
-                        type="button"
-                        onClick={() => finalizarPedido(v.id)}
-                        className="p-2 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-transform active:scale-95 cursor-pointer shrink-0"
-                        title="¡Todas las prendas están liquidadas! Clic para finalizar pedido"
-                      >
-                        <CheckCircle2 className="w-4 h-4" />
-                      </button>
-                    )}
+                    {/* Botón Finalizar Pedido */}
+                    <button
+                      type="button"
+                      onClick={() => finalizarPedido(v.id)}
+                      className={`py-2 px-2.5 rounded-2xl text-xs font-black transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
+                        todasLiquidadas
+                          ? 'bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white shadow-xs'
+                          : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200/80'
+                      }`}
+                      title={
+                        todasLiquidadas
+                          ? '¡Todas las prendas liquidadas! Finalizar pedido y mover a Historial'
+                          : 'Finalizar pedido (validará que esté cobrado, pagado a Yesenia y liquidado)'
+                      }
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>Finalizar</span>
+                    </button>
 
                     {/* Botón Rápido: WhatsApp */}
                     {waLink && (
@@ -524,18 +533,6 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
                     >
                       {copiadoPedidoId === v.id ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                     </button>
-
-                    {/* Botón Rápido: Editar */}
-                    {onEditOrder && (
-                      <button
-                        type="button"
-                        onClick={() => onEditOrder(v)}
-                        className="p-2 rounded-2xl bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 transition-colors cursor-pointer shrink-0"
-                        title="Editar pedido"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                    )}
 
                     {/* Botón Rápido: Borrar / Papelera */}
                     <InlineDeleteConfirm

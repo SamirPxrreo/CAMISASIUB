@@ -72,7 +72,7 @@ export default function InlineDeleteConfirm({ onDelete, clienteNombre, title, co
     <button
       type="button"
       onClick={handleStartDelete}
-      className="flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-600 text-xs font-bold transition-colors cursor-pointer"
+      className="flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-xl bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200/90 hover:border-rose-600 text-xs font-bold transition-all shadow-2xs hover:shadow-xs cursor-pointer active:scale-95"
       title="Eliminar elemento"
     >
       <Trash2 className="w-3.5 h-3.5" />

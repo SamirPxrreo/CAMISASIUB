@@ -361,5 +361,42 @@ La aplicación está completamente adaptada para usarse como una app instalada e
 - Se reforzó el contorno con `border-2 border-slate-200/90 hover:border-indigo-400` y sombra suave, logrando una delimitación visual nítida que separa claramente cada pedido en la pantalla.
 - División interna estructurada: encabezado del cliente separado con `border-b` y pie de tarjeta separado con `border-t-2`, brindando orden y jerarquía visual inmediata.
 
+---
+
+## 14. Simplificación de Tarjetas, Botón Rojo de Borrado, Código Corto y Reportes de 2 Opciones
+
+### 1. Código Corto de Pedido (`codigoCortoPedido`):
+- Se implementó un identificador compacto y amigable (ej: `#S04`, `#V12`, `#15`, `#A1`) en lugar de IDs largos o alfanuméricos excesivos.
+- Muestra la inicial del vendedor (`S` para Samir, `V` para Valentina) acompañada de los dos últimos dígitos, o el ID directo si es numérico corto.
+- Visible en: encabezado de tarjeta en `OrdersView`, tarjetas de `CalendarView`, cabecera de `OrderDetailModal`, tabla de vista previa de `ReportsView` y hoja de cálculo de `excelExport.js`.
+
+### 2. Pulido de Tarjetas del Calendario (`CalendarView.jsx`):
+- **Eliminación de la Hora**: Se retiró la hora falsa/fija (`10:00`, `Clock`) que cargaba visualmente la vista.
+- **Jerarquía Reenfocada**:
+  - Código corto `#S04` y badge circular del socio en la fila superior.
+  - Nombre del cliente destacado en negrita.
+  - Pill de lugar de entrega o número de prendas.
+  - Descripción limpia de prendas con `descripcionPrendaHumana` (ej: `Negro Talla XL para Mujer (V2)`).
+  - Chip pastel de estado y saldo en tiempo real (`Pagado ✓` o `Resta $XX.XXX`).
+
+### 3. Botones y Flujo de Tarjetas de Pedidos (`OrdersView.jsx`):
+- **Botón "Ver"**: Se redujo el texto de "Ver detalle" a simplemente **"Ver"** (con icono `Eye`).
+- **Edición Centralizada**: Se quitó el botón de editar de la tarjeta principal para evitar sobrecarga de botones; la opción de "Editar Pedido" queda limpia y exclusivamente dentro de la ventana modal de "Ver" (`OrderDetailModal`).
+- **Botón "Finalizar" Restaurado**: Visible en el pie de la tarjeta con icono `CheckCircle2` y texto "Finalizar". Se activa en verde esmeralda cuando todas las prendas están liquidadas, y si faltan requisitos alerta con precisión qué saldo o pago a Yesenia/socio está pendiente.
+- **Botón de Borrado Rojo (`InlineDeleteConfirm.jsx`)**: El botón de papelera ahora tiene estilo rojo de por sí (`bg-rose-50 text-rose-600 border-rose-200`) y resalta con mayor intensidad al pasar el cursor (`hover:bg-rose-600 hover:text-white`).
+
+### 4. Ajustes en Modal de Detalle (`OrderDetailModal.jsx`):
+- Se eliminó el botón duplicado de `+ Abono` dentro del recuadro de "Saldo Pendiente", ya que la ventana ya cuenta con el botón principal "Abonar" en su barra inferior de acciones.
+- Se agregó el código corto `#S04` en el encabezado junto al nombre del cliente.
+
+### 5. Reportes con 2 Botones Exactos y Vista Previa Completa (`ReportsView.jsx` & `excelExport.js`):
+- **Exactamente 2 Alcances**:
+  1. **"Solo Pedidos por Comprar"**: Filtra pedidos con estado `"Pedido"` pendientes de comprar tela.
+  2. **"Todos los Pedidos Activos"**: Exporta todos los pedidos activos (`!v.finalizado`) que figuran en el menú de pedidos sin importar su estado en curso.
+- **Vista Previa de Tabla Completa con Scroll**:
+  - Se eliminó el recorte de 5 registros (`slice(0, 5)`).
+  - La tabla muestra el 100% de los pedidos seleccionados dentro de un contenedor desplazable (`max-h-[520px] overflow-auto`).
+  - Cabecera fija (`sticky top-0 z-10`) con fondo sólido para facilitar la navegación y lectura.
+
 
 
