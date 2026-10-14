@@ -14,12 +14,10 @@ import {
   User,
   Sparkles,
   Info,
-  FileSpreadsheet,
   CheckCircle2
 } from 'lucide-react';
 import StatusDropdown from './StatusDropdown';
 import { useData } from '../context/DataContext';
-import { exportarPedidoIndividualExcel } from '../lib/excelExport';
 import {
   fmt,
   formatearFechaHumana,
@@ -31,13 +29,13 @@ import {
   generarMensajeWhatsApp,
   getEstadoBadgeStyle,
   normalizarEstado,
+  estadoGeneralVenta,
   estadosTodosLiquidado
 } from '../lib/utils';
 
 export default function OrderDetailModal({ isOpen, onClose, order, onEditOrder }) {
   const { updateItemEstado, updateOrderEstadoCompleto, finalizarPedido, colores } = useData();
   const [copiado, setCopiado] = useState(false);
-  const [exportando, setExportando] = useState(false);
 
   if (!isOpen || !order) return null;
 
@@ -53,18 +51,6 @@ export default function OrderDetailModal({ isOpen, onClose, order, onEditOrder }
     navigator.clipboard.writeText(texto);
     setCopiado(true);
     setTimeout(() => setCopiado(false), 2500);
-  };
-
-  const handleExportarExcel = async () => {
-    try {
-      setExportando(true);
-      await exportarPedidoIndividualExcel(order);
-    } catch (e) {
-      console.warn('Error exportando pedido a Excel:', e);
-      alert(e.message || 'Error al exportar el pedido a Excel');
-    } finally {
-      setExportando(false);
-    }
   };
 
   const getColorHex = (nombreColor) => {
@@ -103,11 +89,9 @@ export default function OrderDetailModal({ isOpen, onClose, order, onEditOrder }
                   <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight break-words">
                     {order.cliente_nombre || 'Sin nombre'}
                   </h2>
-                  <StatusDropdown
-                    value={normalizarEstado(order.estado)}
-                    onChange={(nuevoEstado) => updateOrderEstadoCompleto && updateOrderEstadoCompleto(order.id, nuevoEstado)}
-                    size="sm"
-                  />
+                  <span className={`text-[11px] font-black px-2.5 py-1 rounded-full border shadow-2xs tracking-tight ${getEstadoBadgeStyle(estadoGeneralVenta(order))}`}>
+                    {estadoGeneralVenta(order)}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-slate-500 font-medium mt-0.5 flex-wrap">
                   <span className="font-bold text-indigo-600 flex items-center gap-1">
@@ -271,14 +255,14 @@ export default function OrderDetailModal({ isOpen, onClose, order, onEditOrder }
               <button
                 type="button"
                 onClick={handleCopiarWhatsApp}
-                className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
+                className={`p-2.5 rounded-2xl border transition-all cursor-pointer ${
                   copiado
-                    ? 'bg-emerald-600 text-white shadow-xs'
-                    : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200'
+                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs scale-105'
+                    : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200'
                 }`}
+                title={copiado ? '¡Copiado para WhatsApp!' : 'Copiar detalle para WhatsApp'}
               >
                 {copiado ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                <span>{copiado ? '¡Copiado!' : 'Copiar para WhatsApp'}</span>
               </button>
 
               {waLink && (
@@ -286,23 +270,13 @@ export default function OrderDetailModal({ isOpen, onClose, order, onEditOrder }
                   href={waLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center p-2.5 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition-colors"
+                  className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
                   title="Abrir WhatsApp"
                 >
                   <MessageCircle className="w-4 h-4" />
+                  <span>WhatsApp</span>
                 </a>
               )}
-
-              <button
-                type="button"
-                disabled={exportando}
-                onClick={handleExportarExcel}
-                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
-                title="Descargar este pedido en Excel (.xlsx) con resumen consolidado por tallas y colores"
-              >
-                <FileSpreadsheet className="w-4 h-4 text-indigo-600" />
-                <span>{exportando ? 'Exportando...' : 'Exportar Excel'}</span>
-              </button>
             </div>
 
             <div className="flex items-center gap-2 w-full sm:w-auto">

@@ -20,7 +20,6 @@ import {
   CreditCard
 } from 'lucide-react';
 import { useData } from '../context/DataContext';
-import StatusDropdown from './StatusDropdown';
 import {
   fmt,
   formatearFechaHumana,
@@ -29,6 +28,7 @@ import {
   abonoClienteTotal,
   itemsCrudosVenta,
   normalizarEstado,
+  estadoGeneralVenta,
   getEstadoBadgeStyle,
   getWhatsAppLink,
   generarMensajeWhatsApp,
@@ -37,7 +37,7 @@ import {
 } from '../lib/utils';
 
 export default function CalendarView({ onEditOrder, onNavigateToCuentas }) {
-  const { ventas, updateOrderEstadoCompleto } = useData();
+  const { ventas } = useData();
   const [vista, setVista] = useState('proximos'); // 'proximos' | 'mes' | 'sin-fecha'
   const [vendedorFiltro, setVendedorFiltro] = useState('Todos');
   const [busqueda, setBusqueda] = useState('');
@@ -364,13 +364,11 @@ export default function CalendarView({ onEditOrder, onNavigateToCuentas }) {
                               </div>
                             </div>
 
-                              {/* Selector interactivo de estado */}
+                              {/* Estado general fijo (Mixto o el estado unánime) */}
                               <div className="shrink-0">
-                                <StatusDropdown
-                                  value={normalizarEstado(v.estado)}
-                                  onChange={(nuevoEstado) => updateOrderEstadoCompleto && updateOrderEstadoCompleto(v.id, nuevoEstado)}
-                                  size="sm"
-                                />
+                                <span className={`text-[10.5px] font-black px-2.5 py-0.5 rounded-full border shadow-2xs ${getEstadoBadgeStyle(estadoGeneralVenta(v))}`}>
+                                  {estadoGeneralVenta(v)}
+                                </span>
                               </div>
                             </div>
 

@@ -40,6 +40,50 @@ import {
 import InlineDeleteConfirm from './InlineDeleteConfirm';
 import Pagination from './Pagination';
 
+export function getVendedorColor(vendedor) {
+  const v = String(vendedor || '').toLowerCase();
+  if (v.includes('val')) {
+    return {
+      nombre: 'Valentina',
+      bg: 'bg-fuchsia-50',
+      text: 'text-fuchsia-700',
+      border: 'border-fuchsia-200',
+      avatarBg: 'bg-fuchsia-100 border-fuchsia-200 text-fuchsia-700',
+      badge: 'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200',
+      ring: 'ring-fuchsia-300',
+      activeBorder: 'border-fuchsia-400',
+      solid: 'bg-fuchsia-600 hover:bg-fuchsia-700 text-white',
+      accentText: 'text-fuchsia-600 hover:text-fuchsia-800'
+    };
+  }
+  if (v.includes('sam')) {
+    return {
+      nombre: 'Samir',
+      bg: 'bg-indigo-50',
+      text: 'text-indigo-700',
+      border: 'border-indigo-200',
+      avatarBg: 'bg-indigo-100 border-indigo-200 text-indigo-700',
+      badge: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+      ring: 'ring-indigo-300',
+      activeBorder: 'border-indigo-400',
+      solid: 'bg-indigo-600 hover:bg-indigo-700 text-white',
+      accentText: 'text-indigo-600 hover:text-indigo-800'
+    };
+  }
+  return {
+    nombre: vendedor || 'Ambos',
+    bg: 'bg-amber-50',
+    text: 'text-amber-800',
+    border: 'border-amber-200',
+    avatarBg: 'bg-amber-100 border-amber-200 text-amber-800',
+    badge: 'bg-amber-50 text-amber-800 border-amber-200',
+    ring: 'ring-amber-300',
+    activeBorder: 'border-amber-400',
+    solid: 'bg-amber-600 hover:bg-amber-700 text-white',
+    accentText: 'text-amber-600 hover:text-amber-800'
+  };
+}
+
 export default function PurchasesView() {
   const { compras, compraAportes, compraPedidos = [], ventas, refreshData } = useData();
   const { role } = useAuth();
@@ -50,8 +94,7 @@ export default function PurchasesView() {
   const [fecha, setFecha] = useState(hoyColombia());
   const [comprador, setComprador] = useState(miVendedor || 'Samir');
   const [observaciones, setObservaciones] = useState('');
-  const [aporteSamir, setAporteSamir] = useState(0);
-  const [aporteVal, setAporteVal] = useState(0);
+  const [montoManual, setMontoManual] = useState('');
   const [pedidosSeleccionados, setPedidosSeleccionados] = useState([]);
   const [abonosPorPedido, setAbonosPorPedido] = useState({});
   const [guardando, setGuardando] = useState(false);
@@ -147,11 +190,25 @@ export default function PurchasesView() {
     }));
   };
 
+  // Suma total calculada automáticamente de los abonos asignados a los pedidos seleccionados
+  const sumaAbonosPedidos = useMemo(() => {
+    return pedidosSeleccionados.reduce((s, id) => {
+      const p = pedidosPendientesProveedor.find(x => x.id === id);
+      const val = abonosPorPedido[id] !== undefined
+        ? Number(abonosPorPedido[id]) || 0
+        : (p?.pendienteProveedor || 0);
+      return s + val;
+    }, 0);
+  }, [pedidosSeleccionados, abonosPorPedido, pedidosPendientesProveedor]);
+
   const handleGuardarCompra = async (e) => {
     e.preventDefault();
-    const totalAbono = (Number(aporteSamir) || 0) + (Number(aporteVal) || 0);
+    const totalAbono = pedidosSeleccionados.length > 0
+      ? sumaAbonosPedidos
+      : (Number(montoManual) || 0);
+
     if (totalAbono <= 0) {
-      setErrorMsg('Ingresa un monto de aporte válido para al menos uno de los socios.');
+      setErrorMsg('Selecciona al menos un pedido para abonar o ingresa un monto válido.');
       return;
     }
 
@@ -184,21 +241,47 @@ export default function PurchasesView() {
 
       if (cErr) throw cErr;
 
-      // 2. Guardar aportes por socio en compra_aportes
+      // 2. Guardar aportes por socio en compra_aportes asignado a la persona que entregó el dinero
+      let finalAporteSamir = 0;
+      let finalAporteVal = 0;
+
+      if (comprador === 'Samir') {
+        finalAporteSamir = totalAbono;
+      } else if (comprador === 'Valentina') {
+        finalAporteVal = totalAbono;
+      } else if (comprador === 'Ambos') {
+        if (pedidosSeleccionados.length > 0) {
+          pedidosSeleccionados.forEach(id => {
+            const p = pedidosPendientesProveedor.find(x => x.id === id);
+            const val = abonosPorPedido[id] !== undefined
+              ? Number(abonosPorPedido[id]) || 0
+              : (p?.pendienteProveedor || 0);
+            if (p?.vendedor === 'Valentina') {
+              finalAporteVal += val;
+            } else {
+              finalAporteSamir += val;
+            }
+          });
+        } else {
+          finalAporteSamir = Math.round(totalAbono / 2);
+          finalAporteVal = totalAbono - finalAporteSamir;
+        }
+      }
+
       const aportesInserts = [];
-      if (Number(aporteSamir) > 0) {
+      if (finalAporteSamir > 0) {
         aportesInserts.push({
           compra_id: cData.id,
           socio: 'Samir',
-          monto: Number(aporteSamir),
+          monto: finalAporteSamir,
           fecha
         });
       }
-      if (Number(aporteVal) > 0) {
+      if (finalAporteVal > 0) {
         aportesInserts.push({
           compra_id: cData.id,
           socio: 'Valentina',
-          monto: Number(aporteVal),
+          monto: finalAporteVal,
           fecha
         });
       }
@@ -254,8 +337,7 @@ export default function PurchasesView() {
 
       await refreshData();
       setModalAbierto(false);
-      setAporteSamir(0);
-      setAporteVal(0);
+      setMontoManual('');
       setObservaciones('');
       setPedidosSeleccionados([]);
       setAbonosPorPedido({});
@@ -453,7 +535,7 @@ export default function PurchasesView() {
         <div className="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-violet-100 text-violet-700 font-black flex items-center justify-center text-sm">
+              <div className="w-10 h-10 rounded-2xl bg-fuchsia-100 border border-fuchsia-200 text-fuchsia-700 font-black flex items-center justify-center text-sm">
                 V
               </div>
               <div>
@@ -476,7 +558,7 @@ export default function PurchasesView() {
               <button
                 type="button"
                 onClick={() => setExpandirDeudaVal(!expandirDeudaVal)}
-                className="w-full flex items-center justify-between text-xs font-bold text-violet-600 hover:text-violet-800 py-1 cursor-pointer"
+                className="w-full flex items-center justify-between text-xs font-bold text-fuchsia-600 hover:text-fuchsia-800 py-1 cursor-pointer"
               >
                 <span>{expandirDeudaVal ? 'Ocultar detalle de pedidos' : `Ver ${deudaDetalleVal.length} pedidos pendientes`}</span>
                 {expandirDeudaVal ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
@@ -548,7 +630,7 @@ export default function PurchasesView() {
                         </div>
                       </div>
 
-                      <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-cyan-100 text-cyan-900 border border-cyan-200">
+                      <span className={`text-[11px] font-black px-2.5 py-0.5 rounded-full border shadow-2xs ${getVendedorColor(c.comprador).badge}`}>
                         {c.comprador || 'Samir'}
                       </span>
                     </div>
@@ -558,12 +640,15 @@ export default function PurchasesView() {
                       <div className="p-2.5 rounded-2xl bg-slate-50 border border-slate-100 space-y-1 text-xs">
                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Aportaron en esta visita:</span>
                         <div className="flex flex-wrap gap-2">
-                          {info.aportesCompra.map((a, i) => (
-                            <span key={i} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white border border-slate-200/80 font-bold text-[11px] text-slate-800 shadow-2xs">
-                              <span className="text-slate-500">{a.socio}:</span>
-                              <span className="text-emerald-700 font-black">{fmt(a.monto)}</span>
-                            </span>
-                          ))}
+                          {info.aportesCompra.map((a, i) => {
+                            const sc = getVendedorColor(a.socio);
+                            return (
+                              <span key={i} className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl border font-bold text-[11px] shadow-2xs ${sc.bg} ${sc.border}`}>
+                                <span className={sc.text}>{a.socio}:</span>
+                                <span className="text-emerald-700 font-black">{fmt(a.monto)}</span>
+                              </span>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -740,7 +825,11 @@ export default function PurchasesView() {
                     className={`w-full px-3 py-2 rounded-xl text-xs font-bold outline-none border transition-colors ${
                       !esAdmin
                         ? 'bg-slate-100 text-slate-600 border-slate-200 cursor-not-allowed'
-                        : 'bg-slate-50 border-slate-200 text-slate-800'
+                        : comprador === 'Valentina'
+                        ? 'bg-fuchsia-50/50 border-fuchsia-200 text-fuchsia-900'
+                        : comprador === 'Ambos'
+                        ? 'bg-amber-50/50 border-amber-200 text-amber-900'
+                        : 'bg-indigo-50/50 border-indigo-200 text-indigo-900'
                     }`}
                   >
                     <option value="Samir">Samir</option>
@@ -750,107 +839,151 @@ export default function PurchasesView() {
                 </div>
               </div>
 
-              {/* Aportes individuales por socio */}
-              <div className="grid grid-cols-2 gap-2 p-3 bg-slate-50 rounded-2xl border border-slate-200/80">
-                <div>
-                  <label className="font-bold text-indigo-700 block mb-1">Aporte Samir ($)</label>
+              {/* Resumen del Aporte del Vendedor (Calculado automáticamente o editable si no hay pedidos) */}
+              {pedidosSeleccionados.length > 0 ? (
+                <div
+                  className={`p-4 rounded-2xl border transition-all ${
+                    comprador === 'Valentina'
+                      ? 'bg-fuchsia-50/80 border-fuchsia-200'
+                      : comprador === 'Ambos'
+                      ? 'bg-amber-50/80 border-amber-200'
+                      : 'bg-indigo-50/80 border-indigo-200'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`w-10 h-10 rounded-2xl font-black flex items-center justify-center text-sm border shadow-xs ${
+                          comprador === 'Valentina'
+                            ? 'bg-fuchsia-100 border-fuchsia-200 text-fuchsia-700'
+                            : comprador === 'Ambos'
+                            ? 'bg-amber-100 border-amber-200 text-amber-800'
+                            : 'bg-indigo-100 border-indigo-200 text-indigo-700'
+                        }`}
+                      >
+                        {comprador === 'Valentina' ? 'V' : comprador === 'Ambos' ? 'A' : 'S'}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                            Dinero entregado por:
+                          </span>
+                          <span
+                            className={`text-xs font-black px-2 py-0.5 rounded-full border ${
+                              getVendedorColor(comprador).badge
+                            }`}
+                          >
+                            {comprador}
+                          </span>
+                        </div>
+                        <span className="text-[11px] text-slate-500 font-medium mt-0.5 block">
+                          Suma automática de {pedidosSeleccionados.length} pedido{pedidosSeleccionados.length > 1 ? 's' : ''} seleccionado{pedidosSeleccionados.length > 1 ? 's' : ''}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="text-right">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">
+                        Total Aporte
+                      </span>
+                      <span className="text-base sm:text-lg font-black text-emerald-600">
+                        {fmt(sumaAbonosPedidos)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  className={`p-3.5 rounded-2xl border ${
+                    comprador === 'Valentina'
+                      ? 'bg-fuchsia-50/60 border-fuchsia-200'
+                      : comprador === 'Ambos'
+                      ? 'bg-amber-50/60 border-amber-200'
+                      : 'bg-indigo-50/60 border-indigo-200'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label
+                      className={`font-black text-xs ${
+                        comprador === 'Valentina'
+                          ? 'text-fuchsia-800'
+                          : comprador === 'Ambos'
+                          ? 'text-amber-800'
+                          : 'text-indigo-800'
+                      }`}
+                    >
+                      Aporte directo de {comprador} ($)
+                    </label>
+                    <span className="text-[10px] text-slate-400 font-medium">
+                      O selecciona pedidos abajo para sumar automáticamente
+                    </span>
+                  </div>
                   <input
                     type="number"
                     min="0"
                     step="1000"
-                    value={aporteSamir === '' ? '' : aporteSamir}
+                    value={montoManual === '' ? '' : montoManual}
                     onFocus={(e) => e.target.select()}
                     onChange={(e) => {
                       const val = e.target.value;
-                      setAporteSamir(val === '' ? '' : (isNaN(Number(val)) ? '' : Number(val)));
+                      setMontoManual(val === '' ? '' : (isNaN(Number(val)) ? '' : Number(val)));
                     }}
                     onBlur={() => {
-                      if (aporteSamir === '' || isNaN(aporteSamir)) setAporteSamir(0);
+                      if (montoManual === '' || isNaN(montoManual)) setMontoManual('');
                     }}
-                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-black text-indigo-700 outline-none focus:border-indigo-500"
+                    placeholder="Ingresa valor o selecciona pedidos abajo..."
+                    className={`w-full px-3 py-2 rounded-xl bg-white border text-xs font-black outline-none ${
+                      comprador === 'Valentina'
+                        ? 'border-fuchsia-200 text-fuchsia-800 focus:border-fuchsia-500'
+                        : comprador === 'Ambos'
+                        ? 'border-amber-200 text-amber-800 focus:border-amber-500'
+                        : 'border-indigo-200 text-indigo-800 focus:border-indigo-500'
+                    }`}
                   />
                 </div>
-                <div>
-                  <label className="font-bold text-violet-700 block mb-1">Aporte Valentina ($)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="1000"
-                    value={aporteVal === '' ? '' : aporteVal}
-                    onFocus={(e) => e.target.select()}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setAporteVal(val === '' ? '' : (isNaN(Number(val)) ? '' : Number(val)));
-                    }}
-                    onBlur={() => {
-                      if (aporteVal === '' || isNaN(aporteVal)) setAporteVal(0);
-                    }}
-                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-black text-violet-700 outline-none focus:border-violet-500"
-                  />
-                </div>
-                <div className="col-span-2 pt-1 border-t border-slate-200/60 flex justify-between text-xs font-black text-slate-800">
-                  <span>Total Abono a Yesenia:</span>
-                  <span className="text-emerald-600 text-sm">{fmt((Number(aporteSamir) || 0) + (Number(aporteVal) || 0))}</span>
-                </div>
-              </div>
+              )}
 
               {/* Selector de pedidos cubiertos en este abono */}
               <div>
-                <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center justify-between mb-2">
                   <label className="font-bold text-slate-700 block">
                     Pedidos que se pagan en esta visita ({pedidosSeleccionados.length} seleccionados):
                   </label>
                   {pedidosSeleccionados.length > 0 && (
-                    <span className="text-[11px] font-black text-indigo-700">
-                      Total pedidos: {fmt(
-                        pedidosSeleccionados.reduce((s, id) => {
-                          const val = abonosPorPedido[id] !== undefined
-                            ? Number(abonosPorPedido[id]) || 0
-                            : (pedidosPendientesProveedor.find(p => p.id === id)?.pendienteProveedor || 0);
-                          return s + val;
-                        }, 0)
-                      )}
+                    <span className={`text-[11px] font-black ${comprador === 'Valentina' ? 'text-fuchsia-700' : 'text-indigo-700'}`}>
+                      Total pedidos: {fmt(sumaAbonosPedidos)}
                     </span>
                   )}
                 </div>
-
-                {/* Botón rápido para igualar el aporte al total asignado a pedidos */}
-                {pedidosSeleccionados.length > 0 && (
-                  <div className="mb-2 flex items-center justify-end">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const sum = pedidosSeleccionados.reduce((s, id) => {
-                          const val = abonosPorPedido[id] !== undefined
-                            ? Number(abonosPorPedido[id]) || 0
-                            : (pedidosPendientesProveedor.find(p => p.id === id)?.pendienteProveedor || 0);
-                          return s + val;
-                        }, 0);
-                        if (comprador === 'Valentina') {
-                          setAporteVal(sum);
-                        } else {
-                          setAporteSamir(sum);
-                        }
-                      }}
-                      className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer underline"
-                    >
-                      <span>Copiar suma al aporte de {comprador === 'Valentina' ? 'Valentina' : 'Samir'}</span>
-                    </button>
-                  </div>
-                )}
 
                 <div className="max-h-60 overflow-y-auto space-y-2 bg-slate-50 p-2.5 rounded-2xl border border-slate-200 text-[11px]">
                   {pedidosPendientesProveedor.map((p) => {
                     const isChecked = pedidosSeleccionados.includes(p.id);
                     const abonoIngresado = abonosPorPedido[p.id] !== undefined ? abonosPorPedido[p.id] : p.pendienteProveedor;
                     const restante = Math.max(p.pendienteProveedor - (Number(abonoIngresado) || 0), 0);
+                    const isVal = (p.vendedor || '').toLowerCase().includes('val');
+                    const vendStyle = isVal
+                      ? {
+                          active: 'bg-fuchsia-50/80 border-fuchsia-200 ring-1 ring-fuchsia-300/50',
+                          badge: 'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200',
+                          inputBorder: 'border-fuchsia-200 text-fuchsia-700 focus:border-fuchsia-500',
+                          checkbox: 'accent-fuchsia-600',
+                          label: 'text-fuchsia-900'
+                        }
+                      : {
+                          active: 'bg-indigo-50/80 border-indigo-200 ring-1 ring-indigo-300/50',
+                          badge: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+                          inputBorder: 'border-indigo-200 text-indigo-700 focus:border-indigo-500',
+                          checkbox: 'accent-indigo-600',
+                          label: 'text-indigo-900'
+                        };
 
                     return (
                       <div
                         key={p.id}
                         className={`p-2.5 rounded-2xl border transition-all ${
                           isChecked
-                            ? 'bg-indigo-50/80 border-indigo-200 ring-1 ring-indigo-300/50'
+                            ? vendStyle.active
                             : 'hover:bg-slate-100 bg-white border-slate-200/70'
                         }`}
                       >
@@ -863,11 +996,14 @@ export default function PurchasesView() {
                               type="checkbox"
                               checked={isChecked}
                               onChange={() => {}}
-                              className="w-4 h-4 rounded text-indigo-600 cursor-pointer shrink-0"
+                              className={`w-4 h-4 rounded cursor-pointer shrink-0 ${vendStyle.checkbox}`}
                             />
                             <div className="min-w-0">
                               <span className="font-extrabold text-slate-800 text-xs block truncate">
-                                {p.cliente_nombre || 'Cliente'} <span className="text-slate-400 font-semibold">({p.vendedor || 'Samir'})</span>
+                                {p.cliente_nombre || 'Cliente'}{' '}
+                                <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-md border ${vendStyle.badge}`}>
+                                  {p.vendedor || 'Samir'}
+                                </span>
                               </span>
                               <span className="text-[10px] text-slate-500 block">
                                 {p.cantidad} camisa(s) · {p.fecha ? formatearFechaHumana(p.fecha) : ''}
@@ -884,9 +1020,9 @@ export default function PurchasesView() {
 
                         {/* Campo editable de cuánto se le aporta a este pedido específico */}
                         {isChecked && (
-                          <div className="mt-2 pt-2 border-t border-indigo-100 flex items-center justify-between gap-3">
+                          <div className="mt-2 pt-2 border-t border-slate-200/60 flex items-center justify-between gap-3">
                             <div className="flex-1">
-                              <label className="text-[10px] font-bold text-indigo-900 block mb-0.5">
+                              <label className={`text-[10px] font-bold block mb-0.5 ${vendStyle.label}`}>
                                 Aporte / Seña a este pedido ($):
                               </label>
                               <input
@@ -904,7 +1040,7 @@ export default function PurchasesView() {
                                     handleCambioAbonoPedido(p.id, 0);
                                   }
                                 }}
-                                className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-indigo-200 text-xs font-black text-indigo-700 outline-none focus:border-indigo-500 shadow-2xs"
+                                className={`w-full px-2.5 py-1.5 rounded-xl bg-white border text-xs font-black outline-none shadow-2xs ${vendStyle.inputBorder}`}
                                 placeholder={`$ Abono (máx ${fmt(p.pendienteProveedor)})`}
                               />
                             </div>
@@ -950,7 +1086,13 @@ export default function PurchasesView() {
                 <button
                   type="submit"
                   disabled={guardando}
-                  className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold disabled:opacity-50"
+                  className={`px-5 py-2 rounded-xl text-white font-bold disabled:opacity-50 transition-colors shadow-xs cursor-pointer ${
+                    comprador === 'Valentina'
+                      ? 'bg-fuchsia-600 hover:bg-fuchsia-700'
+                      : comprador === 'Ambos'
+                      ? 'bg-amber-600 hover:bg-amber-700'
+                      : 'bg-indigo-600 hover:bg-indigo-700'
+                  }`}
                 >
                   {guardando ? 'Guardando...' : 'Registrar Abono'}
                 </button>

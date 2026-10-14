@@ -36,6 +36,7 @@ import {
   abonoClienteTotal,
   itemsCrudosVenta,
   normalizarEstado,
+  estadoGeneralVenta,
   getEstadoBadgeStyle,
   getWhatsAppLink,
   ESTADOS_PASTEL_CHIP,
@@ -345,13 +346,11 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
                       </div>
                     </div>
 
-                    {/* Selector de estado general interactivo */}
+                    {/* Estado general fijo (Mixto o unánime) */}
                     <div className="shrink-0">
-                      <StatusDropdown
-                        value={normalizarEstado(v.estado)}
-                        onChange={(nuevoEstado) => updateOrderEstadoCompleto(v.id, nuevoEstado)}
-                        size="sm"
-                      />
+                      <span className={`text-[11px] font-black px-3 py-1 rounded-full border shadow-2xs tracking-tight ${getEstadoBadgeStyle(estadoGeneralVenta(v))}`}>
+                        {estadoGeneralVenta(v)}
+                      </span>
                     </div>
                   </div>
 
@@ -374,56 +373,90 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
                     </div>
 
                     <div className="space-y-1.5">
-                      {items.slice(0, 1).map((it, idx) => {
-                        const estadoItem = normalizarEstado(it.estado || v.estado);
-                        return (
-                          <div
-                            key={idx}
-                            className="p-3 rounded-2xl bg-slate-50/80 border border-slate-200/70 flex flex-col sm:flex-row sm:items-center justify-between text-xs gap-2.5"
-                          >
-                            <div className="min-w-0 flex-1 space-y-1">
-                              <div className="font-black text-slate-800 text-xs leading-snug flex items-center gap-1.5 flex-wrap">
-                                <span>{it.genero === 'Hombre' ? 'Hombre' : 'Mujer'} {it.color || 'Color'} Talla {it.talla || 'U'}</span>
-                                {it.modelo === 'Nuevo' && (
-                                  <span className="text-[10px] font-black px-1.5 py-0.2 rounded-md bg-amber-500/15 text-amber-600 border border-amber-500/30 shrink-0">
-                                    v2
-                                  </span>
+                      {items.length <= 1 ? (
+                        // 1 sola prenda: se muestra directamente con su selector individual de estado
+                        (items.length === 1 ? items : [{
+                          genero: v.genero || 'Hombre',
+                          color: v.color || 'Negro',
+                          talla: v.talla || 'M',
+                          modelo: v.modelo || 'Viejo',
+                          programa: v.cliente_programa || '',
+                          estado: v.estado || 'Pedido'
+                        }]).map((it, idx) => {
+                          const estadoItem = normalizarEstado(it.estado || v.estado);
+                          return (
+                            <div
+                              key={idx}
+                              className="p-3 rounded-2xl bg-slate-50/80 border border-slate-200/70 flex flex-col sm:flex-row sm:items-center justify-between text-xs gap-2.5"
+                            >
+                              <div className="min-w-0 flex-1 space-y-1">
+                                <div className="font-black text-slate-800 text-xs leading-snug flex items-center gap-1.5 flex-wrap">
+                                  <span>{it.genero === 'Hombre' ? 'Hombre' : 'Mujer'} {it.color || 'Color'} Talla {it.talla || 'U'}</span>
+                                  {it.modelo === 'Nuevo' && (
+                                    <span className="text-[10px] font-black px-1.5 py-0.2 rounded-md bg-amber-500/15 text-amber-600 border border-amber-500/30 shrink-0">
+                                      v2
+                                    </span>
+                                  )}
+                                </div>
+                                {it.programa && (
+                                  <div className="text-[11px] theme-active-text font-bold leading-snug break-words">
+                                    Bordado: <span className="font-black">{it.programa}</span>
+                                  </div>
                                 )}
                               </div>
-                              {it.programa && (
-                                <div className="text-[11px] theme-active-text font-bold leading-snug break-words">
-                                  Bordado: <span className="font-black">{it.programa}</span>
+
+                              {/* Selector individual de estado para esta camisa */}
+                              <div className="shrink-0 self-start sm:self-center">
+                                <StatusDropdown
+                                  value={estadoItem}
+                                  onChange={(nuevoEstado) => updateItemEstado(v.id, idx, nuevoEstado)}
+                                  size="sm"
+                                />
+                              </div>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        // 2 o más prendas: Bloque limpio, no esconde camisas y permite gestionarlas individualmente
+                        <div className="p-3 rounded-2xl bg-slate-50/80 border border-slate-200/70 space-y-2">
+                          <div className="flex items-center justify-between text-[11px] font-bold text-slate-500">
+                            <span>Pedido múltiple ({items.length} prendas)</span>
+                            <span className="text-[10px] text-slate-400">Estados individuales</span>
+                          </div>
+
+                          <div className="space-y-1">
+                            {items.map((it, idx) => (
+                              <div
+                                key={idx}
+                                className="flex items-center justify-between text-[11px] bg-white p-2 rounded-xl border border-slate-200/60 shadow-2xs"
+                              >
+                                <div className="min-w-0 flex items-center gap-2 truncate">
+                                  <span className="w-4 h-4 rounded-md bg-slate-100 text-slate-600 font-mono text-[9px] font-black flex items-center justify-center shrink-0">
+                                    #{idx + 1}
+                                  </span>
+                                  <span className="font-bold text-slate-800 truncate">
+                                    {it.genero === 'Hombre' ? 'H' : 'M'} {it.color || 'Color'} {it.talla || 'U'}{it.programa ? ` · ${it.programa}` : ''}
+                                  </span>
                                 </div>
-                              )}
-                            </div>
+                                <span className={`text-[9.5px] font-black px-1.5 py-0.5 rounded-md border shrink-0 ${getEstadoBadgeStyle(it.estado || v.estado)}`}>
+                                  {it.estado || v.estado || 'Pedido'}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
 
-                            {/* Selector individual de estado estilizado */}
-                            <div className="shrink-0 self-start sm:self-center">
-                              <StatusDropdown
-                                value={estadoItem}
-                                onChange={(nuevoEstado) => updateItemEstado(v.id, idx, nuevoEstado)}
-                                size="sm"
-                              />
-                            </div>
-                          </div>
-                        );
-                      })}
-
-                      {items.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => setSelectedOrderDetail(v)}
-                          className="w-full mt-1.5 py-2 px-3 rounded-2xl bg-indigo-50/80 hover:bg-indigo-100 text-indigo-700 text-xs font-black border border-indigo-200/80 flex items-center justify-between transition-all cursor-pointer group"
-                        >
-                          <div className="flex items-center gap-1.5">
-                            <Shirt className="w-3.5 h-3.5 text-indigo-600 group-hover:scale-110 transition-transform" />
-                            <span>+{items.length - 1} prenda{items.length - 1 > 1 ? 's' : ''} más</span>
-                          </div>
-                          <div className="flex items-center gap-0.5 text-[11px] font-bold text-indigo-600 group-hover:translate-x-0.5 transition-transform">
-                            <span>Ver las {items.length} prendas</span>
-                            <ChevronRight className="w-3.5 h-3.5" />
-                          </div>
-                        </button>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedOrderDetail(v)}
+                            className="w-full mt-1 py-2 px-3 rounded-xl bg-indigo-50/90 hover:bg-indigo-100 active:scale-98 text-indigo-700 text-xs font-black border border-indigo-200/80 flex items-center justify-between transition-all cursor-pointer group"
+                          >
+                            <span className="flex items-center gap-1.5">
+                              <Eye className="w-3.5 h-3.5 text-indigo-600 group-hover:scale-110 transition-transform" />
+                              <span>Ver y cambiar estados de las {items.length} prendas</span>
+                            </span>
+                            <ChevronRight className="w-3.5 h-3.5 text-indigo-500 group-hover:translate-x-0.5 transition-transform" />
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>
