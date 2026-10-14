@@ -28,7 +28,10 @@ import {
   costoProveedorSugerido,
   hoyColombia,
   fmt,
-  itemsCrudosVenta
+  itemsCrudosVenta,
+  formatMiles,
+  parseMiles,
+  getVendedorColor
 } from '../lib/utils';
 import CustomSelect from './CustomSelect';
 import StatusDropdown from './StatusDropdown';
@@ -312,7 +315,32 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
         abono: totalAbono,
         estado: estadoPrincipal,
         nota: nota.trim(),
-        items_camisa: JSON.stringify(itemsIndividuales)
+        items_camisa: (() => {
+          let historialExistente = [];
+          if (editingOrder && editingOrder.items_camisa) {
+            try {
+              const p = typeof editingOrder.items_camisa === 'string' ? JSON.parse(editingOrder.items_camisa) : editingOrder.items_camisa;
+              if (p && Array.isArray(p.historial)) historialExistente = p.historial;
+            } catch {}
+          }
+          const evento = editingOrder ? {
+            fecha: new Date().toISOString(),
+            tipo: 'edicion',
+            titulo: 'Pedido modificado',
+            detalle: `Datos actualizados (${totalCamisas} prenda${totalCamisas > 1 ? 's' : ''})`,
+            usuario: role?.role === 'admin' ? vendedor : miNombreVendedor
+          } : {
+            fecha: new Date().toISOString(),
+            tipo: 'creacion',
+            titulo: 'Venta registrada en el sistema',
+            detalle: `Pedido creado para ${cliente.trim()} con ${totalCamisas} prenda${totalCamisas > 1 ? 's' : ''}`,
+            usuario: role?.role === 'admin' ? vendedor : miNombreVendedor
+          };
+          return JSON.stringify({
+            items: itemsIndividuales,
+            historial: [evento, ...historialExistente]
+          });
+        })()
       };
 
       if (estadoPrincipal === 'Liquidado' || itemsIndividuales.some(it => it.estado === 'Liquidado')) {
@@ -676,56 +704,64 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
                       <div>
                         <label className="text-[10.5px] font-semibold text-slate-500 block mb-0.5">Precio Venta ($)</label>
                         <input
-                          type="number"
-                          min="0"
-                          step="1000"
-                          value={f.precio === '' ? '' : f.precio}
+                          type="text"
+                          inputMode="numeric"
+                          value={formatMiles(f.precio)}
+                          onKeyDown={(e) => {
+                            if (e.key === '.' || e.key === ',') e.preventDefault();
+                          }}
                           onFocus={(e) => e.target.select()}
                           onChange={(e) => {
-                            const val = e.target.value;
-                            updateFila(idx, 'precio', val === '' ? '' : (isNaN(Number(val)) ? '' : Number(val)));
+                            const raw = e.target.value.replace(/\D/g, '');
+                            updateFila(idx, 'precio', raw === '' ? '' : parseInt(raw, 10));
                           }}
                           onBlur={() => {
                             if (f.precio === '' || isNaN(f.precio)) {
                               updateFila(idx, 'precio', PRECIO_VENTA_DEFECTO);
                             }
                           }}
-                          className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-800 outline-none focus:border-indigo-500"
+                          className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-800 outline-none focus:border-indigo-500 font-mono"
+                          placeholder="39.000"
                         />
                       </div>
 
                       <div>
                         <label className="text-[10.5px] font-semibold text-slate-500 block mb-0.5">Costo Yesenia ($)</label>
                         <input
-                          type="number"
-                          min="0"
-                          step="1000"
-                          value={f.costo === '' ? '' : f.costo}
+                          type="text"
+                          inputMode="numeric"
+                          value={formatMiles(f.costo)}
+                          onKeyDown={(e) => {
+                            if (e.key === '.' || e.key === ',') e.preventDefault();
+                          }}
                           onFocus={(e) => e.target.select()}
                           onChange={(e) => {
-                            const val = e.target.value;
-                            updateFila(idx, 'costo', val === '' ? '' : (isNaN(Number(val)) ? '' : Number(val)));
+                            const raw = e.target.value.replace(/\D/g, '');
+                            updateFila(idx, 'costo', raw === '' ? '' : parseInt(raw, 10));
                           }}
                           onBlur={() => {
                             if (f.costo === '' || isNaN(f.costo)) {
                               updateFila(idx, 'costo', 0);
                             }
                           }}
-                          className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-amber-700 outline-none focus:border-amber-500"
+                          className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-amber-700 outline-none focus:border-amber-500 font-mono"
+                          placeholder="30.000"
                         />
                       </div>
 
                       <div>
                         <label className="text-[10.5px] font-semibold text-slate-500 block mb-0.5">Abono ($)</label>
                         <input
-                          type="number"
-                          min="0"
-                          step="1000"
-                          value={f.abono === '' ? '' : f.abono}
+                          type="text"
+                          inputMode="numeric"
+                          value={formatMiles(f.abono)}
+                          onKeyDown={(e) => {
+                            if (e.key === '.' || e.key === ',') e.preventDefault();
+                          }}
                           onFocus={(e) => e.target.select()}
                           onChange={(e) => {
-                            const val = e.target.value;
-                            updateFila(idx, 'abono', val === '' ? '' : (isNaN(Number(val)) ? '' : Number(val)));
+                            const raw = e.target.value.replace(/\D/g, '');
+                            updateFila(idx, 'abono', raw === '' ? '' : parseInt(raw, 10));
                           }}
                           onBlur={() => {
                             if (f.abono === '' || isNaN(f.abono)) {
@@ -733,7 +769,7 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
                             }
                           }}
                           placeholder="0"
-                          className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-emerald-700 outline-none focus:border-emerald-500"
+                          className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-emerald-700 outline-none focus:border-emerald-500 font-mono"
                         />
                       </div>
 

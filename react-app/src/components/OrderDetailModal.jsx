@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
@@ -14,7 +14,10 @@ import {
   User,
   Sparkles,
   Info,
-  CheckCircle2
+  CheckCircle2,
+  Clock,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import StatusDropdown from './StatusDropdown';
 import { useData } from '../context/DataContext';
@@ -30,12 +33,17 @@ import {
   getEstadoBadgeStyle,
   normalizarEstado,
   estadoGeneralVenta,
-  estadosTodosLiquidado
+  estadosTodosLiquidado,
+  getVendedorColor,
+  fechaHoraRegistroVenta,
+  formatearFechaYHora,
+  historialVenta
 } from '../lib/utils';
 
 export default function OrderDetailModal({ isOpen, onClose, order, onEditOrder }) {
   const { updateItemEstado, updateOrderEstadoCompleto, finalizarPedido, colores } = useData();
   const [copiado, setCopiado] = useState(false);
+  const [mostrarHistorial, setMostrarHistorial] = useState(false);
 
   if (!isOpen || !order) return null;
 
@@ -45,6 +53,7 @@ export default function OrderDetailModal({ isOpen, onClose, order, onEditOrder }
   const total = precioTotalVenta(order);
   const abono = abonoClienteTotal(order);
   const saldo = saldoCliente(order);
+  const historial = useMemo(() => historialVenta(order), [order]);
 
   const handleCopiarWhatsApp = () => {
     const texto = generarMensajeWhatsApp(order);
@@ -81,7 +90,7 @@ export default function OrderDetailModal({ isOpen, onClose, order, onEditOrder }
           {/* 1. ENCABEZADO */}
           <div className="flex items-start justify-between pb-4 border-b border-slate-100 shrink-0">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-700 flex items-center justify-center font-black text-lg shrink-0 shadow-inner">
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg shrink-0 shadow-inner border ${getVendedorColor(order.vendedor).avatarBg}`}>
                 {(order.cliente_nombre || 'C')[0].toUpperCase()}
               </div>
               <div className="min-w-0">
@@ -93,17 +102,25 @@ export default function OrderDetailModal({ isOpen, onClose, order, onEditOrder }
                     {estadoGeneralVenta(order)}
                   </span>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-slate-500 font-medium mt-0.5 flex-wrap">
-                  <span className="font-bold text-indigo-600 flex items-center gap-1">
-                    <User className="w-3.5 h-3.5" />
+                <div className="flex items-center gap-2 text-xs text-slate-500 font-medium mt-1 flex-wrap">
+                  <span className={`text-[11px] font-black px-2 py-0.5 rounded-md border flex items-center gap-1 ${getVendedorColor(order.vendedor).badge}`}>
+                    <User className="w-3 h-3" />
                     {order.vendedor || 'Samir'}
                   </span>
                   {tel && (
                     <>
                       <span>•</span>
-                      <span className="font-mono">{tel}</span>
+                      <span className="font-mono text-slate-500 flex items-center gap-0.5">
+                        <Phone className="w-3 h-3 text-slate-400" />
+                        {tel}
+                      </span>
                     </>
                   )}
+                  <span>•</span>
+                  <span className="text-[11px] text-slate-500 font-semibold flex items-center gap-1">
+                    <Clock className="w-3 h-3 text-slate-400" />
+                    Reg: {fechaHoraRegistroVenta(order)}
+                  </span>
                 </div>
               </div>
             </div>
@@ -246,6 +263,70 @@ export default function OrderDetailModal({ isOpen, onClose, order, onEditOrder }
                   );
                 })}
               </div>
+            </div>
+
+            {/* HISTORIAL Y TRAZABILIDAD DE ESTADOS (Colapsable y fuera de la vista principal) */}
+            <div className="pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setMostrarHistorial(!mostrarHistorial)}
+                className="w-full flex items-center justify-between p-3 rounded-2xl bg-slate-50 hover:bg-slate-100/80 border border-slate-200/70 text-slate-700 transition-colors cursor-pointer group"
+              >
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                    <Clock className="w-3.5 h-3.5" />
+                  </div>
+                  <span className="text-xs font-black">Historial y Trazabilidad de Estados</span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200/80 text-slate-600">
+                    {historial.length} {historial.length === 1 ? 'evento' : 'eventos'}
+                  </span>
+                </div>
+                {mostrarHistorial ? (
+                  <ChevronUp className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                )}
+              </button>
+
+              <AnimatePresence>
+                {mostrarHistorial && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="overflow-hidden mt-2"
+                  >
+                    <div className="p-3.5 rounded-2xl bg-slate-50/70 border border-slate-200/70 space-y-2.5">
+                      {historial.length === 0 ? (
+                        <p className="text-xs text-slate-400 italic text-center py-2">
+                          No hay eventos adicionales registrados.
+                        </p>
+                      ) : (
+                        historial.map((ev, i) => (
+                          <div key={i} className="flex items-start gap-2.5 text-xs">
+                            <div className="w-2 h-2 rounded-full bg-indigo-500 mt-1.5 shrink-0" />
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center justify-between gap-2 flex-wrap">
+                                <span className="font-bold text-slate-800">
+                                  {ev.detalle || ev.accion || 'Cambio registrado'}
+                                </span>
+                                <span className="text-[10px] font-semibold text-slate-400 shrink-0">
+                                  {formatearFechaYHora(ev.fecha)}
+                                </span>
+                              </div>
+                              {ev.usuario && (
+                                <p className="text-[10px] text-slate-400 mt-0.5">
+                                  Por: <span className="font-semibold text-slate-600">{ev.usuario}</span>
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
 

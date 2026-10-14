@@ -18,7 +18,8 @@ import {
   Check,
   Eye,
   ChevronRight,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Clock
 } from 'lucide-react';
 import { exportarListaCompraExcel } from '../lib/excelExport';
 import { useData } from '../context/DataContext';
@@ -40,7 +41,9 @@ import {
   getEstadoBadgeStyle,
   getWhatsAppLink,
   ESTADOS_PASTEL_CHIP,
-  generarTextoResumenPedido
+  generarTextoResumenPedido,
+  getVendedorColor,
+  fechaHoraRegistroVenta
 } from '../lib/utils';
 import InlineDeleteConfirm from './InlineDeleteConfirm';
 import Pagination from './Pagination';
@@ -150,6 +153,10 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
       }
 
       return true;
+    }).sort((a, b) => {
+      const timeA = new Date(a.created_at || a.fecha || 0).getTime();
+      const timeB = new Date(b.created_at || b.fecha || 0).getTime();
+      return timeB - timeA;
     });
   }, [ventas, busqueda, estadoFiltro, esAdmin, miNombreVendedor, vendedorFiltro]);
 
@@ -306,288 +313,217 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
             const saldo = saldoCliente(v);
             const total = precioTotalVenta(v);
             const abono = abonoClienteTotal(v);
-            const isExpanded = expandedId === v.id;
             const tel = v.cliente_telefono || v.telefono || '';
             const waLink = getWhatsAppLink(tel);
+            const vCol = getVendedorColor(v.vendedor);
+            const estadoGral = estadoGeneralVenta(v);
+            const todasLiquidadas = estadosTodosLiquidado(v);
 
             return (
               <motion.div
                 key={v.id}
                 layout
-                initial={{ opacity: 0, scale: 0.95 }}
+                initial={{ opacity: 0, scale: 0.96 }}
                 animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ type: "spring", stiffness: 350, damping: 25 }}
-                className="bg-white rounded-[28px] border border-slate-200/80 p-5 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between"
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+                className="bg-white rounded-3xl border border-slate-200/90 p-4 sm:p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group"
               >
-                <div className="space-y-3.5">
-                  {/* SECCIÓN 1: ENCABEZADO DEL CLIENTE Y ESTADO GENERAL */}
-                  <div className="flex items-start justify-between gap-2">
+                <div className="space-y-3">
+                  {/* 1. ENCABEZADO: CLIENTE, VENDEDOR Y ESTADO GENERAL */}
+                  <div className="flex items-start justify-between gap-2.5">
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-700 flex items-center justify-center font-black text-sm shrink-0">
+                      <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-black text-sm shrink-0 border ${vCol.bg} ${vCol.border} ${vCol.text}`}>
                         {(v.cliente_nombre || 'C')[0].toUpperCase()}
                       </div>
                       <div className="min-w-0">
-                        <h3 className="font-black text-slate-900 text-sm leading-snug break-words">
+                        <h3 className="font-black text-slate-900 text-sm leading-tight truncate" title={v.cliente_nombre}>
                           {v.cliente_nombre}
                         </h3>
-                        <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-semibold flex-wrap">
-                          <span className="text-indigo-600 font-bold">{v.vendedor || 'Samir'}</span>
+                        <div className="flex items-center gap-1.5 text-[11px] font-semibold mt-1 flex-wrap">
+                          <span className={`px-2 py-0.5 rounded-lg font-black text-[10.5px] border ${vCol.badge}`}>
+                            {v.vendedor || 'Samir'}
+                          </span>
                           {tel && (
-                            <>
-                              <span>•</span>
-                              <span className="font-mono text-slate-500 flex items-center gap-0.5">
-                                <Phone className="w-3 h-3 text-slate-400" />
-                                {tel}
-                              </span>
-                            </>
+                            <span className="font-mono text-slate-500 flex items-center gap-1 text-[11px]">
+                              <Phone className="w-3 h-3 text-slate-400" />
+                              {tel}
+                            </span>
                           )}
                         </div>
                       </div>
                     </div>
 
-                    {/* Estado general fijo (Mixto o unánime) */}
+                    {/* Estado General Fijo (Mixto o el estado unánime) */}
                     <div className="shrink-0">
-                      <span className={`text-[11px] font-black px-3 py-1 rounded-full border shadow-2xs tracking-tight ${getEstadoBadgeStyle(estadoGeneralVenta(v))}`}>
-                        {estadoGeneralVenta(v)}
+                      <span className={`text-[11px] font-black px-3 py-1 rounded-full border shadow-2xs ${getEstadoBadgeStyle(estadoGral)}`}>
+                        {estadoGral}
                       </span>
                     </div>
                   </div>
 
-                  {/* SECCIÓN 2: PRENDAS / CAMISAS POLO DEL PEDIDO */}
-                  <div>
-                    <div className="flex items-center justify-between text-xs font-bold text-slate-700 mb-1.5">
-                      <span className="flex items-center gap-1 text-[11px] font-black text-slate-500 uppercase tracking-wider">
+                  {/* 2. FECHAS: REGISTRO (CON HORA) Y ENTREGA */}
+                  <div className="grid grid-cols-2 gap-2 p-2.5 rounded-2xl bg-slate-50/80 border border-slate-100 text-[11px]">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Clock className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                      <div className="truncate">
+                        <span className="text-[9.5px] text-slate-400 font-bold block uppercase tracking-wider leading-none">Registro</span>
+                        <span className="font-bold text-slate-700 leading-tight block mt-0.5">
+                          {fechaHoraRegistroVenta(v)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 min-w-0 border-l border-slate-200/70 pl-2.5">
+                      <Calendar className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                      <div className="truncate">
+                        <span className="text-[9.5px] text-slate-400 font-bold block uppercase tracking-wider leading-none">Entrega</span>
+                        <span className="font-bold text-slate-700 leading-tight block mt-0.5">
+                          {v.fecha_entrega ? formatearFechaHumana(v.fecha_entrega) : 'Por definir'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 3. RESUMEN LIMPIO DE PRENDAS */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-[11px] font-bold text-slate-500">
+                      <span className="flex items-center gap-1 uppercase tracking-wider text-[10px] text-slate-400">
                         <Shirt className="w-3.5 h-3.5 text-indigo-500" />
                         Prendas ({items.length || 1})
                       </span>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedOrderDetail(v)}
-                        className="text-indigo-600 hover:text-indigo-800 flex items-center gap-1 text-[11px] font-bold cursor-pointer"
-                        title="Ver detalle de todas las prendas"
-                      >
-                        <Eye className="w-3 h-3" />
-                        <span>Ver detalle</span>
-                      </button>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      {items.length <= 1 ? (
-                        // 1 sola prenda: se muestra directamente con su selector individual de estado
-                        (items.length === 1 ? items : [{
-                          genero: v.genero || 'Hombre',
-                          color: v.color || 'Negro',
-                          talla: v.talla || 'M',
-                          modelo: v.modelo || 'Viejo',
-                          programa: v.cliente_programa || '',
-                          estado: v.estado || 'Pedido'
-                        }]).map((it, idx) => {
-                          const estadoItem = normalizarEstado(it.estado || v.estado);
-                          return (
-                            <div
-                              key={idx}
-                              className="p-3 rounded-2xl bg-slate-50/80 border border-slate-200/70 flex flex-col sm:flex-row sm:items-center justify-between text-xs gap-2.5"
-                            >
-                              <div className="min-w-0 flex-1 space-y-1">
-                                <div className="font-black text-slate-800 text-xs leading-snug flex items-center gap-1.5 flex-wrap">
-                                  <span>{it.genero === 'Hombre' ? 'Hombre' : 'Mujer'} {it.color || 'Color'} Talla {it.talla || 'U'}</span>
-                                  {it.modelo === 'Nuevo' && (
-                                    <span className="text-[10px] font-black px-1.5 py-0.2 rounded-md bg-amber-500/15 text-amber-600 border border-amber-500/30 shrink-0">
-                                      v2
-                                    </span>
-                                  )}
-                                </div>
-                                {it.programa && (
-                                  <div className="text-[11px] theme-active-text font-bold leading-snug break-words">
-                                    Bordado: <span className="font-black">{it.programa}</span>
-                                  </div>
-                                )}
-                              </div>
-
-                              {/* Selector individual de estado para esta camisa */}
-                              <div className="shrink-0 self-start sm:self-center">
-                                <StatusDropdown
-                                  value={estadoItem}
-                                  onChange={(nuevoEstado) => updateItemEstado(v.id, idx, nuevoEstado)}
-                                  size="sm"
-                                />
-                              </div>
-                            </div>
-                          );
-                        })
-                      ) : (
-                        // 2 o más prendas: Bloque limpio, no esconde camisas y permite gestionarlas individualmente
-                        <div className="p-3 rounded-2xl bg-slate-50/80 border border-slate-200/70 space-y-2">
-                          <div className="flex items-center justify-between text-[11px] font-bold text-slate-500">
-                            <span>Pedido múltiple ({items.length} prendas)</span>
-                            <span className="text-[10px] text-slate-400">Estados individuales</span>
-                          </div>
-
-                          <div className="space-y-1">
-                            {items.map((it, idx) => (
-                              <div
-                                key={idx}
-                                className="flex items-center justify-between text-[11px] bg-white p-2 rounded-xl border border-slate-200/60 shadow-2xs"
-                              >
-                                <div className="min-w-0 flex items-center gap-2 truncate">
-                                  <span className="w-4 h-4 rounded-md bg-slate-100 text-slate-600 font-mono text-[9px] font-black flex items-center justify-center shrink-0">
-                                    #{idx + 1}
-                                  </span>
-                                  <span className="font-bold text-slate-800 truncate">
-                                    {it.genero === 'Hombre' ? 'H' : 'M'} {it.color || 'Color'} {it.talla || 'U'}{it.programa ? ` · ${it.programa}` : ''}
-                                  </span>
-                                </div>
-                                <span className={`text-[9.5px] font-black px-1.5 py-0.5 rounded-md border shrink-0 ${getEstadoBadgeStyle(it.estado || v.estado)}`}>
-                                  {it.estado || v.estado || 'Pedido'}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => setSelectedOrderDetail(v)}
-                            className="w-full mt-1 py-2 px-3 rounded-xl bg-indigo-50/90 hover:bg-indigo-100 active:scale-98 text-indigo-700 text-xs font-black border border-indigo-200/80 flex items-center justify-between transition-all cursor-pointer group"
-                          >
-                            <span className="flex items-center gap-1.5">
-                              <Eye className="w-3.5 h-3.5 text-indigo-600 group-hover:scale-110 transition-transform" />
-                              <span>Ver y cambiar estados de las {items.length} prendas</span>
-                            </span>
-                            <ChevronRight className="w-3.5 h-3.5 text-indigo-500 group-hover:translate-x-0.5 transition-transform" />
-                          </button>
-                        </div>
+                      {v.lugar_entrega && (
+                        <span className="flex items-center gap-1 text-[10.5px] text-slate-500 font-semibold truncate max-w-[150px]" title={v.lugar_entrega}>
+                          <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
+                          <span className="truncate">{v.lugar_entrega}</span>
+                        </span>
                       )}
                     </div>
-                  </div>
 
-                  {/* SECCIÓN 3: LOGÍSTICA DE ENTREGA Y NOTAS */}
-                  <div className="space-y-1 text-xs text-slate-600 bg-slate-50/60 p-2.5 rounded-2xl border border-slate-100">
-                    <div className="flex items-center gap-1.5 text-[11px]">
-                      <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                      <span className="font-medium">
-                        {v.fecha_entrega ? `Entrega: ${formatearFechaHumana(v.fecha_entrega)}` : 'Fecha de entrega por definir'}
-                      </span>
+                    {/* Lista concisa de prendas */}
+                    <div className="space-y-1">
+                      {items.map((it, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between p-2 rounded-xl bg-slate-50/70 border border-slate-100 text-xs hover:bg-slate-50 transition-colors"
+                        >
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                            <span className="w-5 h-5 rounded-lg bg-white border border-slate-200/80 text-slate-600 font-black text-[10px] flex items-center justify-center shrink-0">
+                              #{idx + 1}
+                            </span>
+                            <span className="font-bold text-slate-800 text-[11.5px] truncate">
+                              {it.genero === 'Hombre' ? 'Hombre' : 'Mujer'} · {it.color || 'Color'} · Talla {it.talla || 'U'}
+                              {it.modelo === 'Nuevo' && ' · v2'}
+                            </span>
+                            {it.programa && (
+                              <span className="hidden sm:inline-block text-[10px] font-bold text-indigo-600 bg-indigo-50/80 px-1.5 py-0.2 rounded border border-indigo-100/80 truncate max-w-[110px]" title={it.programa}>
+                                {it.programa}
+                              </span>
+                            )}
+                          </div>
+
+                          <span className={`text-[9.5px] font-black px-2 py-0.5 rounded-md border shrink-0 ${getEstadoBadgeStyle(it.estado || v.estado)}`}>
+                            {it.estado || v.estado || 'Pedido'}
+                          </span>
+                        </div>
+                      ))}
                     </div>
 
-                    {v.lugar_entrega && (
-                      <div className="flex items-center gap-1.5 text-[11px]">
-                        <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                        <span className="break-words leading-tight">{v.lugar_entrega}</span>
-                      </div>
-                    )}
-
                     {v.nota && (
-                      <p className="text-[11px] text-slate-500 italic pt-1 border-t border-slate-200/50">
+                      <p className="text-[11px] text-slate-500 italic px-2.5 py-1.5 bg-amber-50/60 rounded-xl border border-amber-100/70 leading-snug">
                         "{v.nota}"
                       </p>
                     )}
                   </div>
                 </div>
 
-                {/* SECCIÓN 4: TOTALES FINANCIEROS Y BOTONES DE ACCIÓN */}
-                <div className="pt-3 border-t border-slate-100 space-y-3 mt-3">
-                  <div className="flex items-center justify-between">
+                {/* 4. PIE DE TARJETA: SALDOS Y BOTONES COMPACTOS */}
+                <div className="pt-3 border-t border-slate-100 space-y-2.5 mt-3">
+                  <div className="flex items-center justify-between text-xs">
                     <div>
-                      <span className="text-[10px] text-slate-400 block font-bold uppercase tracking-wider">Saldo</span>
+                      <span className="text-[9.5px] text-slate-400 font-black block uppercase tracking-wider">Saldo</span>
                       <span className={`text-base font-black ${saldo > 0 ? 'text-amber-600' : 'text-emerald-600'}`}>
-                        {saldo > 0 ? fmt(saldo) : 'Pagado ✓'}
+                        {saldo > 0 ? `Resta ${fmt(saldo)}` : 'Pagado ✓'}
                       </span>
                     </div>
 
                     <div className="text-right">
-                      <span className="text-[10px] text-slate-400 block font-bold uppercase tracking-wider">Total / Abono</span>
-                      <div className="text-xs font-bold text-slate-800">
+                      <span className="text-[9.5px] text-slate-400 font-black block uppercase tracking-wider">Total / Abono</span>
+                      <span className="font-bold text-slate-800 text-xs">
                         {fmt(total)} <span className="text-emerald-600 font-semibold">({fmt(abono)})</span>
-                      </div>
+                      </span>
                     </div>
                   </div>
 
-                  {/* Fila de Botones: Copiar Pedido, WhatsApp, Editar, Borrar */}
-                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
-                    {/* Botón Copiar Pedido */}
+                  {/* BOTONES DE ACCIÓN: Botón principal "Ver detalle" + Accesos rápidos */}
+                  <div className="flex items-center gap-1.5 pt-1">
+                    {/* Botón Principal: Ver Detalle */}
                     <button
                       type="button"
-                      onClick={() => handleCopiarPedido(v)}
-                      className={`flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                        copiadoPedidoId === v.id
-                          ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                          : 'bg-indigo-50/80 hover:bg-indigo-100 text-indigo-700'
-                      }`}
-                      title="Copiar resumen del pedido completo"
+                      onClick={() => setSelectedOrderDetail(v)}
+                      className="flex-1 py-2 px-3 rounded-2xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-black border border-indigo-200/80 flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs hover:shadow-xs group"
                     >
-                      {copiadoPedidoId === v.id ? (
-                        <>
-                          <Check className="w-3.5 h-3.5 text-emerald-600" />
-                          <span>¡Copiado! ✓</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-3.5 h-3.5 text-indigo-600" />
-                          <span>Copiar Pedido</span>
-                        </>
-                      )}
+                      <Eye className="w-3.5 h-3.5 text-indigo-600 group-hover:scale-110 transition-transform" />
+                      <span>Ver detalle</span>
                     </button>
 
-                    {/* Botón WhatsApp directo (sin texto preestablecido) */}
-                    {waLink ? (
+                    {/* Si está 100% liquidado, acceso directo a Finalizar */}
+                    {todasLiquidadas && (
+                      <button
+                        type="button"
+                        onClick={() => finalizarPedido(v.id)}
+                        className="p-2 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-transform active:scale-95 cursor-pointer shrink-0"
+                        title="¡Todas las prendas están liquidadas! Clic para finalizar pedido"
+                      >
+                        <CheckCircle2 className="w-4 h-4" />
+                      </button>
+                    )}
+
+                    {/* Botón Rápido: WhatsApp */}
+                    {waLink && (
                       <a
                         href={waLink}
                         target="_blank"
                         rel="noreferrer"
-                        className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold transition-colors cursor-pointer"
-                        title="Abrir chat en WhatsApp"
+                        className="p-2 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition-colors cursor-pointer shrink-0"
+                        title="Abrir WhatsApp"
                       >
-                        <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
-                        <span>WhatsApp</span>
+                        <MessageCircle className="w-4 h-4" />
                       </a>
-                    ) : (
+                    )}
+
+                    {/* Botón Rápido: Copiar Pedido */}
+                    <button
+                      type="button"
+                      onClick={() => handleCopiarPedido(v)}
+                      className={`p-2 rounded-2xl border transition-all cursor-pointer shrink-0 ${
+                        copiadoPedidoId === v.id
+                          ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs scale-105'
+                          : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200'
+                      }`}
+                      title={copiadoPedidoId === v.id ? '¡Copiado!' : 'Copiar resumen para WhatsApp'}
+                    >
+                      {copiadoPedidoId === v.id ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    </button>
+
+                    {/* Botón Rápido: Editar */}
+                    {onEditOrder && (
                       <button
                         type="button"
-                        disabled
-                        className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-slate-50 text-slate-300 text-xs font-bold cursor-not-allowed"
-                        title="Sin teléfono registrado"
+                        onClick={() => onEditOrder(v)}
+                        className="p-2 rounded-2xl bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 transition-colors cursor-pointer shrink-0"
+                        title="Editar pedido"
                       >
-                        <MessageCircle className="w-3.5 h-3.5 text-slate-300" />
-                        <span>WhatsApp</span>
+                        <Pencil className="w-4 h-4" />
                       </button>
                     )}
 
-                    {/* Botón Editar Pedido */}
-                    <button
-                      type="button"
-                      onClick={() => onEditOrder && onEditOrder(v)}
-                      className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold transition-colors cursor-pointer"
-                    >
-                      <Pencil className="w-3.5 h-3.5" />
-                      <span>Editar</span>
-                    </button>
-
-                    {/* Botón Papelera con microinteracción Bencho Confirm */}
+                    {/* Botón Rápido: Borrar / Papelera */}
                     <InlineDeleteConfirm
                       onDelete={() => deleteVenta(v.id)}
                       clienteNombre={v.cliente_nombre}
                       duration={4500}
                     />
-
-                    {/* Botón Finalizar Pedido */}
-                    <button
-                      type="button"
-                      onClick={() => finalizarPedido(v.id)}
-                      className={`col-span-2 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                        estadosTodosLiquidado(v)
-                          ? 'bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white shadow-xs'
-                          : 'bg-slate-100 hover:bg-slate-200 text-slate-500'
-                      }`}
-                      title={
-                        estadosTodosLiquidado(v)
-                          ? 'Finalizar pedido y mover a Historial'
-                          : 'Solo se puede finalizar cuando todas las camisas estén en estado Liquidado (proveedor y socios al día)'
-                      }
-                    >
-                      <CheckCircle2 className={`w-4 h-4 ${estadosTodosLiquidado(v) ? 'text-white' : 'text-slate-400'}`} />
-                      <span>{estadosTodosLiquidado(v) ? 'Finalizar Pedido (Listo ✓)' : 'Finalizar Pedido'}</span>
-                    </button>
                   </div>
                 </div>
               </motion.div>

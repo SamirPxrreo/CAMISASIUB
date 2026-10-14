@@ -104,6 +104,7 @@ export function itemsCrudosVenta(v) {
     try {
       const p = typeof v.items_camisa === 'string' ? JSON.parse(v.items_camisa) : v.items_camisa;
       if (Array.isArray(p) && p.length) return p;
+      if (p && Array.isArray(p.items) && p.items.length) return p.items;
     } catch { /* parse error */ }
   }
   return null;
@@ -439,3 +440,144 @@ export function getEstadoBadgeStyle(estado) {
   const norm = normalizarEstado(estado);
   return ESTADOS_COLOR[norm]?.badge || 'bg-slate-50 text-slate-800 border-slate-200';
 }
+
+// Colores unificados e inconfundibles por vendedor en toda la aplicación
+export function getVendedorColor(vendedor) {
+  const v = String(vendedor || '').toLowerCase();
+  if (v.includes('val')) {
+    return {
+      nombre: 'Valentina',
+      bg: 'bg-fuchsia-50',
+      text: 'text-fuchsia-700',
+      border: 'border-fuchsia-200',
+      avatarBg: 'bg-fuchsia-100 border-fuchsia-200 text-fuchsia-700',
+      badge: 'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200',
+      ring: 'ring-fuchsia-300',
+      activeBorder: 'border-fuchsia-400',
+      solid: 'bg-fuchsia-600 hover:bg-fuchsia-700 text-white',
+      accentText: 'text-fuchsia-600 hover:text-fuchsia-800'
+    };
+  }
+  if (v.includes('sam')) {
+    return {
+      nombre: 'Samir',
+      bg: 'bg-indigo-50',
+      text: 'text-indigo-700',
+      border: 'border-indigo-200',
+      avatarBg: 'bg-indigo-100 border-indigo-200 text-indigo-700',
+      badge: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+      ring: 'ring-indigo-300',
+      activeBorder: 'border-indigo-400',
+      solid: 'bg-indigo-600 hover:bg-indigo-700 text-white',
+      accentText: 'text-indigo-600 hover:text-indigo-800'
+    };
+  }
+  return {
+    nombre: vendedor || 'Ambos',
+    bg: 'bg-amber-50',
+    text: 'text-amber-800',
+    border: 'border-amber-200',
+    avatarBg: 'bg-amber-100 border-amber-200 text-amber-800',
+    badge: 'bg-amber-50 text-amber-800 border-amber-200',
+    ring: 'ring-amber-300',
+    activeBorder: 'border-amber-400',
+    solid: 'bg-amber-600 hover:bg-amber-700 text-white',
+    accentText: 'text-amber-600 hover:text-amber-800'
+  };
+}
+
+// Formateador de moneda en miles colombianos con puntos automáticos (ej: 2500 -> "2.500")
+export function formatMiles(val) {
+  if (val === '' || val == null) return '';
+  const num = typeof val === 'number' ? val : parseInt(String(val).replace(/\D/g, ''), 10);
+  if (isNaN(num)) return '';
+  return num.toLocaleString('es-CO');
+}
+
+// Extrae el valor numérico puro de una cadena con puntos o formato
+export function parseMiles(str) {
+  if (str === '' || str == null) return 0;
+  const digits = String(str).replace(/\D/g, '');
+  return digits ? parseInt(digits, 10) : 0;
+}
+
+// Formatear fecha y hora completa en zona horaria de Colombia
+export function formatearFechaYHora(isoString) {
+  if (!isoString) return '';
+  try {
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return String(isoString);
+    return d.toLocaleString('es-CO', {
+      timeZone: 'America/Bogota',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+  } catch {
+    return String(isoString);
+  }
+}
+
+// Formato limpio de fecha y hora en la que se registró la venta
+export function fechaHoraRegistroVenta(v) {
+  if (v?.created_at) {
+    return formatearFechaYHora(v.created_at);
+  }
+  if (v?.fecha) {
+    return formatearFechaHumana(v.fecha);
+  }
+  return 'Fecha por definir';
+}
+
+// Historial y trazabilidad de eventos del pedido
+export function historialVenta(v) {
+  if (!v) return [];
+  const list = [];
+
+  // 1. Evento de registro original
+  const fCreacion = v.created_at || v.fecha;
+  if (fCreacion) {
+    list.push({
+      fecha: fCreacion,
+      tipo: 'creacion',
+      titulo: 'Venta registrada en el sistema',
+      detalle: `Pedido creado para ${v.cliente_nombre || 'Cliente'} (${v.cantidad || 1} prenda${(v.cantidad || 1) > 1 ? 's' : ''})`,
+      usuario: v.vendedor || 'Vendedor'
+    });
+  }
+
+  // 2. Historial persistido en items_camisa
+  try {
+    if (v.items_camisa) {
+      const p = typeof v.items_camisa === 'string' ? JSON.parse(v.items_camisa) : v.items_camisa;
+      if (p && Array.isArray(p.historial)) {
+        p.historial.forEach(ev => {
+          if (!list.some(x => x.fecha === ev.fecha && x.titulo === ev.titulo)) {
+            list.push(ev);
+          }
+        });
+      }
+    }
+  } catch {}
+
+  // 3. Fallback en caché local
+  try {
+    const local = localStorage.getItem(`historial_venta_${v.id}`);
+    if (local) {
+      const parsed = JSON.parse(local);
+      if (Array.isArray(parsed)) {
+        parsed.forEach(ev => {
+          if (!list.some(x => x.fecha === ev.fecha && x.titulo === ev.titulo)) {
+            list.push(ev);
+          }
+        });
+      }
+    }
+  } catch {}
+
+  return list.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+}
+

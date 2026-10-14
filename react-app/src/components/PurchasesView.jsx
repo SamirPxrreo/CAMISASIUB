@@ -35,54 +35,13 @@ import {
   getEstadoBadgeStyle,
   claveCliente,
   getWhatsAppLink,
-  itemsCrudosVenta
+  itemsCrudosVenta,
+  getVendedorColor,
+  formatMiles,
+  parseMiles
 } from '../lib/utils';
 import InlineDeleteConfirm from './InlineDeleteConfirm';
 import Pagination from './Pagination';
-
-export function getVendedorColor(vendedor) {
-  const v = String(vendedor || '').toLowerCase();
-  if (v.includes('val')) {
-    return {
-      nombre: 'Valentina',
-      bg: 'bg-fuchsia-50',
-      text: 'text-fuchsia-700',
-      border: 'border-fuchsia-200',
-      avatarBg: 'bg-fuchsia-100 border-fuchsia-200 text-fuchsia-700',
-      badge: 'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200',
-      ring: 'ring-fuchsia-300',
-      activeBorder: 'border-fuchsia-400',
-      solid: 'bg-fuchsia-600 hover:bg-fuchsia-700 text-white',
-      accentText: 'text-fuchsia-600 hover:text-fuchsia-800'
-    };
-  }
-  if (v.includes('sam')) {
-    return {
-      nombre: 'Samir',
-      bg: 'bg-indigo-50',
-      text: 'text-indigo-700',
-      border: 'border-indigo-200',
-      avatarBg: 'bg-indigo-100 border-indigo-200 text-indigo-700',
-      badge: 'bg-indigo-50 text-indigo-700 border-indigo-200',
-      ring: 'ring-indigo-300',
-      activeBorder: 'border-indigo-400',
-      solid: 'bg-indigo-600 hover:bg-indigo-700 text-white',
-      accentText: 'text-indigo-600 hover:text-indigo-800'
-    };
-  }
-  return {
-    nombre: vendedor || 'Ambos',
-    bg: 'bg-amber-50',
-    text: 'text-amber-800',
-    border: 'border-amber-200',
-    avatarBg: 'bg-amber-100 border-amber-200 text-amber-800',
-    badge: 'bg-amber-50 text-amber-800 border-amber-200',
-    ring: 'ring-amber-300',
-    activeBorder: 'border-amber-400',
-    solid: 'bg-amber-600 hover:bg-amber-700 text-white',
-    accentText: 'text-amber-600 hover:text-amber-800'
-  };
-}
 
 export default function PurchasesView() {
   const { compras, compraAportes, compraPedidos = [], ventas, refreshData } = useData();
@@ -919,20 +878,22 @@ export default function PurchasesView() {
                     </span>
                   </div>
                   <input
-                    type="number"
-                    min="0"
-                    step="1000"
-                    value={montoManual === '' ? '' : montoManual}
+                    type="text"
+                    inputMode="numeric"
+                    value={formatMiles(montoManual)}
+                    onKeyDown={(e) => {
+                      if (e.key === '.' || e.key === ',') e.preventDefault();
+                    }}
                     onFocus={(e) => e.target.select()}
                     onChange={(e) => {
-                      const val = e.target.value;
-                      setMontoManual(val === '' ? '' : (isNaN(Number(val)) ? '' : Number(val)));
+                      const raw = e.target.value.replace(/\D/g, '');
+                      setMontoManual(raw === '' ? '' : parseInt(raw, 10));
                     }}
                     onBlur={() => {
                       if (montoManual === '' || isNaN(montoManual)) setMontoManual('');
                     }}
                     placeholder="Ingresa valor o selecciona pedidos abajo..."
-                    className={`w-full px-3 py-2 rounded-xl bg-white border text-xs font-black outline-none ${
+                    className={`w-full px-3 py-2 rounded-xl bg-white border text-xs font-black outline-none font-mono ${
                       comprador === 'Valentina'
                         ? 'border-fuchsia-200 text-fuchsia-800 focus:border-fuchsia-500'
                         : comprador === 'Ambos'
@@ -1026,21 +987,23 @@ export default function PurchasesView() {
                                 Aporte / Seña a este pedido ($):
                               </label>
                               <input
-                                type="number"
-                                min="0"
-                                step="1000"
-                                value={abonoIngresado === '' ? '' : abonoIngresado}
+                                type="text"
+                                inputMode="numeric"
+                                value={formatMiles(abonoIngresado)}
+                                onKeyDown={(e) => {
+                                  if (e.key === '.' || e.key === ',') e.preventDefault();
+                                }}
                                 onFocus={(e) => e.target.select()}
                                 onChange={(e) => {
-                                  const val = e.target.value;
-                                  handleCambioAbonoPedido(p.id, val === '' ? '' : (isNaN(Number(val)) ? '' : Number(val)));
+                                  const raw = e.target.value.replace(/\D/g, '');
+                                  handleCambioAbonoPedido(p.id, raw === '' ? '' : parseInt(raw, 10));
                                 }}
                                 onBlur={() => {
                                   if (abonoIngresado === '' || isNaN(abonoIngresado)) {
                                     handleCambioAbonoPedido(p.id, 0);
                                   }
                                 }}
-                                className={`w-full px-2.5 py-1.5 rounded-xl bg-white border text-xs font-black outline-none shadow-2xs ${vendStyle.inputBorder}`}
+                                className={`w-full px-2.5 py-1.5 rounded-xl bg-white border text-xs font-black outline-none shadow-2xs font-mono ${vendStyle.inputBorder}`}
                                 placeholder={`$ Abono (máx ${fmt(p.pendienteProveedor)})`}
                               />
                             </div>

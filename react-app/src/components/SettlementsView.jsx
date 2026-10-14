@@ -26,7 +26,10 @@ import {
   calcularDeudaSocios,
   saldoSocioPendientePedido,
   pedidosPendientesLiquidacion,
-  otroSocioDe
+  otroSocioDe,
+  formatMiles,
+  parseMiles,
+  getVendedorColor
 } from '../lib/utils';
 import Pagination from './Pagination';
 
@@ -98,7 +101,7 @@ export default function SettlementsView() {
 
   const handleGuardarLiquidacion = async (e) => {
     e.preventDefault();
-    const valMonto = parseFloat(monto);
+    const valMonto = parseMiles(monto);
     if (!valMonto || valMonto <= 0) {
       setErrorMsg('Ingresa un monto válido mayor que cero.');
       return;
@@ -484,16 +487,21 @@ export default function SettlementsView() {
                 )}
               </div>
 
-              {/* Monto */}
+              {/* Monto con autoformateo de miles colombiano */}
               <div>
                 <label className="font-bold text-slate-700 block mb-1">Monto a Transferir ($)</label>
                 <input
-                  type="number"
-                  min="1"
-                  step="1000"
-                  value={monto}
-                  onChange={(e) => setMonto(e.target.value)}
-                  placeholder="Ej. 15000"
+                  type="text"
+                  inputMode="numeric"
+                  value={formatMiles(monto)}
+                  onKeyDown={(e) => {
+                    if (e.key === '.' || e.key === ',') e.preventDefault();
+                  }}
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/\D/g, '');
+                    setMonto(raw);
+                  }}
+                  placeholder="Ej. 15.000"
                   required
                   className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-black text-emerald-700 outline-none"
                 />

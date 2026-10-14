@@ -84,9 +84,15 @@ export function DataProvider({ children }) {
       if (vErr) {
         console.error("[Supabase] Error cargando ventas:", vErr);
         setError(vErr.message);
-      } else {
-        // Filtrar borrados lógicos como hace la app real
-        const filtradas = (vData || []).filter(v => !v.eliminado_at);
+        // Filtrar borrados lógicos y ordenar con los más recientes primero
+        const filtradas = (vData || [])
+          .filter(v => !v.eliminado_at)
+          .sort((a, b) => {
+            const timeA = a.created_at ? new Date(a.created_at).getTime() : (a.fecha ? new Date(a.fecha).getTime() : 0);
+            const timeB = b.created_at ? new Date(b.created_at).getTime() : (b.fecha ? new Date(b.fecha).getTime() : 0);
+            if (timeB !== timeA) return timeB - timeA;
+            return (Number(b.id) || 0) - (Number(a.id) || 0);
+          });
         setVentas(filtradas);
       }
 
@@ -311,8 +317,32 @@ export function DataProvider({ children }) {
     }
 
     if (items[itemIdx]) {
+      const estadoAnterior = items[itemIdx].estado || venta.estado || 'Pedido';
       items[itemIdx].estado = nuevoEstado;
-      const jsonStr = JSON.stringify(items);
+
+      // Historial previo
+      let prevHistorial = [];
+      try {
+        if (venta.items_camisa) {
+          const p = typeof venta.items_camisa === 'string' ? JSON.parse(venta.items_camisa) : venta.items_camisa;
+          if (p && Array.isArray(p.historial)) prevHistorial = p.historial;
+        }
+      } catch {}
+
+      const nuevoEvento = {
+        fecha: new Date().toISOString(),
+        tipo: 'cambio_estado',
+        titulo: `Prenda #${itemIdx + 1} pasó a "${nuevoEstado}"`,
+        detalle: `${items[itemIdx].genero || 'Hombre'} ${items[itemIdx].color || 'Color'} Talla ${items[itemIdx].talla || 'U'}${items[itemIdx].programa ? ` (Bordado: ${items[itemIdx].programa})` : ''} (antes: ${estadoAnterior})`,
+        usuario: role?.vendedor || role?.nombre || 'Usuario'
+      };
+      const updatedHistorial = [nuevoEvento, ...prevHistorial];
+
+      try {
+        localStorage.setItem(`historial_venta_${ventaId}`, JSON.stringify(updatedHistorial));
+      } catch {}
+
+      const jsonStr = JSON.stringify({ items, historial: updatedHistorial });
 
       // El estado general de la venta es el estado más retrasado entre todas las camisas
       const estadosOrdenados = items
@@ -351,9 +381,32 @@ export function DataProvider({ children }) {
       items = items.map(it => ({ ...it, estado: nuevoEstado }));
     }
 
+    let prevHistorial = [];
+    try {
+      if (venta.items_camisa) {
+        const p = typeof venta.items_camisa === 'string' ? JSON.parse(venta.items_camisa) : venta.items_camisa;
+        if (p && Array.isArray(p.historial)) prevHistorial = p.historial;
+      }
+    } catch {}
+
+    const nuevoEvento = {
+      fecha: new Date().toISOString(),
+      tipo: 'cambio_estado',
+      titulo: `Pedido completo pasó a "${nuevoEstado}"`,
+      detalle: `Todas las prendas (${items ? items.length : 1}) marcadas como ${nuevoEstado}`,
+      usuario: role?.vendedor || role?.nombre || 'Usuario'
+    };
+    const updatedHistorial = [nuevoEvento, ...prevHistorial];
+
+    try {
+      localStorage.setItem(`historial_venta_${ventaId}`, JSON.stringify(updatedHistorial));
+    } catch {}
+
+    const jsonStr = items ? JSON.stringify({ items, historial: updatedHistorial }) : undefined;
+
     const cambios = {
       estado: nuevoEstado,
-      ...(items ? { items_camisa: JSON.stringify(items) } : {})
+      ...(jsonStr ? { items_camisa: jsonStr } : {})
     };
 
     await updateVenta(ventaId, cambios);

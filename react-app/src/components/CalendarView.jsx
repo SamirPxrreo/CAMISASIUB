@@ -33,7 +33,8 @@ import {
   getWhatsAppLink,
   generarMensajeWhatsApp,
   generarTextoResumenPedido,
-  hoyColombia
+  hoyColombia,
+  getVendedorColor
 } from '../lib/utils';
 
 export default function CalendarView({ onEditOrder, onNavigateToCuentas }) {
@@ -351,7 +352,9 @@ export default function CalendarView({ onEditOrder, onNavigateToCuentas }) {
                                 {v.cliente_nombre}
                               </h4>
                               <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-semibold mt-0.5">
-                                <span className="text-indigo-600 font-bold">{v.vendedor || 'Samir'}</span>
+                                <span className={`px-2 py-0.2 rounded-md font-bold text-[10.5px] border ${getVendedorColor(v.vendedor).badge}`}>
+                                  {v.vendedor || 'Samir'}
+                                </span>
                                 {tel && (
                                   <>
                                     <span>•</span>

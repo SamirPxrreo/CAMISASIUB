@@ -25,7 +25,8 @@ import {
   itemsCrudosVenta,
   getEstadoBadgeStyle,
   getWhatsAppLink,
-  generarMensajeWhatsApp
+  generarMensajeWhatsApp,
+  getVendedorColor
 } from '../lib/utils';
 import Pagination from './Pagination';
 import { useAuth } from '../context/AuthContext';
@@ -320,7 +321,9 @@ export default function HistoryView({ onEditOrder }) {
                           )}
                         </div>
                         <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium">
-                          <span className="font-semibold text-slate-600">{v.vendedor || 'Samir'}</span>
+                          <span className={`px-2 py-0.2 rounded-md font-bold text-[10px] border ${getVendedorColor(v.vendedor).badge}`}>
+                            {v.vendedor || 'Samir'}
+                          </span>
                           <span>•</span>
                           <span>{items.length || v.cantidad || 1} camisas</span>
                         </div>
