@@ -44,6 +44,7 @@ export default function OrderDetailModal({ isOpen, onClose, order, onEditOrder }
   const { updateItemEstado, updateOrderEstadoCompleto, finalizarPedido, colores } = useData();
   const [copiado, setCopiado] = useState(false);
   const [mostrarHistorial, setMostrarHistorial] = useState(false);
+  const historial = useMemo(() => (order ? historialVenta(order) : []), [order]);
 
   if (!isOpen || !order) return null;
 
@@ -53,7 +54,6 @@ export default function OrderDetailModal({ isOpen, onClose, order, onEditOrder }
   const total = precioTotalVenta(order);
   const abono = abonoClienteTotal(order);
   const saldo = saldoCliente(order);
-  const historial = useMemo(() => historialVenta(order), [order]);
 
   const handleCopiarWhatsApp = () => {
     const texto = generarMensajeWhatsApp(order);

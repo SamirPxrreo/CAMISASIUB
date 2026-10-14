@@ -64,6 +64,7 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
   const [expandedId, setExpandedId] = useState(null);
   const [copiadoPedidoId, setCopiadoPedidoId] = useState(null);
   const [selectedOrderDetail, setSelectedOrderDetail] = useState(null);
+  const [exportandoCompra, setExportandoCompra] = useState(false);
 
   // Mantener actualizado el pedido abierto en el modal
   const activeOrderForModal = useMemo(() => {
@@ -183,8 +184,6 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
       await deleteVenta(id);
     }
   };
-
-  const [exportandoCompra, setExportandoCompra] = useState(false);
 
   // Exportar a Excel con diseño profesional, tabla y filtros únicamente las prendas en estado 'Pedido'
   const handleExportarCompra = async () => {
