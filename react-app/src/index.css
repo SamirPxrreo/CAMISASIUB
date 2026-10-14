@@ -222,374 +222,374 @@ html[data-theme="sunset"] [class*="from-indigo-500"] {
 }
 
 /* --- TEMA: NOCHE ELEGANTE (DARK MODE TOTAL) --- */
-html[data-theme="dark"] {
+html[data-oscuro="1"] {
   color-scheme: dark;
 }
-html[data-theme="dark"] body {
+html[data-oscuro="1"] body {
   background-color: #090d16 !important;
   color: #f8fafc !important;
 }
-html[data-theme="dark"] aside {
+html[data-oscuro="1"] aside {
   background-color: #0f172a !important;
   border-color: rgba(255, 255, 255, 0.08) !important;
 }
-html[data-theme="dark"] header,
+html[data-oscuro="1"] header,
 html.dark header,
-html[data-theme="dark"] nav.bottom-nav-bar,
+html[data-oscuro="1"] nav.bottom-nav-bar,
 html.dark nav.bottom-nav-bar {
   background-color: rgba(19, 27, 46, 0.95) !important;
   border-color: rgba(255, 255, 255, 0.08) !important;
 }
-html[data-theme="dark"] .bg-white {
+html[data-oscuro="1"] .bg-white {
   background-color: #131b2e !important;
   color: #f8fafc !important;
 }
-html[data-theme="dark"] .bg-white\/80,
-html[data-theme="dark"] .bg-white\/90 {
+html[data-oscuro="1"] .bg-white\/80,
+html[data-oscuro="1"] .bg-white\/90 {
   background-color: rgba(19, 27, 46, 0.92) !important;
 }
 
 /* Superficies y subcontenedores oscuros */
-html[data-theme="dark"] .bg-slate-50,
-html[data-theme="dark"] .bg-slate-50\/40,
-html[data-theme="dark"] .bg-slate-50\/50,
-html[data-theme="dark"] .bg-slate-50\/60,
-html[data-theme="dark"] .bg-slate-50\/70,
-html[data-theme="dark"] .bg-slate-50\/80,
-html[data-theme="dark"] .bg-gray-50,
-html[data-theme="dark"] .bg-zinc-50 {
+html[data-oscuro="1"] .bg-slate-50,
+html[data-oscuro="1"] .bg-slate-50\/40,
+html[data-oscuro="1"] .bg-slate-50\/50,
+html[data-oscuro="1"] .bg-slate-50\/60,
+html[data-oscuro="1"] .bg-slate-50\/70,
+html[data-oscuro="1"] .bg-slate-50\/80,
+html[data-oscuro="1"] .bg-gray-50,
+html[data-oscuro="1"] .bg-zinc-50 {
   background-color: #0b1120 !important;
 }
 
-html[data-theme="dark"] .bg-slate-100,
-html[data-theme="dark"] .bg-slate-100\/50,
-html[data-theme="dark"] .bg-slate-100\/70,
-html[data-theme="dark"] .bg-slate-100\/80,
-html[data-theme="dark"] .bg-gray-100,
-html[data-theme="dark"] .bg-zinc-100 {
+html[data-oscuro="1"] .bg-slate-100,
+html[data-oscuro="1"] .bg-slate-100\/50,
+html[data-oscuro="1"] .bg-slate-100\/70,
+html[data-oscuro="1"] .bg-slate-100\/80,
+html[data-oscuro="1"] .bg-gray-100,
+html[data-oscuro="1"] .bg-zinc-100 {
   background-color: #1e293b !important;
   color: #f8fafc !important;
 }
 
-html[data-theme="dark"] .bg-slate-200,
-html[data-theme="dark"] .bg-slate-200\/60,
-html[data-theme="dark"] .bg-slate-200\/80,
-html[data-theme="dark"] .bg-gray-200 {
+html[data-oscuro="1"] .bg-slate-200,
+html[data-oscuro="1"] .bg-slate-200\/60,
+html[data-oscuro="1"] .bg-slate-200\/80,
+html[data-oscuro="1"] .bg-gray-200 {
   background-color: #334155 !important;
 }
 
 /* Hover y focus seguros en modo oscuro */
-html[data-theme="dark"] .hover\:bg-slate-50:hover,
-html[data-theme="dark"] .hover\:bg-slate-100:hover,
-html[data-theme="dark"] .hover\:bg-gray-50:hover,
-html[data-theme="dark"] .hover\:bg-gray-100:hover,
-html[data-theme="dark"] .hover\:bg-white:hover {
+html[data-oscuro="1"] .hover\:bg-slate-50:hover,
+html[data-oscuro="1"] .hover\:bg-slate-100:hover,
+html[data-oscuro="1"] .hover\:bg-gray-50:hover,
+html[data-oscuro="1"] .hover\:bg-gray-100:hover,
+html[data-oscuro="1"] .hover\:bg-white:hover {
   background-color: rgba(255, 255, 255, 0.08) !important;
 }
 
-html[data-theme="dark"] .focus\:bg-white:focus {
+html[data-oscuro="1"] .focus\:bg-white:focus {
   background-color: #0d1527 !important;
   color: #f8fafc !important;
 }
 
 /* Textos de alto contraste */
-html[data-theme="dark"] .text-slate-950,
-html[data-theme="dark"] .text-slate-900,
-html[data-theme="dark"] .text-slate-800,
-html[data-theme="dark"] .text-gray-950,
-html[data-theme="dark"] .text-gray-900,
-html[data-theme="dark"] .text-gray-800 {
+html[data-oscuro="1"] .text-slate-950,
+html[data-oscuro="1"] .text-slate-900,
+html[data-oscuro="1"] .text-slate-800,
+html[data-oscuro="1"] .text-gray-950,
+html[data-oscuro="1"] .text-gray-900,
+html[data-oscuro="1"] .text-gray-800 {
   color: #f8fafc !important;
 }
 
-html[data-theme="dark"] .text-slate-700,
-html[data-theme="dark"] .text-slate-600,
-html[data-theme="dark"] .text-gray-700,
-html[data-theme="dark"] .text-gray-600 {
+html[data-oscuro="1"] .text-slate-700,
+html[data-oscuro="1"] .text-slate-600,
+html[data-oscuro="1"] .text-gray-700,
+html[data-oscuro="1"] .text-gray-600 {
   color: #cbd5e1 !important;
 }
 
-html[data-theme="dark"] .text-slate-500,
-html[data-theme="dark"] .text-slate-400,
-html[data-theme="dark"] .text-gray-500,
-html[data-theme="dark"] .text-gray-400 {
+html[data-oscuro="1"] .text-slate-500,
+html[data-oscuro="1"] .text-slate-400,
+html[data-oscuro="1"] .text-gray-500,
+html[data-oscuro="1"] .text-gray-400 {
   color: #94a3b8 !important;
 }
 
 /* Bordes y divisores */
-html[data-theme="dark"] .border-slate-100,
-html[data-theme="dark"] .border-slate-200,
-html[data-theme="dark"] .border-slate-200\/40,
-html[data-theme="dark"] .border-slate-200\/50,
-html[data-theme="dark"] .border-slate-200\/60,
-html[data-theme="dark"] .border-slate-200\/70,
-html[data-theme="dark"] .border-slate-200\/80,
-html[data-theme="dark"] .border-slate-200\/90,
-html[data-theme="dark"] .border-slate-300,
-html[data-theme="dark"] .border-gray-100,
-html[data-theme="dark"] .border-gray-200 {
+html[data-oscuro="1"] .border-slate-100,
+html[data-oscuro="1"] .border-slate-200,
+html[data-oscuro="1"] .border-slate-200\/40,
+html[data-oscuro="1"] .border-slate-200\/50,
+html[data-oscuro="1"] .border-slate-200\/60,
+html[data-oscuro="1"] .border-slate-200\/70,
+html[data-oscuro="1"] .border-slate-200\/80,
+html[data-oscuro="1"] .border-slate-200\/90,
+html[data-oscuro="1"] .border-slate-300,
+html[data-oscuro="1"] .border-gray-100,
+html[data-oscuro="1"] .border-gray-200 {
   border-color: rgba(255, 255, 255, 0.09) !important;
 }
 
-html[data-theme="dark"] .hover\:border-slate-300:hover,
-html[data-theme="dark"] .hover\:border-slate-400:hover {
+html[data-oscuro="1"] .hover\:border-slate-300:hover,
+html[data-oscuro="1"] .hover\:border-slate-400:hover {
   border-color: rgba(255, 255, 255, 0.22) !important;
 }
 
-html[data-theme="dark"] .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
-html[data-theme="dark"] .divide-slate-200 > :not([hidden]) ~ :not([hidden]) {
+html[data-oscuro="1"] .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+html[data-oscuro="1"] .divide-slate-200 > :not([hidden]) ~ :not([hidden]) {
   border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 /* Chips y Acentos Índigo */
-html[data-theme="dark"] .bg-indigo-50,
-html[data-theme="dark"] .bg-indigo-50\/40,
-html[data-theme="dark"] .bg-indigo-50\/50,
-html[data-theme="dark"] .bg-indigo-50\/60,
-html[data-theme="dark"] .bg-indigo-50\/70,
-html[data-theme="dark"] .bg-indigo-50\/80,
-html[data-theme="dark"] .bg-indigo-100 {
+html[data-oscuro="1"] .bg-indigo-50,
+html[data-oscuro="1"] .bg-indigo-50\/40,
+html[data-oscuro="1"] .bg-indigo-50\/50,
+html[data-oscuro="1"] .bg-indigo-50\/60,
+html[data-oscuro="1"] .bg-indigo-50\/70,
+html[data-oscuro="1"] .bg-indigo-50\/80,
+html[data-oscuro="1"] .bg-indigo-100 {
   background-color: rgba(99, 102, 241, 0.18) !important;
   color: #c7d2fe !important;
 }
-html[data-theme="dark"] .text-indigo-950,
-html[data-theme="dark"] .text-indigo-900,
-html[data-theme="dark"] .text-indigo-800 {
+html[data-oscuro="1"] .text-indigo-950,
+html[data-oscuro="1"] .text-indigo-900,
+html[data-oscuro="1"] .text-indigo-800 {
   color: #c7d2fe !important;
 }
-html[data-theme="dark"] .text-indigo-700,
-html[data-theme="dark"] .text-indigo-600,
-html[data-theme="dark"] .text-indigo-500 {
+html[data-oscuro="1"] .text-indigo-700,
+html[data-oscuro="1"] .text-indigo-600,
+html[data-oscuro="1"] .text-indigo-500 {
   color: #a5b4fc !important;
 }
-html[data-theme="dark"] .border-indigo-100,
-html[data-theme="dark"] .border-indigo-200,
-html[data-theme="dark"] .border-indigo-300 {
+html[data-oscuro="1"] .border-indigo-100,
+html[data-oscuro="1"] .border-indigo-200,
+html[data-oscuro="1"] .border-indigo-300 {
   border-color: rgba(129, 140, 248, 0.28) !important;
 }
-html[data-theme="dark"] .hover\:bg-indigo-50:hover {
+html[data-oscuro="1"] .hover\:bg-indigo-50:hover {
   background-color: rgba(99, 102, 241, 0.25) !important;
 }
-html[data-theme="dark"] .hover\:text-indigo-800:hover,
-html[data-theme="dark"] .hover\:text-indigo-700:hover {
+html[data-oscuro="1"] .hover\:text-indigo-800:hover,
+html[data-oscuro="1"] .hover\:text-indigo-700:hover {
   color: #e0e7ff !important;
 }
 
 /* Chips y Acentos Esmeralda / Verdes */
-html[data-theme="dark"] .bg-emerald-50,
-html[data-theme="dark"] .bg-emerald-50\/40,
-html[data-theme="dark"] .bg-emerald-50\/60,
-html[data-theme="dark"] .bg-emerald-50\/70,
-html[data-theme="dark"] .bg-emerald-50\/80,
-html[data-theme="dark"] .bg-emerald-100,
-html[data-theme="dark"] .bg-emerald-300,
-html[data-theme="dark"] .bg-emerald-500\/10,
-html[data-theme="dark"] .bg-emerald-500\/5 {
+html[data-oscuro="1"] .bg-emerald-50,
+html[data-oscuro="1"] .bg-emerald-50\/40,
+html[data-oscuro="1"] .bg-emerald-50\/60,
+html[data-oscuro="1"] .bg-emerald-50\/70,
+html[data-oscuro="1"] .bg-emerald-50\/80,
+html[data-oscuro="1"] .bg-emerald-100,
+html[data-oscuro="1"] .bg-emerald-300,
+html[data-oscuro="1"] .bg-emerald-500\/10,
+html[data-oscuro="1"] .bg-emerald-500\/5 {
   background-color: rgba(16, 185, 129, 0.16) !important;
   color: #6ee7b7 !important;
 }
-html[data-theme="dark"] .text-emerald-950,
-html[data-theme="dark"] .text-emerald-900,
-html[data-theme="dark"] .text-emerald-800 {
+html[data-oscuro="1"] .text-emerald-950,
+html[data-oscuro="1"] .text-emerald-900,
+html[data-oscuro="1"] .text-emerald-800 {
   color: #6ee7b7 !important;
 }
-html[data-theme="dark"] .text-emerald-700,
-html[data-theme="dark"] .text-emerald-600 {
+html[data-oscuro="1"] .text-emerald-700,
+html[data-oscuro="1"] .text-emerald-600 {
   color: #34d399 !important;
 }
-html[data-theme="dark"] .border-emerald-100,
-html[data-theme="dark"] .border-emerald-200,
-html[data-theme="dark"] [class*="border-emerald-200"],
-html[data-theme="dark"] .border-emerald-300,
-html[data-theme="dark"] .border-emerald-500\/20,
-html[data-theme="dark"] .border-emerald-500\/30 {
+html[data-oscuro="1"] .border-emerald-100,
+html[data-oscuro="1"] .border-emerald-200,
+html[data-oscuro="1"] [class*="border-emerald-200"],
+html[data-oscuro="1"] .border-emerald-300,
+html[data-oscuro="1"] .border-emerald-500\/20,
+html[data-oscuro="1"] .border-emerald-500\/30 {
   border-color: rgba(16, 185, 129, 0.3) !important;
 }
 
 /* Chips y Acentos Ámbar / Amarillos */
-html[data-theme="dark"] .bg-amber-50,
-html[data-theme="dark"] .bg-amber-50\/40,
-html[data-theme="dark"] .bg-amber-50\/60,
-html[data-theme="dark"] .bg-amber-50\/70,
-html[data-theme="dark"] .bg-amber-50\/80,
-html[data-theme="dark"] .bg-amber-100,
-html[data-theme="dark"] .bg-amber-300,
-html[data-theme="dark"] .bg-amber-500\/10,
-html[data-theme="dark"] .bg-amber-500\/5,
-html[data-theme="dark"] .bg-amber-500\/20 {
+html[data-oscuro="1"] .bg-amber-50,
+html[data-oscuro="1"] .bg-amber-50\/40,
+html[data-oscuro="1"] .bg-amber-50\/60,
+html[data-oscuro="1"] .bg-amber-50\/70,
+html[data-oscuro="1"] .bg-amber-50\/80,
+html[data-oscuro="1"] .bg-amber-100,
+html[data-oscuro="1"] .bg-amber-300,
+html[data-oscuro="1"] .bg-amber-500\/10,
+html[data-oscuro="1"] .bg-amber-500\/5,
+html[data-oscuro="1"] .bg-amber-500\/20 {
   background-color: rgba(245, 158, 11, 0.16) !important;
   color: #fde68a !important;
 }
-html[data-theme="dark"] .text-amber-950,
-html[data-theme="dark"] .text-amber-900,
-html[data-theme="dark"] .text-amber-800 {
+html[data-oscuro="1"] .text-amber-950,
+html[data-oscuro="1"] .text-amber-900,
+html[data-oscuro="1"] .text-amber-800 {
   color: #fde68a !important;
 }
-html[data-theme="dark"] .text-amber-700,
-html[data-theme="dark"] .text-amber-600 {
+html[data-oscuro="1"] .text-amber-700,
+html[data-oscuro="1"] .text-amber-600 {
   color: #fbbf24 !important;
 }
-html[data-theme="dark"] .border-amber-100,
-html[data-theme="dark"] .border-amber-200,
-html[data-theme="dark"] [class*="border-amber-200"],
-html[data-theme="dark"] .border-amber-300,
-html[data-theme="dark"] .border-amber-500\/20,
-html[data-theme="dark"] .border-amber-500\/30 {
+html[data-oscuro="1"] .border-amber-100,
+html[data-oscuro="1"] .border-amber-200,
+html[data-oscuro="1"] [class*="border-amber-200"],
+html[data-oscuro="1"] .border-amber-300,
+html[data-oscuro="1"] .border-amber-500\/20,
+html[data-oscuro="1"] .border-amber-500\/30 {
   border-color: rgba(245, 158, 11, 0.3) !important;
 }
 
 /* Chips y Acentos Rosa / Rose */
-html[data-theme="dark"] .bg-rose-50,
-html[data-theme="dark"] .bg-rose-50\/60,
-html[data-theme="dark"] .bg-rose-50\/70,
-html[data-theme="dark"] .bg-rose-50\/80,
-html[data-theme="dark"] .bg-rose-100,
-html[data-theme="dark"] .bg-rose-500\/10 {
+html[data-oscuro="1"] .bg-rose-50,
+html[data-oscuro="1"] .bg-rose-50\/60,
+html[data-oscuro="1"] .bg-rose-50\/70,
+html[data-oscuro="1"] .bg-rose-50\/80,
+html[data-oscuro="1"] .bg-rose-100,
+html[data-oscuro="1"] .bg-rose-500\/10 {
   background-color: rgba(244, 63, 94, 0.16) !important;
   color: #fda4af !important;
 }
-html[data-theme="dark"] .text-rose-950,
-html[data-theme="dark"] .text-rose-900,
-html[data-theme="dark"] .text-rose-800 {
+html[data-oscuro="1"] .text-rose-950,
+html[data-oscuro="1"] .text-rose-900,
+html[data-oscuro="1"] .text-rose-800 {
   color: #fda4af !important;
 }
-html[data-theme="dark"] .text-rose-700,
-html[data-theme="dark"] .text-rose-600 {
+html[data-oscuro="1"] .text-rose-700,
+html[data-oscuro="1"] .text-rose-600 {
   color: #fb7185 !important;
 }
-html[data-theme="dark"] .border-rose-100,
-html[data-theme="dark"] .border-rose-200,
-html[data-theme="dark"] [class*="border-rose-200"],
-html[data-theme="dark"] .border-rose-300 {
+html[data-oscuro="1"] .border-rose-100,
+html[data-oscuro="1"] .border-rose-200,
+html[data-oscuro="1"] [class*="border-rose-200"],
+html[data-oscuro="1"] .border-rose-300 {
   border-color: rgba(244, 63, 94, 0.3) !important;
 }
 
 /* Chips y Acentos Cian / Cyan / Sky */
-html[data-theme="dark"] .bg-cyan-50,
-html[data-theme="dark"] .bg-cyan-100,
-html[data-theme="dark"] .bg-sky-50,
-html[data-theme="dark"] .bg-sky-50\/80,
-html[data-theme="dark"] .bg-sky-100,
-html[data-theme="dark"] .bg-sky-300,
-html[data-theme="dark"] .bg-sky-500\/10 {
+html[data-oscuro="1"] .bg-cyan-50,
+html[data-oscuro="1"] .bg-cyan-100,
+html[data-oscuro="1"] .bg-sky-50,
+html[data-oscuro="1"] .bg-sky-50\/80,
+html[data-oscuro="1"] .bg-sky-100,
+html[data-oscuro="1"] .bg-sky-300,
+html[data-oscuro="1"] .bg-sky-500\/10 {
   background-color: rgba(14, 165, 233, 0.16) !important;
   color: #7dd3fc !important;
 }
-html[data-theme="dark"] .text-cyan-950,
-html[data-theme="dark"] .text-cyan-900,
-html[data-theme="dark"] .text-cyan-800,
-html[data-theme="dark"] .text-sky-950,
-html[data-theme="dark"] .text-sky-900,
-html[data-theme="dark"] .text-sky-800 {
+html[data-oscuro="1"] .text-cyan-950,
+html[data-oscuro="1"] .text-cyan-900,
+html[data-oscuro="1"] .text-cyan-800,
+html[data-oscuro="1"] .text-sky-950,
+html[data-oscuro="1"] .text-sky-900,
+html[data-oscuro="1"] .text-sky-800 {
   color: #7dd3fc !important;
 }
-html[data-theme="dark"] .text-cyan-700,
-html[data-theme="dark"] .text-cyan-600,
-html[data-theme="dark"] .text-sky-700,
-html[data-theme="dark"] .text-sky-600 {
+html[data-oscuro="1"] .text-cyan-700,
+html[data-oscuro="1"] .text-cyan-600,
+html[data-oscuro="1"] .text-sky-700,
+html[data-oscuro="1"] .text-sky-600 {
   color: #38bdf8 !important;
 }
-html[data-theme="dark"] .border-cyan-100,
-html[data-theme="dark"] .border-cyan-200,
-html[data-theme="dark"] .border-sky-100,
-html[data-theme="dark"] .border-sky-200,
-html[data-theme="dark"] [class*="border-sky-200"],
-html[data-theme="dark"] .border-sky-300,
-html[data-theme="dark"] .border-sky-500\/30 {
+html[data-oscuro="1"] .border-cyan-100,
+html[data-oscuro="1"] .border-cyan-200,
+html[data-oscuro="1"] .border-sky-100,
+html[data-oscuro="1"] .border-sky-200,
+html[data-oscuro="1"] [class*="border-sky-200"],
+html[data-oscuro="1"] .border-sky-300,
+html[data-oscuro="1"] .border-sky-500\/30 {
   border-color: rgba(14, 165, 233, 0.3) !important;
 }
 
 /* Chips y Acentos Violeta / Púrpura */
-html[data-theme="dark"] .bg-purple-50,
-html[data-theme="dark"] .bg-purple-50\/80,
-html[data-theme="dark"] .bg-purple-100,
-html[data-theme="dark"] .bg-purple-300,
-html[data-theme="dark"] .bg-violet-50,
-html[data-theme="dark"] .bg-violet-100 {
+html[data-oscuro="1"] .bg-purple-50,
+html[data-oscuro="1"] .bg-purple-50\/80,
+html[data-oscuro="1"] .bg-purple-100,
+html[data-oscuro="1"] .bg-purple-300,
+html[data-oscuro="1"] .bg-violet-50,
+html[data-oscuro="1"] .bg-violet-100 {
   background-color: rgba(168, 85, 247, 0.16) !important;
   color: #d8b4fe !important;
 }
-html[data-theme="dark"] .text-purple-950,
-html[data-theme="dark"] .text-purple-900,
-html[data-theme="dark"] .text-purple-800,
-html[data-theme="dark"] .text-violet-950,
-html[data-theme="dark"] .text-violet-900,
-html[data-theme="dark"] .text-violet-800 {
+html[data-oscuro="1"] .text-purple-950,
+html[data-oscuro="1"] .text-purple-900,
+html[data-oscuro="1"] .text-purple-800,
+html[data-oscuro="1"] .text-violet-950,
+html[data-oscuro="1"] .text-violet-900,
+html[data-oscuro="1"] .text-violet-800 {
   color: #d8b4fe !important;
 }
-html[data-theme="dark"] .text-purple-700,
-html[data-theme="dark"] .text-purple-600,
-html[data-theme="dark"] .text-violet-700,
-html[data-theme="dark"] .text-violet-600 {
+html[data-oscuro="1"] .text-purple-700,
+html[data-oscuro="1"] .text-purple-600,
+html[data-oscuro="1"] .text-violet-700,
+html[data-oscuro="1"] .text-violet-600 {
   color: #c084fc !important;
 }
-html[data-theme="dark"] .border-purple-100,
-html[data-theme="dark"] .border-purple-200,
-html[data-theme="dark"] [class*="border-purple-200"],
-html[data-theme="dark"] .border-purple-300 {
+html[data-oscuro="1"] .border-purple-100,
+html[data-oscuro="1"] .border-purple-200,
+html[data-oscuro="1"] [class*="border-purple-200"],
+html[data-oscuro="1"] .border-purple-300 {
   border-color: rgba(168, 85, 247, 0.3) !important;
 }
 
 /* Chips y Acentos Azul / Blue */
-html[data-theme="dark"] .bg-blue-50,
-html[data-theme="dark"] .bg-blue-50\/80,
-html[data-theme="dark"] .bg-blue-100,
-html[data-theme="dark"] .bg-blue-300 {
+html[data-oscuro="1"] .bg-blue-50,
+html[data-oscuro="1"] .bg-blue-50\/80,
+html[data-oscuro="1"] .bg-blue-100,
+html[data-oscuro="1"] .bg-blue-300 {
   background-color: rgba(59, 130, 246, 0.16) !important;
   color: #93c5fd !important;
 }
-html[data-theme="dark"] .text-blue-950,
-html[data-theme="dark"] .text-blue-900,
-html[data-theme="dark"] .text-blue-800 {
+html[data-oscuro="1"] .text-blue-950,
+html[data-oscuro="1"] .text-blue-900,
+html[data-oscuro="1"] .text-blue-800 {
   color: #93c5fd !important;
 }
-html[data-theme="dark"] .text-blue-700,
-html[data-theme="dark"] .text-blue-600 {
+html[data-oscuro="1"] .text-blue-700,
+html[data-oscuro="1"] .text-blue-600 {
   color: #60a5fa !important;
 }
-html[data-theme="dark"] .border-blue-100,
-html[data-theme="dark"] .border-blue-200,
-html[data-theme="dark"] [class*="border-blue-200"],
-html[data-theme="dark"] .border-blue-300 {
+html[data-oscuro="1"] .border-blue-100,
+html[data-oscuro="1"] .border-blue-200,
+html[data-oscuro="1"] [class*="border-blue-200"],
+html[data-oscuro="1"] .border-blue-300 {
   border-color: rgba(59, 130, 246, 0.3) !important;
 }
 
 /* Chips y Acentos Teal */
-html[data-theme="dark"] .bg-teal-50,
-html[data-theme="dark"] .bg-teal-50\/80,
-html[data-theme="dark"] .bg-teal-100,
-html[data-theme="dark"] .bg-teal-300 {
+html[data-oscuro="1"] .bg-teal-50,
+html[data-oscuro="1"] .bg-teal-50\/80,
+html[data-oscuro="1"] .bg-teal-100,
+html[data-oscuro="1"] .bg-teal-300 {
   background-color: rgba(20, 184, 166, 0.16) !important;
   color: #5eead4 !important;
 }
-html[data-theme="dark"] .text-teal-950,
-html[data-theme="dark"] .text-teal-900,
-html[data-theme="dark"] .text-teal-800 {
+html[data-oscuro="1"] .text-teal-950,
+html[data-oscuro="1"] .text-teal-900,
+html[data-oscuro="1"] .text-teal-800 {
   color: #5eead4 !important;
 }
-html[data-theme="dark"] .text-teal-700,
-html[data-theme="dark"] .text-teal-600 {
+html[data-oscuro="1"] .text-teal-700,
+html[data-oscuro="1"] .text-teal-600 {
   color: #2dd4bf !important;
 }
-html[data-theme="dark"] .border-teal-100,
-html[data-theme="dark"] .border-teal-200,
-html[data-theme="dark"] [class*="border-teal-200"],
-html[data-theme="dark"] .border-teal-300 {
+html[data-oscuro="1"] .border-teal-100,
+html[data-oscuro="1"] .border-teal-200,
+html[data-oscuro="1"] [class*="border-teal-200"],
+html[data-oscuro="1"] .border-teal-300 {
   border-color: rgba(20, 184, 166, 0.3) !important;
 }
 
 /* Modales y superficies flotantes con sombra profunda */
-html[data-theme="dark"] .shadow-2xl,
-html[data-theme="dark"] .shadow-xl,
+html[data-oscuro="1"] .shadow-2xl,
+html[data-oscuro="1"] .shadow-xl,
 html.dark .shadow-2xl,
 html.dark .shadow-xl {
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
 }
 
 /* Inputs, selects y controles de formulario en modo oscuro */
-html[data-theme="dark"] input:not(.lbi-field),
-html[data-theme="dark"] select,
-html[data-theme="dark"] textarea,
+html[data-oscuro="1"] input:not(.lbi-field),
+html[data-oscuro="1"] select,
+html[data-oscuro="1"] textarea,
 html.dark input:not(.lbi-field),
 html.dark select,
 html.dark textarea {
@@ -597,9 +597,9 @@ html.dark textarea {
   color: #f8fafc !important;
   border-color: rgba(255, 255, 255, 0.14) !important;
 }
-html[data-theme="dark"] input:not(.lbi-field):focus,
-html[data-theme="dark"] select:focus,
-html[data-theme="dark"] textarea:focus,
+html[data-oscuro="1"] input:not(.lbi-field):focus,
+html[data-oscuro="1"] select:focus,
+html[data-oscuro="1"] textarea:focus,
 html.dark input:not(.lbi-field):focus,
 html.dark select:focus,
 html.dark textarea:focus {
@@ -607,28 +607,28 @@ html.dark textarea:focus {
   background-color: #0d1527 !important;
   --tw-ring-color: rgba(129, 140, 248, 0.3) !important;
 }
-html[data-theme="dark"] input::placeholder,
-html[data-theme="dark"] textarea::placeholder,
+html[data-oscuro="1"] input::placeholder,
+html[data-oscuro="1"] textarea::placeholder,
 html.dark input::placeholder,
 html.dark textarea::placeholder {
   color: #64748b !important;
 }
 
 /* Opciones nativas de select en modo oscuro */
-html[data-theme="dark"] select option,
+html[data-oscuro="1"] select option,
 html.dark select option {
   background-color: #131b2e !important;
   color: #f8fafc !important;
 }
 
 /* Hovers de texto y fondo en modo oscuro */
-html[data-theme="dark"] .hover\:bg-slate-200:hover,
+html[data-oscuro="1"] .hover\:bg-slate-200:hover,
 html.dark .hover\:bg-slate-200:hover {
   background-color: rgba(255, 255, 255, 0.14) !important;
 }
-html[data-theme="dark"] .hover\:text-slate-900:hover,
-html[data-theme="dark"] .hover\:text-slate-800:hover,
-html[data-theme="dark"] .hover\:text-slate-700:hover,
+html[data-oscuro="1"] .hover\:text-slate-900:hover,
+html[data-oscuro="1"] .hover\:text-slate-800:hover,
+html[data-oscuro="1"] .hover\:text-slate-700:hover,
 html.dark .hover\:text-slate-900:hover,
 html.dark .hover\:text-slate-800:hover,
 html.dark .hover\:text-slate-700:hover {
@@ -636,13 +636,233 @@ html.dark .hover\:text-slate-700:hover {
 }
 
 /* Scrollbar en modo oscuro */
-html[data-theme="dark"] ::-webkit-scrollbar-thumb,
+html[data-oscuro="1"] ::-webkit-scrollbar-thumb,
 html.dark ::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.18) !important;
 }
-html[data-theme="dark"] ::-webkit-scrollbar-thumb:hover,
+html[data-oscuro="1"] ::-webkit-scrollbar-thumb:hover,
 html.dark ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.32) !important;
+}
+
+/* ========================================================
+   CAPA DE CORRECCION DE CONTRASTE (todos los temas)
+   Medido con auditor WCAG sobre las 11 vistas.
+   Objetivo: toda combinacion texto/fondo >= 4,5:1 (AA)
+   a tamano normal y >= 3:1 a tamano grande o bold.
+   ======================================================== */
+
+/* ---- 1. TEXTO SECUNDARIO PEQUENO ----
+   slate-400 sobre blanco daba 3,5:1 y se usaba en ~45 sitios
+   (subtitulos, "Control & Socios", ayudas). slate-500 llega a
+   7:1 sobre blanco y 5,9:1 sobre slate-50.
+   OJO: se excluyen los temas oscuros con :not([data-oscuro="1"]),
+   porque alli slate-400 ya significa un tono claro sobre fondo oscuro. */
+html[data-theme]:not([data-oscuro="1"]) .text-slate-400 {
+  color: #64748b !important;
+}
+html[data-theme]:not([data-oscuro="1"]) .text-slate-500 {
+  color: #556070 !important;
+}
+
+/* ---- 2. EL PRIMARIO DEL TEMA SOBRE SU PROPIO TONO CLARO ----
+   Menta usaba #059669 sobre #ecfdf5 = 3,58:1. Este primario es
+   el que se usa como fondo de boton con texto blanco, asi que
+   para texto sobre fondo claro hace falta el tono 700. */
+html[data-theme="mint"] .text-indigo-600,
+html[data-theme="mint"] .text-indigo-700,
+html[data-theme="mint"] .text-indigo-800,
+html[data-theme="mint"] .text-indigo-900,
+html[data-theme="mint"] .text-emerald-600,
+html[data-theme="mint"] .text-emerald-700 {
+  color: #046c4e !important;
+}
+html[data-theme="lavender"] .text-indigo-600,
+html[data-theme="lavender"] .text-indigo-700,
+html[data-theme="lavender"] .text-violet-600,
+html[data-theme="lavender"] .text-purple-600 {
+  color: #5b3fb0 !important;
+}
+html[data-theme="sunset"] .text-indigo-600,
+html[data-theme="sunset"] .text-indigo-700,
+html[data-theme="sunset"] .text-orange-600,
+html[data-theme="sunset"] .text-amber-600 {
+  color: #b4460c !important;
+}
+
+/* ---- 3. ACENTOS CLAROS QUE NO SE REMAPEABAN ----
+   rose/amber/fuchsia/indigo en tonos 100-400 no existian en la
+   seccion dark, asi que se veian apagados sobre fondo oscuro. */
+html[data-oscuro="1"] .text-rose-100,
+html[data-oscuro="1"] .text-rose-200,
+html[data-oscuro="1"] .text-rose-300,
+html[data-oscuro="1"] .text-rose-400 {
+  color: #fda4af !important;
+}
+html[data-oscuro="1"] .text-amber-100,
+html[data-oscuro="1"] .text-amber-200,
+html[data-oscuro="1"] .text-amber-300,
+html[data-oscuro="1"] .text-amber-400 {
+  color: #fcd34d !important;
+}
+html[data-oscuro="1"] .text-fuchsia-300,
+html[data-oscuro="1"] .text-fuchsia-400 {
+  color: #f0abfc !important;
+}
+html[data-oscuro="1"] .text-indigo-200,
+html[data-oscuro="1"] .text-indigo-300,
+html[data-oscuro="1"] .text-indigo-400 {
+  color: #c7d2fe !important;
+}
+html[data-oscuro="1"] .text-slate-100,
+html[data-oscuro="1"] .text-slate-200,
+html[data-oscuro="1"] .text-slate-300 {
+  color: #e2e8f0 !important;
+}
+
+/* ---- 4. FONDOS DE ACENTO QUE NO SE REMAPEABAN ----
+   bg-fuchsia-50 etc. se quedaban claros en modo oscuro y dejaban
+   texto iluminado ilegible encima. */
+html[data-oscuro="1"] .bg-fuchsia-50,
+html[data-oscuro="1"] .bg-fuchsia-100 {
+  background-color: rgba(232, 121, 249, 0.16) !important;
+  color: #f5d0fe !important;
+}
+html[data-oscuro="1"] .bg-purple-50,
+html[data-oscuro="1"] .bg-purple-100,
+html[data-oscuro="1"] .bg-violet-50,
+html[data-oscuro="1"] .bg-violet-100 {
+  background-color: rgba(167, 139, 250, 0.16) !important;
+  color: #ddd6fe !important;
+}
+html[data-oscuro="1"] .bg-amber-50,
+html[data-oscuro="1"] .bg-amber-100 {
+  background-color: rgba(245, 158, 11, 0.16) !important;
+  color: #fde68a !important;
+}
+html[data-oscuro="1"] .bg-emerald-50,
+html[data-oscuro="1"] .bg-emerald-100 {
+  background-color: rgba(16, 185, 129, 0.16) !important;
+  color: #a7f3d0 !important;
+}
+html[data-oscuro="1"] .bg-rose-50,
+html[data-oscuro="1"] .bg-rose-100 {
+  background-color: rgba(244, 63, 94, 0.16) !important;
+  color: #fecdd3 !important;
+}
+html[data-oscuro="1"] .bg-sky-50,
+html[data-oscuro="1"] .bg-blue-50 {
+  background-color: rgba(14, 165, 233, 0.16) !important;
+  color: #bae6fd !important;
+}
+
+/* ---- 5. HOVER DE ACENTOS ----
+   Al pasar el mouse el fondo se aclaraba pero el texto se
+   quedaba en su color claro (ratio 1,79 medido en Compras). */
+html[data-oscuro="1"] .hover\:bg-fuchsia-50:hover,
+html[data-oscuro="1"] .hover\:bg-fuchsia-100:hover,
+html[data-oscuro="1"] .hover\:bg-purple-50:hover,
+html[data-oscuro="1"] .hover\:bg-violet-50:hover,
+html[data-oscuro="1"] .hover\:bg-amber-50:hover,
+html[data-oscuro="1"] .hover\:bg-emerald-50:hover,
+html[data-oscuro="1"] .hover\:bg-rose-50:hover,
+html[data-oscuro="1"] .hover\:bg-sky-50:hover,
+html[data-oscuro="1"] .hover\:bg-blue-50:hover {
+  background-color: rgba(255, 255, 255, 0.07) !important;
+}
+
+/* VARIANTES CON OPACIDAD (/70, /80, /90...)
+   La regla original solo cubria el nombre exacto, sin el sufijo. Tailwind
+   genera una clase distinta para cada opacidad, asi que hover:bg-slate-50/80
+   se escapaba y pintaba un blanco al 80% encima del fondo oscuro: las filas
+   de "Ultimos Pedidos" del dashboard quedaban con texto blanco sobre blanco. */
+html[data-oscuro="1"] .hover\:bg-slate-50\/40:hover,
+html[data-oscuro="1"] .hover\:bg-slate-50\/50:hover,
+html[data-oscuro="1"] .hover\:bg-slate-50\/60:hover,
+html[data-oscuro="1"] .hover\:bg-slate-50\/70:hover,
+html[data-oscuro="1"] .hover\:bg-slate-50\/80:hover,
+html[data-oscuro="1"] .hover\:bg-slate-50\/90:hover,
+html[data-oscuro="1"] .hover\:bg-slate-100\/40:hover,
+html[data-oscuro="1"] .hover\:bg-slate-100\/50:hover,
+html[data-oscuro="1"] .hover\:bg-slate-100\/60:hover,
+html[data-oscuro="1"] .hover\:bg-slate-100\/70:hover,
+html[data-oscuro="1"] .hover\:bg-slate-100\/80:hover,
+html[data-oscuro="1"] .hover\:bg-slate-100\/90:hover,
+html[data-oscuro="1"] .hover\:bg-slate-200\/40:hover,
+html[data-oscuro="1"] .hover\:bg-slate-200\/60:hover,
+html[data-oscuro="1"] .hover\:bg-slate-200\/80:hover,
+html[data-oscuro="1"] .hover\:bg-white\/40:hover,
+html[data-oscuro="1"] .hover\:bg-white\/60:hover,
+html[data-oscuro="1"] .hover\:bg-white\/80:hover,
+html[data-oscuro="1"] .hover\:bg-white\/90:hover,
+html[data-oscuro="1"] .hover\:bg-gray-50\/80:hover,
+html[data-oscuro="1"] .hover\:bg-zinc-50\/80:hover {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* ---- 6. BOTON PRIMARIO EN TEMA OSCURO ----
+   El primario se remapeaba a un indigo CLARO (#818cf8) y el texto
+   se quedaba en blanco: 2,98:1 en las 11 vistas. Ahora el fondo
+   primario es oscuro y el texto blanco tiene 7,4:1. */
+html[data-oscuro="1"] .theme-btn-primary {
+  background-color: #4f46e5 !important;
+  color: #ffffff !important;
+}
+html[data-oscuro="1"] .theme-btn-primary:hover {
+  background-color: #6366f1 !important;
+}
+html[data-oscuro="1"] .bg-indigo-600,
+html[data-oscuro="1"] .bg-indigo-500,
+html[data-oscuro="1"] .bg-violet-500,
+html[data-oscuro="1"] .bg-violet-600 {
+  background-color: #4f46e5 !important;
+}
+html[data-oscuro="1"] .hover\:bg-indigo-700:hover,
+html[data-oscuro="1"] .hover\:bg-indigo-600:hover {
+  background-color: #6366f1 !important;
+}
+html[data-oscuro="1"] .bg-emerald-600 {
+  background-color: #047857 !important;
+  color: #ffffff !important;
+}
+html[data-oscuro="1"] .hover\:bg-emerald-700:hover,
+html[data-oscuro="1"] .hover\:bg-emerald-600:hover {
+  background-color: #059669 !important;
+}
+html[data-oscuro="1"] .bg-emerald-500 {
+  background-color: #047857 !important;
+  color: #ffffff !important;
+}
+html[data-oscuro="1"] .bg-fuchsia-500 {
+  background-color: #a21caf !important;
+  color: #ffffff !important;
+}
+
+/* ---- 7. TEXTO CON OPACIDAD ----
+   /80 sobre fondo oscuro bajaba a 2,66-2,74:1. */
+html[data-oscuro="1"] .text-amber-700\/80,
+html[data-oscuro="1"] .text-emerald-700\/80,
+html[data-oscuro="1"] .text-amber-800\/80,
+html[data-oscuro="1"] .text-emerald-800\/80 {
+  color: #fde68a !important;
+}
+html[data-oscuro="1"] .text-emerald-700\/80 {
+  color: #a7f3d0 !important;
+}
+
+/* ---- 8. PUNTOS DE VENDEDOR Y LEYENDAS ---- */
+html[data-oscuro="1"] .text-amber-500,
+html[data-oscuro="1"] .text-amber-600 {
+  color: #fbbf24 !important;
+}
+html[data-oscuro="1"] .text-rose-500,
+html[data-oscuro="1"] .text-rose-600 {
+  color: #fb7185 !important;
+}
+html[data-oscuro="1"] .text-fuchsia-500,
+html[data-oscuro="1"] .text-fuchsia-600,
+html[data-oscuro="1"] .text-fuchsia-700 {
+  color: #e879f9 !important;
 }
 
 /* Variables de tema dinámico */
@@ -687,6 +907,8 @@ html[data-theme="sunset"] {
   --theme-gradient-to: #f97316;
 }
 
+/* Solo el bloque de VARIABLES se ata al tema concreto; el resto de las reglas
+   oscuras usan data-oscuro="1" y las comparten todos los temas oscuros. */
 html[data-theme="dark"] {
   --theme-primary: #818cf8;
   --theme-primary-hover: #6366f1;
@@ -695,6 +917,393 @@ html[data-theme="dark"] {
   --theme-primary-text: #c7d2fe;
   --theme-gradient-from: #6366f1;
   --theme-gradient-to: #818cf8;
+}
+
+/* --- Temas oscuros adicionales --- */
+
+html[data-theme="bosque"] {
+  --theme-primary: #34d399;
+  --theme-primary-hover: #10b981;
+  --theme-primary-light: rgba(16, 185, 129, 0.16);
+  --theme-primary-border: rgba(52, 211, 153, 0.28);
+  --theme-primary-text: #a7f3d0;
+  --theme-gradient-from: #059669;
+  --theme-gradient-to: #34d399;
+}
+
+html[data-theme="medianoche"] {
+  --theme-primary: #60a5fa;
+  --theme-primary-hover: #3b82f6;
+  --theme-primary-light: rgba(59, 130, 246, 0.16);
+  --theme-primary-border: rgba(96, 165, 250, 0.28);
+  --theme-primary-text: #bfdbfe;
+  --theme-gradient-from: #2563eb;
+  --theme-gradient-to: #60a5fa;
+}
+
+html[data-theme="carbon"] {
+  --theme-primary: #fb923c;
+  --theme-primary-hover: #f97316;
+  --theme-primary-light: rgba(249, 115, 22, 0.16);
+  --theme-primary-border: rgba(251, 146, 60, 0.28);
+  --theme-primary-text: #fed7aa;
+  --theme-gradient-from: #ea580c;
+  --theme-gradient-to: #fb923c;
+}
+
+/* ========================================================
+   SUPERFICIES PROPIAS DE CADA TEMA OSCURO
+   Las ~290 reglas base son compartidas via [data-oscuro="1"];
+   aqui solo se ajusta el tono de superficie y el acento, para que
+   los cuatro temas oscuros se distingan de verdad.
+   ======================================================== */
+
+/* --- BOSQUE NOCTURNO: negros con verde --- */
+html[data-theme="bosque"] body {
+  background-color: #04140d !important;
+  color: #ecfdf5 !important;
+}
+html[data-theme="bosque"] aside {
+  background-color: #071a11 !important;
+  border-color: rgba(52, 211, 153, 0.16) !important;
+}
+html[data-theme="bosque"] header,
+html[data-theme="bosque"] nav.bottom-nav-bar {
+  background-color: rgba(9, 32, 22, 0.95) !important;
+  border-color: rgba(52, 211, 153, 0.16) !important;
+}
+html[data-theme="bosque"] .bg-white,
+html[data-theme="bosque"] .bg-white\/80,
+html[data-theme="bosque"] .bg-white\/90 {
+  background-color: #0c2019 !important;
+}
+html[data-theme="bosque"] .bg-slate-50 {
+  background-color: #071a11 !important;
+}
+html[data-theme="bosque"] .bg-slate-100,
+html[data-theme="bosque"] .bg-slate-100\/50,
+html[data-theme="bosque"] .bg-slate-100\/70,
+html[data-theme="bosque"] .bg-slate-100\/80 {
+  background-color: #14352a !important;
+}
+html[data-theme="bosque"] .theme-btn-primary,
+html[data-theme="bosque"] .bg-indigo-600,
+html[data-theme="bosque"] .bg-indigo-500 {
+  background-color: #059669 !important;
+  color: #ffffff !important;
+}
+html[data-theme="bosque"] .theme-btn-primary:hover,
+html[data-theme="bosque"] .hover\:bg-indigo-700:hover,
+html[data-theme="bosque"] .hover\:bg-indigo-600:hover {
+  background-color: #10b981 !important;
+}
+html[data-theme="bosque"] .text-indigo-600,
+html[data-theme="bosque"] .text-indigo-500,
+html[data-theme="bosque"] .text-indigo-700,
+html[data-theme="bosque"] .text-indigo-800,
+html[data-theme="bosque"] .text-indigo-900,
+html[data-theme="bosque"] .text-indigo-950,
+html[data-theme="bosque"] .bg-indigo-50,
+html[data-theme="bosque"] .bg-indigo-100 {
+  color: #a7f3d0 !important;
+}
+html[data-theme="bosque"] .bg-indigo-50,
+html[data-theme="bosque"] .bg-indigo-100 {
+  background-color: rgba(16, 185, 129, 0.16) !important;
+}
+
+/* --- MEDIANOCHE: azules profundos --- */
+html[data-theme="medianoche"] body {
+  background-color: #070d1c !important;
+  color: #eff6ff !important;
+}
+html[data-theme="medianoche"] aside {
+  background-color: #0b1428 !important;
+  border-color: rgba(96, 165, 250, 0.16) !important;
+}
+html[data-theme="medianoche"] header,
+html[data-theme="medianoche"] nav.bottom-nav-bar {
+  background-color: rgba(14, 24, 48, 0.95) !important;
+  border-color: rgba(96, 165, 250, 0.16) !important;
+}
+html[data-theme="medianoche"] .bg-white,
+html[data-theme="medianoche"] .bg-white\/80,
+html[data-theme="medianoche"] .bg-white\/90 {
+  background-color: #0e1830 !important;
+}
+html[data-theme="medianoche"] .bg-slate-50 {
+  background-color: #0b1428 !important;
+}
+html[data-theme="medianoche"] .bg-slate-100,
+html[data-theme="medianoche"] .bg-slate-100\/50,
+html[data-theme="medianoche"] .bg-slate-100\/70,
+html[data-theme="medianoche"] .bg-slate-100\/80 {
+  background-color: #17244a !important;
+}
+html[data-theme="medianoche"] .theme-btn-primary,
+html[data-theme="medianoche"] .bg-indigo-600,
+html[data-theme="medianoche"] .bg-indigo-500 {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+}
+html[data-theme="medianoche"] .theme-btn-primary:hover,
+html[data-theme="medianoche"] .hover\:bg-indigo-700:hover,
+html[data-theme="medianoche"] .hover\:bg-indigo-600:hover {
+  background-color: #3b82f6 !important;
+}
+html[data-theme="medianoche"] .text-indigo-600,
+html[data-theme="medianoche"] .text-indigo-500,
+html[data-theme="medianoche"] .text-indigo-700,
+html[data-theme="medianoche"] .text-indigo-800,
+html[data-theme="medianoche"] .text-indigo-900,
+html[data-theme="medianoche"] .text-indigo-950,
+html[data-theme="medianoche"] .bg-indigo-50,
+html[data-theme="medianoche"] .bg-indigo-100 {
+  color: #bfdbfe !important;
+}
+html[data-theme="medianoche"] .bg-indigo-50,
+html[data-theme="medianoche"] .bg-indigo-100 {
+  background-color: rgba(59, 130, 246, 0.16) !important;
+}
+
+/* --- CARBON CALIDO: gris con naranja --- */
+html[data-theme="carbon"] body {
+  background-color: #12100f !important;
+  color: #fafaf9 !important;
+}
+html[data-theme="carbon"] aside {
+  background-color: #1a1715 !important;
+  border-color: rgba(251, 146, 60, 0.16) !important;
+}
+html[data-theme="carbon"] header,
+html[data-theme="carbon"] nav.bottom-nav-bar {
+  background-color: rgba(28, 25, 23, 0.95) !important;
+  border-color: rgba(251, 146, 60, 0.16) !important;
+}
+html[data-theme="carbon"] .bg-white,
+html[data-theme="carbon"] .bg-white\/80,
+html[data-theme="carbon"] .bg-white\/90 {
+  background-color: #1c1917 !important;
+}
+html[data-theme="carbon"] .bg-slate-50 {
+  background-color: #1a1715 !important;
+}
+html[data-theme="carbon"] .bg-slate-100,
+html[data-theme="carbon"] .bg-slate-100\/50,
+html[data-theme="carbon"] .bg-slate-100\/70,
+html[data-theme="carbon"] .bg-slate-100\/80 {
+  background-color: #292524 !important;
+}
+html[data-theme="carbon"] .theme-btn-primary,
+html[data-theme="carbon"] .bg-indigo-600,
+html[data-theme="carbon"] .bg-indigo-500 {
+  background-color: #ea580c !important;
+  color: #ffffff !important;
+}
+html[data-theme="carbon"] .theme-btn-primary:hover,
+html[data-theme="carbon"] .hover\:bg-indigo-700:hover,
+html[data-theme="carbon"] .hover\:bg-indigo-600:hover {
+  background-color: #f97316 !important;
+}
+html[data-theme="carbon"] .text-indigo-600,
+html[data-theme="carbon"] .text-indigo-500,
+html[data-theme="carbon"] .text-indigo-700,
+html[data-theme="carbon"] .text-indigo-800,
+html[data-theme="carbon"] .text-indigo-900,
+html[data-theme="carbon"] .text-indigo-950,
+html[data-theme="carbon"] .bg-indigo-50,
+html[data-theme="carbon"] .bg-indigo-100 {
+  color: #fed7aa !important;
+}
+html[data-theme="carbon"] .bg-indigo-50,
+html[data-theme="carbon"] .bg-indigo-100 {
+  background-color: rgba(249, 115, 22, 0.16) !important;
+}
+
+/* ========================================================
+   LOGIN CON EL TEMA ACTIVO
+   Antes el login llevaba bg-[#090d16] fijo, asi que se veia
+   siempre oscuro. Estas reglas lo atan al tema elegido y
+   garantizan contraste AA en claro y en oscuro.
+   ======================================================== */
+
+/* --- Temas claros: superficie clara, texto oscuro --- */
+html[data-theme]:not([data-oscuro="1"]) .login-shell {
+  background-color: #f0fbf6 !important;
+  color: #0f172a !important;
+}
+html[data-theme="pastel"]:not([data-oscuro="1"]) .login-shell {
+  background-color: #f8fafc !important;
+}
+html[data-theme="lavender"]:not([data-oscuro="1"]) .login-shell {
+  background-color: #f6f4fe !important;
+}
+html[data-theme="sunset"]:not([data-oscuro="1"]) .login-shell {
+  background-color: #fff8f4 !important;
+}
+html[data-theme]:not([data-oscuro="1"]) .login-shell > div[style*="radial-gradient"] {
+  opacity: 0.5 !important;
+}
+/* La tarjeta de login es translucida y muy oscura; en tema claro
+   el texto interior necesita invertirse. */
+html[data-theme]:not([data-oscuro="1"]) .login-shell .text-white {
+  color: #ffffff !important;
+}
+html[data-theme]:not([data-oscuro="1"]) .login-shell .text-slate-100,
+html[data-theme]:not([data-oscuro="1"]) .login-shell .text-slate-200,
+html[data-theme]:not([data-oscuro="1"]) .login-shell .text-slate-300 {
+  color: #e2e8f0 !important;
+}
+html[data-theme]:not([data-oscuro="1"]) .login-shell .text-slate-400,
+html[data-theme]:not([data-oscuro="1"]) .login-shell .text-slate-500 {
+  color: #94a3b8 !important;
+}
+/* Orbes ambientales: en claro Needs seran visibles, en oscuro no. */
+html[data-theme]:not([data-oscuro="1"]) .login-shell .bg-indigo-600\/25 {
+  background-color: rgba(99, 102, 241, 0.35) !important;
+}
+html[data-theme]:not([data-oscuro="1"]) .login-shell .bg-violet-600\/20 {
+  background-color: rgba(139, 92, 246, 0.3) !important;
+}
+html[data-theme="mint"]:not([data-oscuro="1"]) .login-shell .bg-indigo-600\/25 {
+  background-color: rgba(5, 150, 105, 0.35) !important;
+}
+html[data-theme="mint"]:not([data-oscuro="1"]) .login-shell .bg-violet-600\/20 {
+  background-color: rgba(13, 148, 136, 0.3) !important;
+}
+html[data-theme="sunset"]:not([data-oscuro="1"]) .login-shell .bg-indigo-600\/25 {
+  background-color: rgba(234, 88, 12, 0.35) !important;
+}
+html[data-theme="sunset"]:not([data-oscuro="1"]) .login-shell .bg-violet-600\/20 {
+  background-color: rgba(249, 115, 22, 0.3) !important;
+}
+html[data-theme="lavender"]:not([data-oscuro="1"]) .login-shell .bg-indigo-600\/25 {
+  background-color: rgba(124, 58, 237, 0.35) !important;
+}
+
+/* --- Temas oscuros: cada uno con su propia superficie --- */
+html[data-theme="dark"] .login-shell {
+  background-color: #090d16 !important;
+}
+html[data-theme="bosque"] .login-shell {
+  background-color: #04140d !important;
+}
+html[data-theme="medianoche"] .login-shell {
+  background-color: #070d1c !important;
+}
+html[data-theme="carbon"] .login-shell {
+  background-color: #12100f !important;
+}
+
+/* --- Tarjeta del login en temas claros ---
+   El marcado usa clases de tema oscuro (bg-slate-900/65, text-white).
+   En un tema claro eso deja una losa gris sobre fondo pastel: legible pero
+   ajena al panel. Aqui se invierte para que se vea del mismo tema. */
+html[data-theme]:not([data-oscuro="1"]) .login-shell .login-card {
+  background-color: rgba(255, 255, 255, 0.82) !important;
+  border-color: rgba(15, 23, 42, 0.08) !important;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.18) !important;
+}
+html[data-theme]:not([data-oscuro="1"]) .login-shell .login-card .text-white {
+  color: #0f172a !important;
+}
+html[data-theme]:not([data-oscuro="1"]) .login-shell .login-card .text-slate-300 {
+  color: #475569 !important;
+}
+html[data-theme]:not([data-oscuro="1"]) .login-shell .login-card .text-slate-400 {
+  color: #64748b !important;
+}
+html[data-theme]:not([data-oscuro="1"]) .login-shell .login-card .text-indigo-300 {
+  color: var(--theme-primary-text) !important;
+}
+html[data-theme]:not([data-oscuro="1"]) .login-shell .login-card .border-white\/10,
+html[data-theme]:not([data-oscuro="1"]) .login-shell .login-card .border-white\/20 {
+  border-color: rgba(15, 23, 42, 0.08) !important;
+}
+html[data-theme]:not([data-oscuro="1"]) .login-shell .login-card .bg-white\/5,
+html[data-theme]:not([data-oscuro="1"]) .login-shell .login-card .bg-white\/10 {
+  background-color: rgba(15, 23, 42, 0.04) !important;
+}
+html[data-theme]:not([data-oscuro="1"]) .login-shell .login-card .placeholder\:text-slate-500::placeholder {
+  color: #64748b !important;
+}
+html[data-theme]:not([data-oscuro="1"]) .login-shell .login-card .placeholder\:text-slate-600::placeholder {
+  color: #64748b !important;
+}
+html[data-theme]:not([data-oscuro="1"]) .login-shell .login-card .ring-white\/20 {
+  --tw-ring-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+/* Campos de texto: en claro no pueden seguir siendo cajas oscuras. */
+html[data-theme]:not([data-oscuro="1"]) .login-shell .login-card input {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  border-color: rgba(15, 23, 42, 0.14) !important;
+  color: #0f172a !important;
+}
+html[data-theme]:not([data-oscuro="1"]) .login-shell .login-card input::placeholder {
+  color: #64748b !important;
+}
+html[data-theme]:not([data-oscuro="1"]) .login-shell .login-card label {
+  color: #475569 !important;
+}
+
+/* Chips de autocompletar: en claro el texto claro sobre pasteles
+   translucidos quedaba casi invisible. */
+html[data-theme]:not([data-oscuro="1"]) .login-shell .login-card .text-indigo-200,
+html[data-theme]:not([data-oscuro="1"]) .login-shell .login-card .text-indigo-300,
+html[data-theme]:not([data-oscuro="1"]) .login-shell .login-card .text-pink-200,
+html[data-theme]:not([data-oscuro="1"]) .login-shell .login-card .text-pink-300 {
+  color: var(--theme-primary-text) !important;
+}
+html[data-theme]:not([data-oscuro="1"]) .login-shell .login-card .bg-indigo-500\/10,
+html[data-theme]:not([data-oscuro="1"]) .login-shell .login-card .bg-pink-500\/10,
+html[data-theme]:not([data-oscuro="1"]) .login-shell .login-card .bg-emerald-500\/10 {
+  background-color: rgba(15, 23, 42, 0.05) !important;
+}
+html[data-theme]:not([data-oscuro="1"]) .login-shell .login-card .border-indigo-500\/20,
+html[data-theme]:not([data-oscuro="1"]) .login-shell .login-card .border-pink-500\/20,
+html[data-theme]:not([data-oscuro="1"]) .login-shell .login-card .border-emerald-500\/20 {
+  border-color: rgba(15, 23, 42, 0.1) !important;
+}
+html[data-theme]:not([data-oscuro="1"]) .login-shell .login-card .text-emerald-400 {
+  color: #047857 !important;
+}
+
+/* ========================================================
+   ACENTOS DEL LOGIN ATADOS AL TEMA
+
+   El markup traia indigo/violeta/cian fijos, asi que en Carbón
+   (calido) el login se veia morado. Estas clases leen el primario
+   del tema activo.
+   ======================================================== */
+.login-orb-a {
+  background-color: color-mix(in srgb, var(--theme-primary) 38%, transparent) !important;
+}
+.login-orb-b {
+  background-color: color-mix(in srgb, var(--theme-gradient-to) 30%, transparent) !important;
+}
+.login-orb-c {
+  background-color: color-mix(in srgb, var(--theme-primary) 14%, transparent) !important;
+}
+.login-marca,
+.login-boton {
+  background-image: linear-gradient(
+    135deg,
+    var(--theme-gradient-from),
+    var(--theme-gradient-to)
+  ) !important;
+  box-shadow: 0 10px 25px -5px color-mix(in srgb, var(--theme-primary) 45%, transparent) !important;
+}
+.login-boton:hover {
+  background-image: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--theme-gradient-from) 82%, white),
+    color-mix(in srgb, var(--theme-gradient-to) 82%, white)
+  ) !important;
+}
+/* Los chips de autocompletar tambien usaban indigo/rosa fijos. */
+.login-shell .text-indigo-400 {
+  color: var(--theme-primary-text) !important;
 }
 
 /* Clases de utilidad para adopción inmediata del tema */
@@ -710,6 +1319,144 @@ html[data-theme="dark"] {
 
 .theme-active-text {
   color: var(--theme-primary) !important;
+}
+
+/* En tema claro el primario se usa como TEXTO sobre su propio tono pastel
+   (p.ej. el contador de los chips de estado), y ahi daba 3,5-3,6:1.
+   --theme-primary-text es la variante 700 del mismo color. */
+html[data-theme]:not([data-oscuro="1"]) .theme-active-text {
+  color: var(--theme-primary-text) !important;
+}
+
+/* ========================================================
+   ULTIMA PASADA - BOTON PRIMARIO Y TEXTOS RESIDUALES
+
+   El boton "Nueva Venta" usa var(--theme-primary) como fondo con
+   texto blanco. Ese color estaba elegido para texto, no para
+   fondo: daba 3,7-4,5:1. --theme-primary-solid es la variante
+   garantizada AA con blanco de cada tema.
+   ======================================================== */
+html[data-theme="pastel"]  { --theme-primary-solid: #4338ca; }
+html[data-theme="mint"]    { --theme-primary-solid: #046c4e; }
+html[data-theme="lavender"]{ --theme-primary-solid: #5b21b6; }
+html[data-theme="sunset"]  { --theme-primary-solid: #9a3412; }
+html[data-theme="dark"]    { --theme-primary-solid: #4338ca; }
+html[data-theme="bosque"]  { --theme-primary-solid: #065f46; }
+html[data-theme="medianoche"] { --theme-primary-solid: #1d4ed8; }
+html[data-theme="carbon"]  { --theme-primary-solid: #9a3412; }
+
+html[data-theme] .theme-btn-primary {
+  background-color: var(--theme-primary-solid) !important;
+  color: #ffffff !important;
+}
+
+/* "Libre" y otros marcadores de estado vacio: slate-300 daba 1,49:1
+   sobre blanco, es decir practicamente invisible. */
+html[data-theme]:not([data-oscuro="1"]) .text-slate-300 {
+  color: #64748b !important;
+}
+/* slate-400 sobre el fondo lavanda (#f7f5ff) daba 4,41, justo por
+   debajo del minimo. */
+html[data-theme]:not([data-oscuro="1"]) .text-slate-400 {
+  color: #59657a !important;
+}
+/* Separador suelto que se quedaba sobre una superficie blanca en oscuro. */
+html[data-oscuro="1"] .text-slate-400 {
+  color: #cbd5e1 !important;
+}
+
+/* ========================================================
+   PASADA FINAL - COLORES SEMANTICOS SOBRE FONDO CLARO
+   Los tonos 600 (amber-600, emerald-600...) dan 3,2-3,65:1 sobre
+   blanco. Se oscurecen al 700, que si alcanza AA. Solo aplica a
+   texto y a botones con texto blanco, no a superficies.
+   ======================================================== */
+
+html[data-theme]:not([data-oscuro="1"]) .text-amber-600 {
+  color: #b45309 !important;
+}
+html[data-theme]:not([data-oscuro="1"]) .text-emerald-600 {
+  color: #047857 !important;
+}
+html[data-theme]:not([data-oscuro="1"]) .text-rose-600 {
+  color: #be123c !important;
+}
+html[data-theme]:not([data-oscuro="1"]) .text-teal-600 {
+  color: #0f766e !important;
+}
+html[data-theme]:not([data-oscuro="1"]) .text-sky-600 {
+  color: #0369a1 !important;
+}
+html[data-theme]:not([data-oscuro="1"]) .text-blue-600 {
+  color: #1d4ed8 !important;
+}
+html[data-theme]:not([data-oscuro="1"]) .text-violet-600 {
+  color: #6d28d9 !important;
+}
+html[data-theme]:not([data-oscuro="1"]) .text-purple-600 {
+  color: #7e22ce !important;
+}
+html[data-theme]:not([data-oscuro="1"]) .text-orange-600 {
+  color: #c2410c !important;
+}
+html[data-theme]:not([data-oscuro="1"]) .text-fuchsia-600 {
+  color: #a21caf !important;
+}
+
+/* Texto con opacidad /80 sobre fondo claro: se pierde demasiado contraste. */
+html[data-theme]:not([data-oscuro="1"]) .text-amber-700\/80,
+html[data-theme]:not([data-oscuro="1"]) .text-emerald-700\/80,
+html[data-theme]:not([data-oscuro="1"]) .text-rose-700\/80,
+html[data-theme]:not([data-oscuro="1"]) .text-slate-600\/80,
+html[data-theme]:not([data-oscuro="1"]) .text-slate-500\/80 {
+  color: inherit !important;
+}
+html[data-theme]:not([data-oscuro="1"]) .text-amber-700\/80 {
+  color: #b45309 !important;
+}
+html[data-theme]:not([data-oscuro="1"]) .text-emerald-700\/80 {
+  color: #047857 !important;
+}
+html[data-theme]:not([data-oscuro="1"]) .text-rose-700\/80 {
+  color: #be123c !important;
+}
+html[data-theme]:not([data-oscuro="1"]) .text-slate-600\/80 {
+  color: #475569 !important;
+}
+html[data-theme]:not([data-oscuro="1"]) .text-slate-500\/80 {
+  color: #556070 !important;
+}
+
+/* Botones con texto blanco sobre verde: emerald-600 daba 3,65-3,77:1.
+   emerald-700 llega a 4,9:1 sin cambiar el significado del color. */
+html[data-theme]:not([data-oscuro="1"]) .bg-emerald-600 {
+  background-color: #047857 !important;
+}
+html[data-theme]:not([data-oscuro="1"]) .hover\:bg-emerald-700:hover,
+html[data-theme]:not([data-oscuro="1"]) .hover\:bg-emerald-600:hover {
+  background-color: #065f46 !important;
+}
+html[data-theme="bosque"] .bg-emerald-600 {
+  background-color: #047857 !important;
+}
+html[data-theme="bosque"] .hover\:bg-emerald-700:hover,
+html[data-theme="bosque"] .hover\:bg-emerald-600:hover {
+  background-color: #065f46 !important;
+}
+
+/* El separador "•" de los grupos de Configuracion caia sobre una
+   superficie blanca que los temas oscuros no llegaban a cubrir. */
+html[data-oscuro="1"] .bg-white {
+  background-color: #131b2e !important;
+}
+html[data-theme="bosque"] .bg-white {
+  background-color: #0c2019 !important;
+}
+html[data-theme="medianoche"] .bg-white {
+  background-color: #0e1830 !important;
+}
+html[data-theme="carbon"] .bg-white {
+  background-color: #1c1917 !important;
 }
 
 .theme-user-avatar {
@@ -923,4 +1670,1769 @@ html[data-theme="dark"] {
 
 .say-fuse {
   animation: say-burn linear forwards;
+}
+
+
+/* ========================================================
+   GENERADO: VARIANTES CON OPACIDAD PARA TEMAS OSCUROS
+   Tailwind emite una clase distinta por cada opacidad, asi que
+   declarar solo bg-slate-50 no cubre bg-slate-50/80. Este
+   bloque cubre todas las combinaciones de una vez.
+   ======================================================== */
+html[data-oscuro="1"] .bg-white\/5 {
+  background-color: rgba(255, 255, 255, 0.004) !important;
+}
+html[data-oscuro="1"] .bg-white\/10 {
+  background-color: rgba(255, 255, 255, 0.009) !important;
+}
+html[data-oscuro="1"] .bg-white\/15 {
+  background-color: rgba(255, 255, 255, 0.013) !important;
+}
+html[data-oscuro="1"] .bg-white\/20 {
+  background-color: rgba(255, 255, 255, 0.018) !important;
+}
+html[data-oscuro="1"] .bg-white\/30 {
+  background-color: rgba(255, 255, 255, 0.027) !important;
+}
+html[data-oscuro="1"] .bg-white\/40 {
+  background-color: rgba(255, 255, 255, 0.036) !important;
+}
+html[data-oscuro="1"] .bg-white\/50 {
+  background-color: rgba(255, 255, 255, 0.045) !important;
+}
+html[data-oscuro="1"] .bg-white\/60 {
+  background-color: rgba(255, 255, 255, 0.054) !important;
+}
+html[data-oscuro="1"] .bg-white\/70 {
+  background-color: rgba(255, 255, 255, 0.063) !important;
+}
+html[data-oscuro="1"] .bg-white\/80 {
+  background-color: rgba(255, 255, 255, 0.072) !important;
+}
+html[data-oscuro="1"] .bg-white\/90 {
+  background-color: rgba(255, 255, 255, 0.081) !important;
+}
+html[data-oscuro="1"] .bg-white\/95 {
+  background-color: rgba(255, 255, 255, 0.085) !important;
+}
+html[data-oscuro="1"] .bg-slate-50\/5 {
+  background-color: rgba(255, 255, 255, 0.004) !important;
+}
+html[data-oscuro="1"] .bg-slate-50\/10 {
+  background-color: rgba(255, 255, 255, 0.009) !important;
+}
+html[data-oscuro="1"] .bg-slate-50\/15 {
+  background-color: rgba(255, 255, 255, 0.013) !important;
+}
+html[data-oscuro="1"] .bg-slate-50\/20 {
+  background-color: rgba(255, 255, 255, 0.018) !important;
+}
+html[data-oscuro="1"] .bg-slate-50\/30 {
+  background-color: rgba(255, 255, 255, 0.027) !important;
+}
+html[data-oscuro="1"] .bg-slate-50\/40 {
+  background-color: rgba(255, 255, 255, 0.036) !important;
+}
+html[data-oscuro="1"] .bg-slate-50\/50 {
+  background-color: rgba(255, 255, 255, 0.045) !important;
+}
+html[data-oscuro="1"] .bg-slate-50\/60 {
+  background-color: rgba(255, 255, 255, 0.054) !important;
+}
+html[data-oscuro="1"] .bg-slate-50\/70 {
+  background-color: rgba(255, 255, 255, 0.063) !important;
+}
+html[data-oscuro="1"] .bg-slate-50\/80 {
+  background-color: rgba(255, 255, 255, 0.072) !important;
+}
+html[data-oscuro="1"] .bg-slate-50\/90 {
+  background-color: rgba(255, 255, 255, 0.081) !important;
+}
+html[data-oscuro="1"] .bg-slate-50\/95 {
+  background-color: rgba(255, 255, 255, 0.085) !important;
+}
+html[data-oscuro="1"] .bg-slate-100\/5 {
+  background-color: rgba(255, 255, 255, 0.004) !important;
+}
+html[data-oscuro="1"] .bg-slate-100\/10 {
+  background-color: rgba(255, 255, 255, 0.009) !important;
+}
+html[data-oscuro="1"] .bg-slate-100\/15 {
+  background-color: rgba(255, 255, 255, 0.013) !important;
+}
+html[data-oscuro="1"] .bg-slate-100\/20 {
+  background-color: rgba(255, 255, 255, 0.018) !important;
+}
+html[data-oscuro="1"] .bg-slate-100\/30 {
+  background-color: rgba(255, 255, 255, 0.027) !important;
+}
+html[data-oscuro="1"] .bg-slate-100\/40 {
+  background-color: rgba(255, 255, 255, 0.036) !important;
+}
+html[data-oscuro="1"] .bg-slate-100\/50 {
+  background-color: rgba(255, 255, 255, 0.045) !important;
+}
+html[data-oscuro="1"] .bg-slate-100\/60 {
+  background-color: rgba(255, 255, 255, 0.054) !important;
+}
+html[data-oscuro="1"] .bg-slate-100\/70 {
+  background-color: rgba(255, 255, 255, 0.063) !important;
+}
+html[data-oscuro="1"] .bg-slate-100\/80 {
+  background-color: rgba(255, 255, 255, 0.072) !important;
+}
+html[data-oscuro="1"] .bg-slate-100\/90 {
+  background-color: rgba(255, 255, 255, 0.081) !important;
+}
+html[data-oscuro="1"] .bg-slate-100\/95 {
+  background-color: rgba(255, 255, 255, 0.085) !important;
+}
+html[data-oscuro="1"] .bg-slate-200\/5 {
+  background-color: rgba(255, 255, 255, 0.004) !important;
+}
+html[data-oscuro="1"] .bg-slate-200\/10 {
+  background-color: rgba(255, 255, 255, 0.009) !important;
+}
+html[data-oscuro="1"] .bg-slate-200\/15 {
+  background-color: rgba(255, 255, 255, 0.013) !important;
+}
+html[data-oscuro="1"] .bg-slate-200\/20 {
+  background-color: rgba(255, 255, 255, 0.018) !important;
+}
+html[data-oscuro="1"] .bg-slate-200\/30 {
+  background-color: rgba(255, 255, 255, 0.027) !important;
+}
+html[data-oscuro="1"] .bg-slate-200\/40 {
+  background-color: rgba(255, 255, 255, 0.036) !important;
+}
+html[data-oscuro="1"] .bg-slate-200\/50 {
+  background-color: rgba(255, 255, 255, 0.045) !important;
+}
+html[data-oscuro="1"] .bg-slate-200\/60 {
+  background-color: rgba(255, 255, 255, 0.054) !important;
+}
+html[data-oscuro="1"] .bg-slate-200\/70 {
+  background-color: rgba(255, 255, 255, 0.063) !important;
+}
+html[data-oscuro="1"] .bg-slate-200\/80 {
+  background-color: rgba(255, 255, 255, 0.072) !important;
+}
+html[data-oscuro="1"] .bg-slate-200\/90 {
+  background-color: rgba(255, 255, 255, 0.081) !important;
+}
+html[data-oscuro="1"] .bg-slate-200\/95 {
+  background-color: rgba(255, 255, 255, 0.085) !important;
+}
+html[data-oscuro="1"] .bg-gray-50\/5 {
+  background-color: rgba(255, 255, 255, 0.004) !important;
+}
+html[data-oscuro="1"] .bg-gray-50\/10 {
+  background-color: rgba(255, 255, 255, 0.009) !important;
+}
+html[data-oscuro="1"] .bg-gray-50\/15 {
+  background-color: rgba(255, 255, 255, 0.013) !important;
+}
+html[data-oscuro="1"] .bg-gray-50\/20 {
+  background-color: rgba(255, 255, 255, 0.018) !important;
+}
+html[data-oscuro="1"] .bg-gray-50\/30 {
+  background-color: rgba(255, 255, 255, 0.027) !important;
+}
+html[data-oscuro="1"] .bg-gray-50\/40 {
+  background-color: rgba(255, 255, 255, 0.036) !important;
+}
+html[data-oscuro="1"] .bg-gray-50\/50 {
+  background-color: rgba(255, 255, 255, 0.045) !important;
+}
+html[data-oscuro="1"] .bg-gray-50\/60 {
+  background-color: rgba(255, 255, 255, 0.054) !important;
+}
+html[data-oscuro="1"] .bg-gray-50\/70 {
+  background-color: rgba(255, 255, 255, 0.063) !important;
+}
+html[data-oscuro="1"] .bg-gray-50\/80 {
+  background-color: rgba(255, 255, 255, 0.072) !important;
+}
+html[data-oscuro="1"] .bg-gray-50\/90 {
+  background-color: rgba(255, 255, 255, 0.081) !important;
+}
+html[data-oscuro="1"] .bg-gray-50\/95 {
+  background-color: rgba(255, 255, 255, 0.085) !important;
+}
+html[data-oscuro="1"] .bg-gray-100\/5 {
+  background-color: rgba(255, 255, 255, 0.004) !important;
+}
+html[data-oscuro="1"] .bg-gray-100\/10 {
+  background-color: rgba(255, 255, 255, 0.009) !important;
+}
+html[data-oscuro="1"] .bg-gray-100\/15 {
+  background-color: rgba(255, 255, 255, 0.013) !important;
+}
+html[data-oscuro="1"] .bg-gray-100\/20 {
+  background-color: rgba(255, 255, 255, 0.018) !important;
+}
+html[data-oscuro="1"] .bg-gray-100\/30 {
+  background-color: rgba(255, 255, 255, 0.027) !important;
+}
+html[data-oscuro="1"] .bg-gray-100\/40 {
+  background-color: rgba(255, 255, 255, 0.036) !important;
+}
+html[data-oscuro="1"] .bg-gray-100\/50 {
+  background-color: rgba(255, 255, 255, 0.045) !important;
+}
+html[data-oscuro="1"] .bg-gray-100\/60 {
+  background-color: rgba(255, 255, 255, 0.054) !important;
+}
+html[data-oscuro="1"] .bg-gray-100\/70 {
+  background-color: rgba(255, 255, 255, 0.063) !important;
+}
+html[data-oscuro="1"] .bg-gray-100\/80 {
+  background-color: rgba(255, 255, 255, 0.072) !important;
+}
+html[data-oscuro="1"] .bg-gray-100\/90 {
+  background-color: rgba(255, 255, 255, 0.081) !important;
+}
+html[data-oscuro="1"] .bg-gray-100\/95 {
+  background-color: rgba(255, 255, 255, 0.085) !important;
+}
+html[data-oscuro="1"] .bg-zinc-50\/5 {
+  background-color: rgba(255, 255, 255, 0.004) !important;
+}
+html[data-oscuro="1"] .bg-zinc-50\/10 {
+  background-color: rgba(255, 255, 255, 0.009) !important;
+}
+html[data-oscuro="1"] .bg-zinc-50\/15 {
+  background-color: rgba(255, 255, 255, 0.013) !important;
+}
+html[data-oscuro="1"] .bg-zinc-50\/20 {
+  background-color: rgba(255, 255, 255, 0.018) !important;
+}
+html[data-oscuro="1"] .bg-zinc-50\/30 {
+  background-color: rgba(255, 255, 255, 0.027) !important;
+}
+html[data-oscuro="1"] .bg-zinc-50\/40 {
+  background-color: rgba(255, 255, 255, 0.036) !important;
+}
+html[data-oscuro="1"] .bg-zinc-50\/50 {
+  background-color: rgba(255, 255, 255, 0.045) !important;
+}
+html[data-oscuro="1"] .bg-zinc-50\/60 {
+  background-color: rgba(255, 255, 255, 0.054) !important;
+}
+html[data-oscuro="1"] .bg-zinc-50\/70 {
+  background-color: rgba(255, 255, 255, 0.063) !important;
+}
+html[data-oscuro="1"] .bg-zinc-50\/80 {
+  background-color: rgba(255, 255, 255, 0.072) !important;
+}
+html[data-oscuro="1"] .bg-zinc-50\/90 {
+  background-color: rgba(255, 255, 255, 0.081) !important;
+}
+html[data-oscuro="1"] .bg-zinc-50\/95 {
+  background-color: rgba(255, 255, 255, 0.085) !important;
+}
+html[data-oscuro="1"] .bg-zinc-100\/5 {
+  background-color: rgba(255, 255, 255, 0.004) !important;
+}
+html[data-oscuro="1"] .bg-zinc-100\/10 {
+  background-color: rgba(255, 255, 255, 0.009) !important;
+}
+html[data-oscuro="1"] .bg-zinc-100\/15 {
+  background-color: rgba(255, 255, 255, 0.013) !important;
+}
+html[data-oscuro="1"] .bg-zinc-100\/20 {
+  background-color: rgba(255, 255, 255, 0.018) !important;
+}
+html[data-oscuro="1"] .bg-zinc-100\/30 {
+  background-color: rgba(255, 255, 255, 0.027) !important;
+}
+html[data-oscuro="1"] .bg-zinc-100\/40 {
+  background-color: rgba(255, 255, 255, 0.036) !important;
+}
+html[data-oscuro="1"] .bg-zinc-100\/50 {
+  background-color: rgba(255, 255, 255, 0.045) !important;
+}
+html[data-oscuro="1"] .bg-zinc-100\/60 {
+  background-color: rgba(255, 255, 255, 0.054) !important;
+}
+html[data-oscuro="1"] .bg-zinc-100\/70 {
+  background-color: rgba(255, 255, 255, 0.063) !important;
+}
+html[data-oscuro="1"] .bg-zinc-100\/80 {
+  background-color: rgba(255, 255, 255, 0.072) !important;
+}
+html[data-oscuro="1"] .bg-zinc-100\/90 {
+  background-color: rgba(255, 255, 255, 0.081) !important;
+}
+html[data-oscuro="1"] .bg-zinc-100\/95 {
+  background-color: rgba(255, 255, 255, 0.085) !important;
+}
+html[data-oscuro="1"] .bg-indigo-50\/5 {
+  background-color: rgba(255, 255, 255, 0.004) !important;
+}
+html[data-oscuro="1"] .bg-indigo-50\/10 {
+  background-color: rgba(255, 255, 255, 0.009) !important;
+}
+html[data-oscuro="1"] .bg-indigo-50\/15 {
+  background-color: rgba(255, 255, 255, 0.013) !important;
+}
+html[data-oscuro="1"] .bg-indigo-50\/20 {
+  background-color: rgba(255, 255, 255, 0.018) !important;
+}
+html[data-oscuro="1"] .bg-indigo-50\/30 {
+  background-color: rgba(255, 255, 255, 0.027) !important;
+}
+html[data-oscuro="1"] .bg-indigo-50\/40 {
+  background-color: rgba(255, 255, 255, 0.036) !important;
+}
+html[data-oscuro="1"] .bg-indigo-50\/50 {
+  background-color: rgba(255, 255, 255, 0.045) !important;
+}
+html[data-oscuro="1"] .bg-indigo-50\/60 {
+  background-color: rgba(255, 255, 255, 0.054) !important;
+}
+html[data-oscuro="1"] .bg-indigo-50\/70 {
+  background-color: rgba(255, 255, 255, 0.063) !important;
+}
+html[data-oscuro="1"] .bg-indigo-50\/80 {
+  background-color: rgba(255, 255, 255, 0.072) !important;
+}
+html[data-oscuro="1"] .bg-indigo-50\/90 {
+  background-color: rgba(255, 255, 255, 0.081) !important;
+}
+html[data-oscuro="1"] .bg-indigo-50\/95 {
+  background-color: rgba(255, 255, 255, 0.085) !important;
+}
+html[data-oscuro="1"] .bg-indigo-100\/5 {
+  background-color: rgba(255, 255, 255, 0.004) !important;
+}
+html[data-oscuro="1"] .bg-indigo-100\/10 {
+  background-color: rgba(255, 255, 255, 0.009) !important;
+}
+html[data-oscuro="1"] .bg-indigo-100\/15 {
+  background-color: rgba(255, 255, 255, 0.013) !important;
+}
+html[data-oscuro="1"] .bg-indigo-100\/20 {
+  background-color: rgba(255, 255, 255, 0.018) !important;
+}
+html[data-oscuro="1"] .bg-indigo-100\/30 {
+  background-color: rgba(255, 255, 255, 0.027) !important;
+}
+html[data-oscuro="1"] .bg-indigo-100\/40 {
+  background-color: rgba(255, 255, 255, 0.036) !important;
+}
+html[data-oscuro="1"] .bg-indigo-100\/50 {
+  background-color: rgba(255, 255, 255, 0.045) !important;
+}
+html[data-oscuro="1"] .bg-indigo-100\/60 {
+  background-color: rgba(255, 255, 255, 0.054) !important;
+}
+html[data-oscuro="1"] .bg-indigo-100\/70 {
+  background-color: rgba(255, 255, 255, 0.063) !important;
+}
+html[data-oscuro="1"] .bg-indigo-100\/80 {
+  background-color: rgba(255, 255, 255, 0.072) !important;
+}
+html[data-oscuro="1"] .bg-indigo-100\/90 {
+  background-color: rgba(255, 255, 255, 0.081) !important;
+}
+html[data-oscuro="1"] .bg-indigo-100\/95 {
+  background-color: rgba(255, 255, 255, 0.085) !important;
+}
+html[data-oscuro="1"] .bg-emerald-50\/5 {
+  background-color: rgba(255, 255, 255, 0.004) !important;
+}
+html[data-oscuro="1"] .bg-emerald-50\/10 {
+  background-color: rgba(255, 255, 255, 0.009) !important;
+}
+html[data-oscuro="1"] .bg-emerald-50\/15 {
+  background-color: rgba(255, 255, 255, 0.013) !important;
+}
+html[data-oscuro="1"] .bg-emerald-50\/20 {
+  background-color: rgba(255, 255, 255, 0.018) !important;
+}
+html[data-oscuro="1"] .bg-emerald-50\/30 {
+  background-color: rgba(255, 255, 255, 0.027) !important;
+}
+html[data-oscuro="1"] .bg-emerald-50\/40 {
+  background-color: rgba(255, 255, 255, 0.036) !important;
+}
+html[data-oscuro="1"] .bg-emerald-50\/50 {
+  background-color: rgba(255, 255, 255, 0.045) !important;
+}
+html[data-oscuro="1"] .bg-emerald-50\/60 {
+  background-color: rgba(255, 255, 255, 0.054) !important;
+}
+html[data-oscuro="1"] .bg-emerald-50\/70 {
+  background-color: rgba(255, 255, 255, 0.063) !important;
+}
+html[data-oscuro="1"] .bg-emerald-50\/80 {
+  background-color: rgba(255, 255, 255, 0.072) !important;
+}
+html[data-oscuro="1"] .bg-emerald-50\/90 {
+  background-color: rgba(255, 255, 255, 0.081) !important;
+}
+html[data-oscuro="1"] .bg-emerald-50\/95 {
+  background-color: rgba(255, 255, 255, 0.085) !important;
+}
+html[data-oscuro="1"] .bg-emerald-100\/5 {
+  background-color: rgba(255, 255, 255, 0.004) !important;
+}
+html[data-oscuro="1"] .bg-emerald-100\/10 {
+  background-color: rgba(255, 255, 255, 0.009) !important;
+}
+html[data-oscuro="1"] .bg-emerald-100\/15 {
+  background-color: rgba(255, 255, 255, 0.013) !important;
+}
+html[data-oscuro="1"] .bg-emerald-100\/20 {
+  background-color: rgba(255, 255, 255, 0.018) !important;
+}
+html[data-oscuro="1"] .bg-emerald-100\/30 {
+  background-color: rgba(255, 255, 255, 0.027) !important;
+}
+html[data-oscuro="1"] .bg-emerald-100\/40 {
+  background-color: rgba(255, 255, 255, 0.036) !important;
+}
+html[data-oscuro="1"] .bg-emerald-100\/50 {
+  background-color: rgba(255, 255, 255, 0.045) !important;
+}
+html[data-oscuro="1"] .bg-emerald-100\/60 {
+  background-color: rgba(255, 255, 255, 0.054) !important;
+}
+html[data-oscuro="1"] .bg-emerald-100\/70 {
+  background-color: rgba(255, 255, 255, 0.063) !important;
+}
+html[data-oscuro="1"] .bg-emerald-100\/80 {
+  background-color: rgba(255, 255, 255, 0.072) !important;
+}
+html[data-oscuro="1"] .bg-emerald-100\/90 {
+  background-color: rgba(255, 255, 255, 0.081) !important;
+}
+html[data-oscuro="1"] .bg-emerald-100\/95 {
+  background-color: rgba(255, 255, 255, 0.085) !important;
+}
+html[data-oscuro="1"] .bg-amber-50\/5 {
+  background-color: rgba(255, 255, 255, 0.004) !important;
+}
+html[data-oscuro="1"] .bg-amber-50\/10 {
+  background-color: rgba(255, 255, 255, 0.009) !important;
+}
+html[data-oscuro="1"] .bg-amber-50\/15 {
+  background-color: rgba(255, 255, 255, 0.013) !important;
+}
+html[data-oscuro="1"] .bg-amber-50\/20 {
+  background-color: rgba(255, 255, 255, 0.018) !important;
+}
+html[data-oscuro="1"] .bg-amber-50\/30 {
+  background-color: rgba(255, 255, 255, 0.027) !important;
+}
+html[data-oscuro="1"] .bg-amber-50\/40 {
+  background-color: rgba(255, 255, 255, 0.036) !important;
+}
+html[data-oscuro="1"] .bg-amber-50\/50 {
+  background-color: rgba(255, 255, 255, 0.045) !important;
+}
+html[data-oscuro="1"] .bg-amber-50\/60 {
+  background-color: rgba(255, 255, 255, 0.054) !important;
+}
+html[data-oscuro="1"] .bg-amber-50\/70 {
+  background-color: rgba(255, 255, 255, 0.063) !important;
+}
+html[data-oscuro="1"] .bg-amber-50\/80 {
+  background-color: rgba(255, 255, 255, 0.072) !important;
+}
+html[data-oscuro="1"] .bg-amber-50\/90 {
+  background-color: rgba(255, 255, 255, 0.081) !important;
+}
+html[data-oscuro="1"] .bg-amber-50\/95 {
+  background-color: rgba(255, 255, 255, 0.085) !important;
+}
+html[data-oscuro="1"] .bg-amber-100\/5 {
+  background-color: rgba(255, 255, 255, 0.004) !important;
+}
+html[data-oscuro="1"] .bg-amber-100\/10 {
+  background-color: rgba(255, 255, 255, 0.009) !important;
+}
+html[data-oscuro="1"] .bg-amber-100\/15 {
+  background-color: rgba(255, 255, 255, 0.013) !important;
+}
+html[data-oscuro="1"] .bg-amber-100\/20 {
+  background-color: rgba(255, 255, 255, 0.018) !important;
+}
+html[data-oscuro="1"] .bg-amber-100\/30 {
+  background-color: rgba(255, 255, 255, 0.027) !important;
+}
+html[data-oscuro="1"] .bg-amber-100\/40 {
+  background-color: rgba(255, 255, 255, 0.036) !important;
+}
+html[data-oscuro="1"] .bg-amber-100\/50 {
+  background-color: rgba(255, 255, 255, 0.045) !important;
+}
+html[data-oscuro="1"] .bg-amber-100\/60 {
+  background-color: rgba(255, 255, 255, 0.054) !important;
+}
+html[data-oscuro="1"] .bg-amber-100\/70 {
+  background-color: rgba(255, 255, 255, 0.063) !important;
+}
+html[data-oscuro="1"] .bg-amber-100\/80 {
+  background-color: rgba(255, 255, 255, 0.072) !important;
+}
+html[data-oscuro="1"] .bg-amber-100\/90 {
+  background-color: rgba(255, 255, 255, 0.081) !important;
+}
+html[data-oscuro="1"] .bg-amber-100\/95 {
+  background-color: rgba(255, 255, 255, 0.085) !important;
+}
+html[data-oscuro="1"] .bg-rose-50\/5 {
+  background-color: rgba(255, 255, 255, 0.004) !important;
+}
+html[data-oscuro="1"] .bg-rose-50\/10 {
+  background-color: rgba(255, 255, 255, 0.009) !important;
+}
+html[data-oscuro="1"] .bg-rose-50\/15 {
+  background-color: rgba(255, 255, 255, 0.013) !important;
+}
+html[data-oscuro="1"] .bg-rose-50\/20 {
+  background-color: rgba(255, 255, 255, 0.018) !important;
+}
+html[data-oscuro="1"] .bg-rose-50\/30 {
+  background-color: rgba(255, 255, 255, 0.027) !important;
+}
+html[data-oscuro="1"] .bg-rose-50\/40 {
+  background-color: rgba(255, 255, 255, 0.036) !important;
+}
+html[data-oscuro="1"] .bg-rose-50\/50 {
+  background-color: rgba(255, 255, 255, 0.045) !important;
+}
+html[data-oscuro="1"] .bg-rose-50\/60 {
+  background-color: rgba(255, 255, 255, 0.054) !important;
+}
+html[data-oscuro="1"] .bg-rose-50\/70 {
+  background-color: rgba(255, 255, 255, 0.063) !important;
+}
+html[data-oscuro="1"] .bg-rose-50\/80 {
+  background-color: rgba(255, 255, 255, 0.072) !important;
+}
+html[data-oscuro="1"] .bg-rose-50\/90 {
+  background-color: rgba(255, 255, 255, 0.081) !important;
+}
+html[data-oscuro="1"] .bg-rose-50\/95 {
+  background-color: rgba(255, 255, 255, 0.085) !important;
+}
+html[data-oscuro="1"] .bg-rose-100\/5 {
+  background-color: rgba(255, 255, 255, 0.004) !important;
+}
+html[data-oscuro="1"] .bg-rose-100\/10 {
+  background-color: rgba(255, 255, 255, 0.009) !important;
+}
+html[data-oscuro="1"] .bg-rose-100\/15 {
+  background-color: rgba(255, 255, 255, 0.013) !important;
+}
+html[data-oscuro="1"] .bg-rose-100\/20 {
+  background-color: rgba(255, 255, 255, 0.018) !important;
+}
+html[data-oscuro="1"] .bg-rose-100\/30 {
+  background-color: rgba(255, 255, 255, 0.027) !important;
+}
+html[data-oscuro="1"] .bg-rose-100\/40 {
+  background-color: rgba(255, 255, 255, 0.036) !important;
+}
+html[data-oscuro="1"] .bg-rose-100\/50 {
+  background-color: rgba(255, 255, 255, 0.045) !important;
+}
+html[data-oscuro="1"] .bg-rose-100\/60 {
+  background-color: rgba(255, 255, 255, 0.054) !important;
+}
+html[data-oscuro="1"] .bg-rose-100\/70 {
+  background-color: rgba(255, 255, 255, 0.063) !important;
+}
+html[data-oscuro="1"] .bg-rose-100\/80 {
+  background-color: rgba(255, 255, 255, 0.072) !important;
+}
+html[data-oscuro="1"] .bg-rose-100\/90 {
+  background-color: rgba(255, 255, 255, 0.081) !important;
+}
+html[data-oscuro="1"] .bg-rose-100\/95 {
+  background-color: rgba(255, 255, 255, 0.085) !important;
+}
+html[data-oscuro="1"] .bg-fuchsia-50\/5 {
+  background-color: rgba(255, 255, 255, 0.004) !important;
+}
+html[data-oscuro="1"] .bg-fuchsia-50\/10 {
+  background-color: rgba(255, 255, 255, 0.009) !important;
+}
+html[data-oscuro="1"] .bg-fuchsia-50\/15 {
+  background-color: rgba(255, 255, 255, 0.013) !important;
+}
+html[data-oscuro="1"] .bg-fuchsia-50\/20 {
+  background-color: rgba(255, 255, 255, 0.018) !important;
+}
+html[data-oscuro="1"] .bg-fuchsia-50\/30 {
+  background-color: rgba(255, 255, 255, 0.027) !important;
+}
+html[data-oscuro="1"] .bg-fuchsia-50\/40 {
+  background-color: rgba(255, 255, 255, 0.036) !important;
+}
+html[data-oscuro="1"] .bg-fuchsia-50\/50 {
+  background-color: rgba(255, 255, 255, 0.045) !important;
+}
+html[data-oscuro="1"] .bg-fuchsia-50\/60 {
+  background-color: rgba(255, 255, 255, 0.054) !important;
+}
+html[data-oscuro="1"] .bg-fuchsia-50\/70 {
+  background-color: rgba(255, 255, 255, 0.063) !important;
+}
+html[data-oscuro="1"] .bg-fuchsia-50\/80 {
+  background-color: rgba(255, 255, 255, 0.072) !important;
+}
+html[data-oscuro="1"] .bg-fuchsia-50\/90 {
+  background-color: rgba(255, 255, 255, 0.081) !important;
+}
+html[data-oscuro="1"] .bg-fuchsia-50\/95 {
+  background-color: rgba(255, 255, 255, 0.085) !important;
+}
+html[data-oscuro="1"] .bg-fuchsia-100\/5 {
+  background-color: rgba(255, 255, 255, 0.004) !important;
+}
+html[data-oscuro="1"] .bg-fuchsia-100\/10 {
+  background-color: rgba(255, 255, 255, 0.009) !important;
+}
+html[data-oscuro="1"] .bg-fuchsia-100\/15 {
+  background-color: rgba(255, 255, 255, 0.013) !important;
+}
+html[data-oscuro="1"] .bg-fuchsia-100\/20 {
+  background-color: rgba(255, 255, 255, 0.018) !important;
+}
+html[data-oscuro="1"] .bg-fuchsia-100\/30 {
+  background-color: rgba(255, 255, 255, 0.027) !important;
+}
+html[data-oscuro="1"] .bg-fuchsia-100\/40 {
+  background-color: rgba(255, 255, 255, 0.036) !important;
+}
+html[data-oscuro="1"] .bg-fuchsia-100\/50 {
+  background-color: rgba(255, 255, 255, 0.045) !important;
+}
+html[data-oscuro="1"] .bg-fuchsia-100\/60 {
+  background-color: rgba(255, 255, 255, 0.054) !important;
+}
+html[data-oscuro="1"] .bg-fuchsia-100\/70 {
+  background-color: rgba(255, 255, 255, 0.063) !important;
+}
+html[data-oscuro="1"] .bg-fuchsia-100\/80 {
+  background-color: rgba(255, 255, 255, 0.072) !important;
+}
+html[data-oscuro="1"] .bg-fuchsia-100\/90 {
+  background-color: rgba(255, 255, 255, 0.081) !important;
+}
+html[data-oscuro="1"] .bg-fuchsia-100\/95 {
+  background-color: rgba(255, 255, 255, 0.085) !important;
+}
+html[data-oscuro="1"] .bg-purple-50\/5 {
+  background-color: rgba(255, 255, 255, 0.004) !important;
+}
+html[data-oscuro="1"] .bg-purple-50\/10 {
+  background-color: rgba(255, 255, 255, 0.009) !important;
+}
+html[data-oscuro="1"] .bg-purple-50\/15 {
+  background-color: rgba(255, 255, 255, 0.013) !important;
+}
+html[data-oscuro="1"] .bg-purple-50\/20 {
+  background-color: rgba(255, 255, 255, 0.018) !important;
+}
+html[data-oscuro="1"] .bg-purple-50\/30 {
+  background-color: rgba(255, 255, 255, 0.027) !important;
+}
+html[data-oscuro="1"] .bg-purple-50\/40 {
+  background-color: rgba(255, 255, 255, 0.036) !important;
+}
+html[data-oscuro="1"] .bg-purple-50\/50 {
+  background-color: rgba(255, 255, 255, 0.045) !important;
+}
+html[data-oscuro="1"] .bg-purple-50\/60 {
+  background-color: rgba(255, 255, 255, 0.054) !important;
+}
+html[data-oscuro="1"] .bg-purple-50\/70 {
+  background-color: rgba(255, 255, 255, 0.063) !important;
+}
+html[data-oscuro="1"] .bg-purple-50\/80 {
+  background-color: rgba(255, 255, 255, 0.072) !important;
+}
+html[data-oscuro="1"] .bg-purple-50\/90 {
+  background-color: rgba(255, 255, 255, 0.081) !important;
+}
+html[data-oscuro="1"] .bg-purple-50\/95 {
+  background-color: rgba(255, 255, 255, 0.085) !important;
+}
+html[data-oscuro="1"] .bg-purple-100\/5 {
+  background-color: rgba(255, 255, 255, 0.004) !important;
+}
+html[data-oscuro="1"] .bg-purple-100\/10 {
+  background-color: rgba(255, 255, 255, 0.009) !important;
+}
+html[data-oscuro="1"] .bg-purple-100\/15 {
+  background-color: rgba(255, 255, 255, 0.013) !important;
+}
+html[data-oscuro="1"] .bg-purple-100\/20 {
+  background-color: rgba(255, 255, 255, 0.018) !important;
+}
+html[data-oscuro="1"] .bg-purple-100\/30 {
+  background-color: rgba(255, 255, 255, 0.027) !important;
+}
+html[data-oscuro="1"] .bg-purple-100\/40 {
+  background-color: rgba(255, 255, 255, 0.036) !important;
+}
+html[data-oscuro="1"] .bg-purple-100\/50 {
+  background-color: rgba(255, 255, 255, 0.045) !important;
+}
+html[data-oscuro="1"] .bg-purple-100\/60 {
+  background-color: rgba(255, 255, 255, 0.054) !important;
+}
+html[data-oscuro="1"] .bg-purple-100\/70 {
+  background-color: rgba(255, 255, 255, 0.063) !important;
+}
+html[data-oscuro="1"] .bg-purple-100\/80 {
+  background-color: rgba(255, 255, 255, 0.072) !important;
+}
+html[data-oscuro="1"] .bg-purple-100\/90 {
+  background-color: rgba(255, 255, 255, 0.081) !important;
+}
+html[data-oscuro="1"] .bg-purple-100\/95 {
+  background-color: rgba(255, 255, 255, 0.085) !important;
+}
+html[data-oscuro="1"] .bg-violet-50\/5 {
+  background-color: rgba(255, 255, 255, 0.004) !important;
+}
+html[data-oscuro="1"] .bg-violet-50\/10 {
+  background-color: rgba(255, 255, 255, 0.009) !important;
+}
+html[data-oscuro="1"] .bg-violet-50\/15 {
+  background-color: rgba(255, 255, 255, 0.013) !important;
+}
+html[data-oscuro="1"] .bg-violet-50\/20 {
+  background-color: rgba(255, 255, 255, 0.018) !important;
+}
+html[data-oscuro="1"] .bg-violet-50\/30 {
+  background-color: rgba(255, 255, 255, 0.027) !important;
+}
+html[data-oscuro="1"] .bg-violet-50\/40 {
+  background-color: rgba(255, 255, 255, 0.036) !important;
+}
+html[data-oscuro="1"] .bg-violet-50\/50 {
+  background-color: rgba(255, 255, 255, 0.045) !important;
+}
+html[data-oscuro="1"] .bg-violet-50\/60 {
+  background-color: rgba(255, 255, 255, 0.054) !important;
+}
+html[data-oscuro="1"] .bg-violet-50\/70 {
+  background-color: rgba(255, 255, 255, 0.063) !important;
+}
+html[data-oscuro="1"] .bg-violet-50\/80 {
+  background-color: rgba(255, 255, 255, 0.072) !important;
+}
+html[data-oscuro="1"] .bg-violet-50\/90 {
+  background-color: rgba(255, 255, 255, 0.081) !important;
+}
+html[data-oscuro="1"] .bg-violet-50\/95 {
+  background-color: rgba(255, 255, 255, 0.085) !important;
+}
+html[data-oscuro="1"] .bg-violet-100\/5 {
+  background-color: rgba(255, 255, 255, 0.004) !important;
+}
+html[data-oscuro="1"] .bg-violet-100\/10 {
+  background-color: rgba(255, 255, 255, 0.009) !important;
+}
+html[data-oscuro="1"] .bg-violet-100\/15 {
+  background-color: rgba(255, 255, 255, 0.013) !important;
+}
+html[data-oscuro="1"] .bg-violet-100\/20 {
+  background-color: rgba(255, 255, 255, 0.018) !important;
+}
+html[data-oscuro="1"] .bg-violet-100\/30 {
+  background-color: rgba(255, 255, 255, 0.027) !important;
+}
+html[data-oscuro="1"] .bg-violet-100\/40 {
+  background-color: rgba(255, 255, 255, 0.036) !important;
+}
+html[data-oscuro="1"] .bg-violet-100\/50 {
+  background-color: rgba(255, 255, 255, 0.045) !important;
+}
+html[data-oscuro="1"] .bg-violet-100\/60 {
+  background-color: rgba(255, 255, 255, 0.054) !important;
+}
+html[data-oscuro="1"] .bg-violet-100\/70 {
+  background-color: rgba(255, 255, 255, 0.063) !important;
+}
+html[data-oscuro="1"] .bg-violet-100\/80 {
+  background-color: rgba(255, 255, 255, 0.072) !important;
+}
+html[data-oscuro="1"] .bg-violet-100\/90 {
+  background-color: rgba(255, 255, 255, 0.081) !important;
+}
+html[data-oscuro="1"] .bg-violet-100\/95 {
+  background-color: rgba(255, 255, 255, 0.085) !important;
+}
+html[data-oscuro="1"] .bg-sky-50\/5 {
+  background-color: rgba(255, 255, 255, 0.004) !important;
+}
+html[data-oscuro="1"] .bg-sky-50\/10 {
+  background-color: rgba(255, 255, 255, 0.009) !important;
+}
+html[data-oscuro="1"] .bg-sky-50\/15 {
+  background-color: rgba(255, 255, 255, 0.013) !important;
+}
+html[data-oscuro="1"] .bg-sky-50\/20 {
+  background-color: rgba(255, 255, 255, 0.018) !important;
+}
+html[data-oscuro="1"] .bg-sky-50\/30 {
+  background-color: rgba(255, 255, 255, 0.027) !important;
+}
+html[data-oscuro="1"] .bg-sky-50\/40 {
+  background-color: rgba(255, 255, 255, 0.036) !important;
+}
+html[data-oscuro="1"] .bg-sky-50\/50 {
+  background-color: rgba(255, 255, 255, 0.045) !important;
+}
+html[data-oscuro="1"] .bg-sky-50\/60 {
+  background-color: rgba(255, 255, 255, 0.054) !important;
+}
+html[data-oscuro="1"] .bg-sky-50\/70 {
+  background-color: rgba(255, 255, 255, 0.063) !important;
+}
+html[data-oscuro="1"] .bg-sky-50\/80 {
+  background-color: rgba(255, 255, 255, 0.072) !important;
+}
+html[data-oscuro="1"] .bg-sky-50\/90 {
+  background-color: rgba(255, 255, 255, 0.081) !important;
+}
+html[data-oscuro="1"] .bg-sky-50\/95 {
+  background-color: rgba(255, 255, 255, 0.085) !important;
+}
+html[data-oscuro="1"] .bg-blue-50\/5 {
+  background-color: rgba(255, 255, 255, 0.004) !important;
+}
+html[data-oscuro="1"] .bg-blue-50\/10 {
+  background-color: rgba(255, 255, 255, 0.009) !important;
+}
+html[data-oscuro="1"] .bg-blue-50\/15 {
+  background-color: rgba(255, 255, 255, 0.013) !important;
+}
+html[data-oscuro="1"] .bg-blue-50\/20 {
+  background-color: rgba(255, 255, 255, 0.018) !important;
+}
+html[data-oscuro="1"] .bg-blue-50\/30 {
+  background-color: rgba(255, 255, 255, 0.027) !important;
+}
+html[data-oscuro="1"] .bg-blue-50\/40 {
+  background-color: rgba(255, 255, 255, 0.036) !important;
+}
+html[data-oscuro="1"] .bg-blue-50\/50 {
+  background-color: rgba(255, 255, 255, 0.045) !important;
+}
+html[data-oscuro="1"] .bg-blue-50\/60 {
+  background-color: rgba(255, 255, 255, 0.054) !important;
+}
+html[data-oscuro="1"] .bg-blue-50\/70 {
+  background-color: rgba(255, 255, 255, 0.063) !important;
+}
+html[data-oscuro="1"] .bg-blue-50\/80 {
+  background-color: rgba(255, 255, 255, 0.072) !important;
+}
+html[data-oscuro="1"] .bg-blue-50\/90 {
+  background-color: rgba(255, 255, 255, 0.081) !important;
+}
+html[data-oscuro="1"] .bg-blue-50\/95 {
+  background-color: rgba(255, 255, 255, 0.085) !important;
+}
+html[data-oscuro="1"] .bg-teal-50\/5 {
+  background-color: rgba(255, 255, 255, 0.004) !important;
+}
+html[data-oscuro="1"] .bg-teal-50\/10 {
+  background-color: rgba(255, 255, 255, 0.009) !important;
+}
+html[data-oscuro="1"] .bg-teal-50\/15 {
+  background-color: rgba(255, 255, 255, 0.013) !important;
+}
+html[data-oscuro="1"] .bg-teal-50\/20 {
+  background-color: rgba(255, 255, 255, 0.018) !important;
+}
+html[data-oscuro="1"] .bg-teal-50\/30 {
+  background-color: rgba(255, 255, 255, 0.027) !important;
+}
+html[data-oscuro="1"] .bg-teal-50\/40 {
+  background-color: rgba(255, 255, 255, 0.036) !important;
+}
+html[data-oscuro="1"] .bg-teal-50\/50 {
+  background-color: rgba(255, 255, 255, 0.045) !important;
+}
+html[data-oscuro="1"] .bg-teal-50\/60 {
+  background-color: rgba(255, 255, 255, 0.054) !important;
+}
+html[data-oscuro="1"] .bg-teal-50\/70 {
+  background-color: rgba(255, 255, 255, 0.063) !important;
+}
+html[data-oscuro="1"] .bg-teal-50\/80 {
+  background-color: rgba(255, 255, 255, 0.072) !important;
+}
+html[data-oscuro="1"] .bg-teal-50\/90 {
+  background-color: rgba(255, 255, 255, 0.081) !important;
+}
+html[data-oscuro="1"] .bg-teal-50\/95 {
+  background-color: rgba(255, 255, 255, 0.085) !important;
+}
+html[data-oscuro="1"] .bg-teal-100\/5 {
+  background-color: rgba(255, 255, 255, 0.004) !important;
+}
+html[data-oscuro="1"] .bg-teal-100\/10 {
+  background-color: rgba(255, 255, 255, 0.009) !important;
+}
+html[data-oscuro="1"] .bg-teal-100\/15 {
+  background-color: rgba(255, 255, 255, 0.013) !important;
+}
+html[data-oscuro="1"] .bg-teal-100\/20 {
+  background-color: rgba(255, 255, 255, 0.018) !important;
+}
+html[data-oscuro="1"] .bg-teal-100\/30 {
+  background-color: rgba(255, 255, 255, 0.027) !important;
+}
+html[data-oscuro="1"] .bg-teal-100\/40 {
+  background-color: rgba(255, 255, 255, 0.036) !important;
+}
+html[data-oscuro="1"] .bg-teal-100\/50 {
+  background-color: rgba(255, 255, 255, 0.045) !important;
+}
+html[data-oscuro="1"] .bg-teal-100\/60 {
+  background-color: rgba(255, 255, 255, 0.054) !important;
+}
+html[data-oscuro="1"] .bg-teal-100\/70 {
+  background-color: rgba(255, 255, 255, 0.063) !important;
+}
+html[data-oscuro="1"] .bg-teal-100\/80 {
+  background-color: rgba(255, 255, 255, 0.072) !important;
+}
+html[data-oscuro="1"] .bg-teal-100\/90 {
+  background-color: rgba(255, 255, 255, 0.081) !important;
+}
+html[data-oscuro="1"] .bg-teal-100\/95 {
+  background-color: rgba(255, 255, 255, 0.085) !important;
+}
+html[data-oscuro="1"] .bg-orange-50\/5 {
+  background-color: rgba(255, 255, 255, 0.004) !important;
+}
+html[data-oscuro="1"] .bg-orange-50\/10 {
+  background-color: rgba(255, 255, 255, 0.009) !important;
+}
+html[data-oscuro="1"] .bg-orange-50\/15 {
+  background-color: rgba(255, 255, 255, 0.013) !important;
+}
+html[data-oscuro="1"] .bg-orange-50\/20 {
+  background-color: rgba(255, 255, 255, 0.018) !important;
+}
+html[data-oscuro="1"] .bg-orange-50\/30 {
+  background-color: rgba(255, 255, 255, 0.027) !important;
+}
+html[data-oscuro="1"] .bg-orange-50\/40 {
+  background-color: rgba(255, 255, 255, 0.036) !important;
+}
+html[data-oscuro="1"] .bg-orange-50\/50 {
+  background-color: rgba(255, 255, 255, 0.045) !important;
+}
+html[data-oscuro="1"] .bg-orange-50\/60 {
+  background-color: rgba(255, 255, 255, 0.054) !important;
+}
+html[data-oscuro="1"] .bg-orange-50\/70 {
+  background-color: rgba(255, 255, 255, 0.063) !important;
+}
+html[data-oscuro="1"] .bg-orange-50\/80 {
+  background-color: rgba(255, 255, 255, 0.072) !important;
+}
+html[data-oscuro="1"] .bg-orange-50\/90 {
+  background-color: rgba(255, 255, 255, 0.081) !important;
+}
+html[data-oscuro="1"] .bg-orange-50\/95 {
+  background-color: rgba(255, 255, 255, 0.085) !important;
+}
+html[data-oscuro="1"] .bg-orange-100\/5 {
+  background-color: rgba(255, 255, 255, 0.004) !important;
+}
+html[data-oscuro="1"] .bg-orange-100\/10 {
+  background-color: rgba(255, 255, 255, 0.009) !important;
+}
+html[data-oscuro="1"] .bg-orange-100\/15 {
+  background-color: rgba(255, 255, 255, 0.013) !important;
+}
+html[data-oscuro="1"] .bg-orange-100\/20 {
+  background-color: rgba(255, 255, 255, 0.018) !important;
+}
+html[data-oscuro="1"] .bg-orange-100\/30 {
+  background-color: rgba(255, 255, 255, 0.027) !important;
+}
+html[data-oscuro="1"] .bg-orange-100\/40 {
+  background-color: rgba(255, 255, 255, 0.036) !important;
+}
+html[data-oscuro="1"] .bg-orange-100\/50 {
+  background-color: rgba(255, 255, 255, 0.045) !important;
+}
+html[data-oscuro="1"] .bg-orange-100\/60 {
+  background-color: rgba(255, 255, 255, 0.054) !important;
+}
+html[data-oscuro="1"] .bg-orange-100\/70 {
+  background-color: rgba(255, 255, 255, 0.063) !important;
+}
+html[data-oscuro="1"] .bg-orange-100\/80 {
+  background-color: rgba(255, 255, 255, 0.072) !important;
+}
+html[data-oscuro="1"] .bg-orange-100\/90 {
+  background-color: rgba(255, 255, 255, 0.081) !important;
+}
+html[data-oscuro="1"] .bg-orange-100\/95 {
+  background-color: rgba(255, 255, 255, 0.085) !important;
+}
+html[data-oscuro="1"] .bg-indigo-500\/5 {
+  background-color: rgba(99, 102, 241, 0.18) !important;
+}
+html[data-oscuro="1"] .bg-indigo-500\/10 {
+  background-color: rgba(99, 102, 241, 0.18) !important;
+}
+html[data-oscuro="1"] .bg-indigo-500\/15 {
+  background-color: rgba(99, 102, 241, 0.18) !important;
+}
+html[data-oscuro="1"] .bg-indigo-500\/20 {
+  background-color: rgba(99, 102, 241, 0.18) !important;
+}
+html[data-oscuro="1"] .bg-indigo-500\/30 {
+  background-color: rgba(99, 102, 241, 0.18) !important;
+}
+html[data-oscuro="1"] .bg-indigo-500\/40 {
+  background-color: rgba(99, 102, 241, 0.18) !important;
+}
+html[data-oscuro="1"] .bg-indigo-500\/50 {
+  background-color: rgba(99, 102, 241, 0.18) !important;
+}
+html[data-oscuro="1"] .bg-indigo-500\/60 {
+  background-color: rgba(99, 102, 241, 0.18) !important;
+}
+html[data-oscuro="1"] .bg-indigo-500\/70 {
+  background-color: rgba(99, 102, 241, 0.18) !important;
+}
+html[data-oscuro="1"] .bg-indigo-500\/80 {
+  background-color: rgba(99, 102, 241, 0.18) !important;
+}
+html[data-oscuro="1"] .bg-indigo-500\/90 {
+  background-color: rgba(99, 102, 241, 0.18) !important;
+}
+html[data-oscuro="1"] .bg-indigo-500\/95 {
+  background-color: rgba(99, 102, 241, 0.18) !important;
+}
+html[data-oscuro="1"] .bg-violet-500\/5 {
+  background-color: rgba(167, 139, 250, 0.18) !important;
+}
+html[data-oscuro="1"] .bg-violet-500\/10 {
+  background-color: rgba(167, 139, 250, 0.18) !important;
+}
+html[data-oscuro="1"] .bg-violet-500\/15 {
+  background-color: rgba(167, 139, 250, 0.18) !important;
+}
+html[data-oscuro="1"] .bg-violet-500\/20 {
+  background-color: rgba(167, 139, 250, 0.18) !important;
+}
+html[data-oscuro="1"] .bg-violet-500\/30 {
+  background-color: rgba(167, 139, 250, 0.18) !important;
+}
+html[data-oscuro="1"] .bg-violet-500\/40 {
+  background-color: rgba(167, 139, 250, 0.18) !important;
+}
+html[data-oscuro="1"] .bg-violet-500\/50 {
+  background-color: rgba(167, 139, 250, 0.18) !important;
+}
+html[data-oscuro="1"] .bg-violet-500\/60 {
+  background-color: rgba(167, 139, 250, 0.18) !important;
+}
+html[data-oscuro="1"] .bg-violet-500\/70 {
+  background-color: rgba(167, 139, 250, 0.18) !important;
+}
+html[data-oscuro="1"] .bg-violet-500\/80 {
+  background-color: rgba(167, 139, 250, 0.18) !important;
+}
+html[data-oscuro="1"] .bg-violet-500\/90 {
+  background-color: rgba(167, 139, 250, 0.18) !important;
+}
+html[data-oscuro="1"] .bg-violet-500\/95 {
+  background-color: rgba(167, 139, 250, 0.18) !important;
+}
+html[data-oscuro="1"] .bg-purple-500\/5 {
+  background-color: rgba(168, 85, 247, 0.18) !important;
+}
+html[data-oscuro="1"] .bg-purple-500\/10 {
+  background-color: rgba(168, 85, 247, 0.18) !important;
+}
+html[data-oscuro="1"] .bg-purple-500\/15 {
+  background-color: rgba(168, 85, 247, 0.18) !important;
+}
+html[data-oscuro="1"] .bg-purple-500\/20 {
+  background-color: rgba(168, 85, 247, 0.18) !important;
+}
+html[data-oscuro="1"] .bg-purple-500\/30 {
+  background-color: rgba(168, 85, 247, 0.18) !important;
+}
+html[data-oscuro="1"] .bg-purple-500\/40 {
+  background-color: rgba(168, 85, 247, 0.18) !important;
+}
+html[data-oscuro="1"] .bg-purple-500\/50 {
+  background-color: rgba(168, 85, 247, 0.18) !important;
+}
+html[data-oscuro="1"] .bg-purple-500\/60 {
+  background-color: rgba(168, 85, 247, 0.18) !important;
+}
+html[data-oscuro="1"] .bg-purple-500\/70 {
+  background-color: rgba(168, 85, 247, 0.18) !important;
+}
+html[data-oscuro="1"] .bg-purple-500\/80 {
+  background-color: rgba(168, 85, 247, 0.18) !important;
+}
+html[data-oscuro="1"] .bg-purple-500\/90 {
+  background-color: rgba(168, 85, 247, 0.18) !important;
+}
+html[data-oscuro="1"] .bg-purple-500\/95 {
+  background-color: rgba(168, 85, 247, 0.18) !important;
+}
+html[data-oscuro="1"] .bg-fuchsia-500\/5 {
+  background-color: rgba(232, 121, 249, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-fuchsia-500\/10 {
+  background-color: rgba(232, 121, 249, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-fuchsia-500\/15 {
+  background-color: rgba(232, 121, 249, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-fuchsia-500\/20 {
+  background-color: rgba(232, 121, 249, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-fuchsia-500\/30 {
+  background-color: rgba(232, 121, 249, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-fuchsia-500\/40 {
+  background-color: rgba(232, 121, 249, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-fuchsia-500\/50 {
+  background-color: rgba(232, 121, 249, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-fuchsia-500\/60 {
+  background-color: rgba(232, 121, 249, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-fuchsia-500\/70 {
+  background-color: rgba(232, 121, 249, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-fuchsia-500\/80 {
+  background-color: rgba(232, 121, 249, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-fuchsia-500\/90 {
+  background-color: rgba(232, 121, 249, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-fuchsia-500\/95 {
+  background-color: rgba(232, 121, 249, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-rose-500\/5 {
+  background-color: rgba(244, 63, 94, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-rose-500\/10 {
+  background-color: rgba(244, 63, 94, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-rose-500\/15 {
+  background-color: rgba(244, 63, 94, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-rose-500\/20 {
+  background-color: rgba(244, 63, 94, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-rose-500\/30 {
+  background-color: rgba(244, 63, 94, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-rose-500\/40 {
+  background-color: rgba(244, 63, 94, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-rose-500\/50 {
+  background-color: rgba(244, 63, 94, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-rose-500\/60 {
+  background-color: rgba(244, 63, 94, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-rose-500\/70 {
+  background-color: rgba(244, 63, 94, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-rose-500\/80 {
+  background-color: rgba(244, 63, 94, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-rose-500\/90 {
+  background-color: rgba(244, 63, 94, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-rose-500\/95 {
+  background-color: rgba(244, 63, 94, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-amber-500\/5 {
+  background-color: rgba(245, 158, 11, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-amber-500\/10 {
+  background-color: rgba(245, 158, 11, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-amber-500\/15 {
+  background-color: rgba(245, 158, 11, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-amber-500\/20 {
+  background-color: rgba(245, 158, 11, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-amber-500\/30 {
+  background-color: rgba(245, 158, 11, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-amber-500\/40 {
+  background-color: rgba(245, 158, 11, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-amber-500\/50 {
+  background-color: rgba(245, 158, 11, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-amber-500\/60 {
+  background-color: rgba(245, 158, 11, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-amber-500\/70 {
+  background-color: rgba(245, 158, 11, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-amber-500\/80 {
+  background-color: rgba(245, 158, 11, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-amber-500\/90 {
+  background-color: rgba(245, 158, 11, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-amber-500\/95 {
+  background-color: rgba(245, 158, 11, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-emerald-500\/5 {
+  background-color: rgba(16, 185, 129, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-emerald-500\/10 {
+  background-color: rgba(16, 185, 129, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-emerald-500\/15 {
+  background-color: rgba(16, 185, 129, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-emerald-500\/20 {
+  background-color: rgba(16, 185, 129, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-emerald-500\/30 {
+  background-color: rgba(16, 185, 129, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-emerald-500\/40 {
+  background-color: rgba(16, 185, 129, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-emerald-500\/50 {
+  background-color: rgba(16, 185, 129, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-emerald-500\/60 {
+  background-color: rgba(16, 185, 129, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-emerald-500\/70 {
+  background-color: rgba(16, 185, 129, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-emerald-500\/80 {
+  background-color: rgba(16, 185, 129, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-emerald-500\/90 {
+  background-color: rgba(16, 185, 129, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-emerald-500\/95 {
+  background-color: rgba(16, 185, 129, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-teal-500\/5 {
+  background-color: rgba(20, 184, 166, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-teal-500\/10 {
+  background-color: rgba(20, 184, 166, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-teal-500\/15 {
+  background-color: rgba(20, 184, 166, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-teal-500\/20 {
+  background-color: rgba(20, 184, 166, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-teal-500\/30 {
+  background-color: rgba(20, 184, 166, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-teal-500\/40 {
+  background-color: rgba(20, 184, 166, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-teal-500\/50 {
+  background-color: rgba(20, 184, 166, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-teal-500\/60 {
+  background-color: rgba(20, 184, 166, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-teal-500\/70 {
+  background-color: rgba(20, 184, 166, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-teal-500\/80 {
+  background-color: rgba(20, 184, 166, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-teal-500\/90 {
+  background-color: rgba(20, 184, 166, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-teal-500\/95 {
+  background-color: rgba(20, 184, 166, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-sky-500\/5 {
+  background-color: rgba(14, 165, 233, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-sky-500\/10 {
+  background-color: rgba(14, 165, 233, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-sky-500\/15 {
+  background-color: rgba(14, 165, 233, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-sky-500\/20 {
+  background-color: rgba(14, 165, 233, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-sky-500\/30 {
+  background-color: rgba(14, 165, 233, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-sky-500\/40 {
+  background-color: rgba(14, 165, 233, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-sky-500\/50 {
+  background-color: rgba(14, 165, 233, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-sky-500\/60 {
+  background-color: rgba(14, 165, 233, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-sky-500\/70 {
+  background-color: rgba(14, 165, 233, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-sky-500\/80 {
+  background-color: rgba(14, 165, 233, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-sky-500\/90 {
+  background-color: rgba(14, 165, 233, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-sky-500\/95 {
+  background-color: rgba(14, 165, 233, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-blue-500\/5 {
+  background-color: rgba(59, 130, 246, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-blue-500\/10 {
+  background-color: rgba(59, 130, 246, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-blue-500\/15 {
+  background-color: rgba(59, 130, 246, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-blue-500\/20 {
+  background-color: rgba(59, 130, 246, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-blue-500\/30 {
+  background-color: rgba(59, 130, 246, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-blue-500\/40 {
+  background-color: rgba(59, 130, 246, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-blue-500\/50 {
+  background-color: rgba(59, 130, 246, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-blue-500\/60 {
+  background-color: rgba(59, 130, 246, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-blue-500\/70 {
+  background-color: rgba(59, 130, 246, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-blue-500\/80 {
+  background-color: rgba(59, 130, 246, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-blue-500\/90 {
+  background-color: rgba(59, 130, 246, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-blue-500\/95 {
+  background-color: rgba(59, 130, 246, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-orange-500\/5 {
+  background-color: rgba(249, 115, 22, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-orange-500\/10 {
+  background-color: rgba(249, 115, 22, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-orange-500\/15 {
+  background-color: rgba(249, 115, 22, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-orange-500\/20 {
+  background-color: rgba(249, 115, 22, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-orange-500\/30 {
+  background-color: rgba(249, 115, 22, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-orange-500\/40 {
+  background-color: rgba(249, 115, 22, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-orange-500\/50 {
+  background-color: rgba(249, 115, 22, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-orange-500\/60 {
+  background-color: rgba(249, 115, 22, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-orange-500\/70 {
+  background-color: rgba(249, 115, 22, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-orange-500\/80 {
+  background-color: rgba(249, 115, 22, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-orange-500\/90 {
+  background-color: rgba(249, 115, 22, 0.16) !important;
+}
+html[data-oscuro="1"] .bg-orange-500\/95 {
+  background-color: rgba(249, 115, 22, 0.16) !important;
+}
+html[data-oscuro="1"] .hover\:bg-white\/10:hover,
+html[data-oscuro="1"] .hover\:bg-white\/15:hover,
+html[data-oscuro="1"] .hover\:bg-white\/20:hover,
+html[data-oscuro="1"] .hover\:bg-white\/40:hover,
+html[data-oscuro="1"] .hover\:bg-white\/50:hover,
+html[data-oscuro="1"] .hover\:bg-white\/60:hover,
+html[data-oscuro="1"] .hover\:bg-white\/70:hover,
+html[data-oscuro="1"] .hover\:bg-white\/80:hover,
+html[data-oscuro="1"] .hover\:bg-white\/90:hover,
+html[data-oscuro="1"] .hover\:bg-slate-50\/10:hover,
+html[data-oscuro="1"] .hover\:bg-slate-50\/15:hover,
+html[data-oscuro="1"] .hover\:bg-slate-50\/20:hover,
+html[data-oscuro="1"] .hover\:bg-slate-50\/40:hover,
+html[data-oscuro="1"] .hover\:bg-slate-50\/50:hover,
+html[data-oscuro="1"] .hover\:bg-slate-50\/60:hover,
+html[data-oscuro="1"] .hover\:bg-slate-50\/70:hover,
+html[data-oscuro="1"] .hover\:bg-slate-50\/80:hover,
+html[data-oscuro="1"] .hover\:bg-slate-50\/90:hover,
+html[data-oscuro="1"] .hover\:bg-slate-100\/10:hover,
+html[data-oscuro="1"] .hover\:bg-slate-100\/15:hover,
+html[data-oscuro="1"] .hover\:bg-slate-100\/20:hover,
+html[data-oscuro="1"] .hover\:bg-slate-100\/40:hover,
+html[data-oscuro="1"] .hover\:bg-slate-100\/50:hover,
+html[data-oscuro="1"] .hover\:bg-slate-100\/60:hover,
+html[data-oscuro="1"] .hover\:bg-slate-100\/70:hover,
+html[data-oscuro="1"] .hover\:bg-slate-100\/80:hover,
+html[data-oscuro="1"] .hover\:bg-slate-100\/90:hover,
+html[data-oscuro="1"] .hover\:bg-slate-200\/10:hover,
+html[data-oscuro="1"] .hover\:bg-slate-200\/15:hover,
+html[data-oscuro="1"] .hover\:bg-slate-200\/20:hover,
+html[data-oscuro="1"] .hover\:bg-slate-200\/40:hover,
+html[data-oscuro="1"] .hover\:bg-slate-200\/50:hover,
+html[data-oscuro="1"] .hover\:bg-slate-200\/60:hover,
+html[data-oscuro="1"] .hover\:bg-slate-200\/70:hover,
+html[data-oscuro="1"] .hover\:bg-slate-200\/80:hover,
+html[data-oscuro="1"] .hover\:bg-slate-200\/90:hover,
+html[data-oscuro="1"] .hover\:bg-gray-50\/10:hover,
+html[data-oscuro="1"] .hover\:bg-gray-50\/15:hover,
+html[data-oscuro="1"] .hover\:bg-gray-50\/20:hover,
+html[data-oscuro="1"] .hover\:bg-gray-50\/40:hover,
+html[data-oscuro="1"] .hover\:bg-gray-50\/50:hover,
+html[data-oscuro="1"] .hover\:bg-gray-50\/60:hover,
+html[data-oscuro="1"] .hover\:bg-gray-50\/70:hover,
+html[data-oscuro="1"] .hover\:bg-gray-50\/80:hover,
+html[data-oscuro="1"] .hover\:bg-gray-50\/90:hover,
+html[data-oscuro="1"] .hover\:bg-gray-100\/10:hover,
+html[data-oscuro="1"] .hover\:bg-gray-100\/15:hover,
+html[data-oscuro="1"] .hover\:bg-gray-100\/20:hover,
+html[data-oscuro="1"] .hover\:bg-gray-100\/40:hover,
+html[data-oscuro="1"] .hover\:bg-gray-100\/50:hover,
+html[data-oscuro="1"] .hover\:bg-gray-100\/60:hover,
+html[data-oscuro="1"] .hover\:bg-gray-100\/70:hover,
+html[data-oscuro="1"] .hover\:bg-gray-100\/80:hover,
+html[data-oscuro="1"] .hover\:bg-gray-100\/90:hover,
+html[data-oscuro="1"] .hover\:bg-zinc-50\/10:hover,
+html[data-oscuro="1"] .hover\:bg-zinc-50\/15:hover,
+html[data-oscuro="1"] .hover\:bg-zinc-50\/20:hover,
+html[data-oscuro="1"] .hover\:bg-zinc-50\/40:hover,
+html[data-oscuro="1"] .hover\:bg-zinc-50\/50:hover,
+html[data-oscuro="1"] .hover\:bg-zinc-50\/60:hover,
+html[data-oscuro="1"] .hover\:bg-zinc-50\/70:hover,
+html[data-oscuro="1"] .hover\:bg-zinc-50\/80:hover,
+html[data-oscuro="1"] .hover\:bg-zinc-50\/90:hover,
+html[data-oscuro="1"] .hover\:bg-zinc-100\/10:hover,
+html[data-oscuro="1"] .hover\:bg-zinc-100\/15:hover,
+html[data-oscuro="1"] .hover\:bg-zinc-100\/20:hover,
+html[data-oscuro="1"] .hover\:bg-zinc-100\/40:hover,
+html[data-oscuro="1"] .hover\:bg-zinc-100\/50:hover,
+html[data-oscuro="1"] .hover\:bg-zinc-100\/60:hover,
+html[data-oscuro="1"] .hover\:bg-zinc-100\/70:hover,
+html[data-oscuro="1"] .hover\:bg-zinc-100\/80:hover,
+html[data-oscuro="1"] .hover\:bg-zinc-100\/90:hover,
+html[data-oscuro="1"] .hover\:bg-indigo-50\/10:hover,
+html[data-oscuro="1"] .hover\:bg-indigo-50\/15:hover,
+html[data-oscuro="1"] .hover\:bg-indigo-50\/20:hover,
+html[data-oscuro="1"] .hover\:bg-indigo-50\/40:hover,
+html[data-oscuro="1"] .hover\:bg-indigo-50\/50:hover,
+html[data-oscuro="1"] .hover\:bg-indigo-50\/60:hover,
+html[data-oscuro="1"] .hover\:bg-indigo-50\/70:hover,
+html[data-oscuro="1"] .hover\:bg-indigo-50\/80:hover,
+html[data-oscuro="1"] .hover\:bg-indigo-50\/90:hover,
+html[data-oscuro="1"] .hover\:bg-indigo-100\/10:hover,
+html[data-oscuro="1"] .hover\:bg-indigo-100\/15:hover,
+html[data-oscuro="1"] .hover\:bg-indigo-100\/20:hover,
+html[data-oscuro="1"] .hover\:bg-indigo-100\/40:hover,
+html[data-oscuro="1"] .hover\:bg-indigo-100\/50:hover,
+html[data-oscuro="1"] .hover\:bg-indigo-100\/60:hover,
+html[data-oscuro="1"] .hover\:bg-indigo-100\/70:hover,
+html[data-oscuro="1"] .hover\:bg-indigo-100\/80:hover,
+html[data-oscuro="1"] .hover\:bg-indigo-100\/90:hover,
+html[data-oscuro="1"] .hover\:bg-emerald-50\/10:hover,
+html[data-oscuro="1"] .hover\:bg-emerald-50\/15:hover,
+html[data-oscuro="1"] .hover\:bg-emerald-50\/20:hover,
+html[data-oscuro="1"] .hover\:bg-emerald-50\/40:hover,
+html[data-oscuro="1"] .hover\:bg-emerald-50\/50:hover,
+html[data-oscuro="1"] .hover\:bg-emerald-50\/60:hover,
+html[data-oscuro="1"] .hover\:bg-emerald-50\/70:hover,
+html[data-oscuro="1"] .hover\:bg-emerald-50\/80:hover,
+html[data-oscuro="1"] .hover\:bg-emerald-50\/90:hover,
+html[data-oscuro="1"] .hover\:bg-emerald-100\/10:hover,
+html[data-oscuro="1"] .hover\:bg-emerald-100\/15:hover,
+html[data-oscuro="1"] .hover\:bg-emerald-100\/20:hover,
+html[data-oscuro="1"] .hover\:bg-emerald-100\/40:hover,
+html[data-oscuro="1"] .hover\:bg-emerald-100\/50:hover,
+html[data-oscuro="1"] .hover\:bg-emerald-100\/60:hover,
+html[data-oscuro="1"] .hover\:bg-emerald-100\/70:hover,
+html[data-oscuro="1"] .hover\:bg-emerald-100\/80:hover,
+html[data-oscuro="1"] .hover\:bg-emerald-100\/90:hover,
+html[data-oscuro="1"] .hover\:bg-amber-50\/10:hover,
+html[data-oscuro="1"] .hover\:bg-amber-50\/15:hover,
+html[data-oscuro="1"] .hover\:bg-amber-50\/20:hover,
+html[data-oscuro="1"] .hover\:bg-amber-50\/40:hover,
+html[data-oscuro="1"] .hover\:bg-amber-50\/50:hover,
+html[data-oscuro="1"] .hover\:bg-amber-50\/60:hover,
+html[data-oscuro="1"] .hover\:bg-amber-50\/70:hover,
+html[data-oscuro="1"] .hover\:bg-amber-50\/80:hover,
+html[data-oscuro="1"] .hover\:bg-amber-50\/90:hover,
+html[data-oscuro="1"] .hover\:bg-amber-100\/10:hover,
+html[data-oscuro="1"] .hover\:bg-amber-100\/15:hover,
+html[data-oscuro="1"] .hover\:bg-amber-100\/20:hover,
+html[data-oscuro="1"] .hover\:bg-amber-100\/40:hover,
+html[data-oscuro="1"] .hover\:bg-amber-100\/50:hover,
+html[data-oscuro="1"] .hover\:bg-amber-100\/60:hover,
+html[data-oscuro="1"] .hover\:bg-amber-100\/70:hover,
+html[data-oscuro="1"] .hover\:bg-amber-100\/80:hover,
+html[data-oscuro="1"] .hover\:bg-amber-100\/90:hover,
+html[data-oscuro="1"] .hover\:bg-rose-50\/10:hover,
+html[data-oscuro="1"] .hover\:bg-rose-50\/15:hover,
+html[data-oscuro="1"] .hover\:bg-rose-50\/20:hover,
+html[data-oscuro="1"] .hover\:bg-rose-50\/40:hover,
+html[data-oscuro="1"] .hover\:bg-rose-50\/50:hover,
+html[data-oscuro="1"] .hover\:bg-rose-50\/60:hover,
+html[data-oscuro="1"] .hover\:bg-rose-50\/70:hover,
+html[data-oscuro="1"] .hover\:bg-rose-50\/80:hover,
+html[data-oscuro="1"] .hover\:bg-rose-50\/90:hover,
+html[data-oscuro="1"] .hover\:bg-rose-100\/10:hover,
+html[data-oscuro="1"] .hover\:bg-rose-100\/15:hover,
+html[data-oscuro="1"] .hover\:bg-rose-100\/20:hover,
+html[data-oscuro="1"] .hover\:bg-rose-100\/40:hover,
+html[data-oscuro="1"] .hover\:bg-rose-100\/50:hover,
+html[data-oscuro="1"] .hover\:bg-rose-100\/60:hover,
+html[data-oscuro="1"] .hover\:bg-rose-100\/70:hover,
+html[data-oscuro="1"] .hover\:bg-rose-100\/80:hover,
+html[data-oscuro="1"] .hover\:bg-rose-100\/90:hover,
+html[data-oscuro="1"] .hover\:bg-fuchsia-50\/10:hover,
+html[data-oscuro="1"] .hover\:bg-fuchsia-50\/15:hover,
+html[data-oscuro="1"] .hover\:bg-fuchsia-50\/20:hover,
+html[data-oscuro="1"] .hover\:bg-fuchsia-50\/40:hover,
+html[data-oscuro="1"] .hover\:bg-fuchsia-50\/50:hover,
+html[data-oscuro="1"] .hover\:bg-fuchsia-50\/60:hover,
+html[data-oscuro="1"] .hover\:bg-fuchsia-50\/70:hover,
+html[data-oscuro="1"] .hover\:bg-fuchsia-50\/80:hover,
+html[data-oscuro="1"] .hover\:bg-fuchsia-50\/90:hover,
+html[data-oscuro="1"] .hover\:bg-fuchsia-100\/10:hover,
+html[data-oscuro="1"] .hover\:bg-fuchsia-100\/15:hover,
+html[data-oscuro="1"] .hover\:bg-fuchsia-100\/20:hover,
+html[data-oscuro="1"] .hover\:bg-fuchsia-100\/40:hover,
+html[data-oscuro="1"] .hover\:bg-fuchsia-100\/50:hover,
+html[data-oscuro="1"] .hover\:bg-fuchsia-100\/60:hover,
+html[data-oscuro="1"] .hover\:bg-fuchsia-100\/70:hover,
+html[data-oscuro="1"] .hover\:bg-fuchsia-100\/80:hover,
+html[data-oscuro="1"] .hover\:bg-fuchsia-100\/90:hover,
+html[data-oscuro="1"] .hover\:bg-purple-50\/10:hover,
+html[data-oscuro="1"] .hover\:bg-purple-50\/15:hover,
+html[data-oscuro="1"] .hover\:bg-purple-50\/20:hover,
+html[data-oscuro="1"] .hover\:bg-purple-50\/40:hover,
+html[data-oscuro="1"] .hover\:bg-purple-50\/50:hover,
+html[data-oscuro="1"] .hover\:bg-purple-50\/60:hover,
+html[data-oscuro="1"] .hover\:bg-purple-50\/70:hover,
+html[data-oscuro="1"] .hover\:bg-purple-50\/80:hover,
+html[data-oscuro="1"] .hover\:bg-purple-50\/90:hover,
+html[data-oscuro="1"] .hover\:bg-purple-100\/10:hover,
+html[data-oscuro="1"] .hover\:bg-purple-100\/15:hover,
+html[data-oscuro="1"] .hover\:bg-purple-100\/20:hover,
+html[data-oscuro="1"] .hover\:bg-purple-100\/40:hover,
+html[data-oscuro="1"] .hover\:bg-purple-100\/50:hover,
+html[data-oscuro="1"] .hover\:bg-purple-100\/60:hover,
+html[data-oscuro="1"] .hover\:bg-purple-100\/70:hover,
+html[data-oscuro="1"] .hover\:bg-purple-100\/80:hover,
+html[data-oscuro="1"] .hover\:bg-purple-100\/90:hover,
+html[data-oscuro="1"] .hover\:bg-violet-50\/10:hover,
+html[data-oscuro="1"] .hover\:bg-violet-50\/15:hover,
+html[data-oscuro="1"] .hover\:bg-violet-50\/20:hover,
+html[data-oscuro="1"] .hover\:bg-violet-50\/40:hover,
+html[data-oscuro="1"] .hover\:bg-violet-50\/50:hover,
+html[data-oscuro="1"] .hover\:bg-violet-50\/60:hover,
+html[data-oscuro="1"] .hover\:bg-violet-50\/70:hover,
+html[data-oscuro="1"] .hover\:bg-violet-50\/80:hover,
+html[data-oscuro="1"] .hover\:bg-violet-50\/90:hover,
+html[data-oscuro="1"] .hover\:bg-violet-100\/10:hover,
+html[data-oscuro="1"] .hover\:bg-violet-100\/15:hover,
+html[data-oscuro="1"] .hover\:bg-violet-100\/20:hover,
+html[data-oscuro="1"] .hover\:bg-violet-100\/40:hover,
+html[data-oscuro="1"] .hover\:bg-violet-100\/50:hover,
+html[data-oscuro="1"] .hover\:bg-violet-100\/60:hover,
+html[data-oscuro="1"] .hover\:bg-violet-100\/70:hover,
+html[data-oscuro="1"] .hover\:bg-violet-100\/80:hover,
+html[data-oscuro="1"] .hover\:bg-violet-100\/90:hover,
+html[data-oscuro="1"] .hover\:bg-sky-50\/10:hover,
+html[data-oscuro="1"] .hover\:bg-sky-50\/15:hover,
+html[data-oscuro="1"] .hover\:bg-sky-50\/20:hover,
+html[data-oscuro="1"] .hover\:bg-sky-50\/40:hover,
+html[data-oscuro="1"] .hover\:bg-sky-50\/50:hover,
+html[data-oscuro="1"] .hover\:bg-sky-50\/60:hover,
+html[data-oscuro="1"] .hover\:bg-sky-50\/70:hover,
+html[data-oscuro="1"] .hover\:bg-sky-50\/80:hover,
+html[data-oscuro="1"] .hover\:bg-sky-50\/90:hover,
+html[data-oscuro="1"] .hover\:bg-blue-50\/10:hover,
+html[data-oscuro="1"] .hover\:bg-blue-50\/15:hover,
+html[data-oscuro="1"] .hover\:bg-blue-50\/20:hover,
+html[data-oscuro="1"] .hover\:bg-blue-50\/40:hover,
+html[data-oscuro="1"] .hover\:bg-blue-50\/50:hover,
+html[data-oscuro="1"] .hover\:bg-blue-50\/60:hover,
+html[data-oscuro="1"] .hover\:bg-blue-50\/70:hover,
+html[data-oscuro="1"] .hover\:bg-blue-50\/80:hover,
+html[data-oscuro="1"] .hover\:bg-blue-50\/90:hover,
+html[data-oscuro="1"] .hover\:bg-teal-50\/10:hover,
+html[data-oscuro="1"] .hover\:bg-teal-50\/15:hover,
+html[data-oscuro="1"] .hover\:bg-teal-50\/20:hover,
+html[data-oscuro="1"] .hover\:bg-teal-50\/40:hover,
+html[data-oscuro="1"] .hover\:bg-teal-50\/50:hover,
+html[data-oscuro="1"] .hover\:bg-teal-50\/60:hover,
+html[data-oscuro="1"] .hover\:bg-teal-50\/70:hover,
+html[data-oscuro="1"] .hover\:bg-teal-50\/80:hover,
+html[data-oscuro="1"] .hover\:bg-teal-50\/90:hover,
+html[data-oscuro="1"] .hover\:bg-teal-100\/10:hover,
+html[data-oscuro="1"] .hover\:bg-teal-100\/15:hover,
+html[data-oscuro="1"] .hover\:bg-teal-100\/20:hover,
+html[data-oscuro="1"] .hover\:bg-teal-100\/40:hover,
+html[data-oscuro="1"] .hover\:bg-teal-100\/50:hover,
+html[data-oscuro="1"] .hover\:bg-teal-100\/60:hover,
+html[data-oscuro="1"] .hover\:bg-teal-100\/70:hover,
+html[data-oscuro="1"] .hover\:bg-teal-100\/80:hover,
+html[data-oscuro="1"] .hover\:bg-teal-100\/90:hover,
+html[data-oscuro="1"] .hover\:bg-orange-50\/10:hover,
+html[data-oscuro="1"] .hover\:bg-orange-50\/15:hover,
+html[data-oscuro="1"] .hover\:bg-orange-50\/20:hover,
+html[data-oscuro="1"] .hover\:bg-orange-50\/40:hover,
+html[data-oscuro="1"] .hover\:bg-orange-50\/50:hover,
+html[data-oscuro="1"] .hover\:bg-orange-50\/60:hover,
+html[data-oscuro="1"] .hover\:bg-orange-50\/70:hover,
+html[data-oscuro="1"] .hover\:bg-orange-50\/80:hover,
+html[data-oscuro="1"] .hover\:bg-orange-50\/90:hover,
+html[data-oscuro="1"] .hover\:bg-orange-100\/10:hover,
+html[data-oscuro="1"] .hover\:bg-orange-100\/15:hover,
+html[data-oscuro="1"] .hover\:bg-orange-100\/20:hover,
+html[data-oscuro="1"] .hover\:bg-orange-100\/40:hover,
+html[data-oscuro="1"] .hover\:bg-orange-100\/50:hover,
+html[data-oscuro="1"] .hover\:bg-orange-100\/60:hover,
+html[data-oscuro="1"] .hover\:bg-orange-100\/70:hover,
+html[data-oscuro="1"] .hover\:bg-orange-100\/80:hover,
+html[data-oscuro="1"] .hover\:bg-orange-100\/90:hover,
+html[data-oscuro="1"] .hover\:bg-indigo-500\/5:hover,
+html[data-oscuro="1"] .hover\:bg-indigo-500\/10:hover,
+html[data-oscuro="1"] .hover\:bg-indigo-500\/15:hover,
+html[data-oscuro="1"] .hover\:bg-indigo-500\/20:hover,
+html[data-oscuro="1"] .hover\:bg-indigo-500\/40:hover,
+html[data-oscuro="1"] .hover\:bg-indigo-500\/50:hover,
+html[data-oscuro="1"] .hover\:bg-indigo-500\/60:hover,
+html[data-oscuro="1"] .hover\:bg-indigo-500\/70:hover,
+html[data-oscuro="1"] .hover\:bg-indigo-500\/80:hover,
+html[data-oscuro="1"] .hover\:bg-violet-500\/5:hover,
+html[data-oscuro="1"] .hover\:bg-violet-500\/10:hover,
+html[data-oscuro="1"] .hover\:bg-violet-500\/15:hover,
+html[data-oscuro="1"] .hover\:bg-violet-500\/20:hover,
+html[data-oscuro="1"] .hover\:bg-violet-500\/40:hover,
+html[data-oscuro="1"] .hover\:bg-violet-500\/50:hover,
+html[data-oscuro="1"] .hover\:bg-violet-500\/60:hover,
+html[data-oscuro="1"] .hover\:bg-violet-500\/70:hover,
+html[data-oscuro="1"] .hover\:bg-violet-500\/80:hover,
+html[data-oscuro="1"] .hover\:bg-purple-500\/5:hover,
+html[data-oscuro="1"] .hover\:bg-purple-500\/10:hover,
+html[data-oscuro="1"] .hover\:bg-purple-500\/15:hover,
+html[data-oscuro="1"] .hover\:bg-purple-500\/20:hover,
+html[data-oscuro="1"] .hover\:bg-purple-500\/40:hover,
+html[data-oscuro="1"] .hover\:bg-purple-500\/50:hover,
+html[data-oscuro="1"] .hover\:bg-purple-500\/60:hover,
+html[data-oscuro="1"] .hover\:bg-purple-500\/70:hover,
+html[data-oscuro="1"] .hover\:bg-purple-500\/80:hover,
+html[data-oscuro="1"] .hover\:bg-fuchsia-500\/5:hover,
+html[data-oscuro="1"] .hover\:bg-fuchsia-500\/10:hover,
+html[data-oscuro="1"] .hover\:bg-fuchsia-500\/15:hover,
+html[data-oscuro="1"] .hover\:bg-fuchsia-500\/20:hover,
+html[data-oscuro="1"] .hover\:bg-fuchsia-500\/40:hover,
+html[data-oscuro="1"] .hover\:bg-fuchsia-500\/50:hover,
+html[data-oscuro="1"] .hover\:bg-fuchsia-500\/60:hover,
+html[data-oscuro="1"] .hover\:bg-fuchsia-500\/70:hover,
+html[data-oscuro="1"] .hover\:bg-fuchsia-500\/80:hover,
+html[data-oscuro="1"] .hover\:bg-rose-500\/5:hover,
+html[data-oscuro="1"] .hover\:bg-rose-500\/10:hover,
+html[data-oscuro="1"] .hover\:bg-rose-500\/15:hover,
+html[data-oscuro="1"] .hover\:bg-rose-500\/20:hover,
+html[data-oscuro="1"] .hover\:bg-rose-500\/40:hover,
+html[data-oscuro="1"] .hover\:bg-rose-500\/50:hover,
+html[data-oscuro="1"] .hover\:bg-rose-500\/60:hover,
+html[data-oscuro="1"] .hover\:bg-rose-500\/70:hover,
+html[data-oscuro="1"] .hover\:bg-rose-500\/80:hover,
+html[data-oscuro="1"] .hover\:bg-amber-500\/5:hover,
+html[data-oscuro="1"] .hover\:bg-amber-500\/10:hover,
+html[data-oscuro="1"] .hover\:bg-amber-500\/15:hover,
+html[data-oscuro="1"] .hover\:bg-amber-500\/20:hover,
+html[data-oscuro="1"] .hover\:bg-amber-500\/40:hover,
+html[data-oscuro="1"] .hover\:bg-amber-500\/50:hover,
+html[data-oscuro="1"] .hover\:bg-amber-500\/60:hover,
+html[data-oscuro="1"] .hover\:bg-amber-500\/70:hover,
+html[data-oscuro="1"] .hover\:bg-amber-500\/80:hover,
+html[data-oscuro="1"] .hover\:bg-emerald-500\/5:hover,
+html[data-oscuro="1"] .hover\:bg-emerald-500\/10:hover,
+html[data-oscuro="1"] .hover\:bg-emerald-500\/15:hover,
+html[data-oscuro="1"] .hover\:bg-emerald-500\/20:hover,
+html[data-oscuro="1"] .hover\:bg-emerald-500\/40:hover,
+html[data-oscuro="1"] .hover\:bg-emerald-500\/50:hover,
+html[data-oscuro="1"] .hover\:bg-emerald-500\/60:hover,
+html[data-oscuro="1"] .hover\:bg-emerald-500\/70:hover,
+html[data-oscuro="1"] .hover\:bg-emerald-500\/80:hover,
+html[data-oscuro="1"] .hover\:bg-teal-500\/5:hover,
+html[data-oscuro="1"] .hover\:bg-teal-500\/10:hover,
+html[data-oscuro="1"] .hover\:bg-teal-500\/15:hover,
+html[data-oscuro="1"] .hover\:bg-teal-500\/20:hover,
+html[data-oscuro="1"] .hover\:bg-teal-500\/40:hover,
+html[data-oscuro="1"] .hover\:bg-teal-500\/50:hover,
+html[data-oscuro="1"] .hover\:bg-teal-500\/60:hover,
+html[data-oscuro="1"] .hover\:bg-teal-500\/70:hover,
+html[data-oscuro="1"] .hover\:bg-teal-500\/80:hover,
+html[data-oscuro="1"] .hover\:bg-sky-500\/5:hover,
+html[data-oscuro="1"] .hover\:bg-sky-500\/10:hover,
+html[data-oscuro="1"] .hover\:bg-sky-500\/15:hover,
+html[data-oscuro="1"] .hover\:bg-sky-500\/20:hover,
+html[data-oscuro="1"] .hover\:bg-sky-500\/40:hover,
+html[data-oscuro="1"] .hover\:bg-sky-500\/50:hover,
+html[data-oscuro="1"] .hover\:bg-sky-500\/60:hover,
+html[data-oscuro="1"] .hover\:bg-sky-500\/70:hover,
+html[data-oscuro="1"] .hover\:bg-sky-500\/80:hover,
+html[data-oscuro="1"] .hover\:bg-blue-500\/5:hover,
+html[data-oscuro="1"] .hover\:bg-blue-500\/10:hover,
+html[data-oscuro="1"] .hover\:bg-blue-500\/15:hover,
+html[data-oscuro="1"] .hover\:bg-blue-500\/20:hover,
+html[data-oscuro="1"] .hover\:bg-blue-500\/40:hover,
+html[data-oscuro="1"] .hover\:bg-blue-500\/50:hover,
+html[data-oscuro="1"] .hover\:bg-blue-500\/60:hover,
+html[data-oscuro="1"] .hover\:bg-blue-500\/70:hover,
+html[data-oscuro="1"] .hover\:bg-blue-500\/80:hover,
+html[data-oscuro="1"] .hover\:bg-orange-500\/5:hover,
+html[data-oscuro="1"] .hover\:bg-orange-500\/10:hover,
+html[data-oscuro="1"] .hover\:bg-orange-500\/15:hover,
+html[data-oscuro="1"] .hover\:bg-orange-500\/20:hover,
+html[data-oscuro="1"] .hover\:bg-orange-500\/40:hover,
+html[data-oscuro="1"] .hover\:bg-orange-500\/50:hover,
+html[data-oscuro="1"] .hover\:bg-orange-500\/60:hover,
+html[data-oscuro="1"] .hover\:bg-orange-500\/70:hover,
+html[data-oscuro="1"] .hover\:bg-orange-500\/80:hover {
+  background-color: rgba(255, 255, 255, 0.09) !important;
 }

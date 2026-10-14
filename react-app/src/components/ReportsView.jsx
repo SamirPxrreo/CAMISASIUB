@@ -6,7 +6,6 @@ import {
   CheckCircle,
   ShoppingBag
 } from 'lucide-react';
-import { exportarReporteCompletoExcel } from '../lib/excelExport';
 import { useData } from '../context/DataContext';
 import { btnPrimario, btnNeutro } from '../lib/buttonStyles';
 import {
@@ -54,6 +53,9 @@ export default function ReportsView() {
     setExito(false);
 
     try {
+      // ExcelJS pesa mucho y solo se usa al exportar: se carga bajo demanda
+      // para no mandarlo en el bundle inicial.
+      const { exportarReporteCompletoExcel } = await import('../lib/excelExport');
       await exportarReporteCompletoExcel(ventas, filtroTipo);
       setExito(true);
       setTimeout(() => setExito(false), 4000);

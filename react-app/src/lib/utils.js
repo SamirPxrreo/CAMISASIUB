@@ -407,6 +407,24 @@ export const ESTADOS_COLOR = {
   }
 };
 
+// Etiqueta corta para chips compactos. "Listo para entrega" ocupaba dos lineas
+// en la tarjeta y robaba el ancho a la descripcion de la prenda, que es la
+// informacion que realmente importa. El menu desplegable sigue mostrando
+// el nombre completo.
+export const ESTADO_CORTO = {
+  'Pedido': 'Pedido',
+  'Comprado': 'Comprado',
+  'Bordando': 'Bordando',
+  'Listo para entrega': 'Listo',
+  'Entregado': 'Entregado',
+  'Liquidado': 'Liquidado'
+};
+
+export function estadoCorto(e) {
+  const n = normalizarEstado(e);
+  return ESTADO_CORTO[n] || n;
+}
+
 export const ESTADOS_PASTEL_CHIP = {
   'Todos': {
     active: 'bg-slate-900 text-white border-slate-900 shadow-xs',

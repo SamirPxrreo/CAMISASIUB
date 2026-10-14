@@ -44,7 +44,10 @@ export default function LoginView({ onLoginSuccess }) {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center p-4 sm:p-6 bg-[#090d16] text-white relative overflow-hidden select-none">
+    // login-login: el fondo y el texto siguen al tema activo. Antes llevaba
+    // bg-[#090d16] fijo, por eso se veía siempre oscuro aunque el panel
+    // estuviera en Menta, Lavanda o Atardecer.
+    <div className="login-shell min-h-screen w-full flex items-center justify-center p-4 sm:p-6 text-white relative overflow-hidden select-none">
       {/* 1. Malla de puntos sutil de fondo */}
       <div
         className="absolute inset-0 pointer-events-none opacity-20"
@@ -66,7 +69,7 @@ export default function LoginView({ onLoginSuccess }) {
           repeat: Infinity,
           ease: "easeInOut"
         }}
-        className="absolute -top-24 -left-24 w-[480px] h-[480px] rounded-full bg-indigo-600/25 blur-[120px] pointer-events-none"
+        className="absolute -top-24 -left-24 w-[480px] h-[480px] rounded-full login-orb-a blur-[120px] pointer-events-none"
       />
 
       <motion.div
@@ -80,7 +83,7 @@ export default function LoginView({ onLoginSuccess }) {
           repeat: Infinity,
           ease: "easeInOut"
         }}
-        className="absolute -bottom-24 -right-24 w-[440px] h-[440px] rounded-full bg-violet-600/20 blur-[130px] pointer-events-none"
+        className="absolute -bottom-24 -right-24 w-[440px] h-[440px] rounded-full login-orb-b blur-[130px] pointer-events-none"
       />
 
       <motion.div
@@ -93,7 +96,7 @@ export default function LoginView({ onLoginSuccess }) {
           repeat: Infinity,
           ease: "easeInOut"
         }}
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-cyan-500/10 blur-[150px] pointer-events-none"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full login-orb-c blur-[150px] pointer-events-none"
       />
 
       {/* 3. Tarjeta Principal Glassmorphic */}
@@ -101,13 +104,13 @@ export default function LoginView({ onLoginSuccess }) {
         initial={{ opacity: 0, scale: 0.92, y: 24 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ type: "spring", stiffness: 320, damping: 26 }}
-        className="relative w-full max-w-[430px] bg-slate-900/65 backdrop-blur-2xl border border-white/10 rounded-[32px] p-7 sm:p-9 shadow-2xl shadow-indigo-950/60 flex flex-col items-center z-10 before:absolute before:inset-x-8 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-indigo-400/40 before:to-transparent"
+        className="login-card relative w-full max-w-[430px] bg-slate-900/65 backdrop-blur-2xl border border-white/10 rounded-[32px] p-7 sm:p-9 shadow-2xl shadow-indigo-950/60 flex flex-col items-center z-10 before:absolute before:inset-x-8 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-indigo-400/40 before:to-transparent"
       >
         {/* Ícono de la marca interactivo */}
         <motion.div
           whileHover={{ scale: 1.1, rotate: 6 }}
           whileTap={{ scale: 0.95 }}
-          className="w-16 h-16 rounded-[24px] bg-gradient-to-tr from-indigo-500 via-indigo-600 to-violet-600 text-white flex items-center justify-center shadow-xl shadow-indigo-500/30 mb-4 ring-1 ring-white/20 cursor-pointer"
+          className="w-16 h-16 rounded-[24px] login-marca text-white flex items-center justify-center shadow-xl mb-4 ring-1 ring-white/20 cursor-pointer"
         >
           <Shirt className="w-8 h-8 drop-shadow" />
         </motion.div>
@@ -171,7 +174,7 @@ export default function LoginView({ onLoginSuccess }) {
             disabled={cargando}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.97 }}
-            className="group w-full h-[52px] rounded-[26px] bg-gradient-to-r from-indigo-500 via-indigo-600 to-violet-600 hover:from-indigo-400 hover:via-indigo-500 hover:to-violet-500 text-white font-bold text-sm tracking-wide shadow-lg shadow-indigo-600/30 hover:shadow-indigo-500/50 flex items-center justify-center gap-2 cursor-pointer transition-all duration-200 mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="group w-full h-[52px] rounded-[26px] login-boton text-white font-bold text-sm tracking-wide shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-all duration-200 mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {cargando ? (
               <div className="flex items-center gap-2">

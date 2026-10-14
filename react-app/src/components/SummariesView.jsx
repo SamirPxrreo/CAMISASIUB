@@ -419,14 +419,17 @@ export default function SummariesView() {
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2.5 min-w-0">
+                      {/* Insignias de ranking. Los tonos claros con texto oscuro dan 1,4:1 y los
+                          oscuros con texto claro se apagan en tema oscuro, asi que
+                          se eligen combinaciones que cumplen AA en ambos casos. */}
                       <span className={`w-6 h-6 rounded-lg text-xs font-black flex items-center justify-center shrink-0 ${
                         idx === 0
-                          ? 'bg-amber-400 text-amber-950 shadow-xs'
+                          ? 'bg-amber-700 text-amber-50 shadow-xs'
                           : idx === 1
-                          ? 'bg-slate-300 text-slate-800'
+                          ? 'bg-slate-500 text-slate-50'
                           : idx === 2
-                          ? 'bg-amber-700 text-amber-100'
-                          : 'bg-slate-200 text-slate-600'
+                          ? 'bg-amber-900 text-amber-100'
+                          : 'bg-slate-400 text-slate-50'
                       }`}>
                         #{idx + 1}
                       </span>

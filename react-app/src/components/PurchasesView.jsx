@@ -622,8 +622,12 @@ export default function PurchasesView() {
                             const sc = getVendedorColor(socioNombre);
                             return (
                               <span key={i} className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl border font-bold text-[11px] shadow-2xs ${sc.bg} ${sc.border}`}>
-                                <span className={sc.text}>{socioNombre}:</span>
-                                <span className="text-emerald-700 font-black">{fmt(a.monto)}</span>
+                                {/* El monto toma el color del socio al que pertenece el
+                                    chip. Con emerald-700 fijo quedaba verde brillante
+                                    sobre el fondo fucsia/ámbar, y en tema oscuro la
+                                    ratio de contraste caía a 1,79 (ilegible). */}
+                                <span className={`${sc.text} font-black`}>{fmt(a.monto)}</span>
+                                <span className={sc.text}>{socioNombre}</span>
                               </span>
                             );
                           })}

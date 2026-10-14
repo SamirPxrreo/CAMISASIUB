@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, Check } from 'lucide-react';
-import { ORDEN_ESTADOS, getEstadoBadgeStyle, ESTADOS_COLOR, normalizarEstado } from '../lib/utils';
+import { ORDEN_ESTADOS, getEstadoBadgeStyle, ESTADOS_COLOR, normalizarEstado, estadoCorto } from '../lib/utils';
 
 /**
  * Selector desplegable de estados estilizado con micro-animaciones
@@ -38,6 +38,9 @@ export default function StatusDropdown({ value, onChange, disabled = false, size
   };
 
   const colorConfig = ESTADOS_COLOR[estadoActual] || ESTADOS_COLOR['Pedido'];
+  // El disparador usa la etiqueta corta (para no partirse en dos lineas ni
+  // robarle ancho a la descripcion de la prenda); el menu usa el nombre completo.
+  const etiqueta = estadoCorto(estadoActual);
 
   return (
     <div className="relative inline-block text-left" ref={containerRef}>
@@ -61,7 +64,7 @@ export default function StatusDropdown({ value, onChange, disabled = false, size
         title="Cambiar estado del pedido"
       >
         <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${colorConfig.dot}`} />
-        <span className="truncate max-w-[110px]">{estadoActual}</span>
+        <span className="truncate max-w-[110px]" title={estadoActual}>{etiqueta}</span>
         <motion.span
           animate={{ rotate: isOpen ? 180 : 0 }}
           transition={{ duration: 0.2 }}

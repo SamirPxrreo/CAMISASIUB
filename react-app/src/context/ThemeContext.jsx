@@ -57,6 +57,43 @@ export const THEMES = [
     textClass: 'text-slate-900',
     previewGradient: 'from-orange-400 via-amber-300 to-rose-400',
     isDark: false
+  },
+  {
+    id: 'bosque',
+    name: 'Bosque Nocturno',
+    desc: 'Verde profundo con acentos esmeralda, descansa la vista de noche',
+    accentColor: '#34d399',
+    bgClass: 'bg-[#04140d]',
+    cardClass: 'bg-[#0c2019]',
+    textClass: 'text-emerald-50',
+    previewGradient: 'from-emerald-900 via-emerald-700 to-emerald-400',
+    isDark: true
+  },
+  {
+    id: 'medianoche',
+    name: 'Medianoche',
+    desc: 'Azul profundo de madrugada, máxima concentración',
+    accentColor: '#60a5fa',
+    bgClass: 'bg-[#070d1c]',
+    cardClass: 'bg-[#0e1830]',
+    textClass: 'text-blue-50',
+    previewGradient: 'from-blue-950 via-blue-800 to-blue-400',
+    isDark: true
+  },
+  {
+    // OJO: el id va sin acentos a proposito. Un id como 'carbón' se rompe
+    // entre localStorage, los selectores [data-theme="..."] de index.css y el
+    // encoding del archivo: el tema no coincidia y la app caia a Pastel.
+    // El nombre visible si lleva acento.
+    id: 'carbon',
+    name: 'Carbón Cálido',
+    desc: 'Gris carbón con acentos naranja, elegante y sobrio',
+    accentColor: '#fb923c',
+    bgClass: 'bg-[#12100f]',
+    cardClass: 'bg-[#1c1917]',
+    textClass: 'text-stone-50',
+    previewGradient: 'from-stone-800 via-stone-700 to-orange-400',
+    isDark: true
   }
 ];
 
@@ -82,16 +119,23 @@ export function ThemeProvider({ children }) {
     }
   };
 
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [theme]);
-
   const currentThemeConfig = THEMES.find(t => t.id === theme) || THEMES[0];
+
+  useEffect(() => {
+    const raiz = document.documentElement;
+    raiz.setAttribute('data-theme', theme);
+
+    // data-oscuro agrupa a todos los temas oscuros. Las ~290 reglas de
+    // index.css usan [data-oscuro="1"] en vez de [data-theme="dark"], asi que
+    // un solo bloque de CSS cubre los cuatro temas oscuros.
+    if (currentThemeConfig.isDark) {
+      raiz.setAttribute('data-oscuro', '1');
+      raiz.classList.add('dark');
+    } else {
+      raiz.removeAttribute('data-oscuro');
+      raiz.classList.remove('dark');
+    }
+  }, [theme, currentThemeConfig]);
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme, themes: THEMES, currentThemeConfig }}>

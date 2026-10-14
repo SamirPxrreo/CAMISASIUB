@@ -20,7 +20,6 @@ import {
   Clock,
   DollarSign
 } from 'lucide-react';
-import { exportarListaCompraExcel } from '../lib/excelExport';
 import { useData } from '../context/DataContext';
 import {
   ORDEN_ESTADOS,
@@ -191,6 +190,8 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
   const handleExportarCompra = async () => {
     setExportandoCompra(true);
     try {
+      // ExcelJS entra solo al exportar: es la mayor parte del peso del bundle.
+      const { exportarListaCompraExcel } = await import('../lib/excelExport');
       const vendedorParaExportar = !esAdmin ? miNombreVendedor : vendedorFiltro;
       await exportarListaCompraExcel(ventas, vendedorParaExportar);
     } catch (err) {
@@ -412,17 +413,19 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
                       {items.map((it, idx) => (
                         <div
                           key={idx}
-                          className="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-50/70 border border-slate-100 text-xs hover:bg-slate-50 transition-colors"
+                          className="flex items-start justify-between gap-2 p-2 rounded-xl bg-slate-50/70 border border-slate-100 text-xs hover:bg-slate-50 transition-colors"
                         >
                           <div className="flex items-start gap-2 min-w-0 flex-1">
                             <span className="w-5 h-5 rounded-lg bg-white border border-slate-200/80 text-slate-600 font-black text-[10px] flex items-center justify-center shrink-0 mt-px">
                               #{idx + 1}
                             </span>
 
-                            {/* Descripción y bordado en dos líneas: en línea se
-                                cortaban y el programa quedaba oculto en móvil. */}
+                            {/* La descripción es lo importante: se le da todo el ancho
+                                disponible y puede ocupar varias líneas. Antes
+                                se truncaba a una línea ("Negro Talla M ...") y
+                                solo se leía completa pasando el mouse. */}
                             <div className="min-w-0 flex-1">
-                              <span className="block font-bold text-slate-800 text-[11.5px] truncate" title={descripcionPrendaHumana(it)}>
+                              <span className="block font-bold text-slate-800 text-[11.5px] leading-snug break-words" title={descripcionPrendaHumana(it)}>
                                 {descripcionPrendaHumana(it)}
                               </span>
                               {it.programa && (
@@ -438,7 +441,7 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
 
                           {/* Estado de esta prenda: desplegable editable sin abrir la tarjeta */}
                           <div
-                            className="shrink-0 mt-px"
+                            className="shrink-0"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <StatusDropdown
