@@ -89,8 +89,9 @@ export default function PurchasesView() {
     let val = 0;
     compraAportes.forEach(a => {
       const m = Number(a.monto) || 0;
-      if (a.socio === 'Samir') samir += m;
-      else if (a.socio === 'Valentina') val += m;
+      const persona = a.persona || a.socio;
+      if (persona === 'Samir') samir += m;
+      else if (persona === 'Valentina') val += m;
     });
     return { samir, val };
   }, [compraAportes]);
@@ -183,17 +184,16 @@ export default function PurchasesView() {
         hour12: false
       });
 
-      // 1. Guardar en compras_proveedor
+      // 1. Guardar en compras_proveedor con el esquema exacto de Supabase
       const { data: cData, error: cErr } = await supabase
         .from('compras_proveedor')
         .insert([{
           fecha,
           hora: horaActual,
           comprador,
+          proveedor: 'Yesenia',
           observaciones: observaciones.trim(),
-          costo_total: totalAbono,
-          abono_total: totalAbono,
-          created_at: new Date().toISOString()
+          total: totalAbono
         }])
         .select()
         .single();
@@ -231,17 +231,19 @@ export default function PurchasesView() {
       if (finalAporteSamir > 0) {
         aportesInserts.push({
           compra_id: cData.id,
-          socio: 'Samir',
+          persona: 'Samir',
           monto: finalAporteSamir,
-          fecha
+          fecha,
+          observacion: observaciones.trim()
         });
       }
       if (finalAporteVal > 0) {
         aportesInserts.push({
           compra_id: cData.id,
-          socio: 'Valentina',
+          persona: 'Valentina',
           monto: finalAporteVal,
-          fecha
+          fecha,
+          observacion: observaciones.trim()
         });
       }
 
@@ -284,10 +286,22 @@ export default function PurchasesView() {
             });
           }
 
+          let newItemsCamisa = items;
+          try {
+            if (typeof vObj.items_camisa === 'string') {
+              const parsed = JSON.parse(vObj.items_camisa);
+              if (parsed && Array.isArray(parsed.historial)) {
+                newItemsCamisa = { items, historial: parsed.historial };
+              }
+            } else if (vObj.items_camisa && Array.isArray(vObj.items_camisa.historial)) {
+              newItemsCamisa = { items, historial: vObj.items_camisa.historial };
+            }
+          } catch (e) {}
+
           const upd = {
             compra_id: cData.id,
             abono_yesenia: nuevoAbonoYesenia,
-            ...(items ? { items_camisa: JSON.stringify(items) } : {})
+            ...(items ? { items_camisa: JSON.stringify(newItemsCamisa) } : {})
           };
 
           await supabase.from('ventas').update(upd).eq('id', vId);
@@ -364,7 +378,7 @@ export default function PurchasesView() {
     const aportesCompra = compraAportes.filter(a => a.compra_id === c.id);
     const totalAportado = Math.max(
       aportesCompra.reduce((s, a) => s + (Number(a.monto) || 0), 0),
-      Number(c.abono_total) || Number(c.costo_total) || 0
+      Number(c.total) || Number(c.abono_total) || Number(c.costo_total) || 0
     );
     const saldoPendiente = Math.max(0, costoTotalConfeccion - totalAportado);
 
@@ -600,10 +614,11 @@ export default function PurchasesView() {
                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Aportaron en esta visita:</span>
                         <div className="flex flex-wrap gap-2">
                           {info.aportesCompra.map((a, i) => {
-                            const sc = getVendedorColor(a.socio);
+                            const socioNombre = a.persona || a.socio || 'Socio';
+                            const sc = getVendedorColor(socioNombre);
                             return (
                               <span key={i} className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl border font-bold text-[11px] shadow-2xs ${sc.bg} ${sc.border}`}>
-                                <span className={sc.text}>{a.socio}:</span>
+                                <span className={sc.text}>{socioNombre}:</span>
                                 <span className="text-emerald-700 font-black">{fmt(a.monto)}</span>
                               </span>
                             );
