@@ -30,25 +30,7 @@ import { useTheme } from '../context/ThemeContext';
 import { btnNeutro, btnIconoSutil, btnPestanaActiva, btnPestanaInactiva } from '../lib/buttonStyles';
 import InlineDeleteConfirm from './InlineDeleteConfirm';
 
-// Paleta de muestras rápidas para sugerir al agregar colores
-const PRESET_COLORES = [
-  { nombre: 'Negro', hex: '#18181b' },
-  { nombre: 'Blanco', hex: '#ffffff' },
-  { nombre: 'Gris Perla', hex: '#94a3b8' },
-  { nombre: 'Turquí (Azul Marino)', hex: '#1e3a8a' },
-  { nombre: 'Azul Turquesa', hex: '#06b6d4' },
-  { nombre: 'Azul Rey', hex: '#2563eb' },
-  { nombre: 'Verde Militar', hex: '#4d5b40' },
-  { nombre: 'Verde Esmeralda', hex: '#059669' },
-  { nombre: 'Vinotinto', hex: '#881337' },
-  { nombre: 'Rojo Carmín', hex: '#dc2626' },
-  { nombre: 'Palo de Rosa', hex: '#f472b6' },
-  { nombre: 'Coral', hex: '#f97316' },
-  { nombre: 'Camel', hex: '#c29b62' },
-  { nombre: 'Beige Arena', hex: '#e2d5c3' },
-  { nombre: 'Mostaza', hex: '#eab308' },
-  { nombre: 'Lila Pastel', hex: '#c084fc' }
-];
+
 
 export default function SettingsView() {
   const {
@@ -823,29 +805,6 @@ export default function SettingsView() {
                   </div>
                 </div>
 
-                {/* Paleta de sugerencias rápidas */}
-                <div>
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-2">
-                    Sugerencias Rápidas:
-                  </label>
-                  <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto p-1 bg-slate-50 rounded-xl border border-slate-100">
-                    {PRESET_COLORES.map((p) => (
-                      <button
-                        type="button"
-                        key={p.nombre}
-                        onClick={() => handleSelectPreset(p)}
-                        className={btnNeutro}
-                      >
-                        <span
-                          className="w-2.5 h-2.5 rounded-full border border-black/10 shrink-0"
-                          style={{ backgroundColor: p.hex }}
-                        />
-                        <span>{p.nombre}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
                 {/* Vista previa en vivo del chip de prenda */}
                 <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-600">Vista previa en pedido:</span>
@@ -923,35 +882,6 @@ export default function SettingsView() {
                     onChange={(e) => setLugarNombre(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold focus:outline-none focus:border-indigo-500"
                   />
-                </div>
-
-                {/* Sugerencias Rápidas */}
-                <div>
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-2">
-                    Sugerencias Rápidas:
-                  </label>
-                  <div className="flex flex-wrap gap-1.5 p-1 bg-slate-50 rounded-xl border border-slate-100 max-h-32 overflow-y-auto">
-                    {[
-                      'Sede Principal (IUB)',
-                      'Sede Prado',
-                      'Sede Soledad',
-                      'Domicilio Barranquilla',
-                      'Domicilio Soledad',
-                      'Punto Clave',
-                      'Centro Comercial Portal del Prado',
-                      'Centro Comercial Villa Country'
-                    ].map((sug) => (
-                      <button
-                        type="button"
-                        key={sug}
-                        onClick={() => setLugarNombre(sug)}
-                        className={btnNeutro}
-                      >
-                        <Plus className="w-2.5 h-2.5 text-indigo-500" />
-                        <span>{sug}</span>
-                      </button>
-                    ))}
-                  </div>
                 </div>
 
                 <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">

@@ -45,7 +45,7 @@ comment on table public.lugares_entrega is 'Catalogo de lugares y sedes de entre
 delete from public.colores_camisa;
 
 insert into public.colores_camisa (id, nombre, hex, orden) values
-  ('turqui',      'Turqui',      '#0d9488', 1),
+  ('turqui',      'Azul Turqui', '#122562', 1),
   ('negro',       'Negro',       '#111827', 2),
   ('blanco',      'Blanco',      '#ffffff', 3),
   ('camel',       'Camel',       '#c19a6b', 4),

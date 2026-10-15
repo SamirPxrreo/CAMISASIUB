@@ -10,7 +10,7 @@ export const VERSIONES_DISPONIBLES = [
 export const GENEROS_DISPONIBLES = ['Hombre', 'Mujer'];
 
 export const COLORES_DEFECTO_OBJETOS = [
-  { id: 'turqui',       nombre: 'Turqui',       hex: '#0d9488' },
+  { id: 'turqui',       nombre: 'Azul Turqui',       hex: '#122562' },
   { id: 'negro',        nombre: 'Negro',        hex: '#111827' },
   { id: 'blanco',       nombre: 'Blanco',       hex: '#ffffff' },
   { id: 'camel',        nombre: 'Camel',        hex: '#c19a6b' },
