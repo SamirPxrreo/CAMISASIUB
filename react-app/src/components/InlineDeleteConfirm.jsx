@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Trash2, RotateCcw } from 'lucide-react';
-import { btnDestructivo } from '../lib/buttonStyles';
+import { btnIconoDestructivo } from '../lib/buttonStyles';
 
 /**
  * Componente de confirmación inline inspirado en Bencho.dev (https://bencho.dev/?c=confirm&theme=dark)
@@ -69,15 +69,22 @@ export default function InlineDeleteConfirm({ onDelete, clienteNombre, title, co
     );
   }
 
+  // Solo el icono de papelera: la palabra se elimina por pedido del usuario.
+// El nombre accesible se mantiene para lectores de pantalla, que de otro modo
+// se quedarian con un boton sin etiqueta.
+const etiquetaBoton = confirmLabel
+    ? `${confirmLabel}${clienteNombre ? ' ' + clienteNombre : ''}`
+    : `Borrar${clienteNombre ? ' pedido de ' + clienteNombre : ' elemento'}`;
+
   return (
     <button
       type="button"
       onClick={handleStartDelete}
-      className={btnDestructivo}
-      title="Eliminar elemento"
+      className={btnIconoDestructivo}
+      title={etiquetaBoton}
+      aria-label={etiquetaBoton}
     >
-      <Trash2 className="w-3.5 h-3.5" />
-      <span>{confirmLabel || 'Borrar'}</span>
+      <Trash2 className="w-4 h-4" />
     </button>
   );
 }

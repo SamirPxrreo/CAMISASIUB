@@ -10,15 +10,12 @@ export const VERSIONES_DISPONIBLES = [
 export const GENEROS_DISPONIBLES = ['Hombre', 'Mujer'];
 
 export const COLORES_DEFECTO_OBJETOS = [
-  { id: 'negro', nombre: 'Negro', hex: '#18181b' },
-  { id: 'blanco', nombre: 'Blanco', hex: '#ffffff' },
-  { id: 'gris', nombre: 'Gris', hex: '#94a3b8' },
-  { id: 'turqui', nombre: 'Turquí', hex: '#1e3a8a' },
-  { id: 'azul-turquesa', nombre: 'Azul turquesa', hex: '#06b6d4' },
-  { id: 'camel', nombre: 'Camel', hex: '#c29b62' },
-  { id: 'vinotinto', nombre: 'Vinotinto', hex: '#881337' },
-  { id: 'palo-de-rosa', nombre: 'Palo de Rosa', hex: '#f472b6' },
-  { id: 'mostaza', nombre: 'Mostaza', hex: '#eab308' }
+  { id: 'turqui',       nombre: 'Turqui',       hex: '#0d9488' },
+  { id: 'negro',        nombre: 'Negro',        hex: '#111827' },
+  { id: 'blanco',       nombre: 'Blanco',       hex: '#ffffff' },
+  { id: 'camel',        nombre: 'Camel',        hex: '#c19a6b' },
+  { id: 'gris',         nombre: 'Gris',         hex: '#6b7280' },
+  { id: 'palo-de-rosa', nombre: 'Palo de rosa', hex: '#d9a3a3' }
 ];
 
 export const COLORES_DISPONIBLES = COLORES_DEFECTO_OBJETOS.map(c => c.nombre);
@@ -40,16 +37,14 @@ export const PRECIO_VENTA_DEFECTO = 39000;
 export const COSTO_YESENIA_DEFECTO = 30000;
 
 export const LUGARES_ENTREGA = [
-  "Soledad",
-  "Barranquilla",
-  "Universidad",
-  "Plaza de la Paz",
-  "Granadillos",
-  "Centro Histórico",
-  "Domicilio",
-  "Buscan en casa de Val",
-  "Buscan en casa de Samir",
-  "Otro"
+  "IUB SOLEDAD",
+  "IUB PLAZA DE LA PAZ",
+  "IUB POSGRADOS",
+  "IUB CENTRO HISTORICO",
+  "DOMICILIO",
+  "CASA VAL",
+  "CASA SAMIR",
+  "OTRO"
 ];
 
 // Cálculo automático de costo sugerido según Versión y Talla

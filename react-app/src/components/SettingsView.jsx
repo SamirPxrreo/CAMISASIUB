@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Palette,
@@ -30,18 +30,18 @@ import { useTheme } from '../context/ThemeContext';
 import { btnNeutro, btnIconoSutil, btnPestanaActiva, btnPestanaInactiva } from '../lib/buttonStyles';
 import InlineDeleteConfirm from './InlineDeleteConfirm';
 
-// Paleta de muestras rÃ¡pidas para sugerir al agregar colores
+// Paleta de muestras rápidas para sugerir al agregar colores
 const PRESET_COLORES = [
   { nombre: 'Negro', hex: '#18181b' },
   { nombre: 'Blanco', hex: '#ffffff' },
   { nombre: 'Gris Perla', hex: '#94a3b8' },
-  { nombre: 'TurquÃ­ (Azul Marino)', hex: '#1e3a8a' },
+  { nombre: 'Turquí (Azul Marino)', hex: '#1e3a8a' },
   { nombre: 'Azul Turquesa', hex: '#06b6d4' },
   { nombre: 'Azul Rey', hex: '#2563eb' },
   { nombre: 'Verde Militar', hex: '#4d5b40' },
   { nombre: 'Verde Esmeralda', hex: '#059669' },
   { nombre: 'Vinotinto', hex: '#881337' },
-  { nombre: 'Rojo CarmÃ­n', hex: '#dc2626' },
+  { nombre: 'Rojo Carmín', hex: '#dc2626' },
   { nombre: 'Palo de Rosa', hex: '#f472b6' },
   { nombre: 'Coral', hex: '#f97316' },
   { nombre: 'Camel', hex: '#c29b62' },
@@ -74,7 +74,7 @@ export default function SettingsView() {
   // Tab activo: 'colores' | 'lugares' | 'usuarios' | 'temas' | 'versiones'
   const [activeTab, setActiveTab] = useState('colores');
 
-  // Filtros de bÃºsqueda
+  // Filtros de búsqueda
   const [searchColor, setSearchColor] = useState('');
   const [searchLugar, setSearchLugar] = useState('');
   const [searchUser, setSearchUser] = useState('');
@@ -212,7 +212,7 @@ export default function SettingsView() {
           rol: userRole,
           password: userPassword
         });
-        setUserSuccess('Usuario creado con Ã©xito.');
+        setUserSuccess('Usuario creado con éxito.');
       }
       setTimeout(() => {
         setIsUserModalOpen(false);
@@ -244,23 +244,23 @@ export default function SettingsView() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* 1. ENCABEZADO PRINCIPAL DE CONFIGURACIÃ“N */}
+      {/* 1. ENCABEZADO PRINCIPAL DE CONFIGURACI�"N */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="w-2.5 h-2.5 rounded-full bg-indigo-600 animate-pulse" />
-            <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">Ajustes & CatÃ¡logos</span>
+            <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">Ajustes & Catálogos</span>
           </div>
           <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-            ConfiguraciÃ³n del Sistema
+            Configuración del Sistema
             <Sliders className="w-5 h-5 text-slate-400 inline" />
           </h1>
           <p className="text-xs text-slate-500 font-medium mt-0.5">
-            Personaliza el catÃ¡logo de colores de camisas, administra usuarios con acceso y ajusta preferencias visuales.
+            Personaliza el catálogo de colores de camisas, administra usuarios con acceso y ajusta preferencias visuales.
           </p>
         </div>
 
-        {/* PÃ­ldoras de navegaciÃ³n de pestaÃ±as */}
+        {/* Píldoras de navegación de pestañas */}
         <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-slate-100 border border-slate-200/60 overflow-x-auto scrollbar-none shrink-0">
           <button
             onClick={() => setActiveTab('colores')}
@@ -313,9 +313,9 @@ export default function SettingsView() {
         </div>
       </div>
 
-      {/* 2. CONTENIDO SEGÃšN PESTAÃ‘A */}
+      {/* 2. CONTENIDO SEG�sN PESTA�'A */}
 
-      {/* PESTAÃ‘A 1: CATÃLOGO DE COLORES DE CAMISAS */}
+      {/* PESTA�'A 1: CATÁLOGO DE COLORES DE CAMISAS */}
       {activeTab === 'colores' && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
@@ -379,7 +379,7 @@ export default function SettingsView() {
                       title={`Tono: ${hexVal}`}
                     >
                       {isWhiteOrLight && (
-                        <span className="text-[10px] text-slate-400 font-bold">â€¢</span>
+                        <span className="text-[10px] text-slate-400 font-bold">�?�</span>
                       )}
                     </div>
 
@@ -393,7 +393,7 @@ export default function SettingsView() {
                     </div>
                   </div>
 
-                  {/* Acciones de ediciÃ³n y eliminaciÃ³n */}
+                  {/* Acciones de edición y eliminación */}
                   <div className="flex flex-wrap items-center gap-1 shrink-0">
                     <button
                       onClick={() => handleOpenEditColor(col)}
@@ -404,7 +404,7 @@ export default function SettingsView() {
                     </button>
 
                     <InlineDeleteConfirm
-                      title={`Â¿Quitar color "${col.nombre}"?`}
+                      title={`¿Quitar color "${col.nombre}"?`}
                       confirmLabel="Quitar"
                       onDelete={() => eliminarColor(col.id)}
                     />
@@ -418,13 +418,13 @@ export default function SettingsView() {
             <div className="bg-white rounded-2xl border border-slate-200/80 p-12 text-center text-slate-400">
               <Palette className="w-10 h-10 mx-auto mb-2 text-slate-300" />
               <p className="font-bold text-sm text-slate-600">No se encontraron colores</p>
-              <p className="text-xs mt-1">Prueba con otro tÃ©rmino de bÃºsqueda o agrega un nuevo color.</p>
+              <p className="text-xs mt-1">Prueba con otro término de búsqueda o agrega un nuevo color.</p>
             </div>
           )}
         </motion.div>
       )}
 
-      {/* PESTAÃ‘A 2: CATÃLOGO DE LUGARES DE ENTREGA */}
+      {/* PESTA�'A 2: CATÁLOGO DE LUGARES DE ENTREGA */}
       {activeTab === 'lugares' && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
@@ -487,12 +487,12 @@ export default function SettingsView() {
                         {lugar}
                       </h4>
                       <span className="text-[11px] text-slate-400 font-semibold block">
-                        {isOtro ? 'OpciÃ³n especial' : 'Lugar activo'}
+                        {isOtro ? 'Opción especial' : 'Lugar activo'}
                       </span>
                     </div>
                   </div>
 
-                  {/* Acciones de ediciÃ³n y eliminaciÃ³n */}
+                  {/* Acciones de edición y eliminación */}
                   {!isOtro ? (
                     <div className="flex flex-wrap items-center gap-1 shrink-0">
                       <button
@@ -504,7 +504,7 @@ export default function SettingsView() {
                       </button>
 
                       <InlineDeleteConfirm
-                        title={`Â¿Quitar "${lugar}"?`}
+                        title={`¿Quitar "${lugar}"?`}
                         confirmLabel="Quitar"
                         onDelete={() => eliminarLugarEntrega(lugar)}
                       />
@@ -523,13 +523,13 @@ export default function SettingsView() {
             <div className="bg-white rounded-2xl border border-slate-200/80 p-12 text-center text-slate-400">
               <MapPin className="w-10 h-10 mx-auto mb-2 text-slate-300" />
               <p className="font-bold text-sm text-slate-600">No se encontraron lugares de entrega</p>
-              <p className="text-xs mt-1">Prueba con otro tÃ©rmino de bÃºsqueda o agrega un nuevo lugar.</p>
+              <p className="text-xs mt-1">Prueba con otro término de búsqueda o agrega un nuevo lugar.</p>
             </div>
           )}
         </motion.div>
       )}
 
-      {/* PESTAÃ‘A 3: GESTIÃ“N DE USUARIOS */}
+      {/* PESTA�'A 3: GESTI�"N DE USUARIOS */}
       {activeTab === 'usuarios' && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
@@ -612,7 +612,7 @@ export default function SettingsView() {
                       </button>
 
                       <InlineDeleteConfirm
-                        title={`Â¿Eliminar usuario "${u.nombre}"?`}
+                        title={`¿Eliminar usuario "${u.nombre}"?`}
                         confirmLabel="Borrar"
                         onDelete={() => eliminarUsuario(u.id)}
                       />
@@ -633,7 +633,7 @@ export default function SettingsView() {
         </motion.div>
       )}
 
-      {/* PESTAÃ‘A 3: APARIENCIA & TEMAS */}
+      {/* PESTA�'A 3: APARIENCIA & TEMAS */}
       {activeTab === 'temas' && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
@@ -642,9 +642,9 @@ export default function SettingsView() {
           className="space-y-4"
         >
           <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-4">
-            <h3 className="font-black text-slate-900 text-base">Selecciona el tema de la aplicaciÃ³n</h3>
+            <h3 className="font-black text-slate-900 text-base">Selecciona el tema de la aplicación</h3>
             <p className="text-xs text-slate-500">
-              Los temas cambian el 100% de la interfaz de forma armÃ³nica: fondo, paneles laterales, tipografÃ­a, insignias y botones.
+              Los temas cambian el 100% de la interfaz de forma armónica: fondo, paneles laterales, tipografía, insignias y botones.
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5 pt-2">
@@ -694,7 +694,7 @@ export default function SettingsView() {
         </motion.div>
       )}
 
-      {/* PESTAÃ‘A 4: ESTRATEGIA DE DESPLIEGUES (3 VERSIONES) */}
+      {/* PESTA�'A 4: ESTRATEGIA DE DESPLIEGUES (3 VERSIONES) */}
       {activeTab === 'versiones' && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
@@ -708,20 +708,20 @@ export default function SettingsView() {
               Estrategia de Versionado en GitHub Pages
             </h3>
             <p className="text-xs text-slate-500 mt-1">
-              Camisas IUB maneja estrictamente un ciclo de 3 despliegues para garantizar rollback instantÃ¡neo y persistencia.
+              Camisas IUB maneja estrictamente un ciclo de 3 despliegues para garantizar rollback instantáneo y persistencia.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* 1. VersiÃ³n Fija */}
+            {/* 1. Versión Fija */}
             <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col justify-between">
               <div>
                 <span className="text-[10px] font-black uppercase tracking-wider text-amber-600 px-2 py-0.5 rounded-full bg-amber-500/20 inline-block mb-2">
-                  1. VersiÃ³n Fija (Ancla)
+                  1. Versión Fija (Ancla)
                 </span>
                 <h4 className="font-bold text-slate-900 text-sm">Commit 6a8ee5f</h4>
                 <p className="text-xs text-slate-600 mt-1">
-                  La Ãºltima versiÃ³n original desplegada en producciÃ³n. Queda permanentemente congelada como ancla de respaldo y no se borra con nuevos despliegues.
+                  La última versión original desplegada en producción. Queda permanentemente congelada como ancla de respaldo y no se borra con nuevos despliegues.
                 </p>
               </div>
               <div className="mt-4 pt-3 border-t border-amber-500/20 text-[11px] font-mono text-amber-700 font-bold">
@@ -729,15 +729,15 @@ export default function SettingsView() {
               </div>
             </div>
 
-            {/* 2. VersiÃ³n Anterior */}
+            {/* 2. Versión Anterior */}
             <div className="p-4 rounded-2xl bg-sky-500/10 border border-sky-500/30 flex flex-col justify-between">
               <div>
                 <span className="text-[10px] font-black uppercase tracking-wider text-sky-600 px-2 py-0.5 rounded-full bg-sky-500/20 inline-block mb-2">
-                  2. VersiÃ³n Anterior
+                  2. Versión Anterior
                 </span>
                 <h4 className="font-bold text-slate-900 text-sm">Punto de Rollback</h4>
                 <p className="text-xs text-slate-600 mt-1">
-                  En este momento coincide con la versiÃ³n fija. En futuros despliegues, la versiÃ³n actual pasarÃ¡ a ocupar este espacio para reversiÃ³n de 1 paso.
+                  En este momento coincide con la versión fija. En futuros despliegues, la versión actual pasará a ocupar este espacio para reversión de 1 paso.
                 </p>
               </div>
               <div className="mt-4 pt-3 border-t border-sky-500/20 text-[11px] font-mono text-sky-700 font-bold">
@@ -745,19 +745,19 @@ export default function SettingsView() {
               </div>
             </div>
 
-            {/* 3. VersiÃ³n Nueva */}
+            {/* 3. Versión Nueva */}
             <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex flex-col justify-between">
               <div>
                 <span className="text-[10px] font-black uppercase tracking-wider text-emerald-600 px-2 py-0.5 rounded-full bg-emerald-500/20 inline-block mb-2">
-                  3. VersiÃ³n Nueva (Viva)
+                  3. Versión Nueva (Viva)
                 </span>
                 <h4 className="font-bold text-slate-900 text-sm">React + Vite + Tailwind</h4>
                 <p className="text-xs text-slate-600 mt-1">
-                  La versiÃ³n moderna que se publica hoy con interfaz Impeccable, selector dinÃ¡mico de colores, cÃ¡lculo exacto de socios y navegaciÃ³n fija.
+                  La versión moderna que se publica hoy con interfaz Impeccable, selector dinámico de colores, cálculo exacto de socios y navegación fija.
                 </p>
               </div>
               <div className="mt-4 pt-3 border-t border-emerald-500/20 text-[11px] font-mono text-emerald-700 font-bold">
-                ESTADO: VIVA EN PRODUCCIÃ“N
+                ESTADO: VIVA EN PRODUCCI�"N
               </div>
             </div>
           </div>
@@ -782,7 +782,7 @@ export default function SettingsView() {
                   onClick={() => setIsColorModalOpen(false)}
                   className="text-slate-400 hover:text-slate-600 text-sm font-bold p-1"
                 >
-                  âœ•
+                  �o.
                 </button>
               </div>
 
@@ -823,10 +823,10 @@ export default function SettingsView() {
                   </div>
                 </div>
 
-                {/* Paleta de sugerencias rÃ¡pidas */}
+                {/* Paleta de sugerencias rápidas */}
                 <div>
                   <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-2">
-                    Sugerencias RÃ¡pidas:
+                    Sugerencias Rápidas:
                   </label>
                   <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto p-1 bg-slate-50 rounded-xl border border-slate-100">
                     {PRESET_COLORES.map((p) => (
@@ -870,7 +870,7 @@ export default function SettingsView() {
                     type="submit"
                     className="theme-btn-primary px-5 py-2 rounded-xl text-xs font-bold shadow-sm"
                   >
-                    {editingColor ? 'Guardar Cambios' : 'Agregar al CatÃ¡logo'}
+                    {editingColor ? 'Guardar Cambios' : 'Agregar al Catálogo'}
                   </button>
                 </div>
               </form>
@@ -902,7 +902,7 @@ export default function SettingsView() {
                   onClick={() => setIsLugarModalOpen(false)}
                   className="text-slate-400 hover:text-slate-600 text-sm font-bold p-1 cursor-pointer"
                 >
-                  âœ•
+                  �o.
                 </button>
               </div>
 
@@ -918,17 +918,17 @@ export default function SettingsView() {
                   <input
                     type="text"
                     required
-                    placeholder="Ej: Sede Prado - CafeterÃ­a, Domicilio Soledad..."
+                    placeholder="Ej: IUB POSGRADOS, CASA VAL, DOMICILIO..."
                     value={lugarNombre}
                     onChange={(e) => setLugarNombre(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold focus:outline-none focus:border-indigo-500"
                   />
                 </div>
 
-                {/* Sugerencias RÃ¡pidas */}
+                {/* Sugerencias Rápidas */}
                 <div>
                   <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-2">
-                    Sugerencias RÃ¡pidas:
+                    Sugerencias Rápidas:
                   </label>
                   <div className="flex flex-wrap gap-1.5 p-1 bg-slate-50 rounded-xl border border-slate-100 max-h-32 overflow-y-auto">
                     {[
@@ -993,7 +993,7 @@ export default function SettingsView() {
                   onClick={() => setIsUserModalOpen(false)}
                   className="text-slate-400 hover:text-slate-600 text-sm font-bold p-1"
                 >
-                  âœ•
+                  �o.
                 </button>
               </div>
 
@@ -1024,7 +1024,7 @@ export default function SettingsView() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Correo ElectrÃ³nico (Login)</label>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Correo Electrónico (Login)</label>
                   <input
                     type="email"
                     required
@@ -1055,12 +1055,12 @@ export default function SettingsView() {
 
                 {!editingUser && (
                   <div>
-                    <label className="text-xs font-bold text-slate-700 block mb-1">ContraseÃ±a Inicial</label>
+                    <label className="text-xs font-bold text-slate-700 block mb-1">Contraseña Inicial</label>
                     <div className="relative">
                       <input
                         type={showPassword ? 'text' : 'password'}
                         required
-                        placeholder="MÃ­nimo 6 caracteres"
+                        placeholder="Mínimo 6 caracteres"
                         value={userPassword}
                         onChange={(e) => setUserPassword(e.target.value)}
                         className="w-full pl-3.5 pr-10 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold focus:outline-none focus:border-indigo-500"

@@ -55,6 +55,10 @@ export const btnNeutroIcono =
 export const btnDestructivo =
   `${BASE} px-3 py-2 bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200/90`;
 
+/** Destructivo cuadrado, solo icono. Mismo tamaño que los demás iconos. */
+export const btnIconoDestructivo =
+  `${ICONO} p-2.5 bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border-rose-200/90`;
+
 export const btnDestructivoSolido =
   `${BASE} px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white shadow-xs`;
 

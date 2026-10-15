@@ -40,34 +40,32 @@ create table if not exists public.lugares_entrega (
 comment on table public.lugares_entrega is 'Catalogo de lugares y sedes de entrega, compartido entre socios';
 
 -- ---------------------------------------------------------------------------
--- 3. SEMILLA: los 9 colores y 10 lugares que ya usa la app
---    (para que nadie pierda lo que ya tenia configurado)
--- ---------------------------------------------------------------------------
+-- 3. SEMILLA: los colores reales de Camisas IUB
+--    Si la tabla ya tiene colores viejos, esta seccion los reemplaza.
+delete from public.colores_camisa;
+
 insert into public.colores_camisa (id, nombre, hex, orden) values
-  ('negro',    'Negro',    '#111827', 1),
-  ('blanco',   'Blanco',   '#ffffff', 2),
-  ('azul',     'Azul',     '#1e40af', 3),
-  ('rojo',     'Rojo',     '#b91c1c', 4),
-  ('verde',    'Verde',    '#15803d', 5),
-  ('gris',     'Gris',     '#6b7280', 6),
-  ('beige',    'Beige',    '#d6c2a4', 7),
-  ('turqui',   'Turqui',   '#0d9488', 8),
-  ('lila',     'Lila',     '#7c3aed', 9)
+  ('turqui',      'Turqui',      '#0d9488', 1),
+  ('negro',       'Negro',       '#111827', 2),
+  ('blanco',      'Blanco',      '#ffffff', 3),
+  ('camel',       'Camel',       '#c19a6b', 4),
+  ('gris',        'Gris',        '#6b7280', 5),
+  ('palo-de-rosa','Palo de rosa','#d9a3a3', 6)
 on conflict (id) do nothing;
 
-insert into public.lugares_entrega (nombre) values
-  ('Sede IUB'),
-  ('Sede IUB 2'),
-  ('Domicilio Barranquilla'),
-  ('Domicilio Soledad'),
-  ('Plaza de la Paz'),
-  ('Centro Comercial'),
-  ('Universidad del Norte'),
-  ('Universidad de los Andes'),
-  ('Universidad Nacional'),
-  ('Otro')
-on conflict (nombre) do nothing;
+-- 3b. SEMILLA: los lugares reales de entrega
+delete from public.lugares_entrega;
 
+insert into public.lugares_entrega (nombre) values
+  ('IUB SOLEDAD'),
+  ('IUB PLAZA DE LA PAZ'),
+  ('IUB POSGRADOS'),
+  ('IUB CENTRO HISTORICO'),
+  ('DOMICILIO'),
+  ('CASA VAL'),
+  ('CASA SAMIR'),
+  ('OTRO')
+on conflict (nombre) do nothing;
 -- ---------------------------------------------------------------------------
 -- 4. RLS: igual que el resto del proyecto, la anon key lee pero no escribe.
 --    Solo un admin autenticado puede modificar los catalogos (lo valida la app).
