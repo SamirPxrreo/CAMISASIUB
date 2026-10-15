@@ -570,7 +570,7 @@ export default function CuentasView({ targetOrder, onClearTargetOrder, onEditOrd
                               }
                             >
                               <CheckCircle2 className={`w-3.5 h-3.5 ${estadosTodosLiquidado(p) ? 'text-white' : 'text-slate-500'}`} />
-                              <span>Finalizar</span>
+                              <span>Finalizar el pedido</span>
                             </button>
                           </div>
                         </div>

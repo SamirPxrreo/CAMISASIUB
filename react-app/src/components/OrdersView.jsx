@@ -548,7 +548,7 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
                     }
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Finalizar</span>
+                    <span>Finalizar el pedido</span>
                   </button>
                 </div>
               </motion.div>

@@ -62,6 +62,12 @@ export default function CalendarView({ onEditOrder, onNavigateToCuentas }) {
   const [vista, setVista] = useState('calendario'); // 'calendario' | 'sin-fecha'
   const [orderModal, setOrderModal] = useState(null);
 
+  // Mantener actualizado el pedido activo para el modal en tiempo real cuando cambie en DataContext
+  const activeOrderForModal = useMemo(() => {
+    if (!orderModal) return null;
+    return ventas.find(v => String(v.id) === String(orderModal.id)) || orderModal;
+  }, [ventas, orderModal]);
+
   // Filtrar pedidos activos (no finalizados)
   const pedidosActivos = useMemo(() => {
     return ventas.filter(v => !v.finalizado);
@@ -442,7 +448,7 @@ export default function CalendarView({ onEditOrder, onNavigateToCuentas }) {
       <OrderDetailModal
         isOpen={!!orderModal}
         onClose={() => setOrderModal(null)}
-        order={orderModal}
+        order={activeOrderForModal}
         onEditOrder={onEditOrder}
       />
     </div>

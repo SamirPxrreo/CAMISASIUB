@@ -398,5 +398,20 @@ La aplicación está completamente adaptada para usarse como una app instalada e
   - La tabla muestra el 100% de los pedidos seleccionados dentro de un contenedor desplazable (`max-h-[520px] overflow-auto`).
   - Cabecera fija (`sticky top-0 z-10`) con fondo sólido para facilitar la navegación y lectura.
 
+---
+
+## 15. Sincronización en Tiempo Real en Calendario, Botón Único de Cierre y Claridad en Finalización
+
+### 1. Reflejo Inmediato de Cambios de Estado en Calendario (`CalendarView.jsx`):
+- Se implementó `activeOrderForModal` mediante `useMemo` enlazado reactivamente al array `ventas` de `DataContext`.
+- Al cambiar el estado de cualquier prenda o pedido desde la ventana modal abierta en el calendario, la tarjeta del calendario y el contenido del modal se actualizan instantáneamente sin necesidad de cerrar y volver a abrir la ventana.
+
+### 2. Eliminación de Botón Redundante de Cierre (`OrderDetailModal.jsx`):
+- Se retiró el botón inferior con el texto "Cerrar", manteniendo exclusivamente el botón de cierre con la cruz (`X`) en la esquina superior derecha, evitando duplicidad de controles y ganando espacio visual limpio.
+
+### 3. Claridad Semántica del Botón de Finalización:
+- Se reemplazó la palabra aislada "Finalizar" por la frase comprensible y descriptiva **"Finalizar el pedido"** en todas las vistas (`OrdersView.jsx`, `OrderDetailModal.jsx` y `CuentasView.jsx`).
+- Elimina cualquier ambigüedad sobre la acción (aclara que se concluye el pedido y se archiva en el historial contable).
+
 
 

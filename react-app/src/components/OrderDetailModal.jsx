@@ -26,7 +26,6 @@ import {
   btnWhatsapp,
   btnWhatsappIcono,
   btnEditar,
-  btnNeutro,
   grupoAcciones
 } from '../lib/buttonStyles';
 import { useData } from '../context/DataContext';
@@ -405,14 +404,6 @@ export default function OrderDetailModal({ isOpen, onClose, order, onEditOrder }
                   <span>Editar Pedido</span>
                 </button>
               )}
-
-              <button
-                type="button"
-                onClick={onClose}
-                className={btnNeutro}
-              >
-                Cerrar
-              </button>
             </div>
 
             {finalizarPedido && !order.finalizado && (
@@ -434,7 +425,7 @@ export default function OrderDetailModal({ isOpen, onClose, order, onEditOrder }
                 }
               >
                 <CheckCircle2 className={`w-4 h-4 ${estadosTodosLiquidado(order) ? 'text-white' : 'text-slate-400'}`} />
-                <span>Finalizar</span>
+                <span>Finalizar el pedido</span>
               </button>
             )}
           </div>
