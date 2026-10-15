@@ -70,6 +70,78 @@ export function DataProvider({ children }) {
     } catch {}
   }, [colores]);
 
+  // ==========================================================================
+  // CATALOGOS COMPARTIDOS
+  // Antes vivian solo en localStorage: si Valentina agregaba un lugar, Samir
+  // no lo veia, y limpiar la cache del navegador hacia perderlos.
+  // Ahora se leen y escriben en Supabase. Si las tablas aun no existen se cae
+  // al localStorage con normalidad (ver SUPABASE-CATALOGOS.sql).
+  // ==========================================================================
+  const [catalogosEnNube, setCatalogosEnNube] = useState(false);
+
+  const cargarCatalogos = useCallback(async () => {
+    try {
+      const [cCol, cLug] = await Promise.all([
+        supabase.from('colores_camisa').select('id,nombre,hex').order('orden', { ascending: true }),
+        supabase.from('lugares_entrega').select('id,nombre,activo').eq('activo', true).order('nombre', { ascending: true })
+      ]);
+
+      if (cCol.error || cLug.error) {
+        setCatalogosEnNube(false);
+        return;
+      }
+
+      setCatalogosEnNube(true);
+
+      if (Array.isArray(cCol.data) && cCol.data.length > 0) {
+        setColores(cCol.data.map(c => ({ id: c.id, nombre: c.nombre, hex: c.hex })));
+      }
+      if (Array.isArray(cLug.data) && cLug.data.length > 0) {
+        setLugaresEntrega(cLug.data.map(l => l.nombre));
+      }
+    } catch {
+      setCatalogosEnNube(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (user) cargarCatalogos();
+  }, [user, cargarCatalogos]);
+
+  // Reflejar cambios de catalogos del otro socio en tiempo real
+  useEffect(() => {
+    if (!catalogosEnNube) return;
+    const canal = supabase.channel('catalogos-iub')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'colores_camisa' }, cargarCatalogos)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'lugares_entrega' }, cargarCatalogos)
+      .subscribe();
+    return () => { supabase.removeChannel(canal); };
+  }, [catalogosEnNube, cargarCatalogos]);
+
+  const guardarColorNube = async (id, nombre, hex) => {
+    if (!catalogosEnNube) return;
+    try { await supabase.from('colores_camisa').upsert({ id, nombre, hex }); }
+    catch (e) { console.warn('[Supabase] No se pudo guardar el color:', e); }
+  };
+
+  const borrarColorNube = async (id) => {
+    if (!catalogosEnNube) return;
+    try { await supabase.from('colores_camisa').delete().eq('id', id); }
+    catch (e) { console.warn('[Supabase] No se pudo borrar el color:', e); }
+  };
+
+  const guardarLugarNube = async (nombre) => {
+    if (!catalogosEnNube) return;
+    try { await supabase.from('lugares_entrega').upsert({ nombre }, { onConflict: 'nombre' }); }
+    catch (e) { console.warn('[Supabase] No se pudo guardar el lugar:', e); }
+  };
+
+  const borrarLugarNube = async (nombre) => {
+    if (!catalogosEnNube) return;
+    try { await supabase.from('lugares_entrega').delete().eq('nombre', nombre); }
+    catch (e) { console.warn('[Supabase] No se pudo borrar el lugar:', e); }
+  };
+
   // Consulta real a todas las tablas de Supabase
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -588,6 +660,7 @@ export function DataProvider({ children }) {
     const hex = nuevoColor?.hex || '#6366f1';
     const nuevoObj = { id, nombre, hex };
     setColores(prev => [...prev, nuevoObj]);
+    guardarColorNube(id, nombre, hex);
     return nuevoObj;
   };
 
@@ -597,12 +670,9 @@ export function DataProvider({ children }) {
     const existe = colores.some(c => c.id !== id && c.nombre.toLowerCase() === nombre.toLowerCase());
     if (existe) throw new Error(`Ya existe otro color con el nombre "${nombre}".`);
 
-    setColores(prev => prev.map(c => {
-      if (c.id === id) {
-        return { ...c, nombre, hex: data?.hex || c.hex };
-      }
-      return c;
-    }));
+    const hex = data?.hex || colores.find(c => c.id === id)?.hex || '#6366f1';
+    setColores(prev => prev.map(c => (c.id === id ? { ...c, nombre, hex } : c)));
+    guardarColorNube(id, nombre, hex);
   };
 
   const eliminarColor = (id) => {
@@ -610,10 +680,13 @@ export function DataProvider({ children }) {
       throw new Error('Debe mantenerse al menos un color disponible.');
     }
     setColores(prev => prev.filter(c => c.id !== id));
+    borrarColorNube(id);
   };
 
   const restablecerColores = () => {
     setColores(COLORES_DEFECTO_OBJETOS);
+    if (!catalogosEnNube) return;
+    COLORES_DEFECTO_OBJETOS.forEach(c => guardarColorNube(c.id, c.nombre, c.hex));
   };
 
   // --- MÉTODOS PARA GESTIÓN DE LUGARES DE ENTREGA ---
@@ -627,6 +700,7 @@ export function DataProvider({ children }) {
       const filtrado = prev.filter(l => l.toLowerCase() !== 'otro');
       return [...filtrado, lugar, 'Otro'];
     });
+    guardarLugarNube(lugar);
   };
 
   const actualizarLugarEntrega = (lugarAntiguo, lugarNuevo) => {
@@ -635,6 +709,7 @@ export function DataProvider({ children }) {
     if (!nuevo) throw new Error('El nuevo nombre es obligatorio.');
     if (viejo.toLowerCase() === 'otro') throw new Error('El lugar "Otro" no se puede modificar.');
     setLugaresEntrega(prev => prev.map(l => l === viejo ? nuevo : l));
+    if (viejo !== nuevo) { borrarLugarNube(viejo); guardarLugarNube(nuevo); }
   };
 
   const eliminarLugarEntrega = (lugarAEliminar) => {
@@ -642,10 +717,13 @@ export function DataProvider({ children }) {
     if (aBorrar.toLowerCase() === 'otro') throw new Error('El lugar "Otro" es necesario para entregas personalizadas.');
     if (lugaresEntrega.length <= 2) throw new Error('Debe mantenerse al menos un lugar disponible.');
     setLugaresEntrega(prev => prev.filter(l => l !== aBorrar));
+    borrarLugarNube(aBorrar);
   };
 
   const restablecerLugaresEntrega = () => {
     setLugaresEntrega(LUGARES_ENTREGA);
+    if (!catalogosEnNube) return;
+    LUGARES_ENTREGA.forEach(l => guardarLugarNube(l));
   };
 
   // --- MÉTODOS PARA GESTIÓN DE USUARIOS ---

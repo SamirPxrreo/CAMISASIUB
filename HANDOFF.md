@@ -142,6 +142,8 @@ npm run build
 # 2. Copiar los archivos generados en dist/ a la raíz del repositorio
 Copy-Item -Path "dist\index.html" -Destination "..\index.html" -Force
 Copy-Item -Path "dist\assets\*" -Destination "..\assets\" -Force
+Copy-Item -Path "dist\sw.js" -Destination "..\sw.js" -Force
+Copy-Item -Path "dist\manifest.json" -Destination "..\manifest.json" -Force
 
 # 3. Volver a la raíz, confirmar los cambios y hacer push
 cd ..

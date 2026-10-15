@@ -55,14 +55,18 @@ export default function UpdateNotifier() {
   }, []);
 
   const handleReload = () => {
-    // Limpiar caches de Service Worker o PWA si existen
-    if ('caches' in window) {
-      caches.keys().then((names) => {
-        names.forEach((name) => caches.delete(name));
-      });
+    // Primero se le pide al service worker que se retire: si no, podria volver
+    // a servir el bundle viejo desde su cache justo despues de recargar.
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistration().then((reg) => {
+        if (reg && reg.waiting) {
+          reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        }
+        // Si el worker activo ya tiene una version mas nueva, se actualiza.
+        if (reg && reg.update) reg.update();
+      }).catch(() => {});
     }
-    // Forzar recarga completa evitando caché
-    window.location.reload(true);
+    window.location.reload();
   };
 
   if (!hasUpdate || dismissed) return null;
