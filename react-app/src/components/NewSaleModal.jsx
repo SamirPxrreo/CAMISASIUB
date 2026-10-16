@@ -56,8 +56,8 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
   const [telefono, setTelefono] = useState('');
   const miNombreVendedor = role?.vendedor || role?.nombre || 'Samir';
   const [vendedor, setVendedor] = useState(miNombreVendedor);
-  const primerLugar = opcionesLugares[0] || 'Sede Principal (IUB)';
-  const [lugarEntrega, setLugarEntrega] = useState(primerLugar);
+  // Sin lugar preseleccionado: el usuario debe elegirlo (evita envíos con sede equivocada)
+  const [lugarEntrega, setLugarEntrega] = useState('');
   const [lugarOtro, setLugarOtro] = useState('');
   const [fecha, setFecha] = useState(hoyColombia());
   const [fechaEntrega, setFechaEntrega] = useState('');
@@ -65,21 +65,23 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
   const [nota, setNota] = useState('');
   const [sugerencias, setSugerencias] = useState([]);
 
-  // Filas de camisas del pedido
-  const [filas, setFilas] = useState([
-    {
-      cantidad: 1,
-      modelo: 'Viejo', // Versión 1
-      genero: 'Hombre',
-      color: 'Negro',
-      talla: 'M',
-      programa: '',
-      precio: PRECIO_VENTA_DEFECTO,
-      costo: 30000,
-      abono: 0,
-      estado: 'Pedido'
-    }
-  ]);
+  // Fila vacía: sin versión/género/color/talla preseleccionados.
+  // El costo se sugiere solo cuando se eligen versión + talla.
+  const filaVacia = () => ({
+    cantidad: 1,
+    modelo: '',
+    genero: '',
+    color: '',
+    talla: '',
+    programa: '',
+    precio: PRECIO_VENTA_DEFECTO,
+    costo: '',
+    abono: 0,
+    estado: 'Pedido'
+  });
+
+  // Filas de camisas del pedido (empiezan vacías para llenar a mano)
+  const [filas, setFilas] = useState([filaVacia()]);
 
   const [guardando, setGuardando] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -97,7 +99,8 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
         setLugarEntrega('Otro');
         setLugarOtro(editingOrder.lugar_entrega);
       } else {
-        setLugarEntrega(primerLugar);
+        // Pedido viejo sin lugar registrado: se deja vacío para elegirlo a mano
+        setLugarEntrega('');
         setLugarOtro('');
       }
       setFecha(editingOrder.fecha || hoyColombia());
@@ -109,53 +112,42 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
       if (crudos && crudos.length) {
         setFilas(crudos.map(it => ({
           cantidad: Math.max(1, Number(it.cantidad) || 1),
-          modelo: it.modelo === 'Nuevo' ? 'Nuevo' : 'Viejo',
-          genero: it.genero || 'Hombre',
-          color: it.color || 'Negro',
-          talla: it.talla || 'M',
+          modelo: it.modelo === 'Nuevo' ? 'Nuevo' : (it.modelo === 'Viejo' ? 'Viejo' : ''),
+          genero: it.genero || '',
+          color: it.color || '',
+          talla: it.talla || '',
           programa: it.programa || '',
           precio: Number(it.precio) || Number(editingOrder.precio_unitario) || PRECIO_VENTA_DEFECTO,
-          costo: Number(it.costo) || Number(editingOrder.costo_unitario) || 30000,
+          costo: (it.costo != null && it.costo !== '') ? Number(it.costo) : (Number(editingOrder.costo_unitario) || ''),
           abono: Number(it.abono) || 0,
           estado: it.estado || editingOrder.estado || 'Pedido'
         })));
       } else {
         setFilas([{
           cantidad: Number(editingOrder.cantidad) || 1,
-          modelo: editingOrder.modelo === 'Nuevo' ? 'Nuevo' : 'Viejo',
-          genero: editingOrder.genero || 'Hombre',
-          color: editingOrder.color || 'Negro',
-          talla: editingOrder.talla || 'M',
+          modelo: editingOrder.modelo === 'Nuevo' ? 'Nuevo' : (editingOrder.modelo === 'Viejo' ? 'Viejo' : ''),
+          genero: editingOrder.genero || '',
+          color: editingOrder.color || '',
+          talla: editingOrder.talla || '',
           programa: editingOrder.cliente_programa || '',
           precio: Number(editingOrder.precio_unitario) || PRECIO_VENTA_DEFECTO,
-          costo: Number(editingOrder.costo_unitario) || 30000,
+          costo: Number(editingOrder.costo_unitario) || '',
           abono: Number(editingOrder.abono) || 0,
           estado: editingOrder.estado || 'Pedido'
         }]);
       }
     } else {
-      // Modo Nuevo
+      // Modo Nuevo: todo vacío para llenar a mano
       setCliente('');
       setTelefono('');
       setVendedor(miNombreVendedor);
-      setLugarEntrega(primerLugar);
+      setLugarEntrega('');
       setLugarOtro('');
       setFecha(hoyColombia());
       setFechaEntrega('');
       setFechaEntregaPendiente(false);
       setNota('');
-      setFilas([{
-        cantidad: 1,
-        modelo: 'Viejo',
-        genero: 'Hombre',
-        color: 'Negro',
-        talla: 'M',
-        programa: '',
-        precio: PRECIO_VENTA_DEFECTO,
-        costo: 30000,
-        abono: 0,
-        estado: 'Pedido'
-      }]);
+      setFilas([filaVacia()]);
     }
     setErrorMsg('');
   }, [editingOrder, isOpen, role]);
@@ -193,22 +185,11 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
     setSugerencias([]);
   };
 
-  // Agregar fila nueva
+  // Agregar fila nueva (vacía para llenar a mano)
   const addFila = () => {
     setFilas(prev => [
       ...prev,
-      {
-        cantidad: 1,
-        modelo: 'Viejo',
-        genero: 'Hombre',
-        color: 'Negro',
-        talla: 'M',
-        programa: '',
-        precio: PRECIO_VENTA_DEFECTO,
-        costo: 30000,
-        abono: 0,
-        estado: 'Pedido'
-      }
+      filaVacia()
     ]);
   };
 
@@ -233,12 +214,14 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
     setFilas(prev => prev.map((f, i) => {
       if (i !== idx) return f;
       const updated = { ...f, [field]: value };
-      // Si cambia modelo o talla, sugerir costo de Yesenia
+      // Si cambia modelo o talla y ya hay versión + talla elegidas, sugerir costo de Yesenia.
+      // Si falta alguno, no se inventa costo: queda vacío hasta elegir ambos.
       if (field === 'modelo' || field === 'talla') {
-        updated.costo = costoProveedorSugerido(
-          field === 'modelo' ? value : updated.modelo,
-          field === 'talla' ? value : updated.talla
-        );
+        const modeloSel = field === 'modelo' ? value : updated.modelo;
+        const tallaSel = field === 'talla' ? value : updated.talla;
+        if (modeloSel && tallaSel) {
+          updated.costo = costoProveedorSugerido(modeloSel, tallaSel);
+        }
       }
       return updated;
     }));
@@ -269,6 +252,29 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
       setErrorMsg('Por favor ingresa el teléfono del cliente.');
       return;
     }
+    if (!lugarEntrega) {
+      setErrorMsg('Selecciona el lugar de entrega (ya no se pone uno solo).');
+      return;
+    }
+    if (lugarEntrega === 'Otro' && !lugarOtro.trim()) {
+      setErrorMsg('Especifica el lugar de entrega ("Otro").');
+      return;
+    }
+    for (let idx = 0; idx < filas.length; idx++) {
+      const f = filas[idx];
+      if (!f.modelo || !f.genero || !f.color || !f.talla) {
+        setErrorMsg(`Fila #${idx + 1}: elige versión, género, color y talla (ya no vienen llenos).`);
+        return;
+      }
+      if (f.precio === '' || f.precio == null || isNaN(Number(f.precio)) || Number(f.precio) <= 0) {
+        setErrorMsg(`Fila #${idx + 1}: ingresa el precio de venta.`);
+        return;
+      }
+      if (f.costo === '' || f.costo == null || isNaN(Number(f.costo))) {
+        setErrorMsg(`Fila #${idx + 1}: elige versión y talla para sugerir el costo o digítalo a mano.`);
+        return;
+      }
+    }
     if (!fechaEntregaPendiente && !fechaEntrega) {
       setErrorMsg('Selecciona la fecha de entrega o marca "Pendiente por definir".');
       return;
@@ -283,13 +289,13 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
       filas.forEach(f => {
         for (let i = 0; i < f.cantidad; i++) {
           itemsIndividuales.push({
-            modelo: f.modelo,
-            genero: f.genero,
-            color: f.color,
-            talla: f.talla,
-            programa: f.programa.trim(),
+            modelo: f.modelo || '',
+            genero: f.genero || '',
+            color: f.color || '',
+            talla: f.talla || '',
+            programa: String(f.programa || '').trim(),
             precio: Number(f.precio) || PRECIO_VENTA_DEFECTO,
-            costo: Number(f.costo) || 30000,
+            costo: (f.costo === '' || f.costo == null) ? 0 : (Number(f.costo) || 0),
             abono: Number(f.abono) || 0,
             estado: f.estado || 'Pedido'
           });
@@ -308,17 +314,17 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
         cliente_nombre: cliente.trim(),
         cliente_telefono: telefono.trim(),
         cliente_programa: primerItem.programa || '',
-        modelo: primerItem.modelo === 'Nuevo' ? 'Nuevo' : 'Viejo',
-        genero: primerItem.genero || 'Hombre',
+        modelo: primerItem.modelo === 'Nuevo' ? 'Nuevo' : (primerItem.modelo || ''),
+        genero: primerItem.genero || '',
         color: itemsIndividuales.map(i => i.color).filter(Boolean).join(', '),
         talla: itemsIndividuales.map(i => i.talla).filter(Boolean).join(', '),
         vendedor: role?.role === 'admin' ? vendedor : miNombreVendedor,
-        lugar_entrega: lugarEntrega === 'Otro' ? lugarOtro.trim() || 'Otro' : lugarEntrega,
+        lugar_entrega: lugarEntrega === 'Otro' ? lugarOtro.trim() : lugarEntrega,
         fecha: fecha,
         fecha_entrega: fechaEntregaPendiente ? null : (fechaEntrega || null),
         cantidad: totalCamisas,
-        precio_unitario: filas[0]?.precio || PRECIO_VENTA_DEFECTO,
-        costo_unitario: filas[0]?.costo || 30000,
+        precio_unitario: (filas[0]?.precio === '' || filas[0]?.precio == null) ? PRECIO_VENTA_DEFECTO : (Number(filas[0]?.precio) || PRECIO_VENTA_DEFECTO),
+        costo_unitario: (filas[0]?.costo === '' || filas[0]?.costo == null) ? 0 : (Number(filas[0]?.costo) || 0),
         abono: totalAbono,
         estado: estadoPrincipal,
         nota: nota.trim(),
@@ -518,13 +524,14 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
               {/* Entrega */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                 <div>
-                  <label className="text-xs font-semibold text-slate-700 block mb-1">Lugar de Entrega</label>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1">Lugar de Entrega *</label>
                   <CustomSelect
                     value={lugarEntrega}
                     onChange={(val) => setLugarEntrega(val)}
                     icon={MapPin}
                     options={opcionesLugares}
                     searchable
+                    placeholder="Elige lugar de entrega…"
                   />
                   {lugarEntrega === 'Otro' && (
                     <input
@@ -648,10 +655,10 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
                       </div>
                     </div>
 
-                    {/* Campos de la prenda */}
+                    {/* Campos de la prenda (vacíos hasta elegir) */}
                     <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                       <div>
-                        <label className="text-[11px] font-semibold text-slate-600 block mb-1">Versión</label>
+                        <label className="text-[11px] font-semibold text-slate-600 block mb-1">Versión *</label>
                         <CustomSelect
                           value={f.modelo}
                           onChange={(val) => updateFila(idx, 'modelo', val)}
@@ -660,37 +667,41 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
                             { value: 'Nuevo', label: 'Versión 2', badge: 'v2' }
                           ]}
                           size="sm"
+                          placeholder="Versión…"
                         />
                       </div>
 
                       <div>
-                        <label className="text-[11px] font-semibold text-slate-600 block mb-1">Género</label>
+                        <label className="text-[11px] font-semibold text-slate-600 block mb-1">Género *</label>
                         <CustomSelect
                           value={f.genero}
                           onChange={(val) => updateFila(idx, 'genero', val)}
                           options={GENEROS_DISPONIBLES}
                           size="sm"
+                          placeholder="Género…"
                         />
                       </div>
 
                       <div>
-                        <label className="text-[11px] font-semibold text-slate-600 block mb-1">Color</label>
+                        <label className="text-[11px] font-semibold text-slate-600 block mb-1">Color *</label>
                         <CustomSelect
                           value={f.color}
                           onChange={(val) => updateFila(idx, 'color', val)}
                           options={opcionesColores}
                           size="sm"
                           searchable
+                          placeholder="Color…"
                         />
                       </div>
 
                       <div>
-                        <label className="text-[11px] font-semibold text-slate-600 block mb-1">Talla</label>
+                        <label className="text-[11px] font-semibold text-slate-600 block mb-1">Talla *</label>
                         <CustomSelect
                           value={f.talla}
                           onChange={(val) => updateFila(idx, 'talla', val)}
                           options={TALLAS_DISPONIBLES}
                           size="sm"
+                          placeholder="Talla…"
                         />
                       </div>
 
@@ -733,7 +744,7 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
                       </div>
 
                       <div>
-                        <label className="text-[10.5px] font-semibold text-slate-500 block mb-0.5">Costo Yesenia ($)</label>
+                        <label className="text-[10.5px] font-semibold text-slate-500 block mb-0.5">Costo Yesenia ($) *</label>
                         <input
                           type="text"
                           inputMode="numeric"
@@ -746,13 +757,8 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
                             const raw = e.target.value.replace(/\D/g, '');
                             updateFila(idx, 'costo', raw === '' ? '' : parseInt(raw, 10));
                           }}
-                          onBlur={() => {
-                            if (f.costo === '' || isNaN(f.costo)) {
-                              updateFila(idx, 'costo', 0);
-                            }
-                          }}
                           className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-amber-700 outline-none focus:border-amber-500 font-mono"
-                          placeholder="30.000"
+                          placeholder="Elige versión y talla…"
                         />
                       </div>
 
