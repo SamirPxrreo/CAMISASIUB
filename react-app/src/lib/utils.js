@@ -20,7 +20,7 @@ export const COLORES_DEFECTO_OBJETOS = [
 
 export const COLORES_DISPONIBLES = COLORES_DEFECTO_OBJETOS.map(c => c.nombre);
 
-export const TALLAS_DISPONIBLES = ['S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'];
+export const TALLAS_DISPONIBLES = ['S', 'M', 'L', 'XL', '2XL', '3XL'];
 
 // Compatibilidad
 export const COLORES = COLORES_DISPONIBLES;
@@ -34,6 +34,9 @@ export const EXTRA_TALLAS_COSTO = {
 };
 
 export const PRECIO_VENTA_DEFECTO = 39000;
+export const PRECIO_VENTA_V2_DEFECTO = 40000;    // Versión 2 en S–XL (editable a mano)
+export const PRECIO_VENTA_TALLA_GRANDE = 42000;  // 2XL/3XL estándar (V2 suma 1.000)
+export const EXTRA_VENTA_V2 = 1000;
 export const COSTO_YESENIA_DEFECTO = 30000;
 
 export const LUGARES_ENTREGA = [
@@ -52,6 +55,16 @@ export function costoProveedorSugerido(modelo, talla) {
   const base = (modelo === 'Nuevo' || modelo === 'Versión 2') ? 31000 : 30000;
   const extra = EXTRA_TALLAS_COSTO[String(talla || '').trim()] || 0;
   return base + extra;
+}
+
+// Precio de venta sugerido según Versión y Talla (tabla fija de Camisas IUB):
+// S–XL: 39.000 estándar / 40.000 V2 · 2XL–3XL: 42.000 estándar / 43.000 V2.
+export function precioVentaSugerido(modelo, talla) {
+  const t = String(talla || '').trim();
+  const esV2 = modelo === 'Nuevo' || modelo === 'Versión 2';
+  const extraV2 = esV2 ? EXTRA_VENTA_V2 : 0;
+  if (t === '2XL' || t === '3XL' || t === '4XL') return PRECIO_VENTA_TALLA_GRANDE + extraV2;
+  return (esV2 ? PRECIO_VENTA_V2_DEFECTO : PRECIO_VENTA_DEFECTO);
 }
 
 export function normalizarEstado(e) {

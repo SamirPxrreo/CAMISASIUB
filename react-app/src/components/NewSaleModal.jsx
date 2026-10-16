@@ -33,6 +33,7 @@ import {
   PRECIO_VENTA_DEFECTO,
   ORDEN_ESTADOS,
   costoProveedorSugerido,
+  precioVentaSugerido,
   hoyColombia,
   fmt,
   itemsCrudosVenta,
@@ -214,13 +215,22 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
     setFilas(prev => prev.map((f, i) => {
       if (i !== idx) return f;
       const updated = { ...f, [field]: value };
-      // Si cambia modelo o talla y ya hay versión + talla elegidas, sugerir costo de Yesenia.
-      // Si falta alguno, no se inventa costo: queda vacío hasta elegir ambos.
+      // Al elegir versión Y talla salen solos costo y precio.
+      // Si falta alguno, no se inventa nada: quedan vacíos hasta elegir ambos.
       if (field === 'modelo' || field === 'talla') {
         const modeloSel = field === 'modelo' ? value : updated.modelo;
         const tallaSel = field === 'talla' ? value : updated.talla;
         if (modeloSel && tallaSel) {
+          // Costo a Yesenia: tabla fija, siempre se sugiere.
           updated.costo = costoProveedorSugerido(modeloSel, tallaSel);
+          // Precio de venta: solo se sugiere si no lo digitaste a mano
+          // (si ya lo editaste, se respeta tu valor).
+          const sugeridoPrev = (f.modelo && f.talla)
+            ? precioVentaSugerido(f.modelo, f.talla)
+            : PRECIO_VENTA_DEFECTO;
+          if (f.precio === '' || f.precio == null || Number(f.precio) === sugeridoPrev) {
+            updated.precio = precioVentaSugerido(modeloSel, tallaSel);
+          }
         }
       }
       return updated;
@@ -579,7 +589,7 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
                     2. Camisas Tipo Polo ({totalCamisas} prenda{totalCamisas !== 1 ? 's' : ''})
                   </span>
                   <span className="text-[11px] text-slate-400">
-                    Manejamos tipo Polo Clásica ($30.000 costo) y Versión 2 ($31.000 costo).
+                    Al elegir versión y talla, costo y precio se ponen solos (puedes ajustarlos a mano).
                   </span>
                 </div>
                 <button
