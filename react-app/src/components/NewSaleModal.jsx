@@ -541,7 +541,7 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
                     icon={MapPin}
                     options={opcionesLugares}
                     searchable
-                    placeholder="Elige lugar de entrega…"
+                    placeholder="----"
                   />
                   {lugarEntrega === 'Otro' && (
                     <input
@@ -677,7 +677,7 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
                             { value: 'Nuevo', label: 'Versión 2', badge: 'v2' }
                           ]}
                           size="sm"
-                          placeholder="Versión…"
+                          placeholder="----"
                         />
                       </div>
 
@@ -688,7 +688,7 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
                           onChange={(val) => updateFila(idx, 'genero', val)}
                           options={GENEROS_DISPONIBLES}
                           size="sm"
-                          placeholder="Género…"
+                          placeholder="----"
                         />
                       </div>
 
@@ -700,7 +700,7 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
                           options={opcionesColores}
                           size="sm"
                           searchable
-                          placeholder="Color…"
+                          placeholder="----"
                         />
                       </div>
 
@@ -711,7 +711,7 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
                           onChange={(val) => updateFila(idx, 'talla', val)}
                           options={TALLAS_DISPONIBLES}
                           size="sm"
-                          placeholder="Talla…"
+                          placeholder="----"
                         />
                       </div>
 

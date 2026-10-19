@@ -16,7 +16,7 @@ import {
   FileText
 } from 'lucide-react';
 import { useData } from '../context/DataContext';
-import { btnPrimario, btnEditar, btnNeutro } from '../lib/buttonStyles';
+import { btnPrimario, btnEditar, btnNeutro, btnNeutroIcono } from '../lib/buttonStyles';
 import {
   fmt,
   estadosTodosLiquidado,

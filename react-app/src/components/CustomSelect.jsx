@@ -114,7 +114,7 @@ export default function CustomSelect({
             <selectedOption.icon className="w-4 h-4 text-indigo-600 shrink-0" />
           )}
 
-          <span className="truncate">
+          <span className={`truncate ${selectedOption ? '' : 'text-slate-400 font-normal'}`}>
             {selectedOption ? selectedOption.label : placeholder}
           </span>
 

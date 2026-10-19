@@ -226,7 +226,7 @@ export default function SettingsView() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* 1. ENCABEZADO PRINCIPAL DE CONFIGURACI�"N */}
+      {/* 1. ENCABEZADO PRINCIPAL DE CONFIGURACIÓN */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -295,9 +295,9 @@ export default function SettingsView() {
         </div>
       </div>
 
-      {/* 2. CONTENIDO SEG�sN PESTA�'A */}
+      {/* 2. CONTENIDO SEGÚN PESTAÑA */}
 
-      {/* PESTA�'A 1: CATÁLOGO DE COLORES DE CAMISAS */}
+      {/* PESTAÑA 1: CATÁLOGO DE COLORES DE CAMISAS */}
       {activeTab === 'colores' && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
@@ -361,7 +361,7 @@ export default function SettingsView() {
                       title={`Tono: ${hexVal}`}
                     >
                       {isWhiteOrLight && (
-                        <span className="text-[10px] text-slate-400 font-bold">�?�</span>
+                        <span className="text-[10px] text-slate-400 font-bold">•</span>
                       )}
                     </div>
 
@@ -406,7 +406,7 @@ export default function SettingsView() {
         </motion.div>
       )}
 
-      {/* PESTA�'A 2: CATÁLOGO DE LUGARES DE ENTREGA */}
+      {/* PESTAÑA 2: CATÁLOGO DE LUGARES DE ENTREGA */}
       {activeTab === 'lugares' && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
@@ -511,7 +511,7 @@ export default function SettingsView() {
         </motion.div>
       )}
 
-      {/* PESTA�'A 3: GESTI�"N DE USUARIOS */}
+      {/* PESTAÑA 3: GESTIÓN DE USUARIOS */}
       {activeTab === 'usuarios' && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
@@ -615,7 +615,7 @@ export default function SettingsView() {
         </motion.div>
       )}
 
-      {/* PESTA�'A 3: APARIENCIA & TEMAS */}
+      {/* PESTAÑA 3: APARIENCIA & TEMAS */}
       {activeTab === 'temas' && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
@@ -676,7 +676,7 @@ export default function SettingsView() {
         </motion.div>
       )}
 
-      {/* PESTA�'A 4: ESTRATEGIA DE DESPLIEGUES (3 VERSIONES) */}
+      {/* PESTAÑA 4: ESTRATEGIA DE DESPLIEGUES (3 VERSIONES) */}
       {activeTab === 'versiones' && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
@@ -739,7 +739,7 @@ export default function SettingsView() {
                 </p>
               </div>
               <div className="mt-4 pt-3 border-t border-emerald-500/20 text-[11px] font-mono text-emerald-700 font-bold">
-                ESTADO: VIVA EN PRODUCCI�"N
+                ESTADO: VIVA EN PRODUCCIÓN
               </div>
             </div>
           </div>
@@ -764,7 +764,7 @@ export default function SettingsView() {
                   onClick={() => setIsColorModalOpen(false)}
                   className="text-slate-400 hover:text-slate-600 text-sm font-bold p-1"
                 >
-                  �o.
+                  ✕
                 </button>
               </div>
 
@@ -861,7 +861,7 @@ export default function SettingsView() {
                   onClick={() => setIsLugarModalOpen(false)}
                   className="text-slate-400 hover:text-slate-600 text-sm font-bold p-1 cursor-pointer"
                 >
-                  �o.
+                  ✕
                 </button>
               </div>
 
@@ -923,7 +923,7 @@ export default function SettingsView() {
                   onClick={() => setIsUserModalOpen(false)}
                   className="text-slate-400 hover:text-slate-600 text-sm font-bold p-1"
                 >
-                  �o.
+                  ✕
                 </button>
               </div>
 
