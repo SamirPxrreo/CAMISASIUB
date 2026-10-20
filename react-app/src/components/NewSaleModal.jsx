@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
@@ -13,6 +13,7 @@ import {
   DollarSign,
   Copy,
   Trash2,
+  AlertCircle,
   FileText
 } from 'lucide-react';
 import { useData } from '../context/DataContext';
@@ -87,6 +88,21 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
   const [guardando, setGuardando] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
+  // Cada error suma un "nonce" para que la notificación vuelva a aparecer
+  // aunque el mensaje sea el mismo (por ejemplo, si le das Guardar dos veces).
+  const [errorNonce, setErrorNonce] = useState(0);
+  const mostrarError = useCallback((msg) => {
+    setErrorMsg(msg ? String(msg) : '');
+    setErrorNonce(n => n + 1);
+  }, []);
+
+  // La notificación se oculta sola a los 8 segundos (también se puede cerrar a mano).
+  useEffect(() => {
+    if (!errorMsg) return;
+    const t = setTimeout(() => setErrorMsg(''), 8000);
+    return () => clearTimeout(t);
+  }, [errorMsg, errorNonce]);
+
   // Cargar datos si estamos en modo edición o resetear si es nuevo
   useEffect(() => {
     if (editingOrder) {
@@ -150,8 +166,8 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
       setNota('');
       setFilas([filaVacia()]);
     }
-    setErrorMsg('');
-  }, [editingOrder, isOpen, role]);
+    mostrarError('');
+  }, [editingOrder, isOpen, role, mostrarError]);
 
   if (!isOpen) return null;
 
@@ -255,43 +271,43 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!cliente.trim()) {
-      setErrorMsg('Por favor ingresa el nombre del cliente.');
+      mostrarError('Por favor ingresa el nombre del cliente.');
       return;
     }
     if (!telefono.trim()) {
-      setErrorMsg('Por favor ingresa el teléfono del cliente.');
+      mostrarError('Por favor ingresa el teléfono del cliente.');
       return;
     }
     if (!lugarEntrega) {
-      setErrorMsg('Selecciona el lugar de entrega (ya no se pone uno solo).');
+      mostrarError('Selecciona el lugar de entrega (ya no se pone uno solo).');
       return;
     }
     if (lugarEntrega === 'Otro' && !lugarOtro.trim()) {
-      setErrorMsg('Especifica el lugar de entrega ("Otro").');
+      mostrarError('Especifica el lugar de entrega ("Otro").');
       return;
     }
     for (let idx = 0; idx < filas.length; idx++) {
       const f = filas[idx];
       if (!f.modelo || !f.genero || !f.color || !f.talla) {
-        setErrorMsg(`Fila #${idx + 1}: elige versión, género, color y talla (ya no vienen llenos).`);
+        mostrarError(`Fila #${idx + 1}: elige versión, género, color y talla (ya no vienen llenos).`);
         return;
       }
       if (f.precio === '' || f.precio == null || isNaN(Number(f.precio)) || Number(f.precio) <= 0) {
-        setErrorMsg(`Fila #${idx + 1}: ingresa el precio de venta.`);
+        mostrarError(`Fila #${idx + 1}: ingresa el precio de venta.`);
         return;
       }
       if (f.costo === '' || f.costo == null || isNaN(Number(f.costo))) {
-        setErrorMsg(`Fila #${idx + 1}: elige versión y talla para sugerir el costo o digítalo a mano.`);
+        mostrarError(`Fila #${idx + 1}: elige versión y talla para sugerir el costo o digítalo a mano.`);
         return;
       }
     }
     if (!fechaEntregaPendiente && !fechaEntrega) {
-      setErrorMsg('Selecciona la fecha de entrega o marca "Pendiente por definir".');
+      mostrarError('Selecciona la fecha de entrega o marca "Pendiente por definir".');
       return;
     }
 
     setGuardando(true);
-    setErrorMsg('');
+    mostrarError('');
 
     try {
       // Desplegar filas según multiplicador para guardado fiel
@@ -374,7 +390,7 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
         };
         const check = validarPasoALiquidado ? validarPasoALiquidado(dummy) : { ok: true };
         if (!check.ok) {
-          setErrorMsg('No se puede guardar como Liquidado:\n• ' + check.faltas.join('\n• '));
+          mostrarError('No se puede guardar como Liquidado:\n• ' + check.faltas.join('\n• '));
           setGuardando(false);
           return;
         }
@@ -388,7 +404,7 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
 
       onClose();
     } catch (err) {
-      setErrorMsg(err.message || 'Error al guardar el pedido');
+      mostrarError(err.message || 'Error al guardar el pedido');
     } finally {
       setGuardando(false);
     }
@@ -397,6 +413,30 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
   return (
     <AnimatePresence>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+        {/* Notificación de error: fija arriba de todo, visible aunque el
+            formulario esté scrolleado hasta abajo. Antes el mensaje vivía
+            dentro del formulario y había que subir para verlo. */}
+        {errorMsg && (
+          <div
+            role="alert"
+            aria-live="assertive"
+            className="fixed top-[calc(env(safe-area-inset-top,0px)+0.75rem)] inset-x-0 mx-auto z-[60] w-[calc(100%-1.5rem)] max-w-md flex items-start gap-3 rounded-2xl bg-rose-600 px-4 py-3 text-white shadow-2xl shadow-rose-950/40 ring-1 ring-white/20"
+          >
+            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+            <p className="flex-1 text-[12.5px] font-bold leading-snug whitespace-pre-line">
+              {errorMsg}
+            </p>
+            <button
+              type="button"
+              onClick={() => setErrorMsg('')}
+              aria-label="Cerrar aviso"
+              className="shrink-0 -mr-1 -mt-0.5 p-1 rounded-lg text-white/80 hover:text-white hover:bg-white/15 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
         {/* Backdrop suave */}
         <motion.div
           initial={{ opacity: 0 }}
@@ -441,12 +481,6 @@ export default function NewSaleModal({ isOpen, onClose, editingOrder = null }) {
 
           {/* Formulario scrolleable */}
           <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto py-4 space-y-6 pr-1">
-            {errorMsg && (
-              <div className="p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold">
-                ⚠️ {errorMsg}
-              </div>
-            )}
-
             {/* 1. Datos del Cliente */}
             <div className="space-y-3">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
