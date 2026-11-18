@@ -91,7 +91,28 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
     return true;
   };
 
-  // Conteo por estado respetando el vendedor del usuario en sesión o el filtro de admin
+  // Cantidad de prendas de un pedido: cada item del jsonb es una prenda.
+  // Si el pedido es viejo y no tiene items, se usa la cantidad guardada.
+  const prendasDeVenta = (v) => {
+    const items = itemsCrudosVenta(v);
+    if (items && items.length) return items.length;
+    return Math.max(1, Number(v.cantidad) || 1);
+  };
+
+  // Prendas de un pedido que están en un estado concreto ('Todos' = todas)
+  const prendasEnEstado = (v, estado) => {
+    if (estado === 'Todos') return prendasDeVenta(v);
+    const items = itemsCrudosVenta(v);
+    if (items && items.length) {
+      return items.filter(it => normalizarEstado(it.estado || v.estado) === estado).length;
+    }
+    if (normalizarEstado(v.estado) !== estado) return 0;
+    return Math.max(1, Number(v.cantidad) || 1);
+  };
+
+  // Conteo por estado respetando el vendedor del usuario en sesión o el filtro de admin.
+  // Todos los chips cuentan PRENDAS (no pedidos) para que sean comparables entre sí
+  // y coincidan con lo que exporta el botón "Exportar por Comprar".
   const conteoPorEstado = useMemo(() => {
     const counts = { Todos: 0 };
     ORDEN_ESTADOS.forEach(e => counts[e] = 0);
@@ -100,7 +121,7 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
       if (v.finalizado) return;
       if (!matchVendedor(v.vendedor)) return;
 
-      counts.Todos += 1;
+      counts.Todos += prendasDeVenta(v);
       const items = itemsCrudosVenta(v);
       if (items && items.length) {
         items.forEach(it => {
@@ -162,6 +183,14 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
     });
   }, [ventas, busqueda, estadoFiltro, esAdmin, miNombreVendedor, vendedorFiltro]);
 
+  // Prendas que hay dentro de las tarjetas visibles (según el chip activo)
+  const prendasFiltradas = useMemo(() => {
+    return ventasFiltradas.reduce(
+      (acc, v) => acc + prendasEnEstado(v, estadoFiltro),
+      0
+    );
+  }, [ventasFiltradas, estadoFiltro]);
+
   const pageSize = 12;
   const totalPages = Math.ceil(ventasFiltradas.length / pageSize) || 1;
 
@@ -210,7 +239,9 @@ export default function OrdersView({ onOpenNewSale, onEditOrder }) {
           <h2 className="text-xl lg:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
             Gestión de Pedidos
             <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
-              {ventasFiltradas.length} activos
+              {ventasFiltradas.length} {ventasFiltradas.length === 1 ? 'pedido' : 'pedidos'}
+              {' · '}
+              {prendasFiltradas} {prendasFiltradas === 1 ? 'prenda' : 'prendas'}
             </span>
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
